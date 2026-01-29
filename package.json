@@ -16,7 +16,10 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "build": "npm run build --workspaces --if-present",
-    "verify": "npm run lint && npm run test && npm run format:check"
+    "verify": "npm run lint && npm run test && npm run format:check",
+    "clean_artifacts": "rm -rf packages/**/dist packages/**/node_modules",
+    "clean_code": "eslint . --fix && prettier --write .",
+    "clean_install": "npm run clean_artifacts && npm install"
   },
   "devDependencies": {
     "@eslint/js": "^9.18.0",
