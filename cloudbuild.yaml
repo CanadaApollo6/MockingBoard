@@ -1,0 +1,51 @@
+# Cloud Build configuration for MockingBoard Discord Bot
+# Deploys to Cloud Run with always-on instance for Discord WebSocket connection
+#
+# Manual deploy:  gcloud builds submit --config=cloudbuild.yaml
+# View logs:      gcloud run logs read mockingboard-bot --region=us-central1
+
+steps:
+  # Build the Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/mockingboard/bot:$COMMIT_SHA'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/mockingboard/bot:latest'
+      - '.'
+
+  # Push to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      [
+        'push',
+        '--all-tags',
+        'us-central1-docker.pkg.dev/$PROJECT_ID/mockingboard/bot',
+      ]
+
+  # Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'mockingboard-bot'
+      - '--image=us-central1-docker.pkg.dev/$PROJECT_ID/mockingboard/bot:$COMMIT_SHA'
+      - '--region=us-central1'
+      - '--platform=managed'
+      - '--no-allow-unauthenticated'
+      - '--min-instances=1'
+      - '--max-instances=1'
+      - '--memory=512Mi'
+      - '--cpu=1'
+      - '--timeout=3600'
+      - '--no-cpu-throttle'
+      - '--set-secrets=DISCORD_TOKEN=discord-token:latest'
+      - '--update-secrets=/app/firebase-key.json=firebase-key:latest'
+
+images:
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/mockingboard/bot:$COMMIT_SHA'
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/mockingboard/bot:latest'
+
+timeout: '1200s'
