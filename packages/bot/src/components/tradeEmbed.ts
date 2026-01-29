@@ -3,7 +3,9 @@ import {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
+  StringSelectMenuBuilder,
 } from 'discord.js';
+import type { DraftSlot } from '@mockingboard/shared';
 import type {
   Trade,
   TradePiece,
@@ -285,4 +287,166 @@ export function buildTradePausedEmbed(draft: Draft, reason: string) {
     .setFooter({ text: 'Draft will resume when the trade is resolved.' });
 
   return { embed };
+}
+
+// ---- Trade Proposal Flow Components ----
+
+interface TradeTarget {
+  id: string; // Team abbreviation for CPU, or internal user ID for humans
+  name: string;
+  isCpu: boolean;
+}
+
+export function buildTradeTargetSelect(
+  draftId: string,
+  targets: TradeTarget[],
+) {
+  const embed = new EmbedBuilder()
+    .setTitle('Propose Trade')
+    .setColor(0x5865f2)
+    .setDescription('Select a team to trade with:')
+    .setFooter({
+      text: 'CPU teams will evaluate trades using the Rich Hill value chart.',
+    });
+
+  const options = targets.slice(0, 25).map((t) => ({
+    label: t.name,
+    value: t.id,
+    description: t.isCpu ? 'CPU Team' : 'Human Player',
+  }));
+
+  const menu = new StringSelectMenuBuilder()
+    .setCustomId(`trade-select-target:${draftId}`)
+    .setPlaceholder('Select trade partner')
+    .addOptions(options);
+
+  const row = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+    menu,
+  );
+
+  const cancelButton = new ButtonBuilder()
+    .setCustomId(`trade-flow-cancel:${draftId}`)
+    .setLabel('Cancel')
+    .setStyle(ButtonStyle.Secondary);
+
+  const buttonRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    cancelButton,
+  );
+
+  return { embed, components: [row, buttonRow] };
+}
+
+export function buildTradeGiveSelect(
+  draftId: string,
+  targetName: string,
+  availablePicks: DraftSlot[],
+) {
+  const embed = new EmbedBuilder()
+    .setTitle(`Trade with ${targetName}`)
+    .setColor(0x5865f2)
+    .setDescription('Select the picks you want to **give**:')
+    .setFooter({ text: 'You can select multiple picks.' });
+
+  const options = availablePicks.slice(0, 25).map((slot) => {
+    const value = getPickValue(slot.overall);
+    return {
+      label: `Pick #${slot.overall} (Round ${slot.round})`,
+      value: `${slot.overall}`,
+      description: `${value.toFixed(1)} pts`,
+    };
+  });
+
+  if (options.length === 0) {
+    embed.setDescription('You have no picks available to trade.');
+    const cancelButton = new ButtonBuilder()
+      .setCustomId(`trade-flow-cancel:${draftId}`)
+      .setLabel('Cancel')
+      .setStyle(ButtonStyle.Secondary);
+    const buttonRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+      cancelButton,
+    );
+    return { embed, components: [buttonRow] };
+  }
+
+  const menu = new StringSelectMenuBuilder()
+    .setCustomId(`trade-select-give:${draftId}`)
+    .setPlaceholder('Select picks to give')
+    .setMinValues(1)
+    .setMaxValues(Math.min(options.length, 5))
+    .addOptions(options);
+
+  const row = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+    menu,
+  );
+
+  const cancelButton = new ButtonBuilder()
+    .setCustomId(`trade-flow-cancel:${draftId}`)
+    .setLabel('Cancel')
+    .setStyle(ButtonStyle.Secondary);
+
+  const buttonRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    cancelButton,
+  );
+
+  return { embed, components: [row, buttonRow] };
+}
+
+export function buildTradeReceiveSelect(
+  draftId: string,
+  targetName: string,
+  targetPicks: DraftSlot[],
+  givingPicks: number[],
+) {
+  const givingValue = givingPicks.reduce((sum, p) => sum + getPickValue(p), 0);
+
+  const embed = new EmbedBuilder()
+    .setTitle(`Trade with ${targetName}`)
+    .setColor(0x5865f2)
+    .setDescription(
+      `You are giving: **${givingPicks.map((p) => `#${p}`).join(', ')}** (${givingValue.toFixed(1)} pts)\n\nSelect the picks you want to **receive**:`,
+    )
+    .setFooter({ text: 'You can select multiple picks.' });
+
+  const options = targetPicks.slice(0, 25).map((slot) => {
+    const value = getPickValue(slot.overall);
+    return {
+      label: `Pick #${slot.overall} (Round ${slot.round})`,
+      value: `${slot.overall}`,
+      description: `${value.toFixed(1)} pts`,
+    };
+  });
+
+  if (options.length === 0) {
+    embed.setDescription(`${targetName} has no picks available to trade.`);
+    const cancelButton = new ButtonBuilder()
+      .setCustomId(`trade-flow-cancel:${draftId}`)
+      .setLabel('Cancel')
+      .setStyle(ButtonStyle.Secondary);
+    const buttonRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+      cancelButton,
+    );
+    return { embed, components: [buttonRow] };
+  }
+
+  const menu = new StringSelectMenuBuilder()
+    .setCustomId(`trade-select-receive:${draftId}`)
+    .setPlaceholder('Select picks to receive')
+    .setMinValues(1)
+    .setMaxValues(Math.min(options.length, 5))
+    .addOptions(options);
+
+  const row = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+    menu,
+  );
+
+  const cancelButton = new ButtonBuilder()
+    .setCustomId(`trade-flow-cancel:${draftId}`)
+    .setLabel('Back')
+    .setStyle(ButtonStyle.Secondary);
+
+  const buttonRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    cancelButton,
+  );
+
+  return { embed, components: [row, buttonRow] };
 }

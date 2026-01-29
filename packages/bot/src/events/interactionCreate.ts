@@ -20,6 +20,11 @@ import {
   handleTradeCancel,
   handleTradeConfirm,
   handleTradeForce,
+  handleTradeStart,
+  handleTradeTargetSelect,
+  handleTradeGiveSelect,
+  handleTradeReceiveSelect,
+  handleTradeFlowCancel,
 } from '../handlers/index.js';
 
 // Re-export handlePick for use by /draft command
@@ -121,7 +126,15 @@ async function handleButton(interaction: ButtonInteraction) {
         await handleResume(interaction, id);
         break;
 
-      // Trade actions
+      // Trade proposal flow
+      case 'trade':
+        await handleTradeStart(interaction, id);
+        break;
+      case 'trade-flow-cancel':
+        await handleTradeFlowCancel(interaction, id);
+        break;
+
+      // Trade resolution actions
       case 'trade-accept':
         await handleTradeAccept(interaction, id);
         break;
@@ -165,6 +178,17 @@ async function handleSelectMenu(interaction: StringSelectMenuInteraction) {
     switch (action) {
       case 'teamselect':
         await handleTeamSelect(interaction, id);
+        break;
+
+      // Trade proposal flow
+      case 'trade-select-target':
+        await handleTradeTargetSelect(interaction, id);
+        break;
+      case 'trade-select-give':
+        await handleTradeGiveSelect(interaction, id);
+        break;
+      case 'trade-select-receive':
+        await handleTradeReceiveSelect(interaction, id);
         break;
 
       default:

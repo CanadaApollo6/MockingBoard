@@ -10,7 +10,7 @@ export {
   advanceDraft,
 } from './draftPicking.js';
 
-// Trade handlers
+// Trade button handlers
 export {
   handleTradeAccept,
   handleTradeReject,
@@ -18,6 +18,15 @@ export {
   handleTradeConfirm,
   handleTradeForce,
 } from './trade.js';
+
+// Trade proposal flow handlers
+export {
+  handleTradeStart,
+  handleTradeTargetSelect,
+  handleTradeGiveSelect,
+  handleTradeReceiveSelect,
+  handleTradeFlowCancel,
+} from './tradeProposal.js';
 
 // Shared utilities
 export {

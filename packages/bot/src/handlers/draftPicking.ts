@@ -11,6 +11,7 @@ import {
   recordPickAndAdvance,
   setPickTimer,
   clearPickTimer,
+  getPickController,
 } from '../services/draft.service.js';
 import { selectCpuPick } from '../services/cpu.service.js';
 import { getCachedPlayers } from '../commands/draft.js';
@@ -153,8 +154,9 @@ export async function handlePick(
   const currentSlot = draft.pickOrder[draft.currentPick - 1];
   if (!currentSlot) return;
 
-  const assignedUserId = draft.teamAssignments[currentSlot.team];
-  if (assignedUserId !== user.id) {
+  // Use getPickController to handle traded picks
+  const pickController = getPickController(draft, currentSlot);
+  if (pickController !== user.id) {
     await sendFollowUp(interaction, "It's not your turn to pick.");
     return;
   }
@@ -214,7 +216,8 @@ export async function advanceDraft(
   const currentSlot = draft.pickOrder[draft.currentPick - 1];
   if (!currentSlot) return;
 
-  const assignedUserId = draft.teamAssignments[currentSlot.team];
+  // Use getPickController to handle traded picks
+  const pickController = getPickController(draft, currentSlot);
   const allPlayers = await getCachedPlayers(draft.config.year);
   const pickedIds = new Set(draft.pickedPlayerIds ?? []);
   const available = allPlayers.filter((p) => !pickedIds.has(p.id));
@@ -224,7 +227,7 @@ export async function advanceDraft(
     return;
   }
 
-  if (assignedUserId === null) {
+  if (pickController === null) {
     // CPU pick - behavior depends on cpuSpeed setting
     const cpuSpeed = draft.config.cpuSpeed ?? 'normal';
 
@@ -243,7 +246,7 @@ export async function advanceDraft(
       interaction,
       draft,
       currentSlot,
-      assignedUserId,
+      pickController,
       available,
     );
   }
@@ -266,8 +269,8 @@ async function doCpuPicksBatch(
     const currentSlot = currentDraft.pickOrder[currentDraft.currentPick - 1];
     if (!currentSlot) break;
 
-    const assignedUserId = currentDraft.teamAssignments[currentSlot.team];
-    if (assignedUserId !== null) break; // Hit a human pick
+    const pickController = getPickController(currentDraft, currentSlot);
+    if (pickController !== null) break; // Hit a human pick
 
     const pickedIds = new Set(currentDraft.pickedPlayerIds ?? []);
     const available = allPlayers.filter((p) => !pickedIds.has(p.id));

@@ -167,15 +167,19 @@ export function buildOnTheClockEmbed(
     rows.push(row);
   }
 
-  // Add pause button row (only for human picks, not CPU)
+  // Add control buttons row (only for human picks, not CPU)
   if (showPauseButton && userDiscordId) {
-    const pauseRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    const controlRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+      new ButtonBuilder()
+        .setCustomId(`trade:${draft.id}`)
+        .setLabel('Propose Trade')
+        .setStyle(ButtonStyle.Primary),
       new ButtonBuilder()
         .setCustomId(`pause:${draft.id}`)
         .setLabel('Pause Draft')
         .setStyle(ButtonStyle.Secondary),
     );
-    rows.push(pauseRow);
+    rows.push(controlRow);
   }
 
   return { embed, components: rows };

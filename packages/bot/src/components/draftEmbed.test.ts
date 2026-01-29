@@ -94,9 +94,9 @@ describe('draftEmbed', () => {
         (sum, row) => sum + row.components.length,
         0,
       );
-      // 10 player buttons + 1 pause button = 11 total
-      expect(totalButtons).toBe(11);
-      // 2 rows of 5 player buttons + 1 pause button row
+      // 10 player buttons + 1 trade button + 1 pause button = 12 total
+      expect(totalButtons).toBe(12);
+      // 2 rows of 5 player buttons + 1 control row (trade + pause)
       expect(result.components).toHaveLength(3);
     });
   });
