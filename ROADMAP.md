@@ -4,38 +4,39 @@
 
 **Goal**: A functional Discord bot that can run a mock draft entirely within a Discord thread.
 
-### Milestone 1.1: Project Setup
+### Milestone 1.1: Project Setup ✓
 
-- [ ] Initialize monorepo structure (`/packages/bot`, `/packages/shared`)
-- [ ] Configure TypeScript, ESLint, Prettier
-- [ ] Set up Jest for testing
-- [ ] Create Firebase project, initialize Firestore
-- [ ] Set up Discord application and bot token
-- [ ] Basic bot scaffolding with discord.js (connects, responds to ping)
+- [x] Initialize monorepo structure (`/packages/bot`, `/packages/shared`)
+- [x] Configure TypeScript, ESLint, Prettier
+- [x] Set up Jest for testing
+- [x] Create Firebase project, initialize Firestore
+- [x] Set up Discord application and bot token
+- [x] Basic bot scaffolding with discord.js (connects, responds to ping)
 
-### Milestone 1.2: Data Foundation
+### Milestone 1.2: Data Foundation ✓
 
-- [ ] Define core types in `/packages/shared`: `Draft`, `Pick`, `Player`, `User`, `Team`
-- [ ] Hand-curate initial prospect list (~100-150 players): name, position, school, consensus rank
-- [ ] Seed NFL team data (name, pick order for current year)
-- [ ] Firestore schema and security rules
-- [ ] Basic CRUD operations for drafts
+- [x] Define core types in `/packages/shared`: `Draft`, `Pick`, `Player`, `User`, `Team`
+- [x] Hand-curate initial prospect list (~100-150 players): name, position, school, consensus rank
+- [x] Seed NFL team data (name, pick order for current year)
+- [x] Firestore schema and security rules
+- [x] Basic CRUD operations for drafts
 
-### Milestone 1.3: Core Draft Loop
+### Milestone 1.3: Core Draft Loop ✓
 
-- [ ] `/startdraft` command: configure rounds, assign teams to users
-- [ ] Create dedicated thread for draft
-- [ ] On-the-clock notifications with player buttons
-- [ ] Record pick, announce to thread, advance to next user
-- [ ] Handle clock expiration (auto-pick BPA or skip)
-- [ ] `/draft` command for manual pick by name (fallback if buttons fail)
-- [ ] Draft completion: post summary, mark draft as complete
+- [x] `/startdraft` command: configure rounds, assign teams to users
+- [x] Create dedicated thread for draft
+- [x] On-the-clock notifications with player buttons
+- [x] Record pick, announce to thread, advance to next user
+- [x] Handle clock expiration (auto-pick BPA or skip)
+- [x] `/draft` command for manual pick by name (fallback if buttons fail)
+- [x] Draft completion: post summary, mark draft as complete
 
-### Milestone 1.4: Draft Variants
+### Milestone 1.4: Draft Variants ✓
 
-- [ ] Support single-team mode (user drafts one team through N rounds, CPU handles rest)
-- [ ] Configurable draft settings: number of rounds, time per pick, randomize order
-- [ ] Pause/resume draft functionality
+- [x] Support single-team mode (user drafts one team through N rounds, CPU handles rest)
+- [x] Configurable draft settings: number of rounds, time per pick, randomize order
+- [x] Pause/resume draft functionality
+- [x] Configurable CPU speed: instant (batched), fast (0.3s), normal (1.5s)
 
 ### Milestone 1.5: Polish & Testing
 
@@ -44,6 +45,14 @@
 - [ ] Rate limiting and basic abuse prevention
 - [ ] Documentation for bot commands
 - [ ] Deploy bot to GCP (Cloud Run or Compute Engine)
+
+### Milestone 1.6: Draft Trades
+
+- [ ] Trade proposal UI during drafts (offer picks to other teams)
+- [ ] CPU trade acceptance logic using Rich Hill trade value chart
+- [ ] "Force Trade" button for users who want to skip realism
+- [ ] Configurable: enable/disable trades per draft
+- [ ] Trade history tracking and announcements
 
 **Phase 1 Complete**: Bot is usable in real Discord servers for real drafts.
 
@@ -174,6 +183,13 @@
 - [ ] Historical accuracy stats on user profiles
 - [ ] Live draft companion: surface correct predictions in real time as picks happen
 
+### Milestone 5.5: Analyst Mock Draft Aggregation
+
+- [ ] Ingest analyst mock drafts (similar to Mock Draft Database)
+- [ ] Display analyst predictions alongside user mocks
+- [ ] Include analysts in leaderboard comparisons
+- [ ] Filter leaderboard: "vs all users", "vs analysts only", "vs friends"
+
 **Phase 5 Complete**: Full accountability system with year-round leaderboard engagement.
 
 ---
@@ -226,6 +242,41 @@
 - [ ] Graceful degradation for features that can't translate
 
 **Phase 7 Complete**: Users can draft in iMessage group chats.
+
+---
+
+## Phase 8: GM Mode / Offseason Simulator
+
+**Goal**: Full offseason simulation for content creators and serious fans.
+
+**Prerequisites**: Research NFL salary cap mechanics, contract structures, free agency rules.
+
+### Milestone 8.1: Salary Cap Foundation
+
+- [ ] Research and document NFL salary cap rules
+- [ ] Ingest contract data (source TBD - may need manual curation or paid API)
+- [ ] Model cap hits, dead money, restructures
+- [ ] Team cap situation snapshots by date
+
+### Milestone 8.2: Team Forking
+
+- [ ] "Fork" a team from a specific date (like git branches)
+- [ ] Multiple save files per user
+- [ ] Name and describe each scenario
+
+### Milestone 8.3: Free Agency Simulation
+
+- [ ] Available free agents list
+- [ ] Sign players with cap implications
+- [ ] CPU teams make signings too (optional realism)
+
+### Milestone 8.4: Integrated Draft
+
+- [ ] Use forked team in mock drafts
+- [ ] Picks reflect trades made in scenario
+- [ ] Draft results save back to scenario
+
+**Phase 8 Complete**: Content creators can create "what if" scenarios and return to them over time.
 
 ---
 
