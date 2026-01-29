@@ -7,6 +7,45 @@
         { "fieldPath": "year", "order": "ASCENDING" },
         { "fieldPath": "consensusRank", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "drafts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "discord.threadId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "trades",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "draftId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "trades",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "draftId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "proposerId", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "trades",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "draftId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "recipientId", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "users",
+      "queryScope": "COLLECTION",
+      "fields": [{ "fieldPath": "discordId", "order": "ASCENDING" }]
     }
   ],
   "fieldOverrides": []

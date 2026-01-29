@@ -1,0 +1,92 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ============================================
+    // Helper Functions
+    // ============================================
+
+    // Check if user is authenticated via Firebase Auth
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Check if authenticated user owns this document
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Check if user is a participant in a draft
+    // Note: participants map is {internalUserId: discordId}
+    // For Phase 2, we'll need to update this to check firebaseUid
+    function isDraftParticipant(draftId) {
+      return isAuthenticated() &&
+        request.auth.uid in get(/databases/$(database)/documents/drafts/$(draftId)).data.participants.values();
+    }
+
+    // ============================================
+    // Players Collection
+    // Public read, admin-only write (seeded data)
+    // ============================================
+    match /players/{playerId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // ============================================
+    // Teams Collection
+    // Public read, admin-only write (seeded data)
+    // ============================================
+    match /teams/{teamId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // ============================================
+    // Users Collection
+    // Authenticated users can read/write their own document
+    // ============================================
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isAuthenticated();
+      allow update: if isOwner(userId);
+      allow delete: if false;
+    }
+
+    // ============================================
+    // Drafts Collection
+    // Public read (for spectating), participants can write
+    // ============================================
+    match /drafts/{draftId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update: if isDraftParticipant(draftId);
+      allow delete: if false;
+
+      // Picks subcollection
+      // Public read, admin-only write (via transactions)
+      match /picks/{pickId} {
+        allow read: if true;
+        allow write: if false;
+      }
+    }
+
+    // ============================================
+    // Trades Collection
+    // Only draft participants can read/write
+    // ============================================
+    match /trades/{tradeId} {
+      allow read: if isAuthenticated() &&
+        isDraftParticipant(resource.data.draftId);
+
+      allow create: if isAuthenticated();
+
+      allow update: if isAuthenticated() &&
+        (resource.data.proposerId == request.auth.uid ||
+         resource.data.recipientId == request.auth.uid);
+
+      allow delete: if false;
+    }
+  }
+}
