@@ -21,6 +21,7 @@ export interface CreateDraftInput {
     year: number;
     teamAssignmentMode: TeamAssignmentMode;
     cpuSpeed: CpuSpeed;
+    tradesEnabled: boolean;
   };
   platform: DraftPlatform;
   discord?: {

@@ -34,6 +34,7 @@ export {
   getSendableChannel,
   resolveDiscordId,
   sendFollowUp,
+  safeSend,
   getJoinedUsers,
   teamSeeds,
   type DraftInteraction,

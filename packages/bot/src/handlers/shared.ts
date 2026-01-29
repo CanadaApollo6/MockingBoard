@@ -1,8 +1,10 @@
-import type { TextChannel } from 'discord.js';
 import type {
+  TextChannel,
   ButtonInteraction,
   ChatInputCommandInteraction,
   StringSelectMenuInteraction,
+  Message,
+  MessageCreateOptions,
 } from 'discord.js';
 import type { Draft, TeamAbbreviation } from '@mockingboard/shared';
 import { teams } from '@mockingboard/shared';
@@ -67,4 +69,21 @@ export function getJoinedUsers(
       discordId: draft.participants[internalId!] ?? internalId!,
       team,
     }));
+}
+
+/**
+ * Safely send a message to a channel, catching and logging any errors.
+ * Returns the sent message on success, null on failure.
+ */
+export async function safeSend(
+  channel: TextChannel | null,
+  options: MessageCreateOptions,
+): Promise<Message | null> {
+  if (!channel) return null;
+  try {
+    return await channel.send(options);
+  } catch (error) {
+    console.error('Failed to send message to channel:', error);
+    return null;
+  }
 }

@@ -452,51 +452,55 @@ async function postOnTheClock(
   // Set pick timer
   if (draft.config.secondsPerPick > 0) {
     setPickTimer(draft.id, draft.config.secondsPerPick, async () => {
-      // Auto-pick on clock expiration
-      const freshDraft = await getDraft(draft.id);
-      if (!freshDraft || freshDraft.status !== 'active') return;
+      try {
+        // Auto-pick on clock expiration
+        const freshDraft = await getDraft(draft.id);
+        if (!freshDraft || freshDraft.status !== 'active') return;
 
-      const currentSlot = freshDraft.pickOrder[freshDraft.currentPick - 1];
-      if (!currentSlot || currentSlot.overall !== slot.overall) return;
+        const currentSlot = freshDraft.pickOrder[freshDraft.currentPick - 1];
+        if (!currentSlot || currentSlot.overall !== slot.overall) return;
 
-      const allPlayers = await getCachedPlayers(freshDraft.config.year);
-      const pickedIds = new Set(freshDraft.pickedPlayerIds ?? []);
-      const avail = allPlayers.filter((p) => !pickedIds.has(p.id));
+        const allPlayers = await getCachedPlayers(freshDraft.config.year);
+        const pickedIds = new Set(freshDraft.pickedPlayerIds ?? []);
+        const avail = allPlayers.filter((p) => !pickedIds.has(p.id));
 
-      if (avail.length === 0) {
-        console.error('No available players in timer callback');
-        return;
-      }
+        if (avail.length === 0) {
+          console.error('No available players in timer callback');
+          return;
+        }
 
-      const teamSeed = teamSeeds.get(slot.team);
-      const player = selectCpuPick(avail, teamSeed?.needs ?? []);
-      const tName = teamSeed?.name ?? slot.team;
+        const teamSeed = teamSeeds.get(slot.team);
+        const player = selectCpuPick(avail, teamSeed?.needs ?? []);
+        const tName = teamSeed?.name ?? slot.team;
 
-      const { isComplete } = await recordPickAndAdvance(
-        freshDraft.id,
-        player.id,
-        null,
-      );
-
-      const timerChannel = getSendableChannel(interaction);
-      if (timerChannel) {
-        const { embed } = buildPickAnnouncementEmbed(
-          currentSlot,
-          player,
-          tName,
-          true,
+        const { isComplete } = await recordPickAndAdvance(
+          freshDraft.id,
+          player.id,
+          null,
         );
-        await timerChannel.send({ embeds: [embed] });
-      }
 
-      if (isComplete) {
-        await postDraftSummary(interaction, freshDraft.id, allPlayers);
-        return;
-      }
+        const timerChannel = getSendableChannel(interaction);
+        if (timerChannel) {
+          const { embed } = buildPickAnnouncementEmbed(
+            currentSlot,
+            player,
+            tName,
+            true,
+          );
+          await timerChannel.send({ embeds: [embed] });
+        }
 
-      const updatedDraft = await getDraft(freshDraft.id);
-      if (updatedDraft) {
-        await advanceDraft(interaction, updatedDraft);
+        if (isComplete) {
+          await postDraftSummary(interaction, freshDraft.id, allPlayers);
+          return;
+        }
+
+        const updatedDraft = await getDraft(freshDraft.id);
+        if (updatedDraft) {
+          await advanceDraft(interaction, updatedDraft);
+        }
+      } catch (error) {
+        console.error(`Timer callback error for draft ${draft.id}:`, error);
       }
     });
   }
