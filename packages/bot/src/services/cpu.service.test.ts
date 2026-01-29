@@ -10,7 +10,6 @@ function makePlayer(
     position: 'WR',
     school: 'Test U',
     year: 2025,
-    consensusRank: overrides.consensusRank,
     updatedAt: { seconds: 0, nanoseconds: 0 },
     ...overrides,
   };

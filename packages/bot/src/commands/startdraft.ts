@@ -2,6 +2,7 @@ import {
   SlashCommandBuilder,
   ChannelType,
   type ChatInputCommandInteraction,
+  type TextChannel,
 } from 'discord.js';
 import { getOrCreateUser } from '../services/user.service.js';
 import {
@@ -115,7 +116,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       ? `Solo Mock Draft - ${dateStr}`
       : `Mock Draft - ${dateStr}`;
 
-  const thread = await interaction.channel.threads.create({
+  const textChannel = interaction.channel as TextChannel;
+  const thread = await textChannel.threads.create({
     name: threadName,
     type: ChannelType.PublicThread,
   });

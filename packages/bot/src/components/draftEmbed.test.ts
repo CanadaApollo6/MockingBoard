@@ -1,4 +1,10 @@
-import type { Draft, Player, DraftSlot, Pick } from '@mockingboard/shared';
+import type {
+  Draft,
+  Player,
+  DraftSlot,
+  Pick,
+  TeamAbbreviation,
+} from '@mockingboard/shared';
 import {
   buildOnTheClockEmbed,
   buildPickAnnouncementEmbed,
@@ -65,7 +71,7 @@ describe('draftEmbed', () => {
       expect(result.components.length).toBeGreaterThan(0);
 
       const buttons = result.components.flatMap((row) =>
-        row.components.map((c) => c.toJSON()),
+        row.components.map((c) => c.toJSON() as { custom_id?: string }),
       );
       expect(buttons[0].custom_id).toBe('pick:draft-1:p1');
       expect(buttons[1].custom_id).toBe('pick:draft-1:p2');
@@ -157,7 +163,9 @@ describe('draftEmbed', () => {
         ['p2', makePlayer({ id: 'p2', name: 'Player B' })],
       ]);
 
-      const teamMap = new Map<string, string>([['TEN', 'Tennessee Titans']]);
+      const teamMap = new Map<TeamAbbreviation, string>([
+        ['TEN', 'Tennessee Titans'],
+      ]);
 
       const result = buildDraftSummaryEmbed(picks, playerMap, teamMap);
       const json = result.embed.toJSON();
