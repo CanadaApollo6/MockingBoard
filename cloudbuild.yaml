@@ -41,7 +41,8 @@ steps:
       - '--cpu=1'
       - '--timeout=3600'
       - '--no-cpu-throttling'
-      - '--set-secrets=DISCORD_TOKEN=discord-token:latest,/app/firebase-key.json=firebase-key:latest'
+      - '--set-secrets=DISCORD_TOKEN=discord-token:latest,/secrets/firebase-key.json=firebase-key:latest'
+      - '--set-env-vars=GOOGLE_APPLICATION_CREDENTIALS=/secrets/firebase-key.json'
 
 images:
   - 'us-central1-docker.pkg.dev/$PROJECT_ID/mockingboard/bot:$COMMIT_SHA'
