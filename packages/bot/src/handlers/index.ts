@@ -7,6 +7,7 @@ export {
   handleResume,
   handlePickButton,
   handlePick,
+  handlePositionFilter,
   advanceDraft,
 } from './draftPicking.js';
 

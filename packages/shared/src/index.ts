@@ -2,6 +2,7 @@
 export type {
   FirestoreTimestamp,
   Position,
+  PositionFilterGroup,
   TeamAbbreviation,
   DraftStatus,
   DraftFormat,
@@ -19,6 +20,9 @@ export type {
   TradePiece,
   Trade,
 } from './types.js';
+
+// Constants
+export { POSITION_GROUPS } from './types.js';
 
 // Seed data
 export { teams, type TeamSeed } from './data/index.js';

@@ -24,6 +24,19 @@ export type Position =
   | 'P'
   | 'LS';
 
+export type PositionFilterGroup = 'QB' | 'WR_TE' | 'RB' | 'OL' | 'DEF' | null;
+
+export const POSITION_GROUPS: Record<
+  Exclude<PositionFilterGroup, null>,
+  Position[]
+> = {
+  QB: ['QB'],
+  WR_TE: ['WR', 'TE'],
+  RB: ['RB'],
+  OL: ['OT', 'OG', 'C'],
+  DEF: ['EDGE', 'DL', 'LB', 'CB', 'S'],
+};
+
 export type TeamAbbreviation =
   | 'ARI'
   | 'ATL'

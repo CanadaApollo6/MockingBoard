@@ -7,6 +7,8 @@ import {
   Collection,
 } from 'discord.js';
 
+import type { PositionFilterGroup } from '@mockingboard/shared';
+
 // Import all handlers
 import {
   handleJoin,
@@ -15,6 +17,7 @@ import {
   handlePause,
   handleResume,
   handlePickButton,
+  handlePositionFilter,
   handleTradeAccept,
   handleTradeReject,
   handleTradeCancel,
@@ -119,6 +122,16 @@ async function handleButton(interaction: ButtonInteraction) {
       case 'pick':
         await handlePickButton(interaction, id, rest[0]);
         break;
+      case 'filter':
+        await handlePositionFilter(
+          interaction,
+          id,
+          rest[0] as Exclude<PositionFilterGroup, null>,
+        );
+        break;
+      case 'clearfilter':
+        await handlePositionFilter(interaction, id, null);
+        break;
       case 'pause':
         await handlePause(interaction, id);
         break;
@@ -178,6 +191,16 @@ async function handleSelectMenu(interaction: StringSelectMenuInteraction) {
     switch (action) {
       case 'teamselect':
         await handleTeamSelect(interaction, id);
+        break;
+
+      // Player browsing (from on-the-clock embed)
+      case 'browse':
+        // Browse select menu returns player ID as value
+        await handlePickButton(
+          interaction as unknown as ButtonInteraction,
+          id,
+          interaction.values[0],
+        );
         break;
 
       // Trade proposal flow

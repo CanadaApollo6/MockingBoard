@@ -2,7 +2,12 @@ import type {
   ButtonInteraction,
   ChatInputCommandInteraction,
 } from 'discord.js';
-import type { Draft, Player, TeamAbbreviation } from '@mockingboard/shared';
+import type {
+  Draft,
+  Player,
+  TeamAbbreviation,
+  PositionFilterGroup,
+} from '@mockingboard/shared';
 import { teams } from '@mockingboard/shared';
 import { getOrCreateUser } from '../services/user.service.js';
 import {
@@ -131,6 +136,66 @@ export async function handlePickButton(
   if (!draft) return;
 
   await handlePick(interaction, draft, playerId);
+}
+
+/**
+ * Handle position filter button click - re-renders embed with filtered players
+ */
+export async function handlePositionFilter(
+  interaction: ButtonInteraction,
+  draftId: string,
+  positionFilter: PositionFilterGroup,
+): Promise<void> {
+  const draft = await getDraft(draftId);
+  if (!draft || draft.status !== 'active') {
+    await interaction.reply({
+      content: 'This draft is not active.',
+      ephemeral: true,
+    });
+    return;
+  }
+
+  const currentSlot = draft.pickOrder[draft.currentPick - 1];
+  if (!currentSlot) {
+    await interaction.reply({
+      content: 'No active pick.',
+      ephemeral: true,
+    });
+    return;
+  }
+
+  // Verify the user clicking is the one on the clock
+  const pickController = getPickController(draft, currentSlot);
+  const discordUserId = resolveDiscordId(draft, pickController ?? '');
+
+  if (discordUserId !== interaction.user.id) {
+    await interaction.reply({
+      content: 'Only the player on the clock can filter.',
+      ephemeral: true,
+    });
+    return;
+  }
+
+  // Get available players
+  const allPlayers = await getCachedPlayers(draft.config.year);
+  const pickedIds = new Set(draft.pickedPlayerIds ?? []);
+  const available = allPlayers
+    .filter((p) => !pickedIds.has(p.id))
+    .sort((a, b) => a.consensusRank - b.consensusRank);
+
+  const teamName = teamSeeds.get(currentSlot.team)?.name ?? currentSlot.team;
+
+  const { embed, components } = buildOnTheClockEmbed(
+    draft,
+    currentSlot,
+    teamName,
+    discordUserId,
+    available,
+    true,
+    positionFilter,
+  );
+
+  await interaction.update({ embeds: [embed], components });
 }
 
 /**
@@ -362,16 +427,17 @@ async function postOnTheClock(
   const discordUserId = resolveDiscordId(draft, internalUserId);
 
   const teamName = teamSeeds.get(slot.team)?.name ?? slot.team;
-  const topPlayers = available
-    .sort((a, b) => a.consensusRank - b.consensusRank)
-    .slice(0, 10);
+  // Sort all available players by rank - embed handles filtering/slicing
+  const sortedPlayers = available.sort(
+    (a, b) => a.consensusRank - b.consensusRank,
+  );
 
   const { embed, components } = buildOnTheClockEmbed(
     draft,
     slot,
     teamName,
     discordUserId,
-    topPlayers,
+    sortedPlayers,
   );
 
   const channel = getSendableChannel(interaction);

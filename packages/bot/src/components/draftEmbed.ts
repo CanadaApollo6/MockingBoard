@@ -11,7 +11,9 @@ import type {
   Pick,
   Player,
   TeamAbbreviation,
+  PositionFilterGroup,
 } from '@mockingboard/shared';
+import { POSITION_GROUPS } from '@mockingboard/shared';
 import type { TeamSeed } from '@mockingboard/shared';
 
 interface JoinedUser {
@@ -122,13 +124,163 @@ export function buildTeamSelectMenu(
   return { components: [row] };
 }
 
+// Filter labels for display
+const FILTER_LABELS: Record<Exclude<PositionFilterGroup, null>, string> = {
+  QB: 'QB',
+  WR_TE: 'WR/TE',
+  RB: 'RB',
+  OL: 'OL',
+  DEF: 'DEF',
+};
+
+/**
+ * Filter players by position group
+ */
+function filterByPositionGroup(
+  players: Player[],
+  filter: PositionFilterGroup,
+): Player[] {
+  if (filter === null) return players;
+  const positions = POSITION_GROUPS[filter];
+  return players.filter((p) => positions.includes(p.position));
+}
+
+/**
+ * Build position filter button row
+ */
+function buildPositionFilterRow(
+  draftId: string,
+  activeFilter: PositionFilterGroup,
+): ActionRowBuilder<ButtonBuilder> {
+  const row = new ActionRowBuilder<ButtonBuilder>();
+  const filters: Exclude<PositionFilterGroup, null>[] = [
+    'QB',
+    'WR_TE',
+    'RB',
+    'OL',
+    'DEF',
+  ];
+
+  for (const filter of filters) {
+    row.addComponents(
+      new ButtonBuilder()
+        .setCustomId(`filter:${draftId}:${filter}`)
+        .setLabel(FILTER_LABELS[filter])
+        .setStyle(
+          activeFilter === filter ? ButtonStyle.Primary : ButtonStyle.Secondary,
+        ),
+    );
+  }
+
+  return row;
+}
+
+/**
+ * Build quick-pick button row (top 5 filtered players)
+ */
+function buildQuickPickRow(
+  draftId: string,
+  players: Player[],
+): ActionRowBuilder<ButtonBuilder> {
+  const row = new ActionRowBuilder<ButtonBuilder>();
+  const topFive = players.slice(0, 5);
+
+  for (const player of topFive) {
+    row.addComponents(
+      new ButtonBuilder()
+        .setCustomId(`pick:${draftId}:${player.id}`)
+        .setLabel(`${player.name} (${player.position})`)
+        .setStyle(ButtonStyle.Primary),
+    );
+  }
+
+  return row;
+}
+
+/**
+ * Build browse select menu (players 6-30 after quick picks)
+ */
+function buildBrowseSelectRow(
+  draftId: string,
+  players: Player[],
+  filterLabel: string | null,
+): ActionRowBuilder<StringSelectMenuBuilder> {
+  // Skip first 5 (shown as buttons), take up to 25 more
+  const browsePlayers = players.slice(5, 30);
+
+  const options = browsePlayers.map((p, i) => ({
+    label: `${i + 6}. ${p.name} (${p.position})`,
+    value: p.id,
+    description: p.school,
+  }));
+
+  // If no browse players available, show placeholder
+  if (options.length === 0) {
+    options.push({
+      label: 'No additional players',
+      value: 'none',
+      description: 'Try removing position filter',
+    });
+  }
+
+  const placeholder = filterLabel
+    ? `Browse more ${filterLabel} players...`
+    : 'Browse more players...';
+
+  const menu = new StringSelectMenuBuilder()
+    .setCustomId(`browse:${draftId}`)
+    .setPlaceholder(placeholder)
+    .addOptions(options.slice(0, 25)); // Discord limit
+
+  return new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(menu);
+}
+
+/**
+ * Build control button row (Trade, Pause, Clear Filter)
+ */
+function buildControlRow(
+  draftId: string,
+  hasFilter: boolean,
+  showPauseButton: boolean,
+): ActionRowBuilder<ButtonBuilder> {
+  const row = new ActionRowBuilder<ButtonBuilder>();
+
+  row.addComponents(
+    new ButtonBuilder()
+      .setCustomId(`trade:${draftId}`)
+      .setLabel('Propose Trade')
+      .setStyle(ButtonStyle.Primary),
+  );
+
+  if (showPauseButton) {
+    row.addComponents(
+      new ButtonBuilder()
+        .setCustomId(`pause:${draftId}`)
+        .setLabel('Pause Draft')
+        .setStyle(ButtonStyle.Secondary),
+    );
+  }
+
+  if (hasFilter) {
+    row.addComponents(
+      new ButtonBuilder()
+        .setCustomId(`clearfilter:${draftId}`)
+        .setLabel('Clear Filter')
+        .setStyle(ButtonStyle.Secondary),
+    );
+  }
+
+  return row;
+}
+
 export function buildOnTheClockEmbed(
   draft: Draft,
   slot: DraftSlot,
   teamName: string,
   userDiscordId: string | null,
-  topPlayers: Player[],
+  allPlayers: Player[],
   showPauseButton = true,
+  positionFilter: PositionFilterGroup = null,
 ) {
   const pickLabel = `Round ${slot.round}, Pick ${slot.pick} (Overall #${slot.overall})`;
   const onClock = userDiscordId ? `<@${userDiscordId}>` : `CPU (${teamName})`;
@@ -137,50 +289,64 @@ export function buildOnTheClockEmbed(
       ? `You have ${draft.config.secondsPerPick} seconds.`
       : '';
 
+  // Filter players by position if filter is active
+  const filteredPlayers = filterByPositionGroup(allPlayers, positionFilter);
+  const filterLabel = positionFilter ? FILTER_LABELS[positionFilter] : null;
+
+  // Build description with filter info
+  const filterInfo = filterLabel ? `\n**Filtering: ${filterLabel}**` : '';
+  const description =
+    `${onClock} is picking.\n${pickLabel}${filterInfo}\n${timer}`.trim();
+
   const embed = new EmbedBuilder()
     .setTitle(`On the Clock: ${teamName}`)
     .setColor(0x5865f2)
-    .setDescription(`${onClock} is picking.\n${pickLabel}\n${timer}`)
+    .setDescription(description)
     .addFields({
-      name: 'Top Available Players',
-      value: topPlayers
-        .slice(0, 10)
-        .map((p, i) => `${i + 1}. **${p.name}** (${p.position} - ${p.school})`)
-        .join('\n'),
-    });
+      name: filterLabel
+        ? `Top ${filterLabel} Players`
+        : 'Top Available Players',
+      value:
+        filteredPlayers.length > 0
+          ? filteredPlayers
+              .slice(0, 5)
+              .map(
+                (p, i) =>
+                  `${i + 1}. **${p.name}** (${p.position} - ${p.school})`,
+              )
+              .join('\n')
+          : 'No players available for this filter.',
+    })
+    .setFooter({ text: 'Tip: Use /draft to search by name' });
 
-  // Build player buttons (2 rows of 5)
-  const rows: ActionRowBuilder<ButtonBuilder>[] = [];
-  const buttonPlayers = topPlayers.slice(0, 10);
-
-  for (let i = 0; i < buttonPlayers.length; i += 5) {
-    const row = new ActionRowBuilder<ButtonBuilder>();
-    const chunk = buttonPlayers.slice(i, i + 5);
-    for (const player of chunk) {
-      row.addComponents(
-        new ButtonBuilder()
-          .setCustomId(`pick:${draft.id}:${player.id}`)
-          .setLabel(`${player.name} (${player.position})`)
-          .setStyle(ButtonStyle.Primary),
-      );
-    }
-    rows.push(row);
+  // For CPU picks, just return embed without components
+  if (!userDiscordId) {
+    return { embed, components: [] };
   }
 
-  // Add control buttons row (only for human picks, not CPU)
-  if (showPauseButton && userDiscordId) {
-    const controlRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
-      new ButtonBuilder()
-        .setCustomId(`trade:${draft.id}`)
-        .setLabel('Propose Trade')
-        .setStyle(ButtonStyle.Primary),
-      new ButtonBuilder()
-        .setCustomId(`pause:${draft.id}`)
-        .setLabel('Pause Draft')
-        .setStyle(ButtonStyle.Secondary),
-    );
-    rows.push(controlRow);
+  // Build 4-row layout for human picks
+  const rows: (
+    | ActionRowBuilder<ButtonBuilder>
+    | ActionRowBuilder<StringSelectMenuBuilder>
+  )[] = [];
+
+  // Row 1: Position filter buttons
+  rows.push(buildPositionFilterRow(draft.id, positionFilter));
+
+  // Row 2: Quick-pick buttons (top 5)
+  if (filteredPlayers.length > 0) {
+    rows.push(buildQuickPickRow(draft.id, filteredPlayers));
   }
+
+  // Row 3: Browse select menu (players 6-30)
+  if (filteredPlayers.length > 5) {
+    rows.push(buildBrowseSelectRow(draft.id, filteredPlayers, filterLabel));
+  }
+
+  // Row 4: Control buttons
+  rows.push(
+    buildControlRow(draft.id, positionFilter !== null, showPauseButton),
+  );
 
   return { embed, components: rows };
 }
