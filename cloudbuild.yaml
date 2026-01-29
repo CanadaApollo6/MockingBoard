@@ -40,7 +40,7 @@ steps:
       - '--memory=512Mi'
       - '--cpu=1'
       - '--timeout=3600'
-      - '--no-cpu-throttle'
+      - '--no-cpu-throttling'
       - '--set-secrets=DISCORD_TOKEN=discord-token:latest'
       - '--update-secrets=/app/firebase-key.json=firebase-key:latest'
 
