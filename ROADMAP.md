@@ -38,15 +38,15 @@
 - [x] Pause/resume draft functionality
 - [x] Configurable CPU speed: instant (batched), fast (0.3s), normal (1.5s)
 
-### Milestone 1.5: Polish & Testing
+### Milestone 1.5: Polish & Testing ✓
 
-- [ ] Comprehensive unit tests for draft logic
-- [ ] Error handling and user-friendly error messages
-- [ ] Rate limiting and basic abuse prevention
-- [ ] Documentation for bot commands
-- [ ] Deploy bot to GCP (Cloud Run or Compute Engine)
+- [x] Comprehensive unit tests for draft logic (123 tests, up from 56)
+- [x] Error handling and user-friendly error messages (custom error classes, timer error handling)
+- [x] Rate limiting and basic abuse prevention (rateLimit.service.ts)
+- [x] Documentation for bot commands (/help command, bot README)
+- [x] Deploy bot to GCP (Dockerfile, cloudbuild.yaml for Cloud Run)
 
-### Milestone 1.6: Draft Trades
+### Milestone 1.6: Draft Trades ✓
 
 - [x] Trade proposal UI during drafts (offer picks to other teams)
 - [x] CPU trade acceptance logic using Rich Hill trade value chart
@@ -54,7 +54,7 @@
 - [x] Trade acceptance/rejection for user-to-user trades
 - [x] Trade timeout with auto-expiration
 - [x] Pick ownership tracking for traded picks
-- [ ] Configurable: enable/disable trades per draft
+- [x] Configurable: enable/disable trades per draft
 
 **Phase 1 Complete**: Bot is usable in real Discord servers for real drafts.
 
