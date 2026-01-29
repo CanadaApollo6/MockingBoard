@@ -71,6 +71,7 @@ export interface DraftSlot {
   round: number;
   pick: number;
   team: TeamAbbreviation;
+  ownerOverride?: string; // User ID if pick was traded away from original team
 }
 
 export interface PreferenceWeights {
@@ -198,4 +199,37 @@ export interface Team {
     recentDraftHistory?: string;
     reportedInterests?: string[];
   };
+}
+
+// ---- Trade Types ----
+
+export type TradeStatus =
+  | 'pending'
+  | 'accepted'
+  | 'rejected'
+  | 'cancelled'
+  | 'expired';
+
+export interface TradePiece {
+  type: 'current-pick' | 'future-pick';
+  // For current-pick:
+  overall?: number;
+  // For future-pick:
+  year?: number;
+  round?: number;
+  originalTeam?: TeamAbbreviation;
+}
+
+export interface Trade {
+  id: string;
+  draftId: string;
+  status: TradeStatus;
+  proposerId: string;
+  recipientId: string | null; // null = CPU trade
+  recipientTeam: TeamAbbreviation; // The CPU team or user's team being traded with
+  proposerGives: TradePiece[];
+  proposerReceives: TradePiece[];
+  proposedAt: FirestoreTimestamp;
+  resolvedAt?: FirestoreTimestamp;
+  isForceTrade: boolean;
 }

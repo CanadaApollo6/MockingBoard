@@ -182,3 +182,25 @@ export function clearPickTimer(draftId: string): void {
     draftTimers.delete(draftId);
   }
 }
+
+// ---- Pick Ownership ----
+
+/**
+ * Get the user ID that controls a pick, considering trades.
+ * Returns null if the pick is controlled by CPU.
+ *
+ * Priority:
+ * 1. Check slot.ownerOverride (set by trades)
+ * 2. Fall back to teamAssignments[slot.team]
+ */
+export function getPickController(
+  draft: Draft,
+  slot: DraftSlot,
+): string | null {
+  // First check if there's an ownerOverride from a trade
+  if (slot.ownerOverride !== undefined) {
+    return slot.ownerOverride || null;
+  }
+  // Fall back to the original team assignment
+  return draft.teamAssignments[slot.team];
+}
