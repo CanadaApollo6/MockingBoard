@@ -48,11 +48,13 @@
 
 ### Milestone 1.6: Draft Trades
 
-- [ ] Trade proposal UI during drafts (offer picks to other teams)
-- [ ] CPU trade acceptance logic using Rich Hill trade value chart
-- [ ] "Force Trade" button for users who want to skip realism
+- [x] Trade proposal UI during drafts (offer picks to other teams)
+- [x] CPU trade acceptance logic using Rich Hill trade value chart
+- [x] "Force Trade" button for users who want to skip realism
+- [x] Trade acceptance/rejection for user-to-user trades
+- [x] Trade timeout with auto-expiration
+- [x] Pick ownership tracking for traded picks
 - [ ] Configurable: enable/disable trades per draft
-- [ ] Trade history tracking and announcements
 
 **Phase 1 Complete**: Bot is usable in real Discord servers for real drafts.
 
@@ -282,7 +284,6 @@
 
 ## Future Considerations (Not Scheduled)
 
-- **Trades during draft**: Propose and accept trades mid-draft
 - **Dynasty/keeper support**: Carry over rosters between years
 - **Collaborative drafting**: Vote-based picks with friends controlling one team
 - **Public draft lobbies**: Join drafts with strangers
