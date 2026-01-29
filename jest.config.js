@@ -7,7 +7,6 @@ const config = {
       transform: {
         '^.+\\.ts$': '@swc/jest',
       },
-      extensionsToTreatAsEsm: ['.ts'],
       moduleNameMapper: {
         '^(\\.{1,2}/.*)\\.js$': '$1',
       },
@@ -18,9 +17,9 @@ const config = {
       transform: {
         '^.+\\.ts$': '@swc/jest',
       },
-      extensionsToTreatAsEsm: ['.ts'],
       moduleNameMapper: {
         '^(\\.{1,2}/.*)\\.js$': '$1',
+        '^@mockingboard/shared$': '<rootDir>/packages/shared/src/index.ts',
       },
     },
   ],
