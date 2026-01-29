@@ -1,10 +1,14 @@
-import 'dotenv/config';
+import './utils/env.js';
 import { REST, Routes, SlashCommandBuilder } from 'discord.js';
+import { data as startdraftData } from './commands/startdraft.js';
+import { data as draftData } from './commands/draft.js';
 
 const commands = [
   new SlashCommandBuilder()
     .setName('ping')
     .setDescription('Check if MockingBoard is online'),
+  startdraftData,
+  draftData,
 ];
 
 const rest = new REST().setToken(process.env.DISCORD_TOKEN!);
