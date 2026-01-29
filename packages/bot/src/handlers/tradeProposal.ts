@@ -54,6 +54,14 @@ export async function handleTradeStart(
     return;
   }
 
+  if (!draft.config.tradesEnabled) {
+    await interaction.reply({
+      content: 'Trading is disabled for this draft.',
+      ephemeral: true,
+    });
+    return;
+  }
+
   const user = await getOrCreateUser(
     interaction.user.id,
     interaction.user.username,

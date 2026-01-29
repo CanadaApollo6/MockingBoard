@@ -43,6 +43,7 @@ export function buildLobbyEmbed(
       : draft.config.cpuSpeed === 'fast'
         ? 'Fast'
         : 'Normal';
+  const tradesLabel = draft.config.tradesEnabled ? 'Enabled' : 'Disabled';
 
   const participantList =
     joinedUsers.length > 0
@@ -64,6 +65,7 @@ export function buildLobbyEmbed(
       { name: 'Rounds', value: `${draft.config.rounds}`, inline: true },
       { name: 'Pick Timer', value: timer, inline: true },
       { name: 'CPU Speed', value: cpuSpeedLabel, inline: true },
+      { name: 'Trades', value: tradesLabel, inline: true },
       ...(isSingleTeam
         ? []
         : [{ name: 'Team Assignment', value: mode, inline: true }]),
@@ -242,15 +244,18 @@ function buildControlRow(
   draftId: string,
   hasFilter: boolean,
   showPauseButton: boolean,
+  tradesEnabled: boolean,
 ): ActionRowBuilder<ButtonBuilder> {
   const row = new ActionRowBuilder<ButtonBuilder>();
 
-  row.addComponents(
-    new ButtonBuilder()
-      .setCustomId(`trade:${draftId}`)
-      .setLabel('Propose Trade')
-      .setStyle(ButtonStyle.Primary),
-  );
+  if (tradesEnabled) {
+    row.addComponents(
+      new ButtonBuilder()
+        .setCustomId(`trade:${draftId}`)
+        .setLabel('Propose Trade')
+        .setStyle(ButtonStyle.Primary),
+    );
+  }
 
   if (showPauseButton) {
     row.addComponents(
@@ -343,10 +348,16 @@ export function buildOnTheClockEmbed(
     rows.push(buildBrowseSelectRow(draft.id, filteredPlayers, filterLabel));
   }
 
-  // Row 4: Control buttons
-  rows.push(
-    buildControlRow(draft.id, positionFilter !== null, showPauseButton),
+  // Row 4: Control buttons (only add if there are buttons to show)
+  const controlRow = buildControlRow(
+    draft.id,
+    positionFilter !== null,
+    showPauseButton,
+    draft.config.tradesEnabled,
   );
+  if (controlRow.components.length > 0) {
+    rows.push(controlRow);
+  }
 
   return { embed, components: rows };
 }

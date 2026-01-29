@@ -127,6 +127,7 @@ export interface Draft {
     year: number;
     teamAssignmentMode: TeamAssignmentMode;
     cpuSpeed: CpuSpeed;
+    tradesEnabled: boolean;
   };
   status: DraftStatus;
   currentPick: number;

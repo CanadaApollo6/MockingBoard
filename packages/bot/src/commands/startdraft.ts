@@ -67,6 +67,12 @@ export const data = new SlashCommandBuilder()
         { name: 'Fast (0.3s)', value: 'fast' },
         { name: 'Normal (1.5s)', value: 'normal' },
       ),
+  )
+  .addBooleanOption((opt) =>
+    opt
+      .setName('trades')
+      .setDescription('Allow trading picks during the draft (default: true)')
+      .setRequired(false),
   );
 
 export async function execute(interaction: ChatInputCommandInteraction) {
@@ -90,6 +96,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   ) as CpuSpeed | null;
   const cpuSpeed: CpuSpeed =
     cpuSpeedOption ?? (format === 'single-team' ? 'fast' : 'normal');
+
+  // Trades enabled by default
+  const tradesEnabled = interaction.options.getBoolean('trades') ?? true;
 
   await interaction.deferReply();
 
@@ -138,6 +147,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       year: 2025,
       teamAssignmentMode,
       cpuSpeed,
+      tradesEnabled,
     },
     platform: 'discord',
     discord: {
