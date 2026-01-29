@@ -41,11 +41,6 @@
         { "fieldPath": "status", "order": "ASCENDING" },
         { "fieldPath": "recipientId", "order": "ASCENDING" }
       ]
-    },
-    {
-      "collectionGroup": "users",
-      "queryScope": "COLLECTION",
-      "fields": [{ "fieldPath": "discordId", "order": "ASCENDING" }]
     }
   ],
   "fieldOverrides": []
