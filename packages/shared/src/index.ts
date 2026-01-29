@@ -1,2 +1,21 @@
-// Core types will be defined here in Milestone 1.2.
-export const PACKAGE_NAME = '@mockingboard/shared';
+// Types
+export type {
+  FirestoreTimestamp,
+  Position,
+  TeamAbbreviation,
+  DraftStatus,
+  DraftFormat,
+  DraftPlatform,
+  TeamAssignmentMode,
+  CpuSpeed,
+  DraftSlot,
+  PreferenceWeights,
+  User,
+  Draft,
+  Pick,
+  Player,
+  Team,
+} from './types.js';
+
+// Seed data
+export { teams, type TeamSeed } from './data/index.js';
