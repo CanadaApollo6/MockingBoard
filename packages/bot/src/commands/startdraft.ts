@@ -53,8 +53,8 @@ export const data = new SlashCommandBuilder()
       .setDescription('Draft format (default: full)')
       .setRequired(false)
       .addChoices(
-        { name: 'Full 32-Team', value: 'full' },
-        { name: 'Single Team (Solo)', value: 'single-team' },
+        { name: 'Multi-User', value: 'full' },
+        { name: 'Single User', value: 'single-team' },
       ),
   )
   .addStringOption((opt) =>

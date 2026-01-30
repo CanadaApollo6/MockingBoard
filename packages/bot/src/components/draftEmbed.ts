@@ -34,9 +34,7 @@ export function buildLobbyEmbed(
       ? 'Unlimited'
       : `${draft.config.secondsPerPick}s`;
   const formatLabel =
-    draft.config.format === 'single-team'
-      ? 'Single Team (Solo)'
-      : 'Full 32-Team';
+    draft.config.format === 'single-team' ? 'Single User' : 'Multi-User';
   const cpuSpeedLabel =
     draft.config.cpuSpeed === 'instant'
       ? 'Instant'

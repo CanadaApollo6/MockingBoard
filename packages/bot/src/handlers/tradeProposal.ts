@@ -8,6 +8,8 @@ import { getOrCreateUser } from '../services/user.service.js';
 import { getDraft, getPickController } from '../services/draft.service.js';
 import {
   createTrade,
+  acceptTrade,
+  executeTrade,
   evaluateCpuTrade,
   expireTrade,
   getAvailableCurrentPicks,
@@ -18,6 +20,7 @@ import {
   buildTradeReceiveSelect,
   buildCpuTradeProposalEmbed,
   buildTradeProposalEmbed,
+  buildTradeAcceptedEmbed,
   buildTradeExpiredEmbed,
 } from '../components/tradeEmbed.js';
 import {
@@ -79,17 +82,19 @@ export async function handleTradeStart(
   const targets: { id: string; name: string; isCpu: boolean }[] = [];
 
   for (const team of teams) {
-    // Skip teams the user controls
-    if (userTeams.has(team.id)) continue;
-
     const assignedUserId = draft.teamAssignments[team.id];
 
-    // Check if this team has any available picks
-    const teamPicks = draft.pickOrder.filter((slot) => {
+    // Skip user's own teams unless they control multiple (self-trade)
+    if (userTeams.has(team.id) && userTeams.size <= 1) continue;
+
+    // Check if this team has any remaining picks
+    const hasRemainingPicks = draft.pickOrder.some((slot) => {
       if (slot.overall < draft.currentPick) return false;
+      if (userTeams.has(team.id)) {
+        // Self-trade target: count picks originally belonging to this team
+        return slot.team === team.id;
+      }
       if (assignedUserId === null) {
-        // CPU team: only count picks originally belonging to this team
-        // that haven't been traded away to a human
         return (
           slot.team === team.id &&
           (slot.ownerOverride === undefined || slot.ownerOverride === null)
@@ -99,13 +104,14 @@ export async function handleTradeStart(
       return controller === assignedUserId;
     });
 
-    if (teamPicks.length === 0) continue;
+    if (!hasRemainingPicks) continue;
 
-    if (assignedUserId === null) {
-      // CPU team
+    if (userTeams.has(team.id)) {
+      // Self-trade target
+      targets.push({ id: team.id, name: team.name, isCpu: false });
+    } else if (assignedUserId === null) {
       targets.push({ id: team.id, name: team.name, isCpu: true });
     } else {
-      // Human player
       const discordId = draft.participants[assignedUserId];
       targets.push({
         id: team.id,
@@ -170,8 +176,11 @@ export async function handleTradeTargetSelect(
     givingPicks: [],
   });
 
-  // Get user's available picks
-  const userPicks = getAvailableCurrentPicks(draft, user.id);
+  // Get user's available picks (exclude target team's picks for self-trades)
+  let userPicks = getAvailableCurrentPicks(draft, user.id);
+  if (targetUserId === user.id) {
+    userPicks = userPicks.filter((slot) => slot.team !== targetTeam);
+  }
 
   const { embed, components } = buildTradeGiveSelect(
     draftId,
@@ -232,6 +241,10 @@ export async function handleTradeGiveSelect(
         slot.team === state.targetTeam &&
         (slot.ownerOverride === undefined || slot.ownerOverride === null)
       );
+    }
+    // Self-trade: only show picks originally belonging to the target team
+    if (state.targetUserId === user.id) {
+      return slot.team === state.targetTeam;
     }
     const controller = getPickController(draft, slot);
     return controller === state.targetUserId;
@@ -323,7 +336,34 @@ export async function handleTradeReceiveSelect(
     teams.map((t) => [t.id, { name: t.name, abbreviation: t.id }]),
   );
 
-  if (state.targetUserId === null) {
+  if (state.targetUserId === user.id) {
+    // Self-trade - auto-execute immediately
+    await acceptTrade(trade.id, user.id);
+    await executeTrade(trade, draft);
+
+    const proposerDiscordId = draft.participants[user.id];
+    const proposerName = proposerDiscordId
+      ? `<@${proposerDiscordId}>`
+      : 'Unknown';
+
+    const { embed } = buildTradeAcceptedEmbed(
+      trade,
+      proposerName,
+      state.targetName,
+      teamInfoMap,
+    );
+
+    await interaction.update({
+      content: 'Trade executed!',
+      embeds: [],
+      components: [],
+    });
+
+    const channel = getSendableChannel(interaction);
+    if (channel) {
+      await channel.send({ embeds: [embed] });
+    }
+  } else if (state.targetUserId === null) {
     // CPU trade - evaluate immediately
     const evaluation = evaluateCpuTrade(trade, draft);
     const proposerDiscordId = draft.participants[user.id];

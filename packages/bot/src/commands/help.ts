@@ -46,8 +46,8 @@ export async function execute(
     .addFields({
       name: 'Draft Formats',
       value: [
-        '**Full 32-Team**: Draft with friends, CPU fills remaining teams',
-        '**Single Team (Solo)**: Draft one team through all rounds against CPU',
+        '**Multi-User**: Draft with friends, CPU fills remaining teams',
+        '**Single User**: Draft one team through all rounds against CPU',
       ].join('\n'),
     })
     .setFooter({ text: 'MockingBoard v1.0' });
