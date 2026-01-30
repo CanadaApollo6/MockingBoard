@@ -30,7 +30,12 @@ vi.mock('../components/draftEmbed.js', () => ({
 }));
 
 // Import after mocks are defined
-import { handleJoin, handleStart, handleTeamSelect } from './draftLobby.js';
+import {
+  handleJoin,
+  handleStart,
+  handleAllTeams,
+  handleTeamSelect,
+} from './draftLobby.js';
 
 // Import mocked modules
 import * as draftService from '../services/draft.service.js';
@@ -311,6 +316,47 @@ describe('draftLobby handlers', () => {
           content: 'This draft cannot be started.',
         }),
       );
+    });
+  });
+
+  describe('handleAllTeams', () => {
+    it('assigns all teams to the user and starts the draft', async () => {
+      const draft = makeDraft({
+        config: { ...makeDraft().config, format: 'single-team' },
+      });
+      mockGetDraft.mockResolvedValue(draft);
+
+      const interaction = createMockButtonInteraction();
+      await handleAllTeams(interaction, 'draft-1');
+
+      expect(mockUpdateDraft).toHaveBeenCalledWith(
+        'draft-1',
+        expect.objectContaining({
+          teamAssignments: expect.objectContaining({
+            TEN: 'user-1',
+            CLE: 'user-1',
+            NYG: 'user-1',
+          }),
+          participants: expect.objectContaining({ 'user-1': 'discord-1' }),
+          status: 'active',
+        }),
+      );
+      expect(mockAdvanceDraft).toHaveBeenCalled();
+    });
+
+    it('rejects when draft is not in lobby', async () => {
+      const draft = makeDraft({ status: 'active' });
+      mockGetDraft.mockResolvedValue(draft);
+
+      const interaction = createMockButtonInteraction();
+      await handleAllTeams(interaction, 'draft-1');
+
+      expect(interaction.followUp).toHaveBeenCalledWith(
+        expect.objectContaining({
+          content: 'This draft is no longer accepting players.',
+        }),
+      );
+      expect(mockUpdateDraft).not.toHaveBeenCalled();
     });
   });
 

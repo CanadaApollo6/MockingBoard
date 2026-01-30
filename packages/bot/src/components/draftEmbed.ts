@@ -73,17 +73,26 @@ export function buildLobbyEmbed(
     )
     .setFooter({
       text: isSingleTeam
-        ? 'Select your team to start the draft.'
+        ? 'Select a team or draft all teams to start.'
         : 'Click Join Draft to enter the draft.',
     });
 
-  // For single-team mode, only show team select (no Join button, no Start button)
+  // For single-team mode, show team select + "Draft All Teams" button
   if (isSingleTeam) {
     const availableTeams = teams.filter(
       (t) => draft.teamAssignments[t.id] === null,
     );
     const { components } = buildTeamSelectMenu(draft.id, availableTeams);
-    return { embed, components };
+
+    const allTeamsButton = new ButtonBuilder()
+      .setCustomId(`allteams:${draft.id}`)
+      .setLabel('Draft All Teams')
+      .setStyle(ButtonStyle.Secondary);
+    const buttonRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+      allTeamsButton,
+    );
+
+    return { embed, components: [...components, buttonRow] };
   }
 
   const joinButton = new ButtonBuilder()

@@ -1,5 +1,10 @@
 // Draft lobby handlers
-export { handleJoin, handleStart, handleTeamSelect } from './draftLobby.js';
+export {
+  handleJoin,
+  handleStart,
+  handleAllTeams,
+  handleTeamSelect,
+} from './draftLobby.js';
 
 // Draft picking handlers
 export {

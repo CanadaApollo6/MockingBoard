@@ -157,6 +157,56 @@ export async function handleStart(
 }
 
 /**
+ * Handle "Draft All Teams" button click
+ */
+export async function handleAllTeams(
+  interaction: ButtonInteraction,
+  draftId: string,
+): Promise<void> {
+  await interaction.deferUpdate();
+
+  const draft = await getDraft(draftId);
+  if (!draft || draft.status !== 'lobby') {
+    await interaction.followUp({
+      content: 'This draft is no longer accepting players.',
+      ephemeral: true,
+    });
+    return;
+  }
+
+  const user = await getOrCreateUser(
+    interaction.user.id,
+    interaction.user.username,
+    interaction.user.displayAvatarURL(),
+  );
+
+  // Assign all teams to this user
+  for (const team of teams) {
+    draft.teamAssignments[team.id] = user.id;
+  }
+  draft.participants[user.id] = interaction.user.id;
+
+  await updateDraft(draftId, {
+    teamAssignments: draft.teamAssignments,
+    participants: draft.participants,
+    status: 'active',
+  });
+  draft.status = 'active';
+
+  await interaction.followUp({
+    content: "You're drafting for **all 32 teams**! The draft is starting...",
+    ephemeral: true,
+  });
+
+  const channel = getSendableChannel(interaction);
+  if (channel) {
+    await channel.send('The solo draft has begun! Drafting all teams.');
+  }
+
+  await advanceDraft(interaction, draft);
+}
+
+/**
  * Handle team selection from dropdown menu
  */
 export async function handleTeamSelect(

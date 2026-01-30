@@ -13,6 +13,7 @@ import type { PositionFilterGroup } from '@mockingboard/shared';
 import {
   handleJoin,
   handleStart,
+  handleAllTeams,
   handleTeamSelect,
   handlePause,
   handleResume,
@@ -116,6 +117,9 @@ async function handleButton(interaction: ButtonInteraction) {
         break;
       case 'start':
         await handleStart(interaction, id);
+        break;
+      case 'allteams':
+        await handleAllTeams(interaction, id);
         break;
 
       // Draft picking actions
