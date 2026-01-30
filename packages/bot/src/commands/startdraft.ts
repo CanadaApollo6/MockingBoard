@@ -8,6 +8,7 @@ import { getOrCreateUser } from '../services/user.service.js';
 import {
   createDraft,
   buildPickOrder,
+  buildFuturePicks,
   type CreateDraftInput,
 } from '../services/draft.service.js';
 import { buildLobbyEmbed } from '../components/draftEmbed.js';
@@ -140,7 +141,10 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     type: ChannelType.PublicThread,
   });
 
-  const pickOrder = buildPickOrder(rounds);
+  const [pickOrder, futurePicks] = await Promise.all([
+    buildPickOrder(rounds, year),
+    buildFuturePicks(year),
+  ]);
 
   const teamAssignments = {} as Record<TeamAbbreviation, string | null>;
   for (const team of teams) {
@@ -166,6 +170,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     },
     teamAssignments,
     pickOrder,
+    futurePicks,
   };
 
   const draft = await createDraft(input);

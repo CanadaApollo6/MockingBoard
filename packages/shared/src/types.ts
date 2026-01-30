@@ -142,6 +142,7 @@ export interface Draft {
   teamAssignments: Record<TeamAbbreviation, string | null>;
   participants: Record<string, string>; // internal userId → discordId
   pickOrder: DraftSlot[];
+  futurePicks?: FutureDraftPick[];
   pickedPlayerIds: string[];
   isLocked?: boolean;
   lockedAt?: FirestoreTimestamp;
@@ -203,16 +204,28 @@ export interface Team {
   mascot: string;
   conference: 'AFC' | 'NFC';
   division: 'North' | 'South' | 'East' | 'West';
-  picks: {
-    year: number;
-    slots: DraftSlot[];
-  };
   needs?: Position[];
+  futurePicks?: FuturePickSeed[];
   personality?: {
     tendencies?: string;
     recentDraftHistory?: string;
     reportedInterests?: string[];
   };
+}
+
+// ---- Future Pick Types ----
+
+export interface FuturePickSeed {
+  year: number;
+  round: number;
+  originalTeam: TeamAbbreviation;
+}
+
+export interface FutureDraftPick {
+  year: number;
+  round: number;
+  originalTeam: TeamAbbreviation;
+  ownerTeam: TeamAbbreviation;
 }
 
 // ---- Trade Types ----
@@ -239,6 +252,7 @@ export interface Trade {
   draftId: string;
   status: TradeStatus;
   proposerId: string;
+  proposerTeam: TeamAbbreviation;
   recipientId: string | null; // null = CPU trade
   recipientTeam: TeamAbbreviation; // The CPU team or user's team being traded with
   proposerGives: TradePiece[];

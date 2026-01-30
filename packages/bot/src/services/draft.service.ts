@@ -5,6 +5,8 @@ import type {
   DraftFormat,
   DraftPlatform,
   DraftSlot,
+  FutureDraftPick,
+  FuturePickSeed,
   TeamAbbreviation,
   TeamAssignmentMode,
   CpuSpeed,
@@ -31,6 +33,7 @@ export interface CreateDraftInput {
   };
   teamAssignments: Record<TeamAbbreviation, string | null>;
   pickOrder: DraftSlot[];
+  futurePicks?: FutureDraftPick[];
 }
 
 export async function createDraft(input: CreateDraftInput): Promise<Draft> {
@@ -85,16 +88,81 @@ export async function getActiveDraftInThread(
   return { id: doc.id, ...doc.data() } as Draft;
 }
 
-export function buildPickOrder(rounds: number): DraftSlot[] {
-  const allSlots: DraftSlot[] = [];
-  for (const team of teams) {
-    for (const slot of team.picks.slots) {
-      if (slot.round <= rounds) {
-        allSlots.push(slot);
+export async function buildPickOrder(
+  rounds: number,
+  year: number,
+): Promise<DraftSlot[]> {
+  const doc = await db.collection('draftOrders').doc(`${year}`).get();
+  const data = doc.data();
+  if (!data?.slots) {
+    throw new Error(`No draft order found for year ${year}`);
+  }
+  return (data.slots as DraftSlot[])
+    .filter((s) => s.round <= rounds)
+    .sort((a, b) => a.overall - b.overall);
+}
+
+/**
+ * Build future draft picks for a draft session.
+ * Year+1: uses seeded ownership data from Firestore team docs.
+ * Year+2: defaults all teams to owning their own rounds 1-3.
+ */
+export async function buildFuturePicks(
+  draftYear: number,
+): Promise<FutureDraftPick[]> {
+  const futurePicks: FutureDraftPick[] = [];
+  const allTeamIds = teams.map((t) => t.id);
+  const year1 = draftYear + 1;
+  const year2 = draftYear + 2;
+
+  // Year+1: use seeded data if available
+  const covered = new Set<string>(); // "originalTeam:round" keys
+  const teamDocs = await db.collection('teams').get();
+
+  for (const doc of teamDocs.docs) {
+    const teamId = doc.id as TeamAbbreviation;
+    const seedPicks = doc.data().futurePicks as FuturePickSeed[] | undefined;
+    if (!seedPicks) continue;
+
+    for (const pick of seedPicks) {
+      if (pick.year !== year1) continue;
+      futurePicks.push({
+        year: pick.year,
+        round: pick.round,
+        originalTeam: pick.originalTeam,
+        ownerTeam: teamId,
+      });
+      covered.add(`${pick.originalTeam}:${pick.round}`);
+    }
+  }
+
+  // Fill in defaults for year+1 (rounds 1-3)
+  for (const teamId of allTeamIds) {
+    for (let round = 1; round <= 3; round++) {
+      if (!covered.has(`${teamId}:${round}`)) {
+        futurePicks.push({
+          year: year1,
+          round,
+          originalTeam: teamId,
+          ownerTeam: teamId,
+        });
       }
     }
   }
-  return allSlots.sort((a, b) => a.overall - b.overall);
+
+  // Year+2: default rounds 1-3 for all teams
+  for (const teamId of allTeamIds) {
+    for (let round = 1; round <= 3; round++) {
+      futurePicks.push({
+        year: year2,
+        round,
+        originalTeam: teamId,
+        ownerTeam: teamId,
+      });
+    }
+  }
+
+  return futurePicks;
 }
 
 export async function recordPickAndAdvance(

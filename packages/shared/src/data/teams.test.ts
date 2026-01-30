@@ -17,8 +17,6 @@ describe('team seed data', () => {
       expect(team.mascot).toBeTruthy();
       expect(['AFC', 'NFC']).toContain(team.conference);
       expect(['North', 'South', 'East', 'West']).toContain(team.division);
-      expect(team.picks.year).toBe(2025);
-      expect(team.picks.slots.length).toBeGreaterThan(0);
     }
   });
 

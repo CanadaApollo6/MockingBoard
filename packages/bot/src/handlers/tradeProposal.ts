@@ -2,7 +2,7 @@ import type {
   ButtonInteraction,
   StringSelectMenuInteraction,
 } from 'discord.js';
-import type { TeamAbbreviation, TradePiece } from '@mockingboard/shared';
+import type { TeamAbbreviation } from '@mockingboard/shared';
 import { teams } from '@mockingboard/shared';
 import { getOrCreateUser } from '../services/user.service.js';
 import { getDraft, getPickController } from '../services/draft.service.js';
@@ -13,6 +13,8 @@ import {
   evaluateCpuTrade,
   expireTrade,
   getAvailableCurrentPicks,
+  getAvailableFuturePicks,
+  getTeamFuturePicks,
 } from '../services/trade.service.js';
 import {
   buildTradeTargetSelect,
@@ -22,6 +24,7 @@ import {
   buildTradeProposalEmbed,
   buildTradeAcceptedEmbed,
   buildTradeExpiredEmbed,
+  parseTradePieceValue,
 } from '../components/tradeEmbed.js';
 import {
   setTradeTimer,
@@ -34,7 +37,7 @@ interface TradeProposalState {
   targetTeam: TeamAbbreviation;
   targetUserId: string | null; // null = CPU
   targetName: string;
-  givingPicks: number[];
+  givingValues: string[]; // Raw select menu values (current + future)
 }
 
 const tradeProposalState = new Map<string, TradeProposalState>();
@@ -173,19 +176,25 @@ export async function handleTradeTargetSelect(
     targetTeam,
     targetUserId,
     targetName,
-    givingPicks: [],
+    givingValues: [],
   });
 
   // Get user's available picks (exclude target team's picks for self-trades)
   let userPicks = getAvailableCurrentPicks(draft, user.id);
+  let userFuturePicks = getAvailableFuturePicks(draft, user.id);
   if (targetUserId === user.id) {
     userPicks = userPicks.filter((slot) => slot.team !== targetTeam);
+    userFuturePicks = userFuturePicks.filter(
+      (fp) => fp.ownerTeam !== targetTeam,
+    );
   }
 
   const { embed, components } = buildTradeGiveSelect(
     draftId,
     targetName,
     userPicks,
+    userFuturePicks,
+    draft.config.year,
   );
   await interaction.update({
     embeds: [embed],
@@ -227,22 +236,18 @@ export async function handleTradeGiveSelect(
     return;
   }
 
-  // Parse selected picks
-  const givingPicks = interaction.values.map((v) => parseInt(v, 10));
-  state.givingPicks = givingPicks;
+  // Store raw select values (current + future picks)
+  state.givingValues = interaction.values;
 
-  // Get target's available picks
+  // Get target's available current picks
   const targetPicks = draft.pickOrder.filter((slot) => {
     if (slot.overall < draft.currentPick) return false;
     if (state.targetUserId === null) {
-      // CPU team: only show picks originally belonging to the target team
-      // that haven't been traded away to a human
       return (
         slot.team === state.targetTeam &&
         (slot.ownerOverride === undefined || slot.ownerOverride === null)
       );
     }
-    // Self-trade: only show picks originally belonging to the target team
     if (state.targetUserId === user.id) {
       return slot.team === state.targetTeam;
     }
@@ -250,11 +255,16 @@ export async function handleTradeGiveSelect(
     return controller === state.targetUserId;
   });
 
+  // Get target's future picks
+  const targetFuturePicks = getTeamFuturePicks(draft, state.targetTeam);
+
   const { embed, components } = buildTradeReceiveSelect(
     draftId,
     state.targetName,
     targetPicks,
-    givingPicks,
+    targetFuturePicks,
+    state.givingValues,
+    draft.config.year,
   );
   await interaction.update({
     embeds: [embed],
@@ -287,7 +297,7 @@ export async function handleTradeReceiveSelect(
   const stateKey = getStateKey(user.id, draftId);
   const state = tradeProposalState.get(stateKey);
 
-  if (!state || state.givingPicks.length === 0) {
+  if (!state || state.givingValues.length === 0) {
     await interaction.update({
       content: 'Trade session expired. Please start over.',
       embeds: [],
@@ -296,32 +306,22 @@ export async function handleTradeReceiveSelect(
     return;
   }
 
-  // Parse selected picks
-  const receivingPicks = interaction.values.map((v) => parseInt(v, 10));
+  // Parse all select menu values into TradePieces
+  const proposerGives = state.givingValues.map(parseTradePieceValue);
+  const proposerReceives = interaction.values.map(parseTradePieceValue);
 
-  // Build trade pieces
-  const proposerGives: TradePiece[] = state.givingPicks.map((overall) => {
-    const slot = draft.pickOrder.find((s) => s.overall === overall);
-    return {
-      type: 'current-pick',
-      overall,
-      originalTeam: slot?.team,
-    };
-  });
-
-  const proposerReceives: TradePiece[] = receivingPicks.map((overall) => {
-    const slot = draft.pickOrder.find((s) => s.overall === overall);
-    return {
-      type: 'current-pick',
-      overall,
-      originalTeam: slot?.team,
-    };
-  });
+  // Determine proposer's team (non-target team they control)
+  const userTeams = Object.entries(draft.teamAssignments)
+    .filter(([, uid]) => uid === user.id)
+    .map(([team]) => team as TeamAbbreviation);
+  const proposerTeam =
+    userTeams.find((t) => t !== state.targetTeam) ?? userTeams[0];
 
   // Create the trade
   const trade = await createTrade({
     draftId,
     proposerId: user.id,
+    proposerTeam,
     recipientId: state.targetUserId,
     recipientTeam: state.targetTeam,
     proposerGives,

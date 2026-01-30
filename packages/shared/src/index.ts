@@ -12,6 +12,8 @@ export type {
   TradeStatus,
   DraftSlot,
   PreferenceWeights,
+  FuturePickSeed,
+  FutureDraftPick,
   User,
   Draft,
   Pick,

@@ -4,7 +4,14 @@ import { resolve } from 'node:path';
 import { FieldValue } from 'firebase-admin/firestore';
 import { db } from './utils/firestore.js';
 import { teams } from '@mockingboard/shared';
-import type { Position, TeamAbbreviation } from '@mockingboard/shared';
+import type {
+  Position,
+  TeamAbbreviation,
+  DraftSlot,
+  FuturePickSeed,
+} from '@mockingboard/shared';
+
+// ---- Team Name Mappings ----
 
 // PFR team abbreviations → our TeamAbbreviation
 const TEAM_MAP: Record<string, TeamAbbreviation> = {
@@ -17,7 +24,49 @@ const TEAM_MAP: Record<string, TeamAbbreviation> = {
   KAN: 'KC',
 };
 
-// Position abbreviations → our Position type (covers both PFR and PFF formats)
+// City/market name → TeamAbbreviation (for draft order txt format)
+const CITY_TO_TEAM: Record<string, TeamAbbreviation> = {
+  'Las Vegas': 'LV',
+  'NY Jets': 'NYJ',
+  Arizona: 'ARI',
+  Tennessee: 'TEN',
+  'NY Giants': 'NYG',
+  Cleveland: 'CLE',
+  Washington: 'WAS',
+  'New Orleans': 'NO',
+  'Kansas City': 'KC',
+  Cincinnati: 'CIN',
+  Miami: 'MIA',
+  Dallas: 'DAL',
+  'LA Rams': 'LAR',
+  Baltimore: 'BAL',
+  'Tampa Bay': 'TB',
+  Detroit: 'DET',
+  Minnesota: 'MIN',
+  Carolina: 'CAR',
+  'Green Bay': 'GB',
+  Pittsburgh: 'PIT',
+  'LA Chargers': 'LAC',
+  Philadelphia: 'PHI',
+  Chicago: 'CHI',
+  Buffalo: 'BUF',
+  'San Francisco': 'SF',
+  Houston: 'HOU',
+  Indianapolis: 'IND',
+  Atlanta: 'ATL',
+  Jacksonville: 'JAX',
+  Denver: 'DEN',
+  'New England': 'NE',
+  Seattle: 'SEA',
+};
+
+// Full team name → TeamAbbreviation (derived from teams seed data)
+const FULLNAME_TO_TEAM = Object.fromEntries(
+  teams.map((t) => [t.name, t.id]),
+) as Record<string, TeamAbbreviation>;
+
+// ---- Position Mappings ----
+
 const POSITION_MAP: Record<string, Position> = {
   QB: 'QB',
   RB: 'RB',
@@ -42,7 +91,6 @@ const POSITION_MAP: Record<string, Position> = {
   P: 'P',
   EDGE: 'EDGE',
   LS: 'LS',
-  // PFF-specific
   ED: 'EDGE',
   HB: 'RB',
   T: 'OT',
@@ -57,6 +105,8 @@ function mapTeam(pfrAbbr: string): TeamAbbreviation {
 function mapPosition(pos: string): Position | null {
   return POSITION_MAP[pos] ?? null;
 }
+
+// ---- Player Parsers ----
 
 interface ParsedPlayer {
   name: string;
@@ -139,6 +189,172 @@ function parsePffCsv(filePath: string, year: number): ParsedPlayer[] {
   return players;
 }
 
+// ---- Draft Order Parsers ----
+
+/**
+ * Parse draft order from the txt format used for 2026+.
+ * Format: round headers, pick numbers on alternating lines with team names,
+ * optional indented original team annotation (skipped).
+ */
+function parseDraftOrderTxt(filePath: string): DraftSlot[] {
+  const content = readFileSync(filePath, 'utf-8');
+  const lines = content.split('\n');
+  const slots: DraftSlot[] = [];
+
+  let currentRound = 0;
+  let pickInRound = 0;
+  let i = 0;
+
+  while (i < lines.length) {
+    const trimmed = lines[i].trim();
+
+    if (!trimmed) {
+      i++;
+      continue;
+    }
+
+    // Round header: "1st Round", "2nd Round", etc.
+    if (/^\d+(st|nd|rd|th) Round$/i.test(trimmed)) {
+      currentRound++;
+      pickInRound = 0;
+      i++;
+      continue;
+    }
+
+    // Pick number line (e.g., "13\t ")
+    const pickMatch = trimmed.match(/^(\d+)\s*$/);
+    if (pickMatch && currentRound > 0) {
+      const overall = parseInt(pickMatch[1], 10);
+      i++;
+
+      const teamName = lines[i]?.trim();
+      if (!teamName) {
+        i++;
+        continue;
+      }
+
+      const team = CITY_TO_TEAM[teamName];
+      if (!team) {
+        console.warn(`Unknown team: "${teamName}" at pick ${overall}`);
+        i++;
+        continue;
+      }
+
+      i++;
+      pickInRound++;
+
+      // Skip optional traded-from annotation (indented line like "  ATL")
+      if (i < lines.length && lines[i] && /^\s{2,}\S/.test(lines[i])) {
+        i++;
+      }
+
+      slots.push({ overall, round: currentRound, pick: pickInRound, team });
+      continue;
+    }
+
+    i++;
+  }
+
+  return slots;
+}
+
+/**
+ * Derive draft order from PFR CSV (for 2025).
+ * Extracts round, overall pick, and team from each row.
+ */
+function parseDraftOrderFromPfr(filePath: string): DraftSlot[] {
+  const content = readFileSync(filePath, 'utf-8');
+  const lines = content.split('\n').filter((l) => l.trim());
+  const dataLines = lines.slice(2);
+
+  const slots: DraftSlot[] = [];
+  let currentRound = 0;
+  let pickInRound = 0;
+
+  for (const line of dataLines) {
+    const cols = line.split(',');
+    const round = parseInt(cols[0], 10);
+    const overall = parseInt(cols[1], 10);
+    const teamAbbr = cols[2];
+
+    if (isNaN(round) || isNaN(overall) || !teamAbbr) continue;
+
+    if (round !== currentRound) {
+      currentRound = round;
+      pickInRound = 0;
+    }
+    pickInRound++;
+
+    slots.push({
+      overall,
+      round,
+      pick: pickInRound,
+      team: mapTeam(teamAbbr),
+    });
+  }
+
+  return slots;
+}
+
+// ---- Future Draft Assets Parser ----
+
+/**
+ * Parse future draft pick ownership from the text file.
+ * Handles traded picks, including hardcoded resolution for conditional picks:
+ * - NYJ gets DAL's 2027 1st (more favorable)
+ * - DAL keeps GB's 2027 1st (less favorable)
+ */
+function parseFutureDraftAssets(
+  filePath: string,
+): Partial<Record<TeamAbbreviation, FuturePickSeed[]>> {
+  const content = readFileSync(filePath, 'utf-8');
+  const lines = content.split('\n');
+
+  const result: Partial<Record<TeamAbbreviation, FuturePickSeed[]>> = {};
+  let currentTeam: TeamAbbreviation | null = null;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+
+    // Team header: "Arizona Cardinals Draft Picks"
+    const headerMatch = trimmed.match(/^(.+) Draft Picks$/);
+    if (headerMatch) {
+      currentTeam = FULLNAME_TO_TEAM[headerMatch[1]] ?? null;
+      if (currentTeam) result[currentTeam] = [];
+      continue;
+    }
+
+    if (!currentTeam) continue;
+
+    // Pick line: "2027 1st Round: Own"
+    const pickMatch = trimmed.match(/^(\d+) (\d+)(?:st|nd|rd|th) Round: (.+)$/);
+    if (!pickMatch) continue;
+
+    const year = parseInt(pickMatch[1], 10);
+    const round = parseInt(pickMatch[2], 10);
+    const status = pickMatch[3].trim();
+
+    if (status === 'Own') {
+      result[currentTeam]!.push({ year, round, originalTeam: currentTeam });
+    } else if (status.startsWith('To ')) {
+      // Pick traded away — don't add for this team
+    } else if (currentTeam === 'DAL' && status.includes('Less favorable')) {
+      // DAL keeps GB's 1st (per resolved conditional)
+      result[currentTeam]!.push({ year, round, originalTeam: 'GB' });
+    } else if (currentTeam === 'NYJ' && status.includes(';')) {
+      // NYJ gets: own + IND's + DAL's 1st (per resolved conditional)
+      result[currentTeam]!.push({ year, round, originalTeam: 'NYJ' });
+      result[currentTeam]!.push({ year, round, originalTeam: 'IND' });
+      result[currentTeam]!.push({ year, round, originalTeam: 'DAL' });
+    }
+  }
+
+  return result;
+}
+
+// ---- Seed Helpers ----
+
 async function clearExistingPlayers(year: number) {
   const snapshot = await db
     .collection('players')
@@ -155,6 +371,8 @@ async function clearExistingPlayers(year: number) {
   await batch.commit();
 }
 
+// ---- Main Seed ----
+
 async function seed() {
   const year = parseInt(process.argv[2], 10);
   if (!year || ![2025, 2026].includes(year)) {
@@ -162,6 +380,7 @@ async function seed() {
     process.exit(1);
   }
 
+  // Parse players
   const csvConfigs: Record<
     number,
     { file: string; parser: typeof parsePfrCsv }
@@ -173,24 +392,69 @@ async function seed() {
   const { file, parser } = csvConfigs[year];
   const csvPath = resolve(import.meta.dirname, '../../../drafts', file);
   const players = parser(csvPath, year);
-
   console.log(`Parsed ${players.length} players for ${year} from ${file}`);
 
+  // Parse draft order
+  const draftOrderConfigs: Record<
+    number,
+    { file: string; parser: (path: string) => DraftSlot[] }
+  > = {
+    2025: { file: '2025_draft.csv', parser: parseDraftOrderFromPfr },
+    2026: { file: '2026_draft_order.txt', parser: parseDraftOrderTxt },
+  };
+
+  const orderConfig = draftOrderConfigs[year];
+  const orderPath = resolve(
+    import.meta.dirname,
+    '../../../drafts',
+    orderConfig.file,
+  );
+  const draftSlots = orderConfig.parser(orderPath);
+  console.log(`Parsed ${draftSlots.length} draft slots for ${year}`);
+
+  // Parse future draft assets (optional)
+  let futureAssets: Partial<Record<TeamAbbreviation, FuturePickSeed[]>> | null =
+    null;
+  try {
+    const futureAssetsPath = resolve(
+      import.meta.dirname,
+      '../../../drafts',
+      'future_draft_assets.txt',
+    );
+    futureAssets = parseFutureDraftAssets(futureAssetsPath);
+    console.log(
+      `Parsed future pick data for ${Object.keys(futureAssets).length} teams`,
+    );
+  } catch {
+    console.log('No future draft assets file found, skipping');
+  }
+
+  // Clear existing players
   await clearExistingPlayers(year);
 
+  // Write draft order to draftOrders/{year}
+  await db.collection('draftOrders').doc(`${year}`).set({
+    slots: draftSlots,
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+  console.log(`Seeded draft order for ${year} (${draftSlots.length} slots)`);
+
+  // Batch write players and teams
   const batch = db.batch();
   const now = FieldValue.serverTimestamp();
 
-  // Seed players
   for (const player of players) {
     const ref = db.collection('players').doc();
     batch.set(ref, { ...player, updatedAt: now });
   }
 
-  // Seed teams
   for (const team of teams) {
     const ref = db.collection('teams').doc(team.id);
-    batch.set(ref, { ...team, updatedAt: now });
+    const teamData: Record<string, unknown> = { ...team, updatedAt: now };
+    if (futureAssets?.[team.id]) {
+      teamData.futurePicks = futureAssets[team.id];
+    }
+    batch.set(ref, teamData);
   }
 
   await batch.commit();

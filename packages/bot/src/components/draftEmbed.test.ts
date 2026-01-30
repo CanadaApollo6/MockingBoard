@@ -25,6 +25,7 @@ function makeDraft(overrides: Partial<Draft> = {}): Draft {
       year: 2025,
       teamAssignmentMode: 'random',
       cpuSpeed: 'normal',
+      tradesEnabled: true,
     },
     status: 'active',
     currentPick: 1,

@@ -5,14 +5,19 @@ import {
   ButtonStyle,
   StringSelectMenuBuilder,
 } from 'discord.js';
-import type { DraftSlot } from '@mockingboard/shared';
 import type {
+  DraftSlot,
+  FutureDraftPick,
   Trade,
   TradePiece,
   Draft,
   TeamAbbreviation,
 } from '@mockingboard/shared';
-import { getPickValue, getPickRound } from '@mockingboard/shared';
+import {
+  getPickValue,
+  getFuturePickValue,
+  getPickRound,
+} from '@mockingboard/shared';
 import type { CpuTradeEvaluation } from '../services/trade.service.js';
 
 interface TeamInfo {
@@ -54,6 +59,59 @@ function formatPieceSimple(
     return `${piece.year} Round ${piece.round}${viaLabel}`;
   }
   return 'Unknown pick';
+}
+
+/**
+ * Parse a select menu value into a TradePiece.
+ * Current picks: "42" → { type: 'current-pick', overall: 42 }
+ * Future picks: "f:2027:1:GB" → { type: 'future-pick', year: 2027, round: 1, originalTeam: 'GB' }
+ */
+export function parseTradePieceValue(value: string): TradePiece {
+  if (value.startsWith('f:')) {
+    const [, yearStr, roundStr, originalTeam] = value.split(':');
+    return {
+      type: 'future-pick',
+      year: parseInt(yearStr, 10),
+      round: parseInt(roundStr, 10),
+      originalTeam: originalTeam as TeamAbbreviation,
+    };
+  }
+  return { type: 'current-pick', overall: parseInt(value, 10) };
+}
+
+/**
+ * Compute the total trade value from select menu value strings.
+ */
+export function computeGivingValue(
+  values: string[],
+  draftYear: number,
+): number {
+  let total = 0;
+  for (const v of values) {
+    if (v.startsWith('f:')) {
+      const [, yearStr, roundStr] = v.split(':');
+      const yearsOut = parseInt(yearStr, 10) - draftYear;
+      total += getFuturePickValue(parseInt(roundStr, 10), yearsOut);
+    } else {
+      total += getPickValue(parseInt(v, 10));
+    }
+  }
+  return total;
+}
+
+/**
+ * Format select menu values as readable labels for display.
+ */
+function formatGivingLabels(values: string[]): string {
+  return values
+    .map((v) => {
+      if (v.startsWith('f:')) {
+        const [, year, round, team] = v.split(':');
+        return `${year} R${round} (${team})`;
+      }
+      return `#${v}`;
+    })
+    .join(', ');
 }
 
 export function buildTradeProposalEmbed(
@@ -331,6 +389,8 @@ export function buildTradeGiveSelect(
   draftId: string,
   targetName: string,
   availablePicks: DraftSlot[],
+  futurePicks: FutureDraftPick[],
+  draftYear: number,
 ) {
   const embed = new EmbedBuilder()
     .setTitle(`Trade with ${targetName}`)
@@ -338,7 +398,7 @@ export function buildTradeGiveSelect(
     .setDescription('Select the picks you want to **give**:')
     .setFooter({ text: 'You can select multiple picks.' });
 
-  const options = availablePicks.slice(0, 25).map((slot) => {
+  const currentOptions = availablePicks.map((slot) => {
     const value = getPickValue(slot.overall);
     return {
       label: `Pick #${slot.overall} (Round ${slot.round})`,
@@ -346,6 +406,18 @@ export function buildTradeGiveSelect(
       description: `${value.toFixed(1)} pts`,
     };
   });
+
+  const futureOptions = futurePicks.map((fp) => {
+    const yearsOut = fp.year - draftYear;
+    const value = getFuturePickValue(fp.round, yearsOut);
+    return {
+      label: `${fp.year} Round ${fp.round} (${fp.originalTeam})`,
+      value: `f:${fp.year}:${fp.round}:${fp.originalTeam}`,
+      description: `${value.toFixed(1)} pts — Future pick`,
+    };
+  });
+
+  const options = [...currentOptions, ...futureOptions].slice(0, 25);
 
   if (options.length === 0) {
     embed.setDescription('You have no picks available to trade.');
@@ -386,19 +458,22 @@ export function buildTradeReceiveSelect(
   draftId: string,
   targetName: string,
   targetPicks: DraftSlot[],
-  givingPicks: number[],
+  targetFuturePicks: FutureDraftPick[],
+  givingValues: string[],
+  draftYear: number,
 ) {
-  const givingValue = givingPicks.reduce((sum, p) => sum + getPickValue(p), 0);
+  const givingValue = computeGivingValue(givingValues, draftYear);
+  const givingLabel = formatGivingLabels(givingValues);
 
   const embed = new EmbedBuilder()
     .setTitle(`Trade with ${targetName}`)
     .setColor(0x5865f2)
     .setDescription(
-      `You are giving: **${givingPicks.map((p) => `#${p}`).join(', ')}** (${givingValue.toFixed(1)} pts)\n\nSelect the picks you want to **receive**:`,
+      `You are giving: **${givingLabel}** (${givingValue.toFixed(1)} pts)\n\nSelect the picks you want to **receive**:`,
     )
     .setFooter({ text: 'You can select multiple picks.' });
 
-  const options = targetPicks.slice(0, 25).map((slot) => {
+  const currentOptions = targetPicks.map((slot) => {
     const value = getPickValue(slot.overall);
     return {
       label: `Pick #${slot.overall} (Round ${slot.round})`,
@@ -406,6 +481,18 @@ export function buildTradeReceiveSelect(
       description: `${value.toFixed(1)} pts`,
     };
   });
+
+  const futureOptions = targetFuturePicks.map((fp) => {
+    const yearsOut = fp.year - draftYear;
+    const value = getFuturePickValue(fp.round, yearsOut);
+    return {
+      label: `${fp.year} Round ${fp.round} (${fp.originalTeam})`,
+      value: `f:${fp.year}:${fp.round}:${fp.originalTeam}`,
+      description: `${value.toFixed(1)} pts — Future pick`,
+    };
+  });
+
+  const options = [...currentOptions, ...futureOptions].slice(0, 25);
 
   if (options.length === 0) {
     embed.setDescription(`${targetName} has no picks available to trade.`);

@@ -6,6 +6,7 @@ import type {
   TradeStatus,
   Draft,
   DraftSlot,
+  FutureDraftPick,
   TeamAbbreviation,
 } from '@mockingboard/shared';
 import {
@@ -18,6 +19,7 @@ import { getPickController } from './draft.service.js';
 export interface CreateTradeInput {
   draftId: string;
   proposerId: string;
+  proposerTeam: TeamAbbreviation;
   recipientId: string | null; // null = CPU trade
   recipientTeam: TeamAbbreviation;
   proposerGives: TradePiece[];
@@ -31,6 +33,7 @@ export async function createTrade(input: CreateTradeInput): Promise<Trade> {
     draftId: input.draftId,
     status: 'pending' as TradeStatus,
     proposerId: input.proposerId,
+    proposerTeam: input.proposerTeam,
     recipientId: input.recipientId,
     recipientTeam: input.recipientTeam,
     proposerGives: input.proposerGives,
@@ -281,50 +284,67 @@ export function evaluateCpuTrade(
 // ---- Trade Execution ----
 
 /**
- * Execute an accepted trade by updating the draft's pickOrder with ownerOverride.
- * This should be called after a trade is accepted.
+ * Execute an accepted trade by updating both pickOrder (current picks)
+ * and futurePicks ownership on the draft document.
  */
 export async function executeTrade(trade: Trade, draft: Draft): Promise<Draft> {
-  // Find the picks being traded and update their ownerOverride
+  // Update current pick ownership via ownerOverride
   const updatedPickOrder = draft.pickOrder.map((slot) => {
-    // Check if this slot is being given by the proposer (transfer to recipient/CPU)
     const isGivenByProposer = trade.proposerGives.some(
       (p) => p.type === 'current-pick' && p.overall === slot.overall,
     );
-
     if (isGivenByProposer) {
-      // Transfer ownership to the recipient (or CPU team's controller)
-      // For CPU trades, recipientId is null, so we need to set ownerOverride to null
-      // to indicate the pick goes back to the original team (CPU)
-      return {
-        ...slot,
-        ownerOverride: trade.recipientId,
-      };
+      return { ...slot, ownerOverride: trade.recipientId };
     }
 
-    // Check if this slot is being received by the proposer
     const isReceivedByProposer = trade.proposerReceives.some(
       (p) => p.type === 'current-pick' && p.overall === slot.overall,
     );
-
     if (isReceivedByProposer) {
-      // Transfer ownership to the proposer
-      return {
-        ...slot,
-        ownerOverride: trade.proposerId,
-      };
+      return { ...slot, ownerOverride: trade.proposerId };
     }
 
     return slot;
   });
 
-  // Update the draft with the new pickOrder
+  // Update future pick ownership via ownerTeam
+  const updatedFuturePicks = (draft.futurePicks ?? []).map((fp) => {
+    const isGivenByProposer = trade.proposerGives.some(
+      (p) =>
+        p.type === 'future-pick' &&
+        p.year === fp.year &&
+        p.round === fp.round &&
+        p.originalTeam === fp.originalTeam,
+    );
+    if (isGivenByProposer) {
+      return { ...fp, ownerTeam: trade.recipientTeam };
+    }
+
+    const isReceivedByProposer = trade.proposerReceives.some(
+      (p) =>
+        p.type === 'future-pick' &&
+        p.year === fp.year &&
+        p.round === fp.round &&
+        p.originalTeam === fp.originalTeam,
+    );
+    if (isReceivedByProposer) {
+      return { ...fp, ownerTeam: trade.proposerTeam };
+    }
+
+    return fp;
+  });
+
   await db.collection('drafts').doc(draft.id).update({
     pickOrder: updatedPickOrder,
+    futurePicks: updatedFuturePicks,
     updatedAt: FieldValue.serverTimestamp(),
   });
 
-  return { ...draft, pickOrder: updatedPickOrder };
+  return {
+    ...draft,
+    pickOrder: updatedPickOrder,
+    futurePicks: updatedFuturePicks,
+  };
 }
 
 // ---- Validation ----
@@ -394,8 +414,8 @@ export function getPicksOwnedByTeam(
 }
 
 /**
- * Get all future picks (not in current draft) remaining for the draft.
- * Returns picks that haven't been made yet.
+ * Get available current-draft picks controlled by a user.
+ * Only returns picks that haven't been made yet.
  */
 export function getAvailableCurrentPicks(
   draft: Draft,
@@ -406,4 +426,29 @@ export function getAvailableCurrentPicks(
     const controller = getPickController(draft, slot);
     return controller === forUserId;
   });
+}
+
+/**
+ * Get future picks owned by teams a user controls.
+ */
+export function getAvailableFuturePicks(
+  draft: Draft,
+  forUserId: string,
+): FutureDraftPick[] {
+  if (!draft.futurePicks) return [];
+  return draft.futurePicks.filter((pick) => {
+    const controller = draft.teamAssignments[pick.ownerTeam] ?? null;
+    return controller === forUserId;
+  });
+}
+
+/**
+ * Get future picks owned by a specific team.
+ */
+export function getTeamFuturePicks(
+  draft: Draft,
+  team: TeamAbbreviation,
+): FutureDraftPick[] {
+  if (!draft.futurePicks) return [];
+  return draft.futurePicks.filter((pick) => pick.ownerTeam === team);
 }

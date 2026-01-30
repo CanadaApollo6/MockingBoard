@@ -290,3 +290,5 @@
 - **Content creator tools**: Spectator mode, stream overlays
 - **Mobile native app**: If iMessage extension proves too limiting
 - **Paid data integration**: Licensed scouting reports, combine data
+- **Full NFL trade simulator**: Akin to the NBA trade emulator with full accountings of cap rules
+- **Multi-faceted and multi-step cap manager**: Comprehensive cap manager with the ability to see the implications of multiple moves at once/in sequence (example: automate move this year into future years alongside multiple other moves)

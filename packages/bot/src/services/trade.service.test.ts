@@ -26,6 +26,7 @@ import type {
   Draft,
   TradePiece,
   TeamAbbreviation,
+  FutureDraftPick,
 } from '@mockingboard/shared';
 import { getPickController } from './draft.service.js';
 import {
@@ -44,6 +45,8 @@ import {
   validateUserOwnsPicks,
   getPicksOwnedByTeam,
   getAvailableCurrentPicks,
+  getAvailableFuturePicks,
+  getTeamFuturePicks,
 } from './trade.service.js';
 
 const mockGetPickController = getPickController as Mock;
@@ -90,6 +93,7 @@ function makeTrade(overrides: Partial<Trade> = {}): Trade {
     draftId: 'draft-1',
     status: 'pending',
     proposerId: 'user-1',
+    proposerTeam: 'TEN' as TeamAbbreviation,
     recipientId: 'user-2',
     recipientTeam: 'CLE' as TeamAbbreviation,
     proposerGives: [{ type: 'current-pick', overall: 1 }],
@@ -129,6 +133,7 @@ describe('trade.service', () => {
       const trade = await createTrade({
         draftId: 'draft-1',
         proposerId: 'user-1',
+        proposerTeam: 'TEN' as TeamAbbreviation,
         recipientId: 'user-2',
         recipientTeam: 'CLE' as TeamAbbreviation,
         proposerGives: [{ type: 'current-pick', overall: 1 }],
@@ -159,6 +164,7 @@ describe('trade.service', () => {
       const trade = await createTrade({
         draftId: 'draft-1',
         proposerId: 'user-1',
+        proposerTeam: 'TEN' as TeamAbbreviation,
         recipientId: null,
         recipientTeam: 'NYG' as TeamAbbreviation,
         proposerGives: [{ type: 'current-pick', overall: 1 }],
@@ -674,6 +680,195 @@ describe('trade.service', () => {
       const result = getAvailableCurrentPicks(draft, 'user-1');
 
       expect(result.every((p) => p.overall >= 3)).toBe(true);
+    });
+  });
+
+  describe('getAvailableFuturePicks', () => {
+    const futurePicks: FutureDraftPick[] = [
+      {
+        year: 2027,
+        round: 1,
+        originalTeam: 'TEN' as TeamAbbreviation,
+        ownerTeam: 'TEN' as TeamAbbreviation,
+      },
+      {
+        year: 2027,
+        round: 2,
+        originalTeam: 'TEN' as TeamAbbreviation,
+        ownerTeam: 'TEN' as TeamAbbreviation,
+      },
+      {
+        year: 2027,
+        round: 1,
+        originalTeam: 'CLE' as TeamAbbreviation,
+        ownerTeam: 'CLE' as TeamAbbreviation,
+      },
+      {
+        year: 2027,
+        round: 1,
+        originalTeam: 'NYG' as TeamAbbreviation,
+        ownerTeam: 'NYG' as TeamAbbreviation,
+      },
+    ];
+
+    it('returns future picks for teams the user controls', () => {
+      const draft = makeDraft({ futurePicks });
+      const result = getAvailableFuturePicks(draft, 'user-1');
+
+      // user-1 controls TEN, which owns 2 future picks
+      expect(result).toHaveLength(2);
+      expect(result.every((fp) => fp.ownerTeam === 'TEN')).toBe(true);
+    });
+
+    it('returns empty array when user has no future picks', () => {
+      const draft = makeDraft({ futurePicks });
+      const result = getAvailableFuturePicks(draft, 'user-999');
+
+      expect(result).toHaveLength(0);
+    });
+
+    it('returns empty array when draft has no futurePicks', () => {
+      const draft = makeDraft({ futurePicks: undefined });
+      const result = getAvailableFuturePicks(draft, 'user-1');
+
+      expect(result).toHaveLength(0);
+    });
+  });
+
+  describe('getTeamFuturePicks', () => {
+    const futurePicks: FutureDraftPick[] = [
+      {
+        year: 2027,
+        round: 1,
+        originalTeam: 'TEN' as TeamAbbreviation,
+        ownerTeam: 'TEN' as TeamAbbreviation,
+      },
+      {
+        year: 2027,
+        round: 1,
+        originalTeam: 'CLE' as TeamAbbreviation,
+        ownerTeam: 'TEN' as TeamAbbreviation,
+      },
+      {
+        year: 2027,
+        round: 1,
+        originalTeam: 'NYG' as TeamAbbreviation,
+        ownerTeam: 'NYG' as TeamAbbreviation,
+      },
+    ];
+
+    it('returns future picks owned by the specified team', () => {
+      const draft = makeDraft({ futurePicks });
+      const result = getTeamFuturePicks(draft, 'TEN' as TeamAbbreviation);
+
+      expect(result).toHaveLength(2);
+      expect(result.every((fp) => fp.ownerTeam === 'TEN')).toBe(true);
+    });
+
+    it('returns empty array when team has no future picks', () => {
+      const draft = makeDraft({ futurePicks });
+      const result = getTeamFuturePicks(draft, 'CLE' as TeamAbbreviation);
+
+      expect(result).toHaveLength(0);
+    });
+
+    it('returns empty array when draft has no futurePicks', () => {
+      const draft = makeDraft({ futurePicks: undefined });
+      const result = getTeamFuturePicks(draft, 'TEN' as TeamAbbreviation);
+
+      expect(result).toHaveLength(0);
+    });
+  });
+
+  describe('executeTrade with future picks', () => {
+    it('updates future pick ownerTeam when traded', async () => {
+      const mockDraftsDocUpdate = vi.fn().mockResolvedValue(undefined);
+      mockDoc.mockReturnValue({ update: mockDraftsDocUpdate });
+
+      const futurePicks: FutureDraftPick[] = [
+        {
+          year: 2027,
+          round: 1,
+          originalTeam: 'TEN' as TeamAbbreviation,
+          ownerTeam: 'TEN' as TeamAbbreviation,
+        },
+        {
+          year: 2027,
+          round: 1,
+          originalTeam: 'CLE' as TeamAbbreviation,
+          ownerTeam: 'CLE' as TeamAbbreviation,
+        },
+      ];
+
+      const trade = makeTrade({
+        proposerTeam: 'TEN' as TeamAbbreviation,
+        recipientTeam: 'CLE' as TeamAbbreviation,
+        proposerGives: [
+          { type: 'future-pick', year: 2027, round: 1, originalTeam: 'TEN' },
+        ],
+        proposerReceives: [
+          { type: 'future-pick', year: 2027, round: 1, originalTeam: 'CLE' },
+        ],
+      });
+      const draft = makeDraft({ futurePicks });
+
+      const result = await executeTrade(trade, draft);
+
+      // TEN's pick should now be owned by CLE
+      const tenPick = result.futurePicks!.find(
+        (fp) => fp.originalTeam === 'TEN' && fp.year === 2027 && fp.round === 1,
+      );
+      expect(tenPick!.ownerTeam).toBe('CLE');
+
+      // CLE's pick should now be owned by TEN
+      const clePick = result.futurePicks!.find(
+        (fp) => fp.originalTeam === 'CLE' && fp.year === 2027 && fp.round === 1,
+      );
+      expect(clePick!.ownerTeam).toBe('TEN');
+    });
+
+    it('handles mixed current and future pick trades', async () => {
+      const mockDraftsDocUpdate = vi.fn().mockResolvedValue(undefined);
+      mockDoc.mockReturnValue({ update: mockDraftsDocUpdate });
+
+      const futurePicks: FutureDraftPick[] = [
+        {
+          year: 2027,
+          round: 1,
+          originalTeam: 'CLE' as TeamAbbreviation,
+          ownerTeam: 'CLE' as TeamAbbreviation,
+        },
+      ];
+
+      const trade = makeTrade({
+        proposerTeam: 'TEN' as TeamAbbreviation,
+        recipientTeam: 'CLE' as TeamAbbreviation,
+        proposerGives: [{ type: 'current-pick', overall: 1 }],
+        proposerReceives: [
+          { type: 'future-pick', year: 2027, round: 1, originalTeam: 'CLE' },
+        ],
+      });
+      const draft = makeDraft({ futurePicks });
+
+      const result = await executeTrade(trade, draft);
+
+      // Current pick #1 should have ownerOverride to recipient
+      const pick1 = result.pickOrder.find((s) => s.overall === 1);
+      expect(pick1!.ownerOverride).toBe('user-2');
+
+      // CLE's future pick should now be owned by TEN
+      const clePick = result.futurePicks!.find(
+        (fp) => fp.originalTeam === 'CLE' && fp.year === 2027,
+      );
+      expect(clePick!.ownerTeam).toBe('TEN');
+
+      // Firestore should have both updates in one call
+      expect(mockDraftsDocUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          pickOrder: expect.any(Array),
+          futurePicks: expect.any(Array),
+        }),
+      );
     });
   });
 });
