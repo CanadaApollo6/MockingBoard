@@ -165,43 +165,34 @@ export function buildCpuTradeProposalEmbed(
       },
     );
 
-  const components: ActionRowBuilder<ButtonBuilder>[] = [];
+  const buttons: ButtonBuilder[] = [];
 
   if (evaluation.accept) {
-    const confirmButton = new ButtonBuilder()
-      .setCustomId(`trade-confirm:${trade.id}`)
-      .setLabel('Confirm Trade')
-      .setStyle(ButtonStyle.Success);
-
-    const cancelButton = new ButtonBuilder()
-      .setCustomId(`trade-cancel:${trade.id}`)
-      .setLabel('Cancel')
-      .setStyle(ButtonStyle.Secondary);
-
-    components.push(
-      new ActionRowBuilder<ButtonBuilder>().addComponents(
-        confirmButton,
-        cancelButton,
-      ),
-    );
-  } else {
-    const forceButton = new ButtonBuilder()
-      .setCustomId(`trade-force:${trade.id}`)
-      .setLabel('Force Trade')
-      .setStyle(ButtonStyle.Danger);
-
-    const cancelButton = new ButtonBuilder()
-      .setCustomId(`trade-cancel:${trade.id}`)
-      .setLabel('Cancel')
-      .setStyle(ButtonStyle.Secondary);
-
-    components.push(
-      new ActionRowBuilder<ButtonBuilder>().addComponents(
-        forceButton,
-        cancelButton,
-      ),
+    buttons.push(
+      new ButtonBuilder()
+        .setCustomId(`trade-confirm:${trade.id}`)
+        .setLabel('Confirm Trade')
+        .setStyle(ButtonStyle.Success),
     );
   }
+
+  buttons.push(
+    new ButtonBuilder()
+      .setCustomId(`trade-force:${trade.id}`)
+      .setLabel('Force Trade')
+      .setStyle(ButtonStyle.Danger),
+  );
+
+  buttons.push(
+    new ButtonBuilder()
+      .setCustomId(`trade-cancel:${trade.id}`)
+      .setLabel('Cancel')
+      .setStyle(ButtonStyle.Secondary),
+  );
+
+  const components = [
+    new ActionRowBuilder<ButtonBuilder>().addComponents(...buttons),
+  ];
 
   return { embed, components };
 }

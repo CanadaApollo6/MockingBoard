@@ -84,7 +84,7 @@ export interface DraftSlot {
   round: number;
   pick: number;
   team: TeamAbbreviation;
-  ownerOverride?: string; // User ID if pick was traded away from original team
+  ownerOverride?: string | null; // User ID if traded to human; null if traded to CPU; undefined if not traded
 }
 
 export interface PreferenceWeights {

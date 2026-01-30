@@ -20,6 +20,7 @@ vi.mock('./draft.service.js', () => ({
   getPickController: vi.fn(),
 }));
 
+import type { Mock } from 'vitest';
 import type {
   Trade,
   Draft,
@@ -45,7 +46,7 @@ import {
   getAvailableCurrentPicks,
 } from './trade.service.js';
 
-const mockGetPickController = getPickController as vi.Mock;
+const mockGetPickController = getPickController as Mock;
 
 function makeDraft(overrides: Partial<Draft> = {}): Draft {
   return {
@@ -302,6 +303,44 @@ describe('trade.service', () => {
         'Only the recipient can accept',
       );
     });
+
+    it('accepts a CPU trade when called by the proposer', async () => {
+      const trade = makeTrade({
+        proposerId: 'user-1',
+        recipientId: null,
+        recipientTeam: 'NYG' as TeamAbbreviation,
+      });
+      mockDocGet.mockResolvedValue({
+        exists: true,
+        id: 'trade-1',
+        data: () => trade,
+      });
+      mockDocUpdate.mockResolvedValue(undefined);
+
+      const result = await acceptTrade('trade-1', 'user-1');
+
+      expect(result.status).toBe('accepted');
+      expect(mockDocUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'accepted' }),
+      );
+    });
+
+    it('throws if non-proposer tries to confirm a CPU trade', async () => {
+      const trade = makeTrade({
+        proposerId: 'user-1',
+        recipientId: null,
+        recipientTeam: 'NYG' as TeamAbbreviation,
+      });
+      mockDocGet.mockResolvedValue({
+        exists: true,
+        id: 'trade-1',
+        data: () => trade,
+      });
+
+      await expect(acceptTrade('trade-1', 'user-2')).rejects.toThrow(
+        'Only the proposer can confirm a CPU trade',
+      );
+    });
   });
 
   describe('rejectTrade', () => {
@@ -486,7 +525,7 @@ describe('trade.service', () => {
       expect(result.pickOrder).toBeDefined();
     });
 
-    it('handles CPU trades (null recipientId)', async () => {
+    it('sets ownerOverride to null for picks given to CPU', async () => {
       const mockDraftsDocUpdate = vi.fn().mockResolvedValue(undefined);
       mockDoc.mockReturnValue({ update: mockDraftsDocUpdate });
 
@@ -501,7 +540,14 @@ describe('trade.service', () => {
 
       await executeTrade(trade, draft);
 
-      expect(mockDraftsDocUpdate).toHaveBeenCalled();
+      expect(mockDraftsDocUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          pickOrder: expect.arrayContaining([
+            expect.objectContaining({ overall: 1, ownerOverride: null }),
+            expect.objectContaining({ overall: 3, ownerOverride: 'user-1' }),
+          ]),
+        }),
+      );
     });
   });
 

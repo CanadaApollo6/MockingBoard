@@ -85,6 +85,14 @@ export async function handleTradeStart(
     // Check if this team has any available picks
     const teamPicks = draft.pickOrder.filter((slot) => {
       if (slot.overall < draft.currentPick) return false;
+      if (assignedUserId === null) {
+        // CPU team: only count picks originally belonging to this team
+        // that haven't been traded away to a human
+        return (
+          slot.team === team.id &&
+          (slot.ownerOverride === undefined || slot.ownerOverride === null)
+        );
+      }
       const controller = getPickController(draft, slot);
       return controller === assignedUserId;
     });
@@ -215,6 +223,14 @@ export async function handleTradeGiveSelect(
   // Get target's available picks
   const targetPicks = draft.pickOrder.filter((slot) => {
     if (slot.overall < draft.currentPick) return false;
+    if (state.targetUserId === null) {
+      // CPU team: only show picks originally belonging to the target team
+      // that haven't been traded away to a human
+      return (
+        slot.team === state.targetTeam &&
+        (slot.ownerOverride === undefined || slot.ownerOverride === null)
+      );
+    }
     const controller = getPickController(draft, slot);
     return controller === state.targetUserId;
   });

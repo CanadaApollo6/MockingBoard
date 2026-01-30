@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import type {
   ButtonInteraction,
   StringSelectMenuInteraction,
@@ -36,10 +37,10 @@ import * as draftService from '../services/draft.service.js';
 import * as userService from '../services/user.service.js';
 import * as draftPicking from './draftPicking.js';
 
-const mockGetDraft = draftService.getDraft as vi.Mock;
-const mockUpdateDraft = draftService.updateDraft as vi.Mock;
-const mockGetOrCreateUser = userService.getOrCreateUser as vi.Mock;
-const mockAdvanceDraft = draftPicking.advanceDraft as vi.Mock;
+const mockGetDraft = draftService.getDraft as Mock;
+const mockUpdateDraft = draftService.updateDraft as Mock;
+const mockGetOrCreateUser = userService.getOrCreateUser as Mock;
+const mockAdvanceDraft = draftPicking.advanceDraft as Mock;
 
 function makeDraft(overrides: Partial<Draft> = {}): Draft {
   return {

@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import type { ButtonInteraction } from 'discord.js';
 import type {
   Draft,
@@ -68,14 +69,14 @@ import * as pickService from '../services/pick.service.js';
 import * as draftCommand from '../commands/draft.js';
 
 // Cast to jest mocks for type safety
-const mockGetDraft = draftService.getDraft as vi.Mock;
-const mockUpdateDraft = draftService.updateDraft as vi.Mock;
-const mockRecordPickAndAdvance = draftService.recordPickAndAdvance as vi.Mock;
-const mockClearPickTimer = draftService.clearPickTimer as vi.Mock;
-const mockGetPickController = draftService.getPickController as vi.Mock;
-const mockGetOrCreateUser = userService.getOrCreateUser as vi.Mock;
-const mockGetPicksByDraft = pickService.getPicksByDraft as vi.Mock;
-const mockGetCachedPlayers = draftCommand.getCachedPlayers as vi.Mock;
+const mockGetDraft = draftService.getDraft as Mock;
+const mockUpdateDraft = draftService.updateDraft as Mock;
+const mockRecordPickAndAdvance = draftService.recordPickAndAdvance as Mock;
+const mockClearPickTimer = draftService.clearPickTimer as Mock;
+const mockGetPickController = draftService.getPickController as Mock;
+const mockGetOrCreateUser = userService.getOrCreateUser as Mock;
+const mockGetPicksByDraft = pickService.getPicksByDraft as Mock;
+const mockGetCachedPlayers = draftCommand.getCachedPlayers as Mock;
 
 function makeDraft(overrides: Partial<Draft> = {}): Draft {
   return {

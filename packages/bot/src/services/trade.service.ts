@@ -108,7 +108,12 @@ export async function acceptTrade(
   const trade = await getTrade(tradeId);
   if (!trade) throw new Error('Trade not found');
   if (trade.status !== 'pending') throw new Error('Trade is not pending');
-  if (trade.recipientId !== userId) {
+  const isCpuTrade = trade.recipientId === null;
+  if (isCpuTrade) {
+    if (trade.proposerId !== userId) {
+      throw new Error('Only the proposer can confirm a CPU trade');
+    }
+  } else if (trade.recipientId !== userId) {
     throw new Error('Only the recipient can accept a trade');
   }
 
@@ -293,7 +298,7 @@ export async function executeTrade(trade: Trade, draft: Draft): Promise<Draft> {
       // to indicate the pick goes back to the original team (CPU)
       return {
         ...slot,
-        ownerOverride: trade.recipientId ?? undefined,
+        ownerOverride: trade.recipientId,
       };
     }
 
