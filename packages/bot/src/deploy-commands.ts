@@ -2,6 +2,7 @@ import './utils/env.js';
 import { REST, Routes, SlashCommandBuilder } from 'discord.js';
 import { data as startdraftData } from './commands/startdraft.js';
 import { data as draftData } from './commands/draft.js';
+import { data as helpData } from './commands/help.js';
 
 const commands = [
   new SlashCommandBuilder()
@@ -9,6 +10,7 @@ const commands = [
     .setDescription('Check if MockingBoard is online'),
   startdraftData,
   draftData,
+  helpData,
 ];
 
 const rest = new REST().setToken(process.env.DISCORD_TOKEN!);

@@ -9,6 +9,7 @@ import { getDraft, getPickController } from '../services/draft.service.js';
 import {
   createTrade,
   evaluateCpuTrade,
+  expireTrade,
   getAvailableCurrentPicks,
 } from '../services/trade.service.js';
 import {
@@ -17,6 +18,7 @@ import {
   buildTradeReceiveSelect,
   buildCpuTradeProposalEmbed,
   buildTradeProposalEmbed,
+  buildTradeExpiredEmbed,
 } from '../components/tradeEmbed.js';
 import {
   setTradeTimer,
@@ -370,10 +372,23 @@ export async function handleTradeReceiveSelect(
       DEFAULT_TRADE_TIMEOUT_SECONDS,
     );
 
+    // Capture channel reference before interaction goes stale
+    const channel = getSendableChannel(interaction);
+
     // Set trade expiration timer
-    setTradeTimer(trade.id, DEFAULT_TRADE_TIMEOUT_SECONDS * 1000, async () => {
-      // This will be called when the trade expires
-      // The handler for expired trades is already in trade.ts
+    setTradeTimer(trade.id, DEFAULT_TRADE_TIMEOUT_SECONDS, async () => {
+      try {
+        await expireTrade(trade.id);
+        if (channel) {
+          const { embed: expiredEmbed } = buildTradeExpiredEmbed(
+            proposerName,
+            recipientName,
+          );
+          await channel.send({ embeds: [expiredEmbed] });
+        }
+      } catch {
+        // Trade may have already been resolved
+      }
     });
 
     // Clear the ephemeral message and post to channel
@@ -383,7 +398,6 @@ export async function handleTradeReceiveSelect(
       components: [],
     });
 
-    const channel = getSendableChannel(interaction);
     if (channel) {
       await channel.send({
         content: recipientDiscordId ? `<@${recipientDiscordId}>` : undefined,
