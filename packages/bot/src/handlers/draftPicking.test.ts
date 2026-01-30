@@ -7,47 +7,47 @@ import type {
 } from '@mockingboard/shared';
 
 // Mock modules with inline factory functions
-jest.mock('../services/draft.service.js', () => ({
-  getDraft: jest.fn(),
-  updateDraft: jest.fn(),
-  recordPickAndAdvance: jest.fn(),
-  setPickTimer: jest.fn(),
-  clearPickTimer: jest.fn(),
-  getPickController: jest.fn(),
+vi.mock('../services/draft.service.js', () => ({
+  getDraft: vi.fn(),
+  updateDraft: vi.fn(),
+  recordPickAndAdvance: vi.fn(),
+  setPickTimer: vi.fn(),
+  clearPickTimer: vi.fn(),
+  getPickController: vi.fn(),
 }));
 
-jest.mock('../services/user.service.js', () => ({
-  getOrCreateUser: jest.fn(),
+vi.mock('../services/user.service.js', () => ({
+  getOrCreateUser: vi.fn(),
 }));
 
-jest.mock('../services/cpu.service.js', () => ({
-  selectCpuPick: jest.fn(),
+vi.mock('../services/cpu.service.js', () => ({
+  selectCpuPick: vi.fn(),
 }));
 
-jest.mock('../commands/draft.js', () => ({
-  getCachedPlayers: jest.fn(),
+vi.mock('../commands/draft.js', () => ({
+  getCachedPlayers: vi.fn(),
 }));
 
-jest.mock('../services/pick.service.js', () => ({
-  getPicksByDraft: jest.fn(),
+vi.mock('../services/pick.service.js', () => ({
+  getPicksByDraft: vi.fn(),
 }));
 
-jest.mock('../components/draftEmbed.js', () => ({
-  buildOnTheClockEmbed: jest.fn(() => ({
+vi.mock('../components/draftEmbed.js', () => ({
+  buildOnTheClockEmbed: vi.fn(() => ({
     embed: { toJSON: () => ({}) },
     components: [],
   })),
-  buildPickAnnouncementEmbed: jest.fn(() => ({
+  buildPickAnnouncementEmbed: vi.fn(() => ({
     embed: { toJSON: () => ({}) },
   })),
-  buildDraftSummaryEmbed: jest.fn(() => ({
+  buildDraftSummaryEmbed: vi.fn(() => ({
     embed: { toJSON: () => ({}) },
   })),
-  buildPausedEmbed: jest.fn(() => ({
+  buildPausedEmbed: vi.fn(() => ({
     embed: { toJSON: () => ({}) },
     components: [],
   })),
-  buildCpuPicksBatchEmbed: jest.fn(() => ({
+  buildCpuPicksBatchEmbed: vi.fn(() => ({
     embed: { toJSON: () => ({}) },
   })),
 }));
@@ -68,14 +68,14 @@ import * as pickService from '../services/pick.service.js';
 import * as draftCommand from '../commands/draft.js';
 
 // Cast to jest mocks for type safety
-const mockGetDraft = draftService.getDraft as jest.Mock;
-const mockUpdateDraft = draftService.updateDraft as jest.Mock;
-const mockRecordPickAndAdvance = draftService.recordPickAndAdvance as jest.Mock;
-const mockClearPickTimer = draftService.clearPickTimer as jest.Mock;
-const mockGetPickController = draftService.getPickController as jest.Mock;
-const mockGetOrCreateUser = userService.getOrCreateUser as jest.Mock;
-const mockGetPicksByDraft = pickService.getPicksByDraft as jest.Mock;
-const mockGetCachedPlayers = draftCommand.getCachedPlayers as jest.Mock;
+const mockGetDraft = draftService.getDraft as vi.Mock;
+const mockUpdateDraft = draftService.updateDraft as vi.Mock;
+const mockRecordPickAndAdvance = draftService.recordPickAndAdvance as vi.Mock;
+const mockClearPickTimer = draftService.clearPickTimer as vi.Mock;
+const mockGetPickController = draftService.getPickController as vi.Mock;
+const mockGetOrCreateUser = userService.getOrCreateUser as vi.Mock;
+const mockGetPicksByDraft = pickService.getPicksByDraft as vi.Mock;
+const mockGetCachedPlayers = draftCommand.getCachedPlayers as vi.Mock;
 
 function makeDraft(overrides: Partial<Draft> = {}): Draft {
   return {
@@ -127,15 +127,15 @@ function makePlayer(overrides: Partial<Player> = {}): Player {
 }
 
 function createMockInteraction(overrides = {}): ButtonInteraction {
-  const mockChannelSend = jest.fn().mockResolvedValue(undefined);
+  const mockChannelSend = vi.fn().mockResolvedValue(undefined);
   return {
     user: { id: 'discord-1', username: 'TestUser' },
-    deferUpdate: jest.fn().mockResolvedValue(undefined),
-    deferReply: jest.fn().mockResolvedValue(undefined),
-    reply: jest.fn().mockResolvedValue(undefined),
-    followUp: jest.fn().mockResolvedValue(undefined),
-    editReply: jest.fn().mockResolvedValue(undefined),
-    update: jest.fn().mockResolvedValue(undefined),
+    deferUpdate: vi.fn().mockResolvedValue(undefined),
+    deferReply: vi.fn().mockResolvedValue(undefined),
+    reply: vi.fn().mockResolvedValue(undefined),
+    followUp: vi.fn().mockResolvedValue(undefined),
+    editReply: vi.fn().mockResolvedValue(undefined),
+    update: vi.fn().mockResolvedValue(undefined),
     deferred: true,
     replied: false,
     channel: { send: mockChannelSend },
@@ -145,7 +145,7 @@ function createMockInteraction(overrides = {}): ButtonInteraction {
 
 describe('draftPicking handlers', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     // Reset mock implementations to default values
     mockGetDraft.mockReset();
     mockGetOrCreateUser.mockResolvedValue({ id: 'user-1' });

@@ -1,8 +1,8 @@
-const mockAdd = jest.fn();
-const mockDocUpdate = jest.fn();
-const mockDoc = jest.fn();
+const mockAdd = vi.fn();
+const mockDocUpdate = vi.fn();
+const mockDoc = vi.fn();
 
-jest.mock('../utils/firestore.js', () => ({
+vi.mock('../utils/firestore.js', () => ({
   db: {
     collection: () => ({
       add: mockAdd,
@@ -36,7 +36,7 @@ const baseInput: CreateDraftInput = {
 };
 
 describe('draft.service', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => vi.clearAllMocks());
 
   describe('createDraft', () => {
     it('creates a draft with lobby status and currentPick 1', async () => {
@@ -50,7 +50,7 @@ describe('draft.service', () => {
       };
 
       mockAdd.mockResolvedValue({
-        get: jest.fn().mockResolvedValue({
+        get: vi.fn().mockResolvedValue({
           id: 'draft-1',
           data: () => draftData,
         }),
@@ -69,7 +69,7 @@ describe('draft.service', () => {
     it('returns the draft when it exists', async () => {
       const draftData = { status: 'active', currentPick: 5 };
       mockDoc.mockReturnValue({
-        get: jest.fn().mockResolvedValue({
+        get: vi.fn().mockResolvedValue({
           exists: true,
           id: 'draft-1',
           data: () => draftData,
@@ -85,7 +85,7 @@ describe('draft.service', () => {
 
     it('returns null when draft does not exist', async () => {
       mockDoc.mockReturnValue({
-        get: jest.fn().mockResolvedValue({ exists: false }),
+        get: vi.fn().mockResolvedValue({ exists: false }),
       });
 
       const draft = await getDraft('nonexistent');

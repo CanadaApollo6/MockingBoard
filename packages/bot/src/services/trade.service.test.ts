@@ -1,11 +1,11 @@
-const mockAdd = jest.fn();
-const mockDocGet = jest.fn();
-const mockDocUpdate = jest.fn();
-const mockDoc = jest.fn();
-const mockWhere = jest.fn();
-const mockGet = jest.fn();
+const mockAdd = vi.fn();
+const mockDocGet = vi.fn();
+const mockDocUpdate = vi.fn();
+const mockDoc = vi.fn();
+const mockWhere = vi.fn();
+const mockGet = vi.fn();
 
-jest.mock('../utils/firestore.js', () => ({
+vi.mock('../utils/firestore.js', () => ({
   db: {
     collection: () => ({
       add: mockAdd,
@@ -16,8 +16,8 @@ jest.mock('../utils/firestore.js', () => ({
 }));
 
 // Also mock draft.service's getPickController
-jest.mock('./draft.service.js', () => ({
-  getPickController: jest.fn(),
+vi.mock('./draft.service.js', () => ({
+  getPickController: vi.fn(),
 }));
 
 import type {
@@ -45,7 +45,7 @@ import {
   getAvailableCurrentPicks,
 } from './trade.service.js';
 
-const mockGetPickController = getPickController as jest.Mock;
+const mockGetPickController = getPickController as vi.Mock;
 
 function makeDraft(overrides: Partial<Draft> = {}): Draft {
   return {
@@ -101,7 +101,7 @@ function makeTrade(overrides: Partial<Trade> = {}): Trade {
 
 describe('trade.service', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     // Default mock setup
     mockDoc.mockReturnValue({
@@ -119,7 +119,7 @@ describe('trade.service', () => {
     it('creates a trade with pending status', async () => {
       const tradeData = makeTrade();
       mockAdd.mockResolvedValue({
-        get: jest.fn().mockResolvedValue({
+        get: vi.fn().mockResolvedValue({
           id: 'trade-1',
           data: () => tradeData,
         }),
@@ -149,7 +149,7 @@ describe('trade.service', () => {
     it('creates a force trade when isForceTrade is true', async () => {
       const tradeData = makeTrade({ isForceTrade: true });
       mockAdd.mockResolvedValue({
-        get: jest.fn().mockResolvedValue({
+        get: vi.fn().mockResolvedValue({
           id: 'trade-1',
           data: () => tradeData,
         }),
@@ -462,7 +462,7 @@ describe('trade.service', () => {
 
   describe('executeTrade', () => {
     it('updates pick ownership when trade is executed', async () => {
-      const mockDraftsDocUpdate = jest.fn().mockResolvedValue(undefined);
+      const mockDraftsDocUpdate = vi.fn().mockResolvedValue(undefined);
       mockDoc.mockReturnValue({ update: mockDraftsDocUpdate });
 
       const trade = makeTrade({
@@ -487,7 +487,7 @@ describe('trade.service', () => {
     });
 
     it('handles CPU trades (null recipientId)', async () => {
-      const mockDraftsDocUpdate = jest.fn().mockResolvedValue(undefined);
+      const mockDraftsDocUpdate = vi.fn().mockResolvedValue(undefined);
       mockDoc.mockReturnValue({ update: mockDraftsDocUpdate });
 
       const trade = makeTrade({

@@ -1,10 +1,10 @@
-const mockGet = jest.fn();
-const mockAdd = jest.fn();
-const mockWhere = jest.fn();
-const mockLimit = jest.fn();
-const mockDocGet = jest.fn();
+const mockGet = vi.fn();
+const mockAdd = vi.fn();
+const mockWhere = vi.fn();
+const mockLimit = vi.fn();
+const mockDocGet = vi.fn();
 
-jest.mock('../utils/firestore.js', () => ({
+vi.mock('../utils/firestore.js', () => ({
   db: {
     collection: () => ({
       where: mockWhere,
@@ -19,7 +19,7 @@ mockLimit.mockReturnValue({ get: mockGet });
 import { getOrCreateUser } from './user.service.js';
 
 describe('getOrCreateUser', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => vi.clearAllMocks());
 
   it('returns existing user when found by discordId', async () => {
     const userData = {

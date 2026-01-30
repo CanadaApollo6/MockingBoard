@@ -1,8 +1,8 @@
-const mockAdd = jest.fn();
-const mockOrderBy = jest.fn();
-const mockSubGet = jest.fn();
+const mockAdd = vi.fn();
+const mockOrderBy = vi.fn();
+const mockSubGet = vi.fn();
 
-jest.mock('../utils/firestore.js', () => ({
+vi.mock('../utils/firestore.js', () => ({
   db: {
     collection: () => ({
       doc: () => ({
@@ -20,7 +20,7 @@ mockOrderBy.mockReturnValue({ get: mockSubGet });
 import { createPick, getPicksByDraft } from './pick.service.js';
 
 describe('pick.service', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => vi.clearAllMocks());
 
   describe('createPick', () => {
     it('writes a pick and returns it', async () => {
@@ -36,7 +36,7 @@ describe('pick.service', () => {
       };
 
       mockAdd.mockResolvedValue({
-        get: jest.fn().mockResolvedValue({
+        get: vi.fn().mockResolvedValue({
           id: 'pick-1',
           data: () => pickData,
         }),

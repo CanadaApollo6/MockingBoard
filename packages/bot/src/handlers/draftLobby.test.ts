@@ -5,25 +5,25 @@ import type {
 import type { Draft, TeamAbbreviation } from '@mockingboard/shared';
 
 // Mock modules with inline factory functions
-jest.mock('../services/draft.service.js', () => ({
-  getDraft: jest.fn(),
-  updateDraft: jest.fn(),
+vi.mock('../services/draft.service.js', () => ({
+  getDraft: vi.fn(),
+  updateDraft: vi.fn(),
 }));
 
-jest.mock('../services/user.service.js', () => ({
-  getOrCreateUser: jest.fn(),
+vi.mock('../services/user.service.js', () => ({
+  getOrCreateUser: vi.fn(),
 }));
 
-jest.mock('./draftPicking.js', () => ({
-  advanceDraft: jest.fn(),
+vi.mock('./draftPicking.js', () => ({
+  advanceDraft: vi.fn(),
 }));
 
-jest.mock('../components/draftEmbed.js', () => ({
-  buildLobbyEmbed: jest.fn(() => ({
+vi.mock('../components/draftEmbed.js', () => ({
+  buildLobbyEmbed: vi.fn(() => ({
     embed: { toJSON: () => ({}) },
     components: [],
   })),
-  buildTeamSelectMenu: jest.fn(() => ({
+  buildTeamSelectMenu: vi.fn(() => ({
     components: [],
   })),
 }));
@@ -36,10 +36,10 @@ import * as draftService from '../services/draft.service.js';
 import * as userService from '../services/user.service.js';
 import * as draftPicking from './draftPicking.js';
 
-const mockGetDraft = draftService.getDraft as jest.Mock;
-const mockUpdateDraft = draftService.updateDraft as jest.Mock;
-const mockGetOrCreateUser = userService.getOrCreateUser as jest.Mock;
-const mockAdvanceDraft = draftPicking.advanceDraft as jest.Mock;
+const mockGetDraft = draftService.getDraft as vi.Mock;
+const mockUpdateDraft = draftService.updateDraft as vi.Mock;
+const mockGetOrCreateUser = userService.getOrCreateUser as vi.Mock;
+const mockAdvanceDraft = draftPicking.advanceDraft as vi.Mock;
 
 function makeDraft(overrides: Partial<Draft> = {}): Draft {
   return {
@@ -81,10 +81,10 @@ function createMockButtonInteraction(overrides = {}): ButtonInteraction {
       username: 'TestUser',
       displayAvatarURL: () => 'url',
     },
-    deferUpdate: jest.fn().mockResolvedValue(undefined),
-    followUp: jest.fn().mockResolvedValue(undefined),
-    editReply: jest.fn().mockResolvedValue(undefined),
-    channel: { send: jest.fn().mockResolvedValue(undefined) },
+    deferUpdate: vi.fn().mockResolvedValue(undefined),
+    followUp: vi.fn().mockResolvedValue(undefined),
+    editReply: vi.fn().mockResolvedValue(undefined),
+    channel: { send: vi.fn().mockResolvedValue(undefined) },
     ...overrides,
   } as unknown as ButtonInteraction;
 }
@@ -95,7 +95,7 @@ function createMockSelectInteraction(
 ): StringSelectMenuInteraction {
   // Mock a Collection-like object with find method
   const mockMessages = {
-    find: jest.fn().mockReturnValue(undefined),
+    find: vi.fn().mockReturnValue(undefined),
   };
   return {
     user: {
@@ -104,13 +104,13 @@ function createMockSelectInteraction(
       displayAvatarURL: () => 'url',
     },
     values,
-    deferUpdate: jest.fn().mockResolvedValue(undefined),
-    followUp: jest.fn().mockResolvedValue(undefined),
-    editReply: jest.fn().mockResolvedValue(undefined),
+    deferUpdate: vi.fn().mockResolvedValue(undefined),
+    followUp: vi.fn().mockResolvedValue(undefined),
+    editReply: vi.fn().mockResolvedValue(undefined),
     channel: {
-      send: jest.fn().mockResolvedValue(undefined),
+      send: vi.fn().mockResolvedValue(undefined),
       messages: {
-        fetch: jest.fn().mockResolvedValue(mockMessages),
+        fetch: vi.fn().mockResolvedValue(mockMessages),
       },
     },
     client: { user: { id: 'bot-id' } },
@@ -120,7 +120,7 @@ function createMockSelectInteraction(
 
 describe('draftLobby handlers', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockGetDraft.mockReset();
     mockGetOrCreateUser.mockResolvedValue({ id: 'user-1' });
     mockUpdateDraft.mockResolvedValue(undefined);
