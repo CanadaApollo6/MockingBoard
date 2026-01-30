@@ -73,6 +73,13 @@ export const data = new SlashCommandBuilder()
       .setName('trades')
       .setDescription('Allow trading picks during the draft (default: true)')
       .setRequired(false),
+  )
+  .addIntegerOption((opt) =>
+    opt
+      .setName('year')
+      .setDescription('Draft class year (default: 2026)')
+      .setRequired(false)
+      .addChoices({ name: '2026', value: 2026 }, { name: '2025', value: 2025 }),
   );
 
 export async function execute(interaction: ChatInputCommandInteraction) {
@@ -99,6 +106,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
   // Trades enabled by default
   const tradesEnabled = interaction.options.getBoolean('trades') ?? true;
+
+  const year = interaction.options.getInteger('year') ?? 2026;
 
   await interaction.deferReply();
 
@@ -144,7 +153,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       rounds,
       secondsPerPick,
       format,
-      year: 2025,
+      year,
       teamAssignmentMode,
       cpuSpeed,
       tradesEnabled,

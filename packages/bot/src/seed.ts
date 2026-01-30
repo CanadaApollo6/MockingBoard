@@ -17,7 +17,7 @@ const TEAM_MAP: Record<string, TeamAbbreviation> = {
   KAN: 'KC',
 };
 
-// PFR positions → our Position type
+// Position abbreviations → our Position type (covers both PFR and PFF formats)
 const POSITION_MAP: Record<string, Position> = {
   QB: 'QB',
   RB: 'RB',
@@ -42,14 +42,20 @@ const POSITION_MAP: Record<string, Position> = {
   P: 'P',
   EDGE: 'EDGE',
   LS: 'LS',
+  // PFF-specific
+  ED: 'EDGE',
+  HB: 'RB',
+  T: 'OT',
+  DI: 'DL',
+  FB: 'RB',
 };
 
 function mapTeam(pfrAbbr: string): TeamAbbreviation {
   return TEAM_MAP[pfrAbbr] ?? (pfrAbbr as TeamAbbreviation);
 }
 
-function mapPosition(pfrPos: string): Position | null {
-  return POSITION_MAP[pfrPos] ?? null;
+function mapPosition(pos: string): Position | null {
+  return POSITION_MAP[pos] ?? null;
 }
 
 interface ParsedPlayer {
@@ -58,14 +64,14 @@ interface ParsedPlayer {
   school: string;
   consensusRank: number;
   year: number;
-  draftedByTeam: TeamAbbreviation;
+  draftedByTeam?: TeamAbbreviation;
 }
 
-function parseCsv(filePath: string): ParsedPlayer[] {
+// PFR format: 2 header rows, columns: Rnd(0), Pick(1), Tm(2), Player(3), Pos(4), ..., School(27)
+function parsePfrCsv(filePath: string, year: number): ParsedPlayer[] {
   const content = readFileSync(filePath, 'utf-8');
   const lines = content.split('\n').filter((line) => line.trim());
 
-  // Skip the two header rows
   const dataLines = lines.slice(2);
   const players: ParsedPlayer[] = [];
 
@@ -90,8 +96,43 @@ function parseCsv(filePath: string): ParsedPlayer[] {
       position,
       school: school?.trim() ?? '',
       consensusRank: pick,
-      year: 2025,
+      year,
       draftedByTeam: mapTeam(teamAbbr),
+    });
+  }
+
+  return players;
+}
+
+// PFF format: 1 header row, columns: Rank(0), Player(1), Position(2), School(3), PFF Grade(4), Analysis(5)
+function parsePffCsv(filePath: string, year: number): ParsedPlayer[] {
+  const content = readFileSync(filePath, 'utf-8');
+  const lines = content.split('\n').filter((line) => line.trim());
+
+  const dataLines = lines.slice(1);
+  const players: ParsedPlayer[] = [];
+
+  for (const line of dataLines) {
+    const cols = line.split(',');
+    const rank = parseInt(cols[0], 10);
+    const name = cols[1];
+    const pos = cols[2];
+    const school = cols[3];
+
+    if (!name || !pos || isNaN(rank)) continue;
+
+    const position = mapPosition(pos);
+    if (!position) {
+      console.log(`Skipping ${name} (unknown position: ${pos})`);
+      continue;
+    }
+
+    players.push({
+      name: name.trim(),
+      position,
+      school: school?.trim() ?? '',
+      consensusRank: rank,
+      year,
     });
   }
 
@@ -115,16 +156,27 @@ async function clearExistingPlayers(year: number) {
 }
 
 async function seed() {
-  const csvPath = resolve(
-    import.meta.dirname,
-    '../../../drafts/2025_draft.csv',
-  );
-  const players = parseCsv(csvPath);
+  const year = parseInt(process.argv[2], 10);
+  if (!year || ![2025, 2026].includes(year)) {
+    console.error('Usage: tsx src/seed.ts <year>  (2025 or 2026)');
+    process.exit(1);
+  }
 
-  console.log(`Parsed ${players.length} players from CSV`);
+  const csvConfigs: Record<
+    number,
+    { file: string; parser: typeof parsePfrCsv }
+  > = {
+    2025: { file: '2025_draft.csv', parser: parsePfrCsv },
+    2026: { file: 'pff-my-big-board-2026-01-30.csv', parser: parsePffCsv },
+  };
 
-  // Clear existing players for this year to prevent duplicates
-  await clearExistingPlayers(2025);
+  const { file, parser } = csvConfigs[year];
+  const csvPath = resolve(import.meta.dirname, '../../../drafts', file);
+  const players = parser(csvPath, year);
+
+  console.log(`Parsed ${players.length} players for ${year} from ${file}`);
+
+  await clearExistingPlayers(year);
 
   const batch = db.batch();
   const now = FieldValue.serverTimestamp();
