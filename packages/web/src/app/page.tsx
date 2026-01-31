@@ -22,6 +22,7 @@ export default async function Home({
           width={96}
           height={96}
           className="mx-auto mb-6 h-24 w-24"
+          unoptimized
         />
         <h1 className="text-5xl font-bold tracking-tight">MockingBoard</h1>
         <p className="mt-4 max-w-md text-lg text-muted-foreground">

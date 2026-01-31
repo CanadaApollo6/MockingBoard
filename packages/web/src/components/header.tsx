@@ -15,6 +15,7 @@ export function Header() {
               width={28}
               height={28}
               className="h-7 w-7"
+              unoptimized
             />
             MockingBoard
           </Link>
