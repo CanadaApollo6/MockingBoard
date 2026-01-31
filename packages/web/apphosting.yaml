@@ -14,3 +14,5 @@ env:
     secret: discord-client-id
   - variable: DISCORD_CLIENT_SECRET
     secret: discord-client-secret
+  - variable: APP_URL
+    value: https://mockingboard-web-backend--mockingboard-22b22.us-central1.hosted.app

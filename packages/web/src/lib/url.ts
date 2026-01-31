@@ -1,10 +1,14 @@
 /**
- * Get the public origin from a request, respecting reverse proxy headers.
- * Firebase App Hosting runs behind a proxy, so request.url shows the
- * internal Cloud Run address (e.g. https://0.0.0.0:8080). The real
- * origin comes from x-forwarded-host / x-forwarded-proto headers.
+ * Get the public origin for building redirect URLs.
+ * Firebase App Hosting runs behind a proxy where request.url shows the
+ * internal Cloud Run address (e.g. https://0.0.0.0:8080). We use APP_URL
+ * env var as the authoritative source, with header-based detection as fallback.
  */
 export function getOrigin(request: Request): string {
+  if (process.env.APP_URL) {
+    return process.env.APP_URL.replace(/\/$/, '');
+  }
+
   const forwardedHost = request.headers.get('x-forwarded-host');
   if (forwardedHost) {
     const proto = request.headers.get('x-forwarded-proto') ?? 'https';
