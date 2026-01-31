@@ -12,7 +12,14 @@ import type {
   CpuSpeed,
   Pick,
 } from '@mockingboard/shared';
-import { teams } from '@mockingboard/shared';
+import {
+  teams,
+  filterAndSortPickOrder,
+  buildFuturePicksFromSeeds,
+} from '@mockingboard/shared';
+
+// Re-export shared pure functions for existing bot consumers
+export { getPickController } from '@mockingboard/shared';
 
 export interface CreateDraftInput {
   createdBy: string;
@@ -97,9 +104,7 @@ export async function buildPickOrder(
   if (!data?.slots) {
     throw new Error(`No draft order found for year ${year}`);
   }
-  return (data.slots as DraftSlot[])
-    .filter((s) => s.round <= rounds)
-    .sort((a, b) => a.overall - b.overall);
+  return filterAndSortPickOrder(data.slots as DraftSlot[], rounds);
 }
 
 /**
@@ -110,59 +115,17 @@ export async function buildPickOrder(
 export async function buildFuturePicks(
   draftYear: number,
 ): Promise<FutureDraftPick[]> {
-  const futurePicks: FutureDraftPick[] = [];
   const allTeamIds = teams.map((t) => t.id);
-  const year1 = draftYear + 1;
-  const year2 = draftYear + 2;
-
-  // Year+1: use seeded data if available
-  const covered = new Set<string>(); // "originalTeam:round" keys
   const teamDocs = await db.collection('teams').get();
 
+  const seededPicksByTeam: Record<string, FuturePickSeed[] | undefined> = {};
   for (const doc of teamDocs.docs) {
-    const teamId = doc.id as TeamAbbreviation;
-    const seedPicks = doc.data().futurePicks as FuturePickSeed[] | undefined;
-    if (!seedPicks) continue;
-
-    for (const pick of seedPicks) {
-      if (pick.year !== year1) continue;
-      futurePicks.push({
-        year: pick.year,
-        round: pick.round,
-        originalTeam: pick.originalTeam,
-        ownerTeam: teamId,
-      });
-      covered.add(`${pick.originalTeam}:${pick.round}`);
-    }
+    seededPicksByTeam[doc.id] = doc.data().futurePicks as
+      | FuturePickSeed[]
+      | undefined;
   }
 
-  // Fill in defaults for year+1 (rounds 1-3)
-  for (const teamId of allTeamIds) {
-    for (let round = 1; round <= 3; round++) {
-      if (!covered.has(`${teamId}:${round}`)) {
-        futurePicks.push({
-          year: year1,
-          round,
-          originalTeam: teamId,
-          ownerTeam: teamId,
-        });
-      }
-    }
-  }
-
-  // Year+2: default rounds 1-3 for all teams
-  for (const teamId of allTeamIds) {
-    for (let round = 1; round <= 3; round++) {
-      futurePicks.push({
-        year: year2,
-        round,
-        originalTeam: teamId,
-        ownerTeam: teamId,
-      });
-    }
-  }
-
-  return futurePicks;
+  return buildFuturePicksFromSeeds(draftYear, allTeamIds, seededPicksByTeam);
 }
 
 export async function recordPickAndAdvance(
@@ -250,26 +213,4 @@ export function clearPickTimer(draftId: string): void {
     clearTimeout(existing);
     draftTimers.delete(draftId);
   }
-}
-
-// ---- Pick Ownership ----
-
-/**
- * Get the user ID that controls a pick, considering trades.
- * Returns null if the pick is controlled by CPU.
- *
- * Priority:
- * 1. Check slot.ownerOverride (set by trades)
- * 2. Fall back to teamAssignments[slot.team]
- */
-export function getPickController(
-  draft: Draft,
-  slot: DraftSlot,
-): string | null {
-  // First check if there's an ownerOverride from a trade
-  if (slot.ownerOverride !== undefined) {
-    return slot.ownerOverride || null;
-  }
-  // Fall back to the original team assignment
-  return draft.teamAssignments[slot.team];
 }

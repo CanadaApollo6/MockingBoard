@@ -37,3 +37,27 @@ export {
   evaluateTradeValue,
   type TradeEvaluation,
 } from './tradeValues';
+
+// CPU logic
+export { selectCpuPick, CPU_PICK_WEIGHTS } from './cpu';
+
+// Draft logic
+export {
+  getPickController,
+  filterAndSortPickOrder,
+  buildFuturePicksFromSeeds,
+  calculatePickAdvancement,
+} from './draft';
+
+// Trade logic
+export {
+  evaluateCpuTrade,
+  validateTradePicksAvailable,
+  validateUserOwnsPicks,
+  getPicksOwnedByTeam,
+  getAvailableCurrentPicks,
+  getAvailableFuturePicks,
+  getTeamFuturePicks,
+  computeTradeExecution,
+  type CpuTradeEvaluation,
+} from './trade';

@@ -15,12 +15,6 @@ vi.mock('../utils/firestore.js', () => ({
   },
 }));
 
-// Also mock draft.service's getPickController
-vi.mock('./draft.service.js', () => ({
-  getPickController: vi.fn(),
-}));
-
-import type { Mock } from 'vitest';
 import type {
   Trade,
   Draft,
@@ -28,7 +22,6 @@ import type {
   TeamAbbreviation,
   FutureDraftPick,
 } from '@mockingboard/shared';
-import { getPickController } from './draft.service.js';
 import {
   createTrade,
   getTrade,
@@ -48,8 +41,6 @@ import {
   getAvailableFuturePicks,
   getTeamFuturePicks,
 } from './trade.service.js';
-
-const mockGetPickController = getPickController as Mock;
 
 function makeDraft(overrides: Partial<Draft> = {}): Draft {
   return {
@@ -598,8 +589,7 @@ describe('trade.service', () => {
 
   describe('validateUserOwnsPicks', () => {
     it('returns valid when user owns all picks', () => {
-      mockGetPickController.mockReturnValue('user-1');
-
+      // Pick 1 is TEN, teamAssignments[TEN] = 'user-1'
       const pieces: TradePiece[] = [{ type: 'current-pick', overall: 1 }];
       const draft = makeDraft();
 
@@ -609,15 +599,14 @@ describe('trade.service', () => {
     });
 
     it('returns invalid when user does not own a pick', () => {
-      mockGetPickController.mockReturnValue('user-2');
-
-      const pieces: TradePiece[] = [{ type: 'current-pick', overall: 1 }];
+      // Pick 2 is CLE, teamAssignments[CLE] = 'user-2'
+      const pieces: TradePiece[] = [{ type: 'current-pick', overall: 2 }];
       const draft = makeDraft();
 
       const result = validateUserOwnsPicks('user-1', pieces, draft);
 
       expect(result.valid).toBe(false);
-      expect(result.error).toContain("don't control pick #1");
+      expect(result.error).toContain("don't control pick #2");
     });
 
     it('returns invalid when pick is not found', () => {
@@ -644,41 +633,30 @@ describe('trade.service', () => {
 
   describe('getPicksOwnedByTeam', () => {
     it('returns picks controlled by the team', () => {
-      mockGetPickController.mockImplementation((draft, slot) => {
-        if (slot.team === 'TEN') return 'user-1';
-        return null;
-      });
-
       const draft = makeDraft();
       const result = getPicksOwnedByTeam('TEN' as TeamAbbreviation, draft);
 
       // TEN has picks 1 and 4 in our mock draft
-      expect(result.length).toBeGreaterThan(0);
+      expect(result).toHaveLength(2);
     });
   });
 
   describe('getAvailableCurrentPicks', () => {
-    it('returns only future picks for the user', () => {
-      mockGetPickController.mockImplementation((draft, slot) => {
-        if (slot.overall === 1 || slot.overall === 4) return 'user-1';
-        return 'user-2';
-      });
-
+    it('returns only unmade picks for the user', () => {
       const draft = makeDraft({ currentPick: 1 });
       const result = getAvailableCurrentPicks(draft, 'user-1');
 
-      expect(result.length).toBe(2);
+      // user-1 controls TEN: picks 1 and 4
+      expect(result).toHaveLength(2);
       expect(result.every((p) => p.overall >= 1)).toBe(true);
     });
 
     it('excludes picks that have already been made', () => {
-      mockGetPickController.mockImplementation(() => {
-        return 'user-1';
-      });
-
       const draft = makeDraft({ currentPick: 3 }); // Picks 1, 2 are done
       const result = getAvailableCurrentPicks(draft, 'user-1');
 
+      // Only pick 4 (TEN) remains for user-1
+      expect(result).toHaveLength(1);
       expect(result.every((p) => p.overall >= 3)).toBe(true);
     });
   });

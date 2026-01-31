@@ -17,8 +17,5 @@ export const DISCORD_SELECT_MAX = 25;
 export const QUICK_PICK_COUNT = 5;
 export const BROWSE_PLAYER_MAX = 30;
 
-// CPU pick probabilities
-export const CPU_PICK_WEIGHTS = { TOP: 0.7, MID: 0.9 } as const;
-
 // Trade proposal state TTL (ms) - clean up abandoned flows
 export const TRADE_PROPOSAL_TTL = 10 * 60 * 1000; // 10 minutes
