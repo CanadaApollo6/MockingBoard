@@ -117,6 +117,9 @@ dist
 # DynamoDB Local files
 .dynamodb/
 
+# Turborepo
+.turbo
+
 # Firebase
 .firebase/
 firebase-key.json
