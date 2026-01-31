@@ -3,7 +3,7 @@ import {
   getFuturePickValue,
   getPickRound,
   evaluateTradeValue,
-} from './tradeValues.js';
+} from './tradeValues';
 
 describe('tradeValues', () => {
   describe('getPickValue', () => {

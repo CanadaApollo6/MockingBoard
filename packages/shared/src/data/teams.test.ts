@@ -1,4 +1,4 @@
-import { teams } from './teams.js';
+import { teams } from './teams';
 
 describe('team seed data', () => {
   it('contains exactly 32 teams', () => {

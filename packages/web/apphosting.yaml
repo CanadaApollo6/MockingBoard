@@ -1,0 +1,16 @@
+runConfig:
+  cpu: 1
+  memoryMiB: 512
+  concurrency: 80
+
+env:
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+    value: AIzaSyAAlzUZSMdIEiskbqYzvS3oaPPwRohbFhQ
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    value: mockingboard-22b22.firebaseapp.com
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    value: mockingboard-22b22
+  - variable: DISCORD_CLIENT_ID
+    secret: discord-client-id
+  - variable: DISCORD_CLIENT_SECRET
+    secret: discord-client-secret

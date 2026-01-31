@@ -21,13 +21,13 @@ export type {
   Team,
   TradePiece,
   Trade,
-} from './types.js';
+} from './types';
 
 // Constants
-export { POSITION_GROUPS } from './types.js';
+export { POSITION_GROUPS } from './types';
 
 // Seed data
-export { teams, type TeamSeed } from './data/index.js';
+export { teams, type TeamSeed } from './data/index';
 
 // Trade values
 export {
@@ -36,4 +36,4 @@ export {
   getPickRound,
   evaluateTradeValue,
   type TradeEvaluation,
-} from './tradeValues.js';
+} from './tradeValues';
