@@ -37,7 +37,7 @@
   "engines": {
     "node": ">=22.12.0"
   },
-  "dependencies": {
+  "optionalDependencies": {
     "lightningcss-win32-x64-msvc": "^1.31.1"
   }
 }
