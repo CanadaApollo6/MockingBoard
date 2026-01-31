@@ -60,15 +60,17 @@ import {
   handlePickButton,
   handlePick,
   handlePositionFilter,
+  advanceDraft,
 } from './draftPicking.js';
 
 // Import mocked modules to get references to the mock functions
 import * as draftService from '../services/draft.service.js';
 import * as userService from '../services/user.service.js';
 import * as pickService from '../services/pick.service.js';
+import * as cpuService from '../services/cpu.service.js';
 import * as draftCommand from '../commands/draft.js';
 
-// Cast to jest mocks for type safety
+// Cast to mocks for type safety
 const mockGetDraft = draftService.getDraft as Mock;
 const mockUpdateDraft = draftService.updateDraft as Mock;
 const mockRecordPickAndAdvance = draftService.recordPickAndAdvance as Mock;
@@ -76,6 +78,7 @@ const mockClearPickTimer = draftService.clearPickTimer as Mock;
 const mockGetPickController = draftService.getPickController as Mock;
 const mockGetOrCreateUser = userService.getOrCreateUser as Mock;
 const mockGetPicksByDraft = pickService.getPicksByDraft as Mock;
+const mockSelectCpuPick = cpuService.selectCpuPick as Mock;
 const mockGetCachedPlayers = draftCommand.getCachedPlayers as Mock;
 
 function makeDraft(overrides: Partial<Draft> = {}): Draft {
@@ -281,6 +284,21 @@ describe('draftPicking handlers', () => {
 
       expect(mockGetDraft).toHaveBeenCalledWith('draft-1');
     });
+
+    it('returns error when draft not found', async () => {
+      mockGetDraft.mockResolvedValue(null);
+
+      const interaction = createMockInteraction();
+      await handlePickButton(interaction, 'nonexistent', 'player-1');
+
+      expect(interaction.followUp).toHaveBeenCalledWith(
+        expect.objectContaining({
+          content: 'Draft not found.',
+          ephemeral: true,
+        }),
+      );
+      expect(mockRecordPickAndAdvance).not.toHaveBeenCalled();
+    });
   });
 
   describe('handlePositionFilter', () => {
@@ -380,7 +398,7 @@ describe('draftPicking handlers', () => {
 
       expect(interaction.followUp).toHaveBeenCalledWith(
         expect.objectContaining({
-          content: expect.stringContaining('not active'),
+          content: expect.stringContaining('currently paused'),
         }),
       );
     });
@@ -439,8 +457,74 @@ describe('draftPicking handlers', () => {
       const interaction = createMockInteraction();
       await handlePick(interaction, draft, 'player-1');
 
-      // Should return early without error
+      // Should notify user and not attempt pick
       expect(mockRecordPickAndAdvance).not.toHaveBeenCalled();
+      expect(interaction.followUp).toHaveBeenCalledWith(
+        expect.objectContaining({
+          content: 'No active pick found.',
+        }),
+      );
+    });
+
+    it('uses describeDraftStatus for inactive draft messages', async () => {
+      const draft = makeDraft({ status: 'paused' });
+
+      const interaction = createMockInteraction();
+      await handlePick(interaction, draft, 'player-1');
+
+      expect(interaction.followUp).toHaveBeenCalledWith(
+        expect.objectContaining({
+          content: expect.stringContaining('currently paused'),
+        }),
+      );
+    });
+  });
+
+  describe('advanceDraft', () => {
+    it('posts on-the-clock embed for human pick', async () => {
+      const draft = makeDraft();
+      mockGetPickController.mockReturnValue('user-1');
+
+      const interaction = createMockInteraction();
+      await advanceDraft(interaction, draft);
+
+      const channelSend = (interaction.channel as unknown as { send: Mock })
+        .send;
+      expect(channelSend).toHaveBeenCalled();
+    });
+
+    it('makes CPU pick when pickController returns null', async () => {
+      const draft = makeDraft({
+        config: { ...makeDraft().config, cpuSpeed: 'instant' },
+      });
+      const player = makePlayer({ id: 'cpu-pick' });
+      // getPickController called in advanceDraft and again in doCpuPicksBatch loop
+      mockGetPickController.mockReturnValue(null);
+      mockSelectCpuPick.mockReturnValue(player);
+      mockRecordPickAndAdvance.mockResolvedValue({ isComplete: true });
+      mockGetPicksByDraft.mockResolvedValue([]);
+
+      const interaction = createMockInteraction();
+      await advanceDraft(interaction, draft);
+
+      expect(mockSelectCpuPick).toHaveBeenCalled();
+      expect(mockRecordPickAndAdvance).toHaveBeenCalledWith(
+        'draft-1',
+        'cpu-pick',
+        null,
+      );
+    });
+
+    it('returns early when no current slot', async () => {
+      const draft = makeDraft({
+        currentPick: 100,
+        pickOrder: [],
+      });
+
+      const interaction = createMockInteraction();
+      await advanceDraft(interaction, draft);
+
+      expect(mockGetPickController).not.toHaveBeenCalled();
     });
   });
 });

@@ -10,7 +10,13 @@ import {
   buildLobbyEmbed,
   buildTeamSelectMenu,
 } from '../components/draftEmbed.js';
-import { teamSeeds, getSendableChannel, getJoinedUsers } from './shared.js';
+import {
+  teamSeeds,
+  getSendableChannel,
+  getJoinedUsers,
+  assertDraftCreator,
+  describeDraftStatus,
+} from './shared.js';
 import { advanceDraft } from './draftPicking.js';
 
 /**
@@ -25,7 +31,7 @@ export async function handleJoin(
   const draft = await getDraft(draftId);
   if (!draft || draft.status !== 'lobby') {
     await interaction.followUp({
-      content: 'This draft is no longer accepting players.',
+      content: `This draft is ${describeDraftStatus(draft?.status ?? 'complete')} and is no longer accepting players.`,
       ephemeral: true,
     });
     return;
@@ -118,24 +124,14 @@ export async function handleStart(
   const draft = await getDraft(draftId);
   if (!draft || draft.status !== 'lobby') {
     await interaction.followUp({
-      content: 'This draft cannot be started.',
+      content: `This draft is ${describeDraftStatus(draft?.status ?? 'complete')} and cannot be started.`,
       ephemeral: true,
     });
     return;
   }
 
-  // Verify the creator is starting
-  const user = await getOrCreateUser(
-    interaction.user.id,
-    interaction.user.username,
-  );
-  if (draft.createdBy !== user.id) {
-    await interaction.followUp({
-      content: 'Only the draft creator can start the draft.',
-      ephemeral: true,
-    });
-    return;
-  }
+  const { authorized } = await assertDraftCreator(interaction, draft, 'start');
+  if (!authorized) return;
 
   // Need at least 1 human participant
   const hasHuman = Object.values(draft.teamAssignments).some((v) => v !== null);
@@ -168,7 +164,7 @@ export async function handleAllTeams(
   const draft = await getDraft(draftId);
   if (!draft || draft.status !== 'lobby') {
     await interaction.followUp({
-      content: 'This draft is no longer accepting players.',
+      content: `This draft is ${describeDraftStatus(draft?.status ?? 'complete')} and is no longer accepting players.`,
       ephemeral: true,
     });
     return;
@@ -218,7 +214,7 @@ export async function handleTeamSelect(
   const draft = await getDraft(draftId);
   if (!draft || draft.status !== 'lobby') {
     await interaction.followUp({
-      content: 'This draft is no longer accepting players.',
+      content: `This draft is ${describeDraftStatus(draft?.status ?? 'complete')} and is no longer accepting players.`,
       ephemeral: true,
     });
     return;

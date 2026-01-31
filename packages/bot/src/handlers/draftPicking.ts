@@ -1,6 +1,6 @@
 import type {
   ButtonInteraction,
-  ChatInputCommandInteraction,
+  StringSelectMenuInteraction,
 } from 'discord.js';
 import type {
   Draft,
@@ -19,6 +19,7 @@ import {
   getPickController,
 } from '../services/draft.service.js';
 import { selectCpuPick } from '../services/cpu.service.js';
+import { CPU_DELAY } from '../constants.js';
 import { getCachedPlayers } from '../commands/draft.js';
 import {
   buildOnTheClockEmbed,
@@ -33,6 +34,8 @@ import {
   getSendableChannel,
   sendFollowUp,
   resolveDiscordId,
+  describeDraftStatus,
+  assertDraftCreator,
   type DraftInteraction,
 } from './shared.js';
 
@@ -54,24 +57,19 @@ export async function handlePause(
     return;
   }
 
-  // Verify the creator is pausing
-  const user = await getOrCreateUser(
-    interaction.user.id,
-    interaction.user.username,
-  );
-  if (draft.createdBy !== user.id) {
-    await interaction.followUp({
-      content: 'Only the draft creator can pause the draft.',
-      ephemeral: true,
-    });
-    return;
-  }
+  const { authorized } = await assertDraftCreator(interaction, draft, 'pause');
+  if (!authorized) return;
 
   clearPickTimer(draftId);
   await updateDraft(draftId, { status: 'paused' });
 
   const currentSlot = draft.pickOrder[draft.currentPick - 1];
-  if (!currentSlot) return;
+  if (!currentSlot) {
+    console.error(
+      `Pause: no slot at pick ${draft.currentPick} for draft ${draftId}`,
+    );
+    return;
+  }
 
   const teamName = teamSeeds.get(currentSlot.team)?.name ?? currentSlot.team;
   const { embed, components } = buildPausedEmbed(draft, currentSlot, teamName);
@@ -100,18 +98,8 @@ export async function handleResume(
     return;
   }
 
-  // Verify the creator is resuming
-  const user = await getOrCreateUser(
-    interaction.user.id,
-    interaction.user.username,
-  );
-  if (draft.createdBy !== user.id) {
-    await interaction.followUp({
-      content: 'Only the draft creator can resume the draft.',
-      ephemeral: true,
-    });
-    return;
-  }
+  const { authorized } = await assertDraftCreator(interaction, draft, 'resume');
+  if (!authorized) return;
 
   await updateDraft(draftId, { status: 'active' });
   draft.status = 'active';
@@ -126,14 +114,34 @@ export async function handleResume(
  * Handle pick button click (quick pick from on-the-clock embed)
  */
 export async function handlePickButton(
-  interaction: ButtonInteraction,
+  interaction: ButtonInteraction | StringSelectMenuInteraction,
   draftId: string,
   playerId: string,
+  expectedOverall?: number,
 ): Promise<void> {
   await interaction.deferUpdate();
 
   const draft = await getDraft(draftId);
-  if (!draft) return;
+  if (!draft) {
+    await interaction.followUp({
+      content: 'Draft not found.',
+      ephemeral: true,
+    });
+    return;
+  }
+
+  // Validate this button belongs to the current pick
+  if (expectedOverall) {
+    const currentSlot = draft.pickOrder[draft.currentPick - 1];
+    if (!currentSlot || currentSlot.overall !== expectedOverall) {
+      await interaction.followUp({
+        content:
+          'This pick has already passed. Use the latest on-the-clock embed.',
+        ephemeral: true,
+      });
+      return;
+    }
+  }
 
   await handlePick(interaction, draft, playerId);
 }
@@ -145,6 +153,7 @@ export async function handlePositionFilter(
   interaction: ButtonInteraction,
   draftId: string,
   positionFilter: PositionFilterGroup,
+  expectedOverall?: number,
 ): Promise<void> {
   const draft = await getDraft(draftId);
   if (!draft || draft.status !== 'active') {
@@ -156,6 +165,20 @@ export async function handlePositionFilter(
   }
 
   const currentSlot = draft.pickOrder[draft.currentPick - 1];
+
+  // Validate this button belongs to the current pick
+  if (
+    expectedOverall &&
+    currentSlot &&
+    currentSlot.overall !== expectedOverall
+  ) {
+    await interaction.reply({
+      content:
+        'This pick has already passed. Use the latest on-the-clock embed.',
+      ephemeral: true,
+    });
+    return;
+  }
   if (!currentSlot) {
     await interaction.reply({
       content: 'No active pick.',
@@ -202,12 +225,15 @@ export async function handlePositionFilter(
  * Core pick logic - shared by buttons and /draft command
  */
 export async function handlePick(
-  interaction: ButtonInteraction | ChatInputCommandInteraction,
+  interaction: DraftInteraction,
   draft: Draft,
   playerId: string,
 ): Promise<void> {
   if (draft.status !== 'active') {
-    await sendFollowUp(interaction, 'This draft is not active.');
+    await sendFollowUp(
+      interaction,
+      `This draft is ${describeDraftStatus(draft.status)}.`,
+    );
     return;
   }
 
@@ -217,7 +243,10 @@ export async function handlePick(
     interaction.user.username,
   );
   const currentSlot = draft.pickOrder[draft.currentPick - 1];
-  if (!currentSlot) return;
+  if (!currentSlot) {
+    await sendFollowUp(interaction, 'No active pick found.');
+    return;
+  }
 
   // Use getPickController to handle traded picks
   const pickController = getPickController(draft, currentSlot);
@@ -252,7 +281,7 @@ export async function handlePick(
       currentSlot,
       player,
       teamName,
-      false,
+      'human',
     );
     await channel.send({ embeds: [embed] });
   }
@@ -301,7 +330,7 @@ export async function advanceDraft(
       await doCpuPicksBatch(interaction, draft, allPlayers);
     } else {
       // Individual CPU picks with delay
-      const delay = cpuSpeed === 'fast' ? 300 : 1500;
+      const delay = cpuSpeed === 'fast' ? CPU_DELAY.fast : CPU_DELAY.normal;
       await new Promise((resolve) => setTimeout(resolve, delay));
       await doCpuPick(interaction, draft, currentSlot, available);
     }
@@ -400,7 +429,7 @@ async function doCpuPick(
 
   const channel = getSendableChannel(interaction);
   if (channel) {
-    const { embed } = buildPickAnnouncementEmbed(slot, player, teamName, true);
+    const { embed } = buildPickAnnouncementEmbed(slot, player, teamName, 'cpu');
     await channel.send({ embeds: [embed] });
   }
 
@@ -485,7 +514,7 @@ async function postOnTheClock(
             currentSlot,
             player,
             tName,
-            true,
+            'timer',
           );
           await timerChannel.send({ embeds: [embed] });
         }

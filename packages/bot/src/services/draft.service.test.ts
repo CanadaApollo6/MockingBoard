@@ -19,9 +19,12 @@ import {
   updateDraft,
   buildPickOrder,
   buildFuturePicks,
+  getPickController,
+  setPickTimer,
+  clearPickTimer,
 } from './draft.service.js';
 import type { CreateDraftInput } from './draft.service.js';
-import type { DraftSlot, TeamAbbreviation } from '@mockingboard/shared';
+import type { Draft, DraftSlot, TeamAbbreviation } from '@mockingboard/shared';
 
 const baseInput: CreateDraftInput = {
   createdBy: 'user-1',
@@ -252,6 +255,134 @@ describe('draft.service', () => {
         (fp) => fp.year === 2027 && fp.round === 1 && fp.originalTeam === 'NYJ',
       );
       expect(nyjRound1).toHaveLength(1);
+    });
+  });
+
+  describe('getPickController', () => {
+    function makeDraft(overrides: Partial<Draft> = {}): Draft {
+      return {
+        id: 'draft-1',
+        createdBy: 'user-1',
+        createdAt: { seconds: 0, nanoseconds: 0 },
+        updatedAt: { seconds: 0, nanoseconds: 0 },
+        config: {
+          rounds: 1,
+          secondsPerPick: 60,
+          format: 'full',
+          year: 2025,
+          teamAssignmentMode: 'random',
+          cpuSpeed: 'normal',
+          tradesEnabled: true,
+        },
+        status: 'active',
+        currentPick: 1,
+        currentRound: 1,
+        platform: 'discord',
+        teamAssignments: {
+          TEN: 'user-1',
+          CLE: null,
+        } as Draft['teamAssignments'],
+        participants: { 'user-1': 'discord-1' },
+        pickOrder: [],
+        pickedPlayerIds: [],
+        ...overrides,
+      };
+    }
+
+    it('returns user ID from teamAssignments when no trade override', () => {
+      const draft = makeDraft();
+      const slot: DraftSlot = {
+        overall: 1,
+        round: 1,
+        pick: 1,
+        team: 'TEN' as TeamAbbreviation,
+      };
+
+      expect(getPickController(draft, slot)).toBe('user-1');
+    });
+
+    it('returns null for CPU-controlled team', () => {
+      const draft = makeDraft();
+      const slot: DraftSlot = {
+        overall: 2,
+        round: 1,
+        pick: 2,
+        team: 'CLE' as TeamAbbreviation,
+      };
+
+      expect(getPickController(draft, slot)).toBeNull();
+    });
+
+    it('returns ownerOverride when set by trade', () => {
+      const draft = makeDraft();
+      const slot: DraftSlot = {
+        overall: 1,
+        round: 1,
+        pick: 1,
+        team: 'TEN' as TeamAbbreviation,
+        ownerOverride: 'user-2',
+      };
+
+      expect(getPickController(draft, slot)).toBe('user-2');
+    });
+
+    it('returns null when ownerOverride is empty string (CPU via trade)', () => {
+      const draft = makeDraft();
+      const slot: DraftSlot = {
+        overall: 1,
+        round: 1,
+        pick: 1,
+        team: 'TEN' as TeamAbbreviation,
+        ownerOverride: '',
+      };
+
+      expect(getPickController(draft, slot)).toBeNull();
+    });
+  });
+
+  describe('setPickTimer / clearPickTimer', () => {
+    beforeEach(() => vi.useFakeTimers());
+    afterEach(() => vi.useRealTimers());
+
+    it('fires callback after specified seconds', () => {
+      const callback = vi.fn();
+      setPickTimer('draft-1', 60, callback);
+
+      vi.advanceTimersByTime(59_000);
+      expect(callback).not.toHaveBeenCalled();
+
+      vi.advanceTimersByTime(1000);
+      expect(callback).toHaveBeenCalledOnce();
+    });
+
+    it('does not set timer for seconds <= 0', () => {
+      const callback = vi.fn();
+      setPickTimer('draft-1', 0, callback);
+
+      vi.advanceTimersByTime(60_000);
+      expect(callback).not.toHaveBeenCalled();
+    });
+
+    it('clearPickTimer prevents callback from firing', () => {
+      const callback = vi.fn();
+      setPickTimer('draft-1', 60, callback);
+      clearPickTimer('draft-1');
+
+      vi.advanceTimersByTime(120_000);
+      expect(callback).not.toHaveBeenCalled();
+    });
+
+    it('setPickTimer replaces existing timer', () => {
+      const cb1 = vi.fn();
+      const cb2 = vi.fn();
+      setPickTimer('draft-1', 30, cb1);
+      setPickTimer('draft-1', 60, cb2);
+
+      vi.advanceTimersByTime(30_000);
+      expect(cb1).not.toHaveBeenCalled();
+
+      vi.advanceTimersByTime(30_000);
+      expect(cb2).toHaveBeenCalledOnce();
     });
   });
 });

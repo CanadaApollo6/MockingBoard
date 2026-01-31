@@ -6,8 +6,9 @@ import type {
   Message,
   MessageCreateOptions,
 } from 'discord.js';
-import type { Draft, TeamAbbreviation } from '@mockingboard/shared';
+import type { Draft, TeamAbbreviation, User } from '@mockingboard/shared';
 import { teams } from '@mockingboard/shared';
+import { getOrCreateUser } from '../services/user.service.js';
 
 // Pre-built team lookup map
 export const teamSeeds = new Map(teams.map((t) => [t.id, t]));
@@ -45,7 +46,7 @@ export function resolveDiscordId(
  * Send a follow-up message, handling both deferred and non-deferred interactions
  */
 export async function sendFollowUp(
-  interaction: ButtonInteraction | ChatInputCommandInteraction,
+  interaction: DraftInteraction,
   content: string,
 ): Promise<void> {
   if (interaction.deferred || interaction.replied) {
@@ -69,6 +70,59 @@ export function getJoinedUsers(
       discordId: draft.participants[internalId!] ?? internalId!,
       team,
     }));
+}
+
+/**
+ * Verify the interaction user is the draft creator. Returns the user and
+ * whether they're authorized. Sends an ephemeral error if not.
+ */
+export async function assertDraftCreator(
+  interaction: ButtonInteraction,
+  draft: Draft,
+  action: string,
+): Promise<{ user: User; authorized: boolean }> {
+  const user = await getOrCreateUser(
+    interaction.user.id,
+    interaction.user.username,
+  );
+  if (draft.createdBy !== user.id) {
+    await interaction.followUp({
+      content: `Only the draft creator can ${action} the draft.`,
+      ephemeral: true,
+    });
+    return { user, authorized: false };
+  }
+  return { user, authorized: true };
+}
+
+/**
+ * Human-readable draft status for error messages
+ */
+export function describeDraftStatus(status: Draft['status']): string {
+  switch (status) {
+    case 'lobby':
+      return 'still in the lobby';
+    case 'active':
+      return 'currently active';
+    case 'paused':
+      return 'currently paused';
+    case 'complete':
+      return 'already complete';
+    default:
+      return status;
+  }
+}
+
+/**
+ * Build a team info map for trade embeds
+ */
+export function buildTeamInfoMap(): Map<
+  TeamAbbreviation,
+  { name: string; abbreviation: TeamAbbreviation }
+> {
+  return new Map(
+    teams.map((t) => [t.id, { name: t.name, abbreviation: t.id }]),
+  );
 }
 
 /**

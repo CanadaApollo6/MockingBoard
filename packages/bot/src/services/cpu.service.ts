@@ -1,4 +1,5 @@
 import type { Player, Position } from '@mockingboard/shared';
+import { CPU_PICK_WEIGHTS } from '../constants.js';
 
 export function selectCpuPick(
   availablePlayers: Player[],
@@ -20,7 +21,7 @@ export function selectCpuPick(
 
   // BPA with weighted randomization
   const roll = Math.random();
-  if (roll < 0.7 || sorted.length === 1) return sorted[0];
-  if (roll < 0.9 || sorted.length === 2) return sorted[1];
+  if (roll < CPU_PICK_WEIGHTS.TOP || sorted.length === 1) return sorted[0];
+  if (roll < CPU_PICK_WEIGHTS.MID || sorted.length === 2) return sorted[1];
   return sorted[2];
 }

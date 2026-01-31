@@ -1,6 +1,5 @@
 import type { ButtonInteraction } from 'discord.js';
-import type { TeamAbbreviation } from '@mockingboard/shared';
-import { teams } from '@mockingboard/shared';
+import type { Draft } from '@mockingboard/shared';
 import { getOrCreateUser } from '../services/user.service.js';
 import { getDraft, updateDraft } from '../services/draft.service.js';
 import {
@@ -16,19 +15,17 @@ import {
   buildTradeRejectedEmbed,
   buildTradeCancelledEmbed,
 } from '../components/tradeEmbed.js';
-import { teamSeeds, getSendableChannel } from './shared.js';
+import { teamSeeds, getSendableChannel, buildTeamInfoMap } from './shared.js';
 import { advanceDraft } from './draftPicking.js';
 
-/**
- * Build a team info map for trade embeds
- */
-function buildTeamInfoMap(): Map<
-  TeamAbbreviation,
-  { name: string; abbreviation: TeamAbbreviation }
-> {
-  return new Map(
-    teams.map((t) => [t.id, { name: t.name, abbreviation: t.id }]),
-  );
+async function resumeDraftIfPaused(
+  interaction: ButtonInteraction,
+  draft: Draft,
+): Promise<void> {
+  if (draft.status !== 'paused') return;
+  await updateDraft(draft.id, { status: 'active' });
+  const updatedDraft = await getDraft(draft.id);
+  if (updatedDraft) await advanceDraft(interaction, updatedDraft);
 }
 
 /**
@@ -78,12 +75,10 @@ export async function handleTradeAccept(
     return;
   }
 
-  // Accept and execute the trade
   clearTradeTimer(tradeId);
   await acceptTrade(tradeId, user.id);
   await executeTrade(trade, draft);
 
-  // Get names for embed
   const proposerDiscordId = draft.participants[trade.proposerId];
   const recipientDiscordId = draft.participants[trade.recipientId];
   const proposerName = proposerDiscordId
@@ -93,12 +88,11 @@ export async function handleTradeAccept(
     ? `<@${recipientDiscordId}>`
     : 'Unknown';
 
-  const teamInfoMap = buildTeamInfoMap();
   const { embed } = buildTradeAcceptedEmbed(
     trade,
     proposerName,
     recipientName,
-    teamInfoMap,
+    buildTeamInfoMap(),
   );
 
   const channel = getSendableChannel(interaction);
@@ -106,14 +100,7 @@ export async function handleTradeAccept(
     await channel.send({ embeds: [embed] });
   }
 
-  // Resume draft if it was paused for this trade
-  if (draft.status === 'paused') {
-    await updateDraft(draft.id, { status: 'active' });
-    const updatedDraft = await getDraft(draft.id);
-    if (updatedDraft) {
-      await advanceDraft(interaction, updatedDraft);
-    }
-  }
+  await resumeDraftIfPaused(interaction, draft);
 }
 
 /**
@@ -182,14 +169,7 @@ export async function handleTradeReject(
     await channel.send({ embeds: [embed] });
   }
 
-  // Resume draft if it was paused for this trade
-  if (draft.status === 'paused') {
-    await updateDraft(draft.id, { status: 'active' });
-    const updatedDraft = await getDraft(draft.id);
-    if (updatedDraft) {
-      await advanceDraft(interaction, updatedDraft);
-    }
-  }
+  await resumeDraftIfPaused(interaction, draft);
 }
 
 /**
@@ -254,14 +234,7 @@ export async function handleTradeCancel(
     await channel.send({ embeds: [embed] });
   }
 
-  // Resume draft if it was paused for this trade
-  if (draft.status === 'paused') {
-    await updateDraft(draft.id, { status: 'active' });
-    const updatedDraft = await getDraft(draft.id);
-    if (updatedDraft) {
-      await advanceDraft(interaction, updatedDraft);
-    }
-  }
+  await resumeDraftIfPaused(interaction, draft);
 }
 
 /**
@@ -302,7 +275,6 @@ export async function handleTradeConfirm(
     return;
   }
 
-  // CPU trades have recipientId = null
   if (trade.recipientId !== null) {
     await interaction.followUp({
       content: 'This is not a CPU trade.',
@@ -320,9 +292,8 @@ export async function handleTradeConfirm(
     return;
   }
 
-  // Execute the CPU trade
   clearTradeTimer(tradeId);
-  await acceptTrade(tradeId, user.id); // For CPU trades, proposer confirms
+  await acceptTrade(tradeId, user.id);
   await executeTrade(trade, draft);
 
   const proposerDiscordId = draft.participants[trade.proposerId];
@@ -332,12 +303,11 @@ export async function handleTradeConfirm(
   const cpuTeamName =
     teamSeeds.get(trade.recipientTeam)?.name ?? trade.recipientTeam;
 
-  const teamInfoMap = buildTeamInfoMap();
   const { embed } = buildTradeAcceptedEmbed(
     trade,
     proposerName,
     cpuTeamName,
-    teamInfoMap,
+    buildTeamInfoMap(),
   );
 
   const channel = getSendableChannel(interaction);
@@ -345,14 +315,7 @@ export async function handleTradeConfirm(
     await channel.send({ embeds: [embed] });
   }
 
-  // Resume draft if it was paused
-  if (draft.status === 'paused') {
-    await updateDraft(draft.id, { status: 'active' });
-    const updatedDraft = await getDraft(draft.id);
-    if (updatedDraft) {
-      await advanceDraft(interaction, updatedDraft);
-    }
-  }
+  await resumeDraftIfPaused(interaction, draft);
 }
 
 /**
@@ -393,7 +356,6 @@ export async function handleTradeForce(
     return;
   }
 
-  // Only CPU trades can be forced
   if (trade.recipientId !== null) {
     await interaction.followUp({
       content: 'Only CPU trades can be forced.',
@@ -411,7 +373,6 @@ export async function handleTradeForce(
     return;
   }
 
-  // Mark as force trade and execute
   clearTradeTimer(tradeId);
   await acceptTrade(tradeId, user.id);
   await executeTrade({ ...trade, isForceTrade: true }, draft);
@@ -423,12 +384,11 @@ export async function handleTradeForce(
   const cpuTeamName =
     teamSeeds.get(trade.recipientTeam)?.name ?? trade.recipientTeam;
 
-  const teamInfoMap = buildTeamInfoMap();
   const { embed } = buildTradeAcceptedEmbed(
     trade,
     proposerName,
     `${cpuTeamName} (Forced)`,
-    teamInfoMap,
+    buildTeamInfoMap(),
   );
 
   const channel = getSendableChannel(interaction);
@@ -436,12 +396,5 @@ export async function handleTradeForce(
     await channel.send({ embeds: [embed] });
   }
 
-  // Resume draft if it was paused
-  if (draft.status === 'paused') {
-    await updateDraft(draft.id, { status: 'active' });
-    const updatedDraft = await getDraft(draft.id);
-    if (updatedDraft) {
-      await advanceDraft(interaction, updatedDraft);
-    }
-  }
+  await resumeDraftIfPaused(interaction, draft);
 }

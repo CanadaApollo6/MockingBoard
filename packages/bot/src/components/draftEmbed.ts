@@ -15,6 +15,12 @@ import type {
 } from '@mockingboard/shared';
 import { POSITION_GROUPS } from '@mockingboard/shared';
 import type { TeamSeed } from '@mockingboard/shared';
+import {
+  COLORS,
+  QUICK_PICK_COUNT,
+  BROWSE_PLAYER_MAX,
+  DISCORD_SELECT_MAX,
+} from '../constants.js';
 
 interface JoinedUser {
   discordId: string;
@@ -57,7 +63,7 @@ export function buildLobbyEmbed(
 
   const embed = new EmbedBuilder()
     .setTitle(isSingleTeam ? 'Solo Mock Draft' : 'Mock Draft Lobby')
-    .setColor(0x2f3136)
+    .setColor(COLORS.DEFAULT)
     .addFields(
       { name: 'Format', value: formatLabel, inline: true },
       { name: 'Rounds', value: `${draft.config.rounds}`, inline: true },
@@ -160,6 +166,7 @@ function filterByPositionGroup(
 function buildPositionFilterRow(
   draftId: string,
   activeFilter: PositionFilterGroup,
+  overall: number,
 ): ActionRowBuilder<ButtonBuilder> {
   const row = new ActionRowBuilder<ButtonBuilder>();
   const filters: Exclude<PositionFilterGroup, null>[] = [
@@ -173,7 +180,7 @@ function buildPositionFilterRow(
   for (const filter of filters) {
     row.addComponents(
       new ButtonBuilder()
-        .setCustomId(`filter:${draftId}:${filter}`)
+        .setCustomId(`filter:${draftId}:${filter}:${overall}`)
         .setLabel(FILTER_LABELS[filter])
         .setStyle(
           activeFilter === filter ? ButtonStyle.Primary : ButtonStyle.Secondary,
@@ -190,14 +197,15 @@ function buildPositionFilterRow(
 function buildQuickPickRow(
   draftId: string,
   players: Player[],
+  overall: number,
 ): ActionRowBuilder<ButtonBuilder> {
   const row = new ActionRowBuilder<ButtonBuilder>();
-  const topFive = players.slice(0, 5);
+  const topFive = players.slice(0, QUICK_PICK_COUNT);
 
   for (const player of topFive) {
     row.addComponents(
       new ButtonBuilder()
-        .setCustomId(`pick:${draftId}:${player.id}`)
+        .setCustomId(`pick:${draftId}:${player.id}:${overall}`)
         .setLabel(`${player.name} (${player.position})`)
         .setStyle(ButtonStyle.Primary),
     );
@@ -213,9 +221,9 @@ function buildBrowseSelectRow(
   draftId: string,
   players: Player[],
   filterLabel: string | null,
+  overall: number,
 ): ActionRowBuilder<StringSelectMenuBuilder> {
-  // Skip first 5 (shown as buttons), take up to 25 more
-  const browsePlayers = players.slice(5, 30);
+  const browsePlayers = players.slice(QUICK_PICK_COUNT, BROWSE_PLAYER_MAX);
 
   const options = browsePlayers.map((p, i) => ({
     label: `${i + 6}. ${p.name} (${p.position})`,
@@ -237,9 +245,9 @@ function buildBrowseSelectRow(
     : 'Browse more players...';
 
   const menu = new StringSelectMenuBuilder()
-    .setCustomId(`browse:${draftId}`)
+    .setCustomId(`browse:${draftId}:${overall}`)
     .setPlaceholder(placeholder)
-    .addOptions(options.slice(0, 25)); // Discord limit
+    .addOptions(options.slice(0, DISCORD_SELECT_MAX));
 
   return new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(menu);
 }
@@ -252,6 +260,7 @@ function buildControlRow(
   hasFilter: boolean,
   showPauseButton: boolean,
   tradesEnabled: boolean,
+  overall: number,
 ): ActionRowBuilder<ButtonBuilder> {
   const row = new ActionRowBuilder<ButtonBuilder>();
 
@@ -276,7 +285,7 @@ function buildControlRow(
   if (hasFilter) {
     row.addComponents(
       new ButtonBuilder()
-        .setCustomId(`clearfilter:${draftId}`)
+        .setCustomId(`clearfilter:${draftId}:${overall}`)
         .setLabel('Clear Filter')
         .setStyle(ButtonStyle.Secondary),
     );
@@ -312,7 +321,7 @@ export function buildOnTheClockEmbed(
 
   const embed = new EmbedBuilder()
     .setTitle(`On the Clock: ${teamName}`)
-    .setColor(0x5865f2)
+    .setColor(COLORS.BLURPLE)
     .setDescription(description)
     .addFields({
       name: filterLabel
@@ -321,7 +330,7 @@ export function buildOnTheClockEmbed(
       value:
         filteredPlayers.length > 0
           ? filteredPlayers
-              .slice(0, 5)
+              .slice(0, QUICK_PICK_COUNT)
               .map(
                 (p, i) =>
                   `${i + 1}. **${p.name}** (${p.position} - ${p.school})`,
@@ -343,16 +352,23 @@ export function buildOnTheClockEmbed(
   )[] = [];
 
   // Row 1: Position filter buttons
-  rows.push(buildPositionFilterRow(draft.id, positionFilter));
+  rows.push(buildPositionFilterRow(draft.id, positionFilter, slot.overall));
 
   // Row 2: Quick-pick buttons (top 5)
   if (filteredPlayers.length > 0) {
-    rows.push(buildQuickPickRow(draft.id, filteredPlayers));
+    rows.push(buildQuickPickRow(draft.id, filteredPlayers, slot.overall));
   }
 
   // Row 3: Browse select menu (players 6-30)
   if (filteredPlayers.length > 5) {
-    rows.push(buildBrowseSelectRow(draft.id, filteredPlayers, filterLabel));
+    rows.push(
+      buildBrowseSelectRow(
+        draft.id,
+        filteredPlayers,
+        filterLabel,
+        slot.overall,
+      ),
+    );
   }
 
   // Row 4: Control buttons (only add if there are buttons to show)
@@ -361,6 +377,7 @@ export function buildOnTheClockEmbed(
     positionFilter !== null,
     showPauseButton,
     draft.config.tradesEnabled,
+    slot.overall,
   );
   if (controlRow.components.length > 0) {
     rows.push(controlRow);
@@ -382,7 +399,7 @@ export function buildPausedEmbed(
 
   const embed = new EmbedBuilder()
     .setTitle('Draft Paused')
-    .setColor(0xffa500)
+    .setColor(COLORS.ORANGE)
     .setDescription(`The draft has been paused.`)
     .addFields(
       { name: 'Next Pick', value: `${teamName}\n${pickLabel}`, inline: true },
@@ -409,7 +426,7 @@ export function buildCpuPicksBatchEmbed(
 ) {
   const embed = new EmbedBuilder()
     .setTitle(`CPU Picks (${picks.length})`)
-    .setColor(0x99aab5);
+    .setColor(COLORS.GREY);
 
   const lines = picks.map(
     (p) =>
@@ -439,17 +456,24 @@ export function buildCpuPicksBatchEmbed(
   return { embed };
 }
 
+export type PickType = 'human' | 'cpu' | 'timer';
+
 export function buildPickAnnouncementEmbed(
   slot: DraftSlot,
   player: Player,
   teamName: string,
-  isAutoPick: boolean,
+  pickType: PickType,
 ) {
-  const autoLabel = isAutoPick ? ' (Auto-Pick)' : '';
+  const autoLabel =
+    pickType === 'timer'
+      ? ' (Clock Expired)'
+      : pickType === 'cpu'
+        ? ' (CPU)'
+        : '';
 
   const embed = new EmbedBuilder()
     .setTitle(`Pick #${slot.overall}${autoLabel}`)
-    .setColor(0x57f287)
+    .setColor(COLORS.GREEN)
     .setDescription(
       `The **${teamName}** select **${player.name}**, ${player.position} from ${player.school}.`,
     )
@@ -473,7 +497,7 @@ export function buildDraftSummaryEmbed(
 ) {
   const embed = new EmbedBuilder()
     .setTitle('Draft Complete!')
-    .setColor(0xfee75c);
+    .setColor(COLORS.YELLOW);
 
   // Group picks by round
   const rounds = new Map<number, Pick[]>();

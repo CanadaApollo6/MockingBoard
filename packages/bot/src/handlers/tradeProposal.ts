@@ -6,6 +6,7 @@ import type { TeamAbbreviation } from '@mockingboard/shared';
 import { teams } from '@mockingboard/shared';
 import { getOrCreateUser } from '../services/user.service.js';
 import { getDraft, getPickController } from '../services/draft.service.js';
+import type { Trade } from '@mockingboard/shared';
 import {
   createTrade,
   acceptTrade,
@@ -15,6 +16,8 @@ import {
   getAvailableCurrentPicks,
   getAvailableFuturePicks,
   getTeamFuturePicks,
+  validateTradePicksAvailable,
+  validateUserOwnsPicks,
 } from '../services/trade.service.js';
 import {
   buildTradeTargetSelect,
@@ -30,7 +33,13 @@ import {
   setTradeTimer,
   DEFAULT_TRADE_TIMEOUT_SECONDS,
 } from '../services/tradeTimer.service.js';
-import { teamSeeds, getSendableChannel } from './shared.js';
+import { TRADE_PROPOSAL_TTL } from '../constants.js';
+import {
+  teamSeeds,
+  getSendableChannel,
+  describeDraftStatus,
+  buildTeamInfoMap,
+} from './shared.js';
 
 // Store in-progress trade proposals (userId:draftId -> state)
 interface TradeProposalState {
@@ -38,9 +47,18 @@ interface TradeProposalState {
   targetUserId: string | null; // null = CPU
   targetName: string;
   givingValues: string[]; // Raw select menu values (current + future)
+  createdAt: number;
 }
 
 const tradeProposalState = new Map<string, TradeProposalState>();
+
+// Clean up stale trade proposal states periodically
+setInterval(() => {
+  const cutoff = Date.now() - TRADE_PROPOSAL_TTL;
+  for (const [key, state] of tradeProposalState) {
+    if (state.createdAt < cutoff) tradeProposalState.delete(key);
+  }
+}, TRADE_PROPOSAL_TTL);
 
 function getStateKey(userId: string, draftId: string): string {
   return `${userId}:${draftId}`;
@@ -56,7 +74,7 @@ export async function handleTradeStart(
   const draft = await getDraft(draftId);
   if (!draft || draft.status !== 'active') {
     await interaction.reply({
-      content: 'This draft is not active.',
+      content: `This draft is ${describeDraftStatus(draft?.status ?? 'complete')}.`,
       ephemeral: true,
     });
     return;
@@ -153,7 +171,7 @@ export async function handleTradeTargetSelect(
   const draft = await getDraft(draftId);
   if (!draft || draft.status !== 'active') {
     await interaction.update({
-      content: 'This draft is not active.',
+      content: `This draft is ${describeDraftStatus(draft?.status ?? 'complete')}.`,
       embeds: [],
       components: [],
     });
@@ -177,6 +195,7 @@ export async function handleTradeTargetSelect(
     targetUserId,
     targetName,
     givingValues: [],
+    createdAt: Date.now(),
   });
 
   // Get user's available picks (exclude target team's picks for self-trades)
@@ -212,7 +231,7 @@ export async function handleTradeGiveSelect(
   const draft = await getDraft(draftId);
   if (!draft || draft.status !== 'active') {
     await interaction.update({
-      content: 'This draft is not active.',
+      content: `This draft is ${describeDraftStatus(draft?.status ?? 'complete')}.`,
       embeds: [],
       components: [],
     });
@@ -282,7 +301,7 @@ export async function handleTradeReceiveSelect(
   const draft = await getDraft(draftId);
   if (!draft || draft.status !== 'active') {
     await interaction.update({
-      content: 'This draft is not active.',
+      content: `This draft is ${describeDraftStatus(draft?.status ?? 'complete')}.`,
       embeds: [],
       components: [],
     });
@@ -310,6 +329,41 @@ export async function handleTradeReceiveSelect(
   const proposerGives = state.givingValues.map(parseTradePieceValue);
   const proposerReceives = interaction.values.map(parseTradePieceValue);
 
+  // Validate picks are still available (not already drafted)
+  const picksValidation = validateTradePicksAvailable(
+    { proposerGives, proposerReceives } as Trade,
+    draft,
+  );
+  if (!picksValidation.valid) {
+    await interaction.update({
+      content:
+        picksValidation.error ??
+        'Some picks in this trade are no longer available.',
+      embeds: [],
+      components: [],
+    });
+    tradeProposalState.delete(stateKey);
+    return;
+  }
+
+  // Validate proposer owns the picks they're giving
+  const ownershipValidation = validateUserOwnsPicks(
+    user.id,
+    proposerGives,
+    draft,
+  );
+  if (!ownershipValidation.valid) {
+    await interaction.update({
+      content:
+        ownershipValidation.error ??
+        "You don't own some of the picks you're offering.",
+      embeds: [],
+      components: [],
+    });
+    tradeProposalState.delete(stateKey);
+    return;
+  }
+
   // Determine proposer's team (non-target team they control)
   const userTeams = Object.entries(draft.teamAssignments)
     .filter(([, uid]) => uid === user.id)
@@ -331,10 +385,7 @@ export async function handleTradeReceiveSelect(
   // Clear the proposal state
   tradeProposalState.delete(stateKey);
 
-  // Build team info map for embeds
-  const teamInfoMap = new Map(
-    teams.map((t) => [t.id, { name: t.name, abbreviation: t.id }]),
-  );
+  const teamInfoMap = buildTeamInfoMap();
 
   if (state.targetUserId === user.id) {
     // Self-trade - auto-execute immediately
@@ -426,8 +477,11 @@ export async function handleTradeReceiveSelect(
           );
           await channel.send({ embeds: [expiredEmbed] });
         }
-      } catch {
-        // Trade may have already been resolved
+      } catch (error) {
+        console.error(
+          `Trade timer expired but failed to process trade ${trade.id}:`,
+          error,
+        );
       }
     });
 

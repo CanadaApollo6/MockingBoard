@@ -19,6 +19,7 @@ import {
   getPickRound,
 } from '@mockingboard/shared';
 import type { CpuTradeEvaluation } from '../services/trade.service.js';
+import { COLORS, DISCORD_SELECT_MAX } from '../constants.js';
 
 interface TeamInfo {
   name: string;
@@ -130,7 +131,7 @@ export function buildTradeProposalEmbed(
 
   const embed = new EmbedBuilder()
     .setTitle('Trade Proposal')
-    .setColor(0x5865f2)
+    .setColor(COLORS.BLURPLE)
     .addFields(
       {
         name: `${proposerName} offers:`,
@@ -201,7 +202,7 @@ export function buildCpuTradeProposalEmbed(
 
   const embed = new EmbedBuilder()
     .setTitle(`Trade Proposal to CPU (${cpuTeamName})`)
-    .setColor(evaluation.accept ? 0x57f287 : 0xed4245)
+    .setColor(evaluation.accept ? COLORS.GREEN : COLORS.RED)
     .addFields(
       {
         name: 'You offer:',
@@ -270,7 +271,7 @@ export function buildTradeAcceptedEmbed(
 
   const embed = new EmbedBuilder()
     .setTitle('Trade Accepted!')
-    .setColor(0x57f287)
+    .setColor(COLORS.GREEN)
     .setDescription(
       `${proposerName} and ${recipientName} have completed a trade.`,
     )
@@ -297,7 +298,7 @@ export function buildTradeRejectedEmbed(
 ) {
   const embed = new EmbedBuilder()
     .setTitle('Trade Rejected')
-    .setColor(0xed4245)
+    .setColor(COLORS.RED)
     .setDescription(
       `${recipientName} has rejected ${proposerName}'s trade proposal.`,
     );
@@ -308,7 +309,7 @@ export function buildTradeRejectedEmbed(
 export function buildTradeCancelledEmbed(proposerName: string) {
   const embed = new EmbedBuilder()
     .setTitle('Trade Cancelled')
-    .setColor(0x99aab5)
+    .setColor(COLORS.GREY)
     .setDescription(`${proposerName} has cancelled their trade proposal.`);
 
   return { embed };
@@ -320,7 +321,7 @@ export function buildTradeExpiredEmbed(
 ) {
   const embed = new EmbedBuilder()
     .setTitle('Trade Expired')
-    .setColor(0xffa500)
+    .setColor(COLORS.ORANGE)
     .setDescription(
       `The trade proposal from ${proposerName} to ${recipientName} has expired.`,
     );
@@ -331,7 +332,7 @@ export function buildTradeExpiredEmbed(
 export function buildTradePausedEmbed(draft: Draft, reason: string) {
   const embed = new EmbedBuilder()
     .setTitle('Draft Paused for Trade')
-    .setColor(0xffa500)
+    .setColor(COLORS.ORANGE)
     .setDescription(reason)
     .setFooter({ text: 'Draft will resume when the trade is resolved.' });
 
@@ -352,13 +353,13 @@ export function buildTradeTargetSelect(
 ) {
   const embed = new EmbedBuilder()
     .setTitle('Propose Trade')
-    .setColor(0x5865f2)
+    .setColor(COLORS.BLURPLE)
     .setDescription('Select a team to trade with:')
     .setFooter({
       text: 'CPU teams will evaluate trades using the Rich Hill value chart.',
     });
 
-  const options = targets.slice(0, 25).map((t) => ({
+  const options = targets.slice(0, DISCORD_SELECT_MAX).map((t) => ({
     label: t.name,
     value: t.id,
     description: t.isCpu ? 'CPU Team' : 'Human Player',
@@ -394,7 +395,7 @@ export function buildTradeGiveSelect(
 ) {
   const embed = new EmbedBuilder()
     .setTitle(`Trade with ${targetName}`)
-    .setColor(0x5865f2)
+    .setColor(COLORS.BLURPLE)
     .setDescription('Select the picks you want to **give**:')
     .setFooter({ text: 'You can select multiple picks.' });
 
@@ -417,7 +418,10 @@ export function buildTradeGiveSelect(
     };
   });
 
-  const options = [...currentOptions, ...futureOptions].slice(0, 25);
+  const options = [...currentOptions, ...futureOptions].slice(
+    0,
+    DISCORD_SELECT_MAX,
+  );
 
   if (options.length === 0) {
     embed.setDescription('You have no picks available to trade.');
@@ -467,7 +471,7 @@ export function buildTradeReceiveSelect(
 
   const embed = new EmbedBuilder()
     .setTitle(`Trade with ${targetName}`)
-    .setColor(0x5865f2)
+    .setColor(COLORS.BLURPLE)
     .setDescription(
       `You are giving: **${givingLabel}** (${givingValue.toFixed(1)} pts)\n\nSelect the picks you want to **receive**:`,
     )
@@ -492,7 +496,10 @@ export function buildTradeReceiveSelect(
     };
   });
 
-  const options = [...currentOptions, ...futureOptions].slice(0, 25);
+  const options = [...currentOptions, ...futureOptions].slice(
+    0,
+    DISCORD_SELECT_MAX,
+  );
 
   if (options.length === 0) {
     embed.setDescription(`${targetName} has no picks available to trade.`);

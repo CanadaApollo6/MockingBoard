@@ -8,6 +8,7 @@ import {
 } from 'discord.js';
 
 import type { PositionFilterGroup } from '@mockingboard/shared';
+import { checkRateLimit, COOLDOWNS } from '../services/rateLimit.service.js';
 
 // Import all handlers
 import {
@@ -106,8 +107,27 @@ async function handleAutocomplete(interaction: AutocompleteInteraction) {
 
 // ---- Button Router ----
 
+const ACTION_COOLDOWNS: Record<string, { action: string; cooldownMs: number }> =
+  {
+    pick: { action: 'pick', cooldownMs: COOLDOWNS.PICK },
+    trade: { action: 'trade', cooldownMs: COOLDOWNS.TRADE_PROPOSAL },
+    join: { action: 'join', cooldownMs: COOLDOWNS.JOIN_DRAFT },
+  };
+
 async function handleButton(interaction: ButtonInteraction) {
   const [action, id, ...rest] = interaction.customId.split(':');
+
+  const cooldown = ACTION_COOLDOWNS[action];
+  if (
+    cooldown &&
+    !checkRateLimit(interaction.user.id, cooldown.action, cooldown.cooldownMs)
+  ) {
+    await interaction.reply({
+      content: 'Slow down! Please wait a moment.',
+      ephemeral: true,
+    });
+    return;
+  }
 
   try {
     switch (action) {
@@ -124,17 +144,18 @@ async function handleButton(interaction: ButtonInteraction) {
 
       // Draft picking actions
       case 'pick':
-        await handlePickButton(interaction, id, rest[0]);
+        await handlePickButton(interaction, id, rest[0], Number(rest[1]));
         break;
       case 'filter':
         await handlePositionFilter(
           interaction,
           id,
           rest[0] as Exclude<PositionFilterGroup, null>,
+          Number(rest[1]),
         );
         break;
       case 'clearfilter':
-        await handlePositionFilter(interaction, id, null);
+        await handlePositionFilter(interaction, id, null, Number(rest[0]));
         break;
       case 'pause':
         await handlePause(interaction, id);
@@ -189,7 +210,7 @@ async function handleButton(interaction: ButtonInteraction) {
 // ---- Select Menu Router ----
 
 async function handleSelectMenu(interaction: StringSelectMenuInteraction) {
-  const [action, id] = interaction.customId.split(':');
+  const [action, id, ...rest] = interaction.customId.split(':');
 
   try {
     switch (action) {
@@ -199,11 +220,11 @@ async function handleSelectMenu(interaction: StringSelectMenuInteraction) {
 
       // Player browsing (from on-the-clock embed)
       case 'browse':
-        // Browse select menu returns player ID as value
         await handlePickButton(
-          interaction as unknown as ButtonInteraction,
+          interaction,
           id,
           interaction.values[0],
+          Number(rest[0]),
         );
         break;
 

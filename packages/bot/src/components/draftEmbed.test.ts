@@ -75,8 +75,8 @@ describe('draftEmbed', () => {
       const buttons = quickPickRow.components.map(
         (c) => c.toJSON() as { custom_id?: string },
       );
-      expect(buttons[0].custom_id).toBe('pick:draft-1:p1');
-      expect(buttons[1].custom_id).toBe('pick:draft-1:p2');
+      expect(buttons[0].custom_id).toBe('pick:draft-1:p1:1');
+      expect(buttons[1].custom_id).toBe('pick:draft-1:p2:1');
     });
 
     it('shows 5 filter buttons in first row', () => {
@@ -137,7 +137,7 @@ describe('draftEmbed', () => {
       // Row 2 should be browse select menu
       const browseRow = result.components[2];
       const menu = browseRow.components[0].toJSON() as { custom_id?: string };
-      expect(menu.custom_id).toBe('browse:draft-1');
+      expect(menu.custom_id).toBe('browse:draft-1:1');
     });
 
     it('has 4 rows for full layout', () => {
@@ -186,12 +186,12 @@ describe('draftEmbed', () => {
         .map((c) => c.toJSON() as { custom_id: string })
         .map((b) => b.custom_id);
 
-      expect(buttonIds).toContain('pick:draft-1:wr1');
-      expect(buttonIds).toContain('pick:draft-1:wr2');
-      expect(buttonIds).toContain('pick:draft-1:wr3');
-      expect(buttonIds).toContain('pick:draft-1:te1');
-      expect(buttonIds).not.toContain('pick:draft-1:qb1');
-      expect(buttonIds).not.toContain('pick:draft-1:rb1');
+      expect(buttonIds).toContain('pick:draft-1:wr1:1');
+      expect(buttonIds).toContain('pick:draft-1:wr2:1');
+      expect(buttonIds).toContain('pick:draft-1:wr3:1');
+      expect(buttonIds).toContain('pick:draft-1:te1:1');
+      expect(buttonIds).not.toContain('pick:draft-1:qb1:1');
+      expect(buttonIds).not.toContain('pick:draft-1:rb1:1');
     });
 
     it('shows Clear Filter button when filter is active', () => {
@@ -300,7 +300,7 @@ describe('draftEmbed', () => {
         slot,
         player,
         'Tennessee Titans',
-        false,
+        'human',
       );
 
       const json = result.embed.toJSON();
@@ -310,16 +310,16 @@ describe('draftEmbed', () => {
       expect(json.description).toContain('Tennessee Titans');
     });
 
-    it('labels auto-picks', () => {
+    it('labels CPU picks', () => {
       const result = buildPickAnnouncementEmbed(
         slot,
         makePlayer(),
         'Tennessee Titans',
-        true,
+        'cpu',
       );
 
       const json = result.embed.toJSON();
-      expect(json.title).toContain('Auto-Pick');
+      expect(json.title).toContain('CPU');
     });
   });
 

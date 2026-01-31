@@ -204,7 +204,7 @@ describe('draftLobby handlers', () => {
 
       expect(interaction.followUp).toHaveBeenCalledWith(
         expect.objectContaining({
-          content: 'This draft is no longer accepting players.',
+          content: expect.stringContaining('no longer accepting players'),
         }),
       );
     });
@@ -239,7 +239,7 @@ describe('draftLobby handlers', () => {
 
       expect(interaction.followUp).toHaveBeenCalledWith(
         expect.objectContaining({
-          content: 'This draft is no longer accepting players.',
+          content: expect.stringContaining('no longer accepting players'),
         }),
       );
     });
@@ -313,7 +313,7 @@ describe('draftLobby handlers', () => {
 
       expect(interaction.followUp).toHaveBeenCalledWith(
         expect.objectContaining({
-          content: 'This draft cannot be started.',
+          content: expect.stringContaining('cannot be started'),
         }),
       );
     });
@@ -353,7 +353,7 @@ describe('draftLobby handlers', () => {
 
       expect(interaction.followUp).toHaveBeenCalledWith(
         expect.objectContaining({
-          content: 'This draft is no longer accepting players.',
+          content: expect.stringContaining('no longer accepting players'),
         }),
       );
       expect(mockUpdateDraft).not.toHaveBeenCalled();
@@ -424,7 +424,7 @@ describe('draftLobby handlers', () => {
 
       expect(interaction.followUp).toHaveBeenCalledWith(
         expect.objectContaining({
-          content: 'This draft is no longer accepting players.',
+          content: expect.stringContaining('no longer accepting players'),
         }),
       );
     });
