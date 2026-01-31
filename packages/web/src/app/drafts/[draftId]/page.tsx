@@ -28,9 +28,7 @@ export default async function DraftDetailPage({
     getDraftTrades(draftId),
   ]);
 
-  const participantCount = Object.values(draft.teamAssignments).filter(
-    Boolean,
-  ).length;
+  const participantCount = Object.keys(draft.participants).length;
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8">

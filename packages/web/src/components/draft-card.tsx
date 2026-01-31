@@ -28,9 +28,7 @@ const STATUS_LABEL: Record<Draft['status'], string> = {
 };
 
 export function DraftCard({ draft }: { draft: Draft }) {
-  const participantCount = Object.values(draft.teamAssignments).filter(
-    Boolean,
-  ).length;
+  const participantCount = Object.keys(draft.participants).length;
   const totalPicks = draft.pickOrder.length;
   const picksMade = draft.pickedPlayerIds?.length ?? 0;
   const href =

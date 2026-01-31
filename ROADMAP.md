@@ -1,6 +1,6 @@
 # MockingBoard Development Roadmap
 
-## Phase 1: MVP — Discord Bot
+## Phase 1: MVP — Discord Bot ✓
 
 **Goal**: A functional Discord bot that can run a mock draft entirely within a Discord thread.
 
@@ -8,7 +8,7 @@
 
 - [x] Initialize monorepo structure (`/packages/bot`, `/packages/shared`)
 - [x] Configure TypeScript, ESLint, Prettier
-- [x] Set up Jest for testing
+- [x] Set up Vitest for testing
 - [x] Create Firebase project, initialize Firestore
 - [x] Set up Discord application and bot token
 - [x] Basic bot scaffolding with discord.js (connects, responds to ping)
@@ -40,7 +40,7 @@
 
 ### Milestone 1.5: Polish & Testing ✓
 
-- [x] Comprehensive unit tests for draft logic (123 tests, up from 56)
+- [x] Comprehensive unit tests for draft logic (218 tests across all packages)
 - [x] Error handling and user-friendly error messages (custom error classes, timer error handling)
 - [x] Rate limiting and basic abuse prevention (rateLimit.service.ts)
 - [x] Documentation for bot commands (/help command, bot README)
@@ -60,36 +60,61 @@
 
 ---
 
-## Phase 2: Web App — Draft History
+## Phase 2: Web App — Draft History ✓
 
-**Goal**: A minimal web application where users can view their past drafts.
+**Goal**: A web application where users can view draft history and watch live drafts.
 
-### Milestone 2.1: Web Setup
+### Milestone 2.1: Web Setup ✓
 
-- [ ] Initialize `/packages/web` with Next.js or Remix
-- [ ] Configure Tailwind CSS
-- [ ] Set up Firebase Auth (Discord OAuth provider)
-- [ ] Basic layout and navigation
+- [x] Initialize `/packages/web` with Next.js 16 (App Router, TypeScript, Tailwind v4)
+- [x] Configure shadcn/ui component library (new-york style, neutral base)
+- [x] Wire into Turborepo monorepo with `transpilePackages` for shared
+- [x] Basic layout and navigation (header, landing page)
 
-### Milestone 2.2: Identity Linking
+### Milestone 2.2: Firebase Integration ✓
 
-- [ ] Login with Discord flow
-- [ ] Link Discord ID to Firebase Auth UID
-- [ ] Update bot to recognize linked accounts
+- [x] Firebase Admin SDK for server-side Firestore access
+- [x] Firebase Client SDK (lazy init) for real-time listeners
+- [x] Discord OAuth → Firebase custom token (uid=discordId) → session cookie
+- [x] Auth context provider with sign in/out
+- [x] Secrets management via Google Secret Manager
 
-### Milestone 2.3: Draft History View
+### Milestone 2.3: Draft History View ✓
 
-- [ ] List view of user's past drafts (date, format, teams involved)
-- [ ] Detail view of individual draft (pick-by-pick breakdown)
-- [ ] Filter/search drafts by date, format, team drafted
-- [ ] Mobile-responsive design
+- [x] List view of drafts with status badges, dates, participant counts
+- [x] "My Drafts" tab filtered by authenticated user's Discord ID
+- [x] Detail view with pick-by-pick draft board and trade summaries
+- [x] Loading skeletons for all pages
+- [x] Mobile-responsive design (grid layouts, responsive tables)
 
-### Milestone 2.4: Deploy
+### Milestone 2.4: Live Spectating ✓
 
-- [ ] Deploy web app (Vercel, Firebase Hosting, or Cloud Run)
-- [ ] Custom domain setup
+- [x] Real-time draft view with Firestore `onSnapshot` listeners
+- [x] "On the Clock" header with current team and progress bar
+- [x] SSR initial paint with client-side real-time hydration
+- [x] Automatic routing: active drafts link to live view
 
-**Phase 2 Complete**: Users can log in and view all drafts they've participated in.
+### Milestone 2.5: Deploy ✓
+
+- [x] Firebase App Hosting configuration (apphosting.yaml, Cloud Run)
+- [x] Cross-platform dependency resolution (lightningcss, SWC)
+- [x] Turborepo `packageManager` field for build server
+- [x] Reverse proxy origin detection for OAuth redirects (APP_URL env var)
+- [x] Service Account Token Creator role for `createCustomToken`
+- [x] Production deployment live and verified
+
+**Phase 2 Complete**: Users can log in with Discord, browse all drafts, view pick boards, and spectate live.
+
+---
+
+## Phase 2.5: Brand & Polish ← CURRENT
+
+**Goal**: Establish visual identity and fix known issues before building new features.
+
+- [ ] Brand restyle: blue jay color scheme matching logo (update CSS variables in globals.css)
+- [ ] Add logo to header and landing page hero
+- [ ] Fix drafter count for single-user all-teams drafts (use `participants` map, not `teamAssignments`)
+- [ ] Clean up debug auth error codes with user-facing messages
 
 ---
 
@@ -97,30 +122,47 @@
 
 **Goal**: Users can run drafts through the web app, not just Discord.
 
-### Milestone 3.1: Draft Creation
+### Milestone 3.0: Shared Package Extraction
 
-- [ ] Create draft form (rounds, teams, invite friends)
-- [ ] Invite system (share link or invite by username)
-- [ ] Lobby view while waiting for participants
+Extract platform-agnostic business logic from bot services to `packages/shared`. This is the critical path — every web draft feature depends on it.
 
-### Milestone 3.2: Live Draft UI
+- [ ] CPU pick logic (`selectCpuPick`, `CPU_PICK_WEIGHTS`) → `shared/src/cpu.ts`
+- [ ] Pick controller resolution (`getPickController`) → `shared/src/draft.ts`
+- [ ] Draft order building (pure ordering logic) → `shared/src/draft.ts`
+- [ ] Trade validation functions (6 pure functions) → `shared/src/trade.ts`
+- [ ] CPU trade evaluation (`evaluateCpuTrade`) → `shared/src/trade.ts`
+- [ ] Trade execution (pure `computeTradeResult`) → `shared/src/trade.ts`
+- [ ] Update bot imports to use shared; all 218 tests must pass throughout
 
-- [ ] Real-time draft board (Firestore listeners)
-- [ ] On-the-clock interface with player selection
-- [ ] Player list with filtering (position, school, search)
-- [ ] Pick confirmation and announcement
-- [ ] Chat/reactions sidebar (optional, lightweight)
+### Milestone 3.1: Solo Draft Mode
 
-### Milestone 3.3: Solo Draft Mode
+- [ ] Draft creation form (year, rounds, format, team, CPU speed, trades toggle)
+- [ ] Interactive picking UI with player search and position filters
+- [ ] Server-side CPU pick advancement (synchronous in pick API route)
+- [ ] Server-side `recordPickAndAdvance` equivalent (Firestore transaction via Admin SDK)
+- [ ] Full draft lifecycle on web: create → pick → complete
 
-- [ ] CPU opponent logic (draft by ADP with some variance)
-- [ ] Visible CPU "personalities" (team tendencies, reported interests)
-- [ ] Optional: post-pick beat reporter flavor text
+### Milestone 3.2: Independent Auth (Email/Password)
 
-### Milestone 3.4: Sync Between Platforms
+- [ ] Enable Email/Password provider in Firebase Console
+- [ ] Login page with both Discord and email/password options
+- [ ] Sign-up page with account creation
+- [ ] Update `User` type: make `discordId` optional, add `email`, `displayName`
+- [ ] Fix `getUserDrafts` to look up by `firebaseUid` instead of `discordId`
+- [ ] Account linking: Discord ↔ email via settings page
 
-- [ ] Drafts started in Discord can be viewed live on web
-- [ ] Drafts started on web send notifications to Discord (optional integration)
+### Milestone 3.3: Multiplayer Draft Rooms
+
+- [ ] Room creation with privacy settings (public listing / invite-link-only)
+- [ ] Lobby page with real-time participant list and shareable invite link
+- [ ] Join flow: invite link → auth check → team selection → join
+- [ ] Multiplayer turn management via Firestore real-time listeners
+- [ ] Timer support via `clockExpiresAt` field + server-side validation
+
+### Milestone 3.4: Platform Sync
+
+- [ ] Drafts started in Discord viewable live on web (already works via shared Firestore)
+- [ ] Drafts started on web optionally send Discord notifications
 
 **Phase 3 Complete**: Full draft functionality on web, with Discord as an alternative entry point.
 
@@ -170,7 +212,7 @@
 
 - [ ] Ingest actual NFL draft results (manual entry initially, API later)
 - [ ] Score predictions against real results
-- [ ] Scoring algorithm: exact pick, correct round, correct team, etc.
+- [ ] Scoring algorithm in `shared/src/scoring.ts`: exact pick, correct round, correct team, etc.
 
 ### Milestone 5.3: Leaderboards
 
@@ -178,6 +220,7 @@
 - [ ] Leaderboard by server/community
 - [ ] Historical leaderboards (by year)
 - [ ] "Bold take" bonus: extra credit for correctly predicting reaches/slides
+- [ ] Filter: "vs all users", "vs analysts", "vs friends"
 
 ### Milestone 5.4: Receipts & Sharing
 
@@ -190,95 +233,120 @@
 - [ ] Ingest analyst mock drafts (similar to Mock Draft Database)
 - [ ] Display analyst predictions alongside user mocks
 - [ ] Include analysts in leaderboard comparisons
-- [ ] Filter leaderboard: "vs all users", "vs analysts only", "vs friends"
 
 **Phase 5 Complete**: Full accountability system with year-round leaderboard engagement.
 
 ---
 
-## Phase 6: Big Board Builder
+## Phase 6: Cost & Monetization
+
+**Goal**: Sustainable cost structure with a paid tier. No ads, ever.
+
+### Milestone 6.1: Cost Optimization
+
+- [ ] Optimize `getUserDrafts` query (denormalized subcollection vs. fetch-and-filter)
+- [ ] Cache player data (read-heavy, rarely changes)
+- [ ] Monitor Firestore reads from real-time listeners during active drafts
+- [ ] GCP budget alerts and spending dashboards
+
+### Milestone 6.2: Custom Domain
+
+- [ ] Register domain
+- [ ] Configure via Firebase App Hosting console (DNS verification)
+
+### Milestone 6.3: Paid Tier (Stripe)
+
+- [ ] Stripe integration (webhook handler, subscription management)
+- [ ] Pricing page
+- [ ] Premium features: unlimited draft history, advanced leaderboard filters, custom room settings, scouting profiles, draft result exports
+
+**Phase 6 Complete**: Revenue offsets hosting costs; free tier remains generous.
+
+---
+
+## Phase 7: Big Board Builder
 
 **Goal**: Users can create and maintain their own prospect rankings.
 
-### Milestone 6.1: Board Creation
+### Milestone 7.1: Board Creation
 
 - [ ] Drag-and-drop interface for ranking players
 - [ ] Start from consensus ADP or blank
 - [ ] Add custom players (for deep sleepers)
 
-### Milestone 6.2: Philosophy Weighting
+### Milestone 7.2: Philosophy Weighting
 
 - [ ] User sets preferences: athleticism vs. production, positional value, conference trust, etc.
 - [ ] System generates recommended board based on weights
 - [ ] User can accept, modify, or ignore recommendations
 
-### Milestone 6.3: Board Integration
+### Milestone 7.3: Board Integration
 
 - [ ] Use personal board during drafts (sort available players by your ranking)
 - [ ] Compare your board to consensus, friends, experts
 - [ ] Track how your board evolves over time
 
-**Phase 6 Complete**: Users have a living, personalized big board integrated into the draft experience.
+**Phase 7 Complete**: Users have a living, personalized big board integrated into the draft experience.
 
 ---
 
-## Phase 7: iMessage Integration
+## Phase 8: iMessage Integration
 
 **Goal**: Bring the in-chat draft experience to iMessage.
 
-### Milestone 7.1: Research & Prototyping
+### Milestone 8.1: Research & Prototyping
 
 - [ ] Explore iMessage app extension capabilities and constraints
 - [ ] Prototype basic message sending from extension
 - [ ] Determine minimum viable UX within iMessage limitations
 
-### Milestone 7.2: Implementation
+### Milestone 8.2: Implementation
 
 - [ ] iMessage extension for draft participation
 - [ ] Compact pick interface (fits iMessage app drawer)
 - [ ] Send pick results as iMessage to group chat
 
-### Milestone 7.3: Feature Parity
+### Milestone 8.3: Feature Parity
 
 - [ ] Match core Discord functionality where possible
 - [ ] Graceful degradation for features that can't translate
 
-**Phase 7 Complete**: Users can draft in iMessage group chats.
+**Phase 8 Complete**: Users can draft in iMessage group chats.
 
 ---
 
-## Phase 8: GM Mode / Offseason Simulator
+## Phase 9: GM Mode / Offseason Simulator
 
 **Goal**: Full offseason simulation for content creators and serious fans.
 
 **Prerequisites**: Research NFL salary cap mechanics, contract structures, free agency rules.
 
-### Milestone 8.1: Salary Cap Foundation
+### Milestone 9.1: Salary Cap Foundation
 
 - [ ] Research and document NFL salary cap rules
 - [ ] Ingest contract data (source TBD - may need manual curation or paid API)
 - [ ] Model cap hits, dead money, restructures
 - [ ] Team cap situation snapshots by date
 
-### Milestone 8.2: Team Forking
+### Milestone 9.2: Team Forking
 
 - [ ] "Fork" a team from a specific date (like git branches)
 - [ ] Multiple save files per user
 - [ ] Name and describe each scenario
 
-### Milestone 8.3: Free Agency Simulation
+### Milestone 9.3: Free Agency Simulation
 
 - [ ] Available free agents list
 - [ ] Sign players with cap implications
 - [ ] CPU teams make signings too (optional realism)
 
-### Milestone 8.4: Integrated Draft
+### Milestone 9.4: Integrated Draft
 
 - [ ] Use forked team in mock drafts
 - [ ] Picks reflect trades made in scenario
 - [ ] Draft results save back to scenario
 
-**Phase 8 Complete**: Content creators can create "what if" scenarios and return to them over time.
+**Phase 9 Complete**: Content creators can create "what if" scenarios and return to them over time.
 
 ---
 
@@ -292,3 +360,4 @@
 - **Paid data integration**: Licensed scouting reports, combine data
 - **Full NFL trade simulator**: Akin to the NBA trade emulator with full accountings of cap rules
 - **Multi-faceted and multi-step cap manager**: Comprehensive cap manager with the ability to see the implications of multiple moves at once/in sequence (example: automate move this year into future years alongside multiple other moves)
+- **Expansion to other pro sports leagues (NBA, NHL, MLB)**: Taking this process feature set from just the NFL all the way into the other 3 of the 4 major North American sports
