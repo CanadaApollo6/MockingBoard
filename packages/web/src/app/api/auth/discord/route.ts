@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getOrigin } from '@/lib/url';
 
 const DISCORD_AUTH_URL = 'https://discord.com/api/oauth2/authorize';
 
@@ -11,8 +12,8 @@ export async function GET(request: Request) {
     );
   }
 
-  const url = new URL(request.url);
-  const redirectUri = `${url.origin}/api/auth/discord/callback`;
+  const origin = getOrigin(request);
+  const redirectUri = `${origin}/api/auth/discord/callback`;
 
   // CSRF protection via random state
   const state = crypto.randomUUID();

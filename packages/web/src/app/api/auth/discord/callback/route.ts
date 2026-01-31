@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { adminDb, adminAuth } from '@/lib/firebase-admin';
+import { getOrigin } from '@/lib/url';
 
 const DISCORD_TOKEN_URL = 'https://discord.com/api/oauth2/token';
 const DISCORD_USER_URL = 'https://discord.com/api/users/@me';
@@ -12,6 +13,7 @@ interface DiscordUser {
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
+  const origin = getOrigin(request);
   const code = url.searchParams.get('code');
   const state = url.searchParams.get('state');
 
@@ -24,7 +26,7 @@ export async function GET(request: Request) {
   const savedState = stateCookie?.split('=')[1];
 
   if (!code || !state || state !== savedState) {
-    return NextResponse.redirect(new URL('/?error=auth_failed', url.origin));
+    return NextResponse.redirect(new URL('/?error=auth_failed', origin));
   }
 
   try {
@@ -37,13 +39,13 @@ export async function GET(request: Request) {
         client_secret: process.env.DISCORD_CLIENT_SECRET!,
         grant_type: 'authorization_code',
         code,
-        redirect_uri: `${url.origin}/api/auth/discord/callback`,
+        redirect_uri: `${origin}/api/auth/discord/callback`,
       }),
     });
 
     if (!tokenRes.ok) {
       console.error('Discord token exchange failed:', await tokenRes.text());
-      return NextResponse.redirect(new URL('/?error=auth_failed', url.origin));
+      return NextResponse.redirect(new URL('/?error=auth_failed', origin));
     }
 
     const { access_token } = await tokenRes.json();
@@ -55,7 +57,7 @@ export async function GET(request: Request) {
 
     if (!userRes.ok) {
       console.error('Discord user fetch failed:', await userRes.text());
-      return NextResponse.redirect(new URL('/?error=auth_failed', url.origin));
+      return NextResponse.redirect(new URL('/?error=auth_failed', origin));
     }
 
     const discordUser: DiscordUser = await userRes.json();
@@ -68,7 +70,7 @@ export async function GET(request: Request) {
     const customToken = await adminAuth.createCustomToken(discordUser.id);
 
     // Redirect to client callback page with the token
-    const callbackUrl = new URL('/auth/callback', url.origin);
+    const callbackUrl = new URL('/auth/callback', origin);
     callbackUrl.searchParams.set('token', customToken);
 
     const response = NextResponse.redirect(callbackUrl);
@@ -77,7 +79,7 @@ export async function GET(request: Request) {
     return response;
   } catch (error) {
     console.error('Discord OAuth callback error:', error);
-    return NextResponse.redirect(new URL('/?error=auth_failed', url.origin));
+    return NextResponse.redirect(new URL('/?error=auth_failed', origin));
   }
 }
 
