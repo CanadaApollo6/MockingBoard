@@ -26,7 +26,8 @@ export async function GET(request: Request) {
   const savedState = stateCookie?.split('=')[1];
 
   if (!code || !state || state !== savedState) {
-    return NextResponse.redirect(new URL('/?error=auth_failed', origin));
+    const reason = !code ? 'no_code' : !state ? 'no_state' : 'state_mismatch';
+    return NextResponse.redirect(new URL(`/?error=csrf_${reason}`, origin));
   }
 
   try {
@@ -45,7 +46,7 @@ export async function GET(request: Request) {
 
     if (!tokenRes.ok) {
       console.error('Discord token exchange failed:', await tokenRes.text());
-      return NextResponse.redirect(new URL('/?error=auth_failed', origin));
+      return NextResponse.redirect(new URL('/?error=token_exchange', origin));
     }
 
     const { access_token } = await tokenRes.json();
@@ -57,7 +58,7 @@ export async function GET(request: Request) {
 
     if (!userRes.ok) {
       console.error('Discord user fetch failed:', await userRes.text());
-      return NextResponse.redirect(new URL('/?error=auth_failed', origin));
+      return NextResponse.redirect(new URL('/?error=discord_profile', origin));
     }
 
     const discordUser: DiscordUser = await userRes.json();
@@ -79,7 +80,7 @@ export async function GET(request: Request) {
     return response;
   } catch (error) {
     console.error('Discord OAuth callback error:', error);
-    return NextResponse.redirect(new URL('/?error=auth_failed', origin));
+    return NextResponse.redirect(new URL('/?error=callback_exception', origin));
   }
 }
 

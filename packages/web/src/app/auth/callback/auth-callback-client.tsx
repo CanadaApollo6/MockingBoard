@@ -16,7 +16,7 @@ export function AuthCallbackClient() {
 
     const token = searchParams.get('token');
     if (!token) {
-      router.replace('/?error=auth_failed');
+      router.replace('/?error=no_token');
       return;
     }
 
@@ -25,16 +25,21 @@ export function AuthCallbackClient() {
         const credential = await signInWithCustomToken(getClientAuth(), token!);
         const idToken = await credential.user.getIdToken();
 
-        await fetch('/api/auth/session', {
+        const sessionRes = await fetch('/api/auth/session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ idToken }),
         });
 
+        if (!sessionRes.ok) {
+          router.replace('/?error=session_create');
+          return;
+        }
+
         router.replace('/drafts');
       } catch (error) {
         console.error('Auth callback failed:', error);
-        router.replace('/?error=auth_failed');
+        router.replace('/?error=client_auth');
       }
     }
 
