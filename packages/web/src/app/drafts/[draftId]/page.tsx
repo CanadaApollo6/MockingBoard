@@ -6,6 +6,7 @@ import {
   getPlayerMap,
   getDraftTrades,
 } from '@/lib/data';
+import { getSessionUser } from '@/lib/auth-session';
 import { formatDraftDate } from '@/lib/format';
 import { DraftBoard } from '@/components/draft-board';
 import { TradeSummary } from '@/components/trade-summary';
@@ -22,13 +23,15 @@ export default async function DraftDetailPage({
   const draft = await getDraft(draftId);
   if (!draft) notFound();
 
-  const [picks, playerMap, trades] = await Promise.all([
+  const [picks, playerMap, trades, session] = await Promise.all([
     getDraftPicks(draftId),
     getPlayerMap(draft.config.year),
     getDraftTrades(draftId),
+    getSessionUser(),
   ]);
 
   const participantCount = Object.keys(draft.participants).length;
+  const isParticipant = session && draft.participants[session.uid];
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8">
@@ -56,7 +59,7 @@ export default async function DraftDetailPage({
         {draft.status === 'active' && (
           <Link href={`/drafts/${draftId}/live`}>
             <Button className="mt-3" size="sm">
-              Watch Live
+              {isParticipant ? 'Continue Draft' : 'Watch Live'}
             </Button>
           </Link>
         )}

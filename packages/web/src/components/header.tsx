@@ -26,6 +26,12 @@ export function Header() {
             >
               Drafts
             </Link>
+            <Link
+              href="/drafts/new"
+              className="text-muted-foreground transition-colors hover:text-foreground"
+            >
+              New Draft
+            </Link>
           </nav>
         </div>
         <div className="flex items-center gap-2">

@@ -1,0 +1,69 @@
+import { NextResponse } from 'next/server';
+import { getSessionUser } from '@/lib/auth-session';
+import { createWebTrade } from '@/lib/draft-actions';
+import { adminDb } from '@/lib/firebase-admin';
+import type { Draft, TeamAbbreviation, TradePiece } from '@mockingboard/shared';
+
+export async function POST(
+  request: Request,
+  { params }: { params: Promise<{ draftId: string }> },
+) {
+  const session = await getSessionUser();
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { draftId } = await params;
+
+  let body: {
+    recipientTeam: TeamAbbreviation;
+    proposerGives: TradePiece[];
+    proposerReceives: TradePiece[];
+  };
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json(
+      { error: 'Invalid request body' },
+      { status: 400 },
+    );
+  }
+
+  try {
+    const draftDoc = await adminDb.collection('drafts').doc(draftId).get();
+    if (!draftDoc.exists) {
+      return NextResponse.json({ error: 'Draft not found' }, { status: 404 });
+    }
+    const draft = { id: draftDoc.id, ...draftDoc.data() } as Draft;
+
+    const proposerTeam = Object.entries(draft.teamAssignments).find(
+      ([, uid]) => uid === session.uid,
+    )?.[0] as TeamAbbreviation | undefined;
+
+    if (!proposerTeam) {
+      return NextResponse.json(
+        { error: 'You are not controlling a team' },
+        { status: 403 },
+      );
+    }
+
+    const { trade, evaluation } = await createWebTrade({
+      draftId,
+      proposerId: session.uid,
+      proposerTeam,
+      recipientTeam: body.recipientTeam,
+      proposerGives: body.proposerGives,
+      proposerReceives: body.proposerReceives,
+    });
+
+    return NextResponse.json({ trade, evaluation });
+  } catch (err) {
+    console.error('Failed to create trade:', err);
+    return NextResponse.json(
+      {
+        error: err instanceof Error ? err.message : 'Failed to create trade',
+      },
+      { status: 500 },
+    );
+  }
+}
