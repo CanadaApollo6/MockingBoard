@@ -37,8 +37,13 @@ export default async function Home({
         )}
 
         <div className="mt-8 flex justify-center gap-3">
+          <Link href="/drafts/new">
+            <Button size="lg">Mock Draft Now</Button>
+          </Link>
           <Link href="/drafts">
-            <Button size="lg">View Drafts</Button>
+            <Button variant="outline" size="lg">
+              View Drafts
+            </Button>
           </Link>
           <Link href="/auth">
             <Button variant="outline" size="lg">

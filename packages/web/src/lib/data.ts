@@ -3,6 +3,11 @@ import 'server-only';
 import { adminDb } from './firebase-admin';
 import type { Draft, Pick, Player, Trade } from '@mockingboard/shared';
 
+/** Strip Firestore class instances (Timestamp, etc.) to plain serializable objects. */
+function sanitize<T>(data: T): T {
+  return JSON.parse(JSON.stringify(data));
+}
+
 export async function getDrafts(options?: {
   status?: Draft['status'];
   limit?: number;
@@ -15,13 +20,15 @@ export async function getDrafts(options?: {
   if (options?.limit) query = query.limit(options.limit);
 
   const snapshot = await query.get();
-  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Draft);
+  return sanitize(
+    snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Draft),
+  );
 }
 
 export async function getDraft(draftId: string): Promise<Draft | null> {
   const doc = await adminDb.collection('drafts').doc(draftId).get();
   if (!doc.exists) return null;
-  return { id: doc.id, ...doc.data() } as Draft;
+  return sanitize({ id: doc.id, ...doc.data() } as Draft);
 }
 
 export async function getDraftPicks(draftId: string): Promise<Pick[]> {
@@ -32,7 +39,9 @@ export async function getDraftPicks(draftId: string): Promise<Pick[]> {
     .orderBy('overall')
     .get();
 
-  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Pick);
+  return sanitize(
+    snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Pick),
+  );
 }
 
 export async function getPlayerMap(year: number): Promise<Map<string, Player>> {
@@ -43,7 +52,7 @@ export async function getPlayerMap(year: number): Promise<Map<string, Player>> {
 
   const map = new Map<string, Player>();
   for (const doc of snapshot.docs) {
-    map.set(doc.id, { id: doc.id, ...doc.data() } as Player);
+    map.set(doc.id, sanitize({ id: doc.id, ...doc.data() } as Player));
   }
   return map;
 }
@@ -55,7 +64,9 @@ export async function getDraftTrades(draftId: string): Promise<Trade[]> {
     .where('status', '==', 'accepted')
     .get();
 
-  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Trade);
+  return sanitize(
+    snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Trade),
+  );
 }
 
 export async function getUserDrafts(

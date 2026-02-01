@@ -65,8 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (snap.exists()) {
         const data = snap.data();
         setProfile({
-          displayName:
-            data.displayName ?? data.discordUsername ?? 'User',
+          displayName: data.displayName ?? data.discordUsername ?? 'User',
           email: data.email,
           discordUsername: data.discordUsername,
           hasDiscord: !!data.discordId,

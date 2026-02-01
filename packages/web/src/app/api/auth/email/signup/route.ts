@@ -54,8 +54,7 @@ export async function POST(request: Request) {
   } catch (err) {
     console.error('Email signup failed:', err);
 
-    const message =
-      err instanceof Error ? err.message : 'Signup failed';
+    const message = err instanceof Error ? err.message : 'Signup failed';
 
     // Firebase Auth errors have a `code` property
     const code = (err as { code?: string }).code;

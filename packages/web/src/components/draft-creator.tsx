@@ -2,12 +2,14 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { teams, type TeamSeed } from '@mockingboard/shared';
 import type {
   TeamAbbreviation,
   DraftFormat,
   CpuSpeed,
 } from '@mockingboard/shared';
+import { useAuth } from '@/components/auth-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -24,6 +26,8 @@ for (const team of teams) {
 
 export function DraftCreator() {
   const router = useRouter();
+  const { user } = useAuth();
+  const isGuest = !user;
   const [year, setYear] = useState(2026);
   const [rounds, setRounds] = useState(3);
   const [format, setFormat] = useState<DraftFormat>('single-team');
@@ -42,6 +46,19 @@ export function DraftCreator() {
   async function handleSubmit() {
     if (format === 'single-team' && !selectedTeam) {
       setError('Please select a team');
+      return;
+    }
+
+    if (isGuest) {
+      const params = new URLSearchParams({
+        year: String(year),
+        rounds: String(rounds),
+        format,
+        cpuSpeed,
+        trades: String(tradesEnabled),
+      });
+      if (selectedTeam) params.set('team', selectedTeam);
+      router.push(`/drafts/guest?${params}`);
       return;
     }
 
@@ -220,12 +237,28 @@ export function DraftCreator() {
 
       {error && <p className="text-sm text-destructive">{error}</p>}
 
+      {isGuest && (
+        <div className="rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-muted-foreground">
+          <Link
+            href="/auth"
+            className="font-medium text-primary hover:underline"
+          >
+            Sign in
+          </Link>{' '}
+          to save your draft history and access your picks later.
+        </div>
+      )}
+
       <Button
         className="w-full"
         onClick={handleSubmit}
         disabled={submitting || (format === 'single-team' && !selectedTeam)}
       >
-        {submitting ? 'Creating Draft...' : 'Start Draft'}
+        {submitting
+          ? 'Creating Draft...'
+          : isGuest
+            ? 'Start Guest Draft'
+            : 'Start Draft'}
       </Button>
     </div>
   );

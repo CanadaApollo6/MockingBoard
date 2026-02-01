@@ -8,9 +8,7 @@ import type { Draft, User } from '@mockingboard/shared';
  * Checks firebaseUid first, then falls back to discordId for legacy
  * sessions where Discord ID was used as the Firebase UID.
  */
-export async function resolveUser(
-  firebaseUid: string,
-): Promise<User | null> {
+export async function resolveUser(firebaseUid: string): Promise<User | null> {
   // Primary: look up by firebaseUid field
   const byFirebase = await adminDb
     .collection('users')
