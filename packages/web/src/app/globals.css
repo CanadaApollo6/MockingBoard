@@ -46,6 +46,18 @@
 
 :root {
   --radius: 0.625rem;
+
+  /* Position group colors — strong identity, same in light/dark */
+  --pos-qb: oklch(0.72 0.14 200);
+  --pos-wr: oklch(0.65 0.2 25);
+  --pos-te: oklch(0.68 0.15 55);
+  --pos-rb: oklch(0.7 0.18 55);
+  --pos-ol: oklch(0.65 0.12 145);
+  --pos-dl: oklch(0.6 0.18 290);
+  --pos-edge: oklch(0.6 0.18 290);
+  --pos-lb: oklch(0.65 0.12 175);
+  --pos-cb: oklch(0.72 0.14 85);
+  --pos-s: oklch(0.72 0.14 85);
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -80,6 +92,18 @@
 }
 
 .dark {
+  /* Position group colors — same as light theme for strong identity */
+  --pos-qb: oklch(0.72 0.14 200);
+  --pos-wr: oklch(0.65 0.2 25);
+  --pos-te: oklch(0.68 0.15 55);
+  --pos-rb: oklch(0.7 0.18 55);
+  --pos-ol: oklch(0.65 0.12 145);
+  --pos-dl: oklch(0.6 0.18 290);
+  --pos-edge: oklch(0.6 0.18 290);
+  --pos-lb: oklch(0.65 0.12 175);
+  --pos-cb: oklch(0.72 0.14 85);
+  --pos-s: oklch(0.72 0.14 85);
+
   --background: oklch(0.16 0.02 255);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.21 0.02 255);

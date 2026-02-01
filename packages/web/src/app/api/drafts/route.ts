@@ -70,14 +70,16 @@ export async function POST(request: Request) {
     }
 
     const user = await resolveUser(session.uid);
+    const discordId = user?.discordId ?? session.uid;
 
     const draft = await createWebDraft({
       userId: session.uid,
-      discordId: user?.discordId ?? session.uid,
+      discordId,
       config: { rounds, format, year, cpuSpeed, tradesEnabled },
       teamAssignments,
       pickOrder,
       futurePicks,
+      participantIds: [...new Set([session.uid, discordId])],
     });
 
     return NextResponse.json({ draftId: draft.id });

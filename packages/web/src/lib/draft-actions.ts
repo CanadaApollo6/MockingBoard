@@ -2,6 +2,11 @@ import 'server-only';
 
 import { FieldValue } from 'firebase-admin/firestore';
 import { adminDb } from './firebase-admin';
+import {
+  getCachedDraftOrderSlots,
+  getCachedTeamDocs,
+  getCachedPlayers,
+} from './cache';
 import type {
   Draft,
   DraftFormat,
@@ -38,25 +43,19 @@ export async function buildPickOrder(
   rounds: number,
   year: number,
 ): Promise<DraftSlot[]> {
-  const doc = await adminDb.collection('draftOrders').doc(`${year}`).get();
-  const data = doc.data();
-  if (!data?.slots) {
-    throw new Error(`No draft order found for year ${year}`);
-  }
-  return filterAndSortPickOrder(data.slots as DraftSlot[], rounds);
+  const slots = await getCachedDraftOrderSlots(year);
+  return filterAndSortPickOrder(slots, rounds);
 }
 
 export async function buildFuturePicks(
   draftYear: number,
 ): Promise<FutureDraftPick[]> {
   const allTeamIds = teams.map((t) => t.id);
-  const teamDocs = await adminDb.collection('teams').get();
+  const cachedTeams = await getCachedTeamDocs();
 
   const seededPicksByTeam: Record<string, FuturePickSeed[] | undefined> = {};
-  for (const doc of teamDocs.docs) {
-    seededPicksByTeam[doc.id] = doc.data().futurePicks as
-      | FuturePickSeed[]
-      | undefined;
+  for (const doc of cachedTeams) {
+    seededPicksByTeam[doc.id] = doc.futurePicks;
   }
 
   return buildFuturePicksFromSeeds(draftYear, allTeamIds, seededPicksByTeam);
@@ -75,6 +74,7 @@ export interface CreateWebDraftInput {
   teamAssignments: Record<TeamAbbreviation, string | null>;
   pickOrder: DraftSlot[];
   futurePicks: FutureDraftPick[];
+  participantIds: string[];
 }
 
 export async function createWebDraft(
@@ -94,6 +94,7 @@ export async function createWebDraft(
     currentRound: 1,
     teamAssignments: input.teamAssignments,
     participants: { [input.userId]: input.discordId },
+    participantIds: input.participantIds,
     pickOrder: input.pickOrder,
     futurePicks: input.futurePicks,
     pickedPlayerIds: [] as string[],
@@ -178,26 +179,22 @@ export async function getAvailablePlayers(
   year: number,
   pickedPlayerIds: string[],
 ): Promise<Player[]> {
-  const snapshot = await adminDb
-    .collection('players')
-    .where('year', '==', year)
-    .orderBy('consensusRank')
-    .get();
-
+  const allPlayers = await getCachedPlayers(year);
   const pickedSet = new Set(pickedPlayerIds);
-  return snapshot.docs
-    .map((doc) => ({ id: doc.id, ...doc.data() }) as Player)
-    .filter((p) => !pickedSet.has(p.id));
+  return allPlayers.filter((p) => !pickedSet.has(p.id));
 }
 
 /**
  * Run all consecutive CPU picks until the next human pick or draft completion.
  * Returns all CPU picks made.
+ *
+ * Players are loaded once and filtered in-memory to avoid repeated Firestore reads.
  */
 export async function runCpuCascade(
   draftId: string,
 ): Promise<{ picks: Pick[]; isComplete: boolean }> {
   const cpuPicks: Pick[] = [];
+  let allPlayers: Player[] | null = null;
 
   while (true) {
     const draftDoc = await adminDb.collection('drafts').doc(draftId).get();
@@ -219,11 +216,12 @@ export async function runCpuCascade(
       return { picks: cpuPicks, isComplete: false };
     }
 
-    // CPU pick
-    const available = await getAvailablePlayers(
-      draft.config.year,
-      draft.pickedPlayerIds ?? [],
-    );
+    // Lazy-load players once, then filter in memory
+    if (!allPlayers) {
+      allPlayers = await getAvailablePlayers(draft.config.year, []);
+    }
+    const pickedSet = new Set(draft.pickedPlayerIds ?? []);
+    const available = allPlayers.filter((p) => !pickedSet.has(p.id));
     if (available.length === 0) break;
 
     const teamSeed = teamSeeds.get(currentSlot.team);

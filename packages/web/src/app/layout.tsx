@@ -1,8 +1,17 @@
 import type { Metadata } from 'next';
+import { Inter, Barlow_Condensed } from 'next/font/google';
 import { ThemeProvider } from '@/components/theme-provider';
 import { AuthProvider } from '@/components/auth-provider';
 import { Header } from '@/components/header';
 import './globals.css';
+
+const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
+
+const barlowCondensed = Barlow_Condensed({
+  subsets: ['latin'],
+  weight: ['600', '700', '800'],
+  variable: '--font-display',
+});
 
 export const metadata: Metadata = {
   title: 'MockingBoard',
@@ -16,7 +25,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="min-h-screen bg-background text-foreground antialiased">
+      <body
+        className={`${inter.variable} ${barlowCondensed.variable} min-h-screen bg-background font-[family-name:var(--font-sans)] text-foreground antialiased`}
+      >
         <ThemeProvider>
           <AuthProvider>
             <Header />

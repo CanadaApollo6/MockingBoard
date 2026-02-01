@@ -32,6 +32,12 @@ export function Header() {
             >
               New Draft
             </Link>
+            <Link
+              href="/invite"
+              className="text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Add Bot
+            </Link>
           </nav>
         </div>
         <div className="flex items-center gap-2">

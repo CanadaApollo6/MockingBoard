@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { adminDb } from './firebase-admin';
+import { getCachedPlayerMap } from './cache';
 import type { Draft, Pick, Player, Trade } from '@mockingboard/shared';
 
 /** Strip Firestore class instances (Timestamp, etc.) to plain serializable objects. */
@@ -17,7 +18,7 @@ export async function getDrafts(options?: {
     .orderBy('createdAt', 'desc');
 
   if (options?.status) query = query.where('status', '==', options.status);
-  if (options?.limit) query = query.limit(options.limit);
+  query = query.limit(options?.limit ?? 50);
 
   const snapshot = await query.get();
   return sanitize(
@@ -45,16 +46,7 @@ export async function getDraftPicks(draftId: string): Promise<Pick[]> {
 }
 
 export async function getPlayerMap(year: number): Promise<Map<string, Player>> {
-  const snapshot = await adminDb
-    .collection('players')
-    .where('year', '==', year)
-    .get();
-
-  const map = new Map<string, Player>();
-  for (const doc of snapshot.docs) {
-    map.set(doc.id, sanitize({ id: doc.id, ...doc.data() } as Player));
-  }
-  return map;
+  return getCachedPlayerMap(year);
 }
 
 export async function getDraftTrades(draftId: string): Promise<Trade[]> {
@@ -73,14 +65,16 @@ export async function getUserDrafts(
   userId: string,
   discordId?: string,
 ): Promise<Draft[]> {
-  // Firestore can't query map values, so fetch recent drafts and filter
-  const allDrafts = await getDrafts({ limit: 100 });
-  return allDrafts.filter((d) => {
-    const keys = Object.keys(d.participants);
-    const values = Object.values(d.participants);
-    if (keys.includes(userId) || values.includes(userId)) return true;
-    if (discordId && (keys.includes(discordId) || values.includes(discordId)))
-      return true;
-    return false;
-  });
+  const ids = [userId, ...(discordId ? [discordId] : [])];
+
+  const snapshot = await adminDb
+    .collection('drafts')
+    .where('participantIds', 'array-contains-any', ids)
+    .orderBy('createdAt', 'desc')
+    .limit(50)
+    .get();
+
+  return sanitize(
+    snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Draft),
+  );
 }
