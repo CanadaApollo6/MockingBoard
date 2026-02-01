@@ -1,5 +1,6 @@
 import { getDrafts, getUserDrafts } from '@/lib/data';
 import { getSessionUser } from '@/lib/auth-session';
+import { resolveUser } from '@/lib/user-resolve';
 import { DraftCard } from '@/components/draft-card';
 
 export default async function DraftsPage({
@@ -11,8 +12,9 @@ export default async function DraftsPage({
   const session = await getSessionUser();
   const showMyDrafts = tab === 'mine' && session;
 
+  const user = showMyDrafts ? await resolveUser(session.uid) : null;
   const drafts = showMyDrafts
-    ? await getUserDrafts(session.uid)
+    ? await getUserDrafts(session.uid, user?.discordId)
     : await getDrafts();
 
   return (

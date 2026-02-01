@@ -7,6 +7,7 @@ import {
   getDraftTrades,
 } from '@/lib/data';
 import { getSessionUser } from '@/lib/auth-session';
+import { resolveUser, isUserInDraft } from '@/lib/user-resolve';
 import { formatDraftDate } from '@/lib/format';
 import { DraftBoard } from '@/components/draft-board';
 import { TradeSummary } from '@/components/trade-summary';
@@ -31,7 +32,9 @@ export default async function DraftDetailPage({
   ]);
 
   const participantCount = Object.keys(draft.participants).length;
-  const isParticipant = session && draft.participants[session.uid];
+  const user = session ? await resolveUser(session.uid) : null;
+  const isParticipant =
+    session && isUserInDraft(draft, session.uid, user?.discordId);
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8">

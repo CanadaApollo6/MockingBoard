@@ -58,10 +58,18 @@ export async function getDraftTrades(draftId: string): Promise<Trade[]> {
   return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Trade);
 }
 
-export async function getUserDrafts(discordId: string): Promise<Draft[]> {
+export async function getUserDrafts(
+  userId: string,
+  discordId?: string,
+): Promise<Draft[]> {
   // Firestore can't query map values, so fetch recent drafts and filter
   const allDrafts = await getDrafts({ limit: 100 });
-  return allDrafts.filter((d) =>
-    Object.values(d.participants).includes(discordId),
-  );
+  return allDrafts.filter((d) => {
+    const keys = Object.keys(d.participants);
+    const values = Object.values(d.participants);
+    if (keys.includes(userId) || values.includes(userId)) return true;
+    if (discordId && (keys.includes(discordId) || values.includes(discordId)))
+      return true;
+    return false;
+  });
 }

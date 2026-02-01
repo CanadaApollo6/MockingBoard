@@ -18,11 +18,12 @@ service cloud.firestore {
     }
 
     // Check if user is a participant in a draft
-    // Note: participants map is {internalUserId: discordId}
-    // For Phase 2, we'll need to update this to check firebaseUid
+    // Checks both keys (Firestore doc IDs) and values (Discord IDs)
+    // to handle bot drafts, legacy web drafts, and new web drafts
     function isDraftParticipant(draftId) {
+      let p = get(/databases/$(database)/documents/drafts/$(draftId)).data.participants;
       return isAuthenticated() &&
-        request.auth.uid in get(/databases/$(database)/documents/drafts/$(draftId)).data.participants.values();
+        (request.auth.uid in p || request.auth.uid in p.values());
     }
 
     // ============================================

@@ -5,6 +5,7 @@ import {
   buildFuturePicks,
   createWebDraft,
 } from '@/lib/draft-actions';
+import { resolveUser } from '@/lib/user-resolve';
 import { teams } from '@mockingboard/shared';
 import type {
   TeamAbbreviation,
@@ -68,9 +69,11 @@ export async function POST(request: Request) {
       }
     }
 
+    const user = await resolveUser(session.uid);
+
     const draft = await createWebDraft({
       userId: session.uid,
-      discordId: session.uid,
+      discordId: user?.discordId ?? session.uid,
       config: { rounds, format, year, cpuSpeed, tradesEnabled },
       teamAssignments,
       pickOrder,

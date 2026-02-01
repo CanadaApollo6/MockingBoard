@@ -63,12 +63,12 @@ export async function GET(request: Request) {
 
     const discordUser: DiscordUser = await userRes.json();
 
-    // Lookup or create Firestore user by discordId
-    await ensureFirestoreUser(discordUser);
+    // Lookup or create Firestore user, get doc ID as canonical internal ID
+    const userDocId = await ensureFirestoreUser(discordUser);
 
-    // Create Firebase custom token using Discord ID as the UID
-    // This aligns with Firestore rules that check participants.values() (Discord IDs)
-    const customToken = await adminAuth.createCustomToken(discordUser.id);
+    // Create Firebase custom token using Firestore doc ID as the UID
+    // This gives a unified identity model: session.uid = Firestore doc ID
+    const customToken = await adminAuth.createCustomToken(userDocId);
 
     // Redirect to client callback page with the token
     const callbackUrl = new URL('/auth/callback', origin);
@@ -84,7 +84,7 @@ export async function GET(request: Request) {
   }
 }
 
-async function ensureFirestoreUser(discordUser: DiscordUser) {
+async function ensureFirestoreUser(discordUser: DiscordUser): Promise<string> {
   const usersRef = adminDb.collection('users');
   const snapshot = await usersRef
     .where('discordId', '==', discordUser.id)
@@ -92,27 +92,33 @@ async function ensureFirestoreUser(discordUser: DiscordUser) {
     .get();
 
   if (!snapshot.empty) {
-    // Update username/avatar and link firebaseUid if not set
     const doc = snapshot.docs[0];
-    const data = doc.data();
     const updates: Record<string, unknown> = {
       discordUsername: discordUser.username,
+      displayName: discordUser.username,
+      updatedAt: new Date(),
     };
     if (discordUser.avatar) updates.discordAvatar = discordUser.avatar;
-    if (!data.firebaseUid) updates.firebaseUid = discordUser.id;
-
+    // Migrate firebaseUid to doc ID if it was set to the Discord ID
+    if (doc.data().firebaseUid !== doc.id) {
+      updates.firebaseUid = doc.id;
+    }
     await doc.ref.update(updates);
-    return;
+    return doc.id;
   }
 
   // Create new user
   const now = new Date();
-  await usersRef.add({
+  const docRef = await usersRef.add({
     discordId: discordUser.id,
     discordUsername: discordUser.username,
+    displayName: discordUser.username,
     ...(discordUser.avatar && { discordAvatar: discordUser.avatar }),
-    firebaseUid: discordUser.id,
+    firebaseUid: '',
     createdAt: now,
     updatedAt: now,
   });
+  // Set firebaseUid to the doc ID
+  await docRef.update({ firebaseUid: docRef.id });
+  return docRef.id;
 }

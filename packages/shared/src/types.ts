@@ -98,9 +98,11 @@ export interface PreferenceWeights {
 
 export interface User {
   id: string;
-  discordId: string;
+  displayName: string;
+  email?: string;
+  discordId?: string;
   firebaseUid?: string;
-  discordUsername: string;
+  discordUsername?: string;
   discordAvatar?: string;
   createdAt: FirestoreTimestamp;
   updatedAt: FirestoreTimestamp;

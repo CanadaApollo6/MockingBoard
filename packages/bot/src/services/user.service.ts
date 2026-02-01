@@ -22,6 +22,7 @@ export async function getOrCreateUser(
   const userData = {
     discordId,
     discordUsername,
+    displayName: discordUsername,
     ...(discordAvatar && { discordAvatar }),
     createdAt: now,
     updatedAt: now,

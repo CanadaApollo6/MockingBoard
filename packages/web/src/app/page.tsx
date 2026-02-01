@@ -40,11 +40,11 @@ export default async function Home({
           <Link href="/drafts">
             <Button size="lg">View Drafts</Button>
           </Link>
-          <a href="/api/auth/discord">
+          <Link href="/auth">
             <Button variant="outline" size="lg">
-              Sign in with Discord
+              Sign In
             </Button>
-          </a>
+          </Link>
         </div>
       </div>
     </main>
