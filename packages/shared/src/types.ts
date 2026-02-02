@@ -196,8 +196,17 @@ export interface Player {
     armLength?: number;
     handSize?: number;
     captain?: boolean;
-    yearInSchool?: 'FR' | 'SO' | 'JR' | 'SR';
+    yearInSchool?:
+      | 'FR'
+      | 'SO'
+      | 'JR'
+      | 'SR'
+      | 'RS-FR'
+      | 'RS-SO'
+      | 'RS-JR'
+      | 'RS-SR';
     gamesStarted?: number;
+    previousSchools?: string[];
   };
   scouting?: {
     summary?: string;

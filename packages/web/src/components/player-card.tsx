@@ -19,6 +19,10 @@ const YEAR_LABELS: Record<string, string> = {
   SO: 'Sophomore',
   JR: 'Junior',
   SR: 'Senior',
+  'RS-FR': 'RS-Freshman',
+  'RS-SO': 'RS-Sophomore',
+  'RS-JR': 'RS-Junior',
+  'RS-SR': 'RS-Senior',
 };
 
 function formatHeight(inches: number): string {
@@ -65,7 +69,7 @@ export function PlayerCard({
       initial={{ opacity: 0, y: 12, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -8, scale: 0.98 }}
-      transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+      transition={{ type: 'spring', damping: 28, stiffness: 350 }}
       className="overflow-hidden rounded-lg border border-mb-border-strong bg-card"
       style={schoolColorStyle(player.school)}
     >
@@ -113,6 +117,11 @@ export function PlayerCard({
             {player.name}
           </h3>
           <p className="mt-0.5 text-sm text-muted-foreground">{subtitle}</p>
+          {attributes?.previousSchools?.length ? (
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              via {attributes.previousSchools.join(', ')}
+            </p>
+          ) : null}
         </div>
 
         {/* Physical profile */}
