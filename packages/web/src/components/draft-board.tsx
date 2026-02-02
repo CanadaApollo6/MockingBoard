@@ -1,7 +1,12 @@
 'use client';
 
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import type { Pick, Player, TeamAbbreviation } from '@mockingboard/shared';
+import type {
+  Pick,
+  Player,
+  TeamAbbreviation,
+  DraftSlot,
+} from '@mockingboard/shared';
 import { getTeamName } from '@/lib/teams';
 import { getTeamColor } from '@/lib/team-colors';
 import { getPositionColor } from '@/lib/position-colors';
@@ -17,33 +22,49 @@ import {
 interface DraftBoardProps {
   picks: Pick[];
   playerMap: Map<string, Player>;
+  pickOrder?: DraftSlot[];
+  currentPick?: number;
   groupByRound?: boolean;
 }
 
 export function DraftBoard({
   picks,
   playerMap,
+  pickOrder,
+  currentPick,
   groupByRound = true,
 }: DraftBoardProps) {
   const shouldReduce = useReducedMotion();
+  const hasFullBoard = pickOrder && pickOrder.length > 0;
 
-  if (picks.length === 0) {
+  if (!hasFullBoard && picks.length === 0) {
     return (
       <p className="py-8 text-center text-muted-foreground">No picks yet.</p>
     );
   }
 
-  // Group picks by round
-  const rounds = new Map<number, Pick[]>();
-  for (const pick of picks) {
-    const roundPicks = rounds.get(pick.round) ?? [];
-    roundPicks.push(pick);
-    rounds.set(pick.round, roundPicks);
+  // Build lookup from overall pick number → completed pick
+  const pickMap = new Map(picks.map((p) => [p.overall, p]));
+
+  // Group by round: full board uses pickOrder slots, fallback uses completed picks
+  const rounds = new Map<number, DraftSlot[] | Pick[]>();
+  if (hasFullBoard) {
+    for (const slot of pickOrder) {
+      const items = (rounds.get(slot.round) as DraftSlot[] | undefined) ?? [];
+      items.push(slot);
+      rounds.set(slot.round, items);
+    }
+  } else {
+    for (const pick of picks) {
+      const items = (rounds.get(pick.round) as Pick[] | undefined) ?? [];
+      items.push(pick);
+      rounds.set(pick.round, items);
+    }
   }
 
   return (
     <div className="space-y-6">
-      {Array.from(rounds.entries()).map(([round, roundPicks]) => (
+      {Array.from(rounds.entries()).map(([round, roundItems]) => (
         <div key={round}>
           {groupByRound && rounds.size > 1 && (
             <h3 className="mb-2 text-sm font-medium text-muted-foreground">
@@ -64,14 +85,34 @@ export function DraftBoard({
               </TableHeader>
               <TableBody>
                 <AnimatePresence initial={false}>
-                  {roundPicks.map((pick) => (
-                    <PickRow
-                      key={pick.overall}
-                      pick={pick}
-                      player={playerMap.get(pick.playerId)}
-                      shouldReduce={shouldReduce ?? false}
-                    />
-                  ))}
+                  {hasFullBoard
+                    ? (roundItems as DraftSlot[]).map((slot) => {
+                        const pick = pickMap.get(slot.overall);
+                        if (pick) {
+                          return (
+                            <PickRow
+                              key={slot.overall}
+                              pick={pick}
+                              player={playerMap.get(pick.playerId)}
+                              shouldReduce={shouldReduce ?? false}
+                            />
+                          );
+                        }
+                        if (slot.overall === currentPick) {
+                          return (
+                            <OnTheClockRow key={slot.overall} slot={slot} />
+                          );
+                        }
+                        return <EmptyRow key={slot.overall} slot={slot} />;
+                      })
+                    : (roundItems as Pick[]).map((pick) => (
+                        <PickRow
+                          key={pick.overall}
+                          pick={pick}
+                          player={playerMap.get(pick.playerId)}
+                          shouldReduce={shouldReduce ?? false}
+                        />
+                      ))}
                 </AnimatePresence>
               </TableBody>
             </Table>
@@ -138,5 +179,54 @@ function PickRow({
         {player?.consensusRank ?? '—'}
       </TableCell>
     </motion.tr>
+  );
+}
+
+function OnTheClockRow({ slot }: { slot: DraftSlot }) {
+  const teamColor = getTeamColor(slot.team as TeamAbbreviation).primary;
+
+  return (
+    <motion.tr
+      initial={{ opacity: 0 }}
+      animate={{
+        opacity: 1,
+        backgroundColor: [`${teamColor}0A`, `${teamColor}1A`, `${teamColor}0A`],
+      }}
+      transition={{
+        opacity: { duration: 0.3 },
+        backgroundColor: { duration: 3, repeat: Infinity, ease: 'easeInOut' },
+      }}
+      style={{ borderLeft: `3px solid ${teamColor}` }}
+      className="border-b"
+    >
+      <TableCell className="font-mono text-mb-accent">{slot.overall}</TableCell>
+      <TableCell className="font-medium">
+        {getTeamName(slot.team as TeamAbbreviation)}
+      </TableCell>
+      <TableCell colSpan={4} className="font-medium text-mb-accent">
+        On the Clock
+      </TableCell>
+    </motion.tr>
+  );
+}
+
+function EmptyRow({ slot }: { slot: DraftSlot }) {
+  const teamColor = getTeamColor(slot.team as TeamAbbreviation).primary;
+
+  return (
+    <tr
+      style={{ borderLeft: `3px solid ${teamColor}` }}
+      className="border-b opacity-40"
+    >
+      <TableCell className="font-mono text-mb-text-tertiary">
+        {slot.overall}
+      </TableCell>
+      <TableCell className="text-mb-text-tertiary">
+        {getTeamName(slot.team as TeamAbbreviation)}
+      </TableCell>
+      <TableCell colSpan={4} className="text-mb-text-tertiary">
+        —
+      </TableCell>
+    </tr>
   );
 }

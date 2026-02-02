@@ -269,7 +269,12 @@ export function DraftRoom({
 
   const boardNode = (
     <>
-      <DraftBoard picks={visiblePicks} playerMap={playerMap} />
+      <DraftBoard
+        picks={visiblePicks}
+        playerMap={playerMap}
+        pickOrder={draft?.pickOrder}
+        currentPick={draft?.currentPick}
+      />
       <div>
         <div className="mb-1 flex justify-between text-xs text-muted-foreground">
           <span>

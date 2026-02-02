@@ -158,7 +158,12 @@ export function GuestDraftRoom({ initialDraft, players }: GuestDraftRoomProps) {
 
   const boardNode = (
     <>
-      <DraftBoard picks={picks} playerMap={playerMap} />
+      <DraftBoard
+        picks={picks}
+        playerMap={playerMap}
+        pickOrder={draft.pickOrder}
+        currentPick={draft.currentPick}
+      />
       <div>
         <div className="mb-1 flex justify-between text-xs text-muted-foreground">
           <span>

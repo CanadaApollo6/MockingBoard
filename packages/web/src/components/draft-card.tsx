@@ -1,6 +1,7 @@
 import Link from 'next/link';
-import type { Draft } from '@mockingboard/shared';
+import type { Draft, TeamAbbreviation } from '@mockingboard/shared';
 import { formatDraftDate } from '@/lib/format';
+import { getTeamColor } from '@/lib/team-colors';
 import { Badge } from '@/components/ui/badge';
 import {
   Card,
@@ -31,6 +32,7 @@ export function DraftCard({ draft }: { draft: Draft }) {
   const participantCount = Object.keys(draft.participants).length;
   const totalPicks = draft.pickOrder.length;
   const picksMade = draft.pickedPlayerIds?.length ?? 0;
+  const teams = Object.keys(draft.teamAssignments) as TeamAbbreviation[];
   const href =
     draft.status === 'active'
       ? `/drafts/${draft.id}/live`
@@ -60,10 +62,28 @@ export function DraftCard({ draft }: { draft: Draft }) {
             </span>
             {draft.status === 'complete' && <span>{picksMade} picks</span>}
             {draft.status === 'active' && totalPicks > 0 && (
-              <span>
-                Pick {picksMade}/{totalPicks}
-              </span>
+              <div className="flex items-center gap-2">
+                <span>
+                  Pick {picksMade}/{totalPicks}
+                </span>
+                <div className="h-1.5 w-16 overflow-hidden rounded-full bg-mb-border">
+                  <div
+                    className="h-full rounded-full bg-mb-accent transition-all"
+                    style={{ width: `${(picksMade / totalPicks) * 100}%` }}
+                  />
+                </div>
+              </div>
             )}
+          </div>
+          <div className="mt-2 flex flex-wrap gap-1">
+            {teams.map((team) => (
+              <div
+                key={team}
+                className="h-2 w-2 rounded-full"
+                style={{ backgroundColor: getTeamColor(team).primary }}
+                title={team}
+              />
+            ))}
           </div>
         </CardContent>
       </Card>
