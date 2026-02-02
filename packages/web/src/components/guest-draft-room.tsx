@@ -14,11 +14,12 @@ import {
   type CpuTradeEvaluation,
 } from '@mockingboard/shared';
 import { useGuestDraft } from '@/hooks/use-guest-draft';
-import { getTeamName } from '@/lib/teams';
 import { PlayerPicker } from '@/components/player-picker';
 import { DraftBoard } from '@/components/draft-board';
 import { TradeModal } from '@/components/trade-modal';
 import { TradeResult } from '@/components/trade-result';
+import { DraftClock } from '@/components/draft-clock';
+import { DraftLayout } from '@/components/draft-layout';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
@@ -121,35 +122,29 @@ export function GuestDraftRoom({ initialDraft, players }: GuestDraftRoomProps) {
     [tradeResult, executeTrade],
   );
 
-  return (
-    <div className="space-y-6">
-      {/* Sign-up encouragement banner */}
-      <div className="rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-muted-foreground">
-        You are drafting as a guest.{' '}
-        <Link href="/auth" className="font-medium text-primary hover:underline">
-          Sign in
-        </Link>{' '}
-        to save your draft history and resume drafts later.
-      </div>
+  const bannerNode = (
+    <div className="rounded-lg border border-mb-accent/20 bg-mb-accent-muted px-4 py-3 text-sm text-muted-foreground">
+      You are drafting as a guest.{' '}
+      <Link href="/auth" className="font-medium text-primary hover:underline">
+        Sign in
+      </Link>{' '}
+      to save your draft history and resume drafts later.
+    </div>
+  );
 
-      {/* On the Clock */}
-      {isActive && clockTeam && (
-        <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
-          <div className="flex items-center gap-3">
-            <Badge>On the Clock</Badge>
-            <span className="text-lg font-bold">
-              {getTeamName(clockTeam as TeamAbbreviation)}
-            </span>
-            {isUserTurn && !isProcessing && (
-              <Badge variant="outline">Your Pick</Badge>
-            )}
-          </div>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Round {clockRound}, Pick {clockPickNum} (Overall #{clockOverall})
-          </p>
-        </div>
+  const clockNode = (
+    <>
+      {isActive && clockTeam && clockRound && clockPickNum && clockOverall && (
+        <DraftClock
+          overall={clockOverall}
+          picksMade={picks.length}
+          total={totalPicks}
+          team={clockTeam as TeamAbbreviation}
+          round={clockRound}
+          pick={clockPickNum}
+          isUserTurn={isUserTurn && !isProcessing}
+        />
       )}
-
       {isComplete && (
         <div className="rounded-lg border bg-muted/50 p-4">
           <Badge variant="secondary">Complete</Badge>
@@ -158,8 +153,12 @@ export function GuestDraftRoom({ initialDraft, players }: GuestDraftRoomProps) {
           </p>
         </div>
       )}
+    </>
+  );
 
-      {/* Progress Bar */}
+  const boardNode = (
+    <>
+      <DraftBoard picks={picks} playerMap={playerMap} />
       <div>
         <div className="mb-1 flex justify-between text-xs text-muted-foreground">
           <span>
@@ -174,10 +173,13 @@ export function GuestDraftRoom({ initialDraft, players }: GuestDraftRoomProps) {
           />
         </div>
       </div>
+    </>
+  );
 
+  const sidebarNode = (
+    <>
       {error && <p className="text-sm text-destructive">{error}</p>}
 
-      {/* Trade controls */}
       {canTrade && (
         <Button variant="outline" size="sm" onClick={() => setShowTrade(true)}>
           Propose Trade
@@ -204,7 +206,6 @@ export function GuestDraftRoom({ initialDraft, players }: GuestDraftRoomProps) {
         />
       )}
 
-      {/* Player Picker */}
       {isActive &&
         isUserTurn &&
         !isProcessing &&
@@ -217,15 +218,20 @@ export function GuestDraftRoom({ initialDraft, players }: GuestDraftRoomProps) {
           />
         )}
 
-      {/* Waiting for CPU */}
       {isActive && isProcessing && !showTrade && !tradeResult && (
         <div className="py-4 text-center text-sm text-muted-foreground">
           CPU picks rolling in...
         </div>
       )}
+    </>
+  );
 
-      {/* Pick Board */}
-      <DraftBoard picks={picks} playerMap={playerMap} />
-    </div>
+  return (
+    <DraftLayout
+      banner={bannerNode}
+      clock={clockNode}
+      board={boardNode}
+      sidebar={sidebarNode}
+    />
   );
 }

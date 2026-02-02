@@ -5,6 +5,7 @@ import type { Player, PositionFilterGroup } from '@mockingboard/shared';
 import { POSITION_GROUPS } from '@mockingboard/shared';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { getPositionColor } from '@/lib/position-colors';
 import { cn } from '@/lib/utils';
 
 interface PlayerPickerProps {
@@ -63,7 +64,7 @@ export function PlayerPicker({ players, onPick, disabled }: PlayerPickerProps) {
         placeholder="Search players..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+        className="w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:shadow-[var(--shadow-glow)]"
       />
 
       <div className="flex flex-wrap gap-1.5">
@@ -89,10 +90,18 @@ export function PlayerPicker({ players, onPick, disabled }: PlayerPickerProps) {
       </div>
 
       {selectedPlayer && (
-        <div className="flex items-center justify-between rounded-md border border-primary/30 bg-primary/5 p-3">
+        <div className="flex items-center justify-between rounded-md border border-mb-accent/30 bg-mb-accent-muted p-3">
           <div className="flex items-center gap-2">
             <span className="font-medium">{selectedPlayer.name}</span>
-            <Badge variant="secondary">{selectedPlayer.position}</Badge>
+            <Badge
+              style={{
+                backgroundColor: getPositionColor(selectedPlayer.position),
+                color: '#0A0A0B',
+              }}
+              className="text-xs"
+            >
+              {selectedPlayer.position}
+            </Badge>
             <span className="text-sm text-muted-foreground">
               {selectedPlayer.school}
             </span>
@@ -135,7 +144,13 @@ export function PlayerPicker({ players, onPick, disabled }: PlayerPickerProps) {
                   </td>
                   <td className="p-2 font-medium">{player.name}</td>
                   <td className="p-2">
-                    <Badge variant="secondary" className="text-xs">
+                    <Badge
+                      style={{
+                        backgroundColor: getPositionColor(player.position),
+                        color: '#0A0A0B',
+                      }}
+                      className="text-xs"
+                    >
                       {player.position}
                     </Badge>
                   </td>

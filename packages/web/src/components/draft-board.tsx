@@ -1,5 +1,10 @@
+'use client';
+
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import type { Pick, Player, TeamAbbreviation } from '@mockingboard/shared';
 import { getTeamName } from '@/lib/teams';
+import { getTeamColor } from '@/lib/team-colors';
+import { getPositionColor } from '@/lib/position-colors';
 import { Badge } from '@/components/ui/badge';
 import {
   Table,
@@ -7,7 +12,6 @@ import {
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
 } from '@/components/ui/table';
 
 interface DraftBoardProps {
@@ -21,6 +25,8 @@ export function DraftBoard({
   playerMap,
   groupByRound = true,
 }: DraftBoardProps) {
+  const shouldReduce = useReducedMotion();
+
   if (picks.length === 0) {
     return (
       <p className="py-8 text-center text-muted-foreground">No picks yet.</p>
@@ -47,23 +53,26 @@ export function DraftBoard({
           <div className="overflow-x-auto rounded-md border">
             <Table>
               <TableHeader>
-                <TableRow>
+                <tr className="border-b">
                   <TableHead className="w-14">#</TableHead>
                   <TableHead>Team</TableHead>
                   <TableHead>Player</TableHead>
                   <TableHead className="w-16">Pos</TableHead>
                   <TableHead className="hidden sm:table-cell">School</TableHead>
                   <TableHead className="w-16 text-right">Rank</TableHead>
-                </TableRow>
+                </tr>
               </TableHeader>
               <TableBody>
-                {roundPicks.map((pick) => (
-                  <PickRow
-                    key={pick.overall}
-                    pick={pick}
-                    player={playerMap.get(pick.playerId)}
-                  />
-                ))}
+                <AnimatePresence initial={false}>
+                  {roundPicks.map((pick) => (
+                    <PickRow
+                      key={pick.overall}
+                      pick={pick}
+                      player={playerMap.get(pick.playerId)}
+                      shouldReduce={shouldReduce ?? false}
+                    />
+                  ))}
+                </AnimatePresence>
               </TableBody>
             </Table>
           </div>
@@ -73,11 +82,29 @@ export function DraftBoard({
   );
 }
 
-function PickRow({ pick, player }: { pick: Pick; player: Player | undefined }) {
+function PickRow({
+  pick,
+  player,
+  shouldReduce,
+}: {
+  pick: Pick;
+  player: Player | undefined;
+  shouldReduce: boolean;
+}) {
   const isCpu = pick.userId === null;
+  const teamColor = getTeamColor(pick.team as TeamAbbreviation).primary;
+  const posColor = player?.position
+    ? getPositionColor(player.position)
+    : undefined;
 
   return (
-    <TableRow>
+    <motion.tr
+      initial={shouldReduce ? false : { opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+      style={{ borderLeft: `3px solid ${teamColor}` }}
+      className="border-b transition-colors hover:bg-muted/50"
+    >
       <TableCell className="font-mono text-muted-foreground">
         {pick.overall}
       </TableCell>
@@ -93,7 +120,16 @@ function PickRow({ pick, player }: { pick: Pick; player: Player | undefined }) {
         )}
       </TableCell>
       <TableCell>
-        <Badge variant="secondary">{player?.position ?? '—'}</Badge>
+        {posColor ? (
+          <Badge
+            style={{ backgroundColor: posColor, color: '#0A0A0B' }}
+            className="text-xs"
+          >
+            {player?.position}
+          </Badge>
+        ) : (
+          <Badge variant="secondary">&mdash;</Badge>
+        )}
       </TableCell>
       <TableCell className="hidden text-muted-foreground sm:table-cell">
         {player?.school ?? '—'}
@@ -101,6 +137,6 @@ function PickRow({ pick, player }: { pick: Pick; player: Player | undefined }) {
       <TableCell className="text-right font-mono text-muted-foreground">
         {player?.consensusRank ?? '—'}
       </TableCell>
-    </TableRow>
+    </motion.tr>
   );
 }

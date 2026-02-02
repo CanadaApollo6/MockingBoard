@@ -4,13 +4,25 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
-  --radius-3xl: calc(var(--radius) + 12px);
-  --radius-4xl: calc(var(--radius) + 16px);
+  /* Radii — fixed values from design system */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-2xl: 32px;
+  --radius-full: 9999px;
+
+  /* Shadows — dark-optimized */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.6);
+  --shadow-glow: 0 0 20px rgba(61, 255, 160, 0.15);
+
+  /* Font — mono */
+  --font-mono: var(--font-mono);
+
+  /* Shadcn semantic colors */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -42,11 +54,30 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* MockingBoard design system colors */
+  --color-mb-black: var(--mb-black);
+  --color-mb-surface: var(--mb-surface);
+  --color-mb-surface-hover: var(--mb-surface-hover);
+  --color-mb-surface-active: var(--mb-surface-active);
+  --color-mb-border: var(--mb-border);
+  --color-mb-border-strong: var(--mb-border-strong);
+  --color-mb-text-primary: var(--mb-text-primary);
+  --color-mb-text-secondary: var(--mb-text-secondary);
+  --color-mb-text-tertiary: var(--mb-text-tertiary);
+  --color-mb-accent: var(--mb-accent);
+  --color-mb-accent-hover: var(--mb-accent-hover);
+  --color-mb-accent-muted: var(--mb-accent-muted);
+  --color-mb-danger: var(--mb-danger);
+  --color-mb-warning: var(--mb-warning);
+  --color-mb-success: var(--mb-success);
+
+  /* Team colors (set dynamically via inline styles) */
+  --color-team-primary: var(--team-primary);
+  --color-team-secondary: var(--team-secondary);
 }
 
 :root {
-  --radius: 0.625rem;
-
   /* Position group colors — strong identity, same in light/dark */
   --pos-qb: oklch(0.72 0.14 200);
   --pos-wr: oklch(0.65 0.2 25);
@@ -58,37 +89,66 @@
   --pos-lb: oklch(0.65 0.12 175);
   --pos-cb: oklch(0.72 0.14 85);
   --pos-s: oklch(0.72 0.14 85);
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.45 0.22 255);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.96 0.015 255);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.94 0.03 255);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0.01 255);
-  --input: oklch(0.922 0.01 255);
-  --ring: oklch(0.55 0.18 255);
-  --chart-1: oklch(0.55 0.22 255);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.45 0.22 255);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.94 0.03 255);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0.01 255);
-  --sidebar-ring: oklch(0.55 0.18 255);
+
+  /* Team color defaults (overridden inline per-context) */
+  --team-primary: #00c468;
+  --team-secondary: #d5d5da;
+
+  /* MockingBoard design tokens — light mode */
+  --mb-black: #ffffff;
+  --mb-surface: #f5f5f7;
+  --mb-surface-hover: #ebebef;
+  --mb-surface-active: #e0e0e5;
+  --mb-border: #d5d5da;
+  --mb-border-strong: #c0c0c8;
+  --mb-text-primary: #0a0a0b;
+  --mb-text-secondary: #6a6a72;
+  --mb-text-tertiary: #a0a0a8;
+  --mb-accent: #00c468;
+  --mb-accent-hover: #00a858;
+  --mb-accent-muted: rgba(0, 196, 104, 0.1);
+  --mb-danger: #e03e56;
+  --mb-warning: #d9952e;
+  --mb-success: #00c468;
+
+  /* Shadcn semantic mappings — light */
+  --background: #ffffff;
+  --foreground: #0a0a0b;
+  --card: #f5f5f7;
+  --card-foreground: #0a0a0b;
+  --popover: #ffffff;
+  --popover-foreground: #0a0a0b;
+  --primary: #00c468;
+  --primary-foreground: #ffffff;
+  --secondary: #ebebef;
+  --secondary-foreground: #0a0a0b;
+  --muted: #ebebef;
+  --muted-foreground: #6a6a72;
+  --accent: #e0e0e5;
+  --accent-foreground: #0a0a0b;
+  --destructive: #e03e56;
+  --border: #d5d5da;
+  --input: #d5d5da;
+  --ring: #00c468;
+  --chart-1: #00c468;
+  --chart-2: #008e97;
+  --chart-3: #003594;
+  --chart-4: #ffb612;
+  --chart-5: #fb4f14;
+  --sidebar: #f5f5f7;
+  --sidebar-foreground: #0a0a0b;
+  --sidebar-primary: #00c468;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e0e0e5;
+  --sidebar-accent-foreground: #0a0a0b;
+  --sidebar-border: #d5d5da;
+  --sidebar-ring: #00c468;
+
+  /* Easing tokens */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-dramatic: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .dark {
@@ -104,37 +164,59 @@
   --pos-cb: oklch(0.72 0.14 85);
   --pos-s: oklch(0.72 0.14 85);
 
-  --background: oklch(0.16 0.02 255);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.21 0.02 255);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.21 0.02 255);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.65 0.22 255);
-  --primary-foreground: oklch(0.15 0 0);
-  --secondary: oklch(0.27 0.03 255);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.27 0.03 255);
-  --muted-foreground: oklch(0.65 0.04 255);
-  --accent: oklch(0.27 0.04 255);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.55 0.18 255);
-  --chart-1: oklch(0.55 0.22 255);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.21 0.02 255);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.65 0.22 255);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.27 0.04 255);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.55 0.18 255);
+  /* Team color defaults */
+  --team-primary: #3dffa0;
+  --team-secondary: #2a2a2e;
+
+  /* MockingBoard design tokens — dark mode (primary) */
+  --mb-black: #0a0a0b;
+  --mb-surface: #141416;
+  --mb-surface-hover: #1c1c1f;
+  --mb-surface-active: #242428;
+  --mb-border: #2a2a2e;
+  --mb-border-strong: #3a3a3f;
+  --mb-text-primary: #f0f0f2;
+  --mb-text-secondary: #a0a0a8;
+  --mb-text-tertiary: #6a6a72;
+  --mb-accent: #3dffa0;
+  --mb-accent-hover: #2de88e;
+  --mb-accent-muted: rgba(61, 255, 160, 0.12);
+  --mb-danger: #ff4d6a;
+  --mb-warning: #ffb84d;
+  --mb-success: #3dffa0;
+
+  /* Shadcn semantic mappings — dark */
+  --background: #0a0a0b;
+  --foreground: #f0f0f2;
+  --card: #141416;
+  --card-foreground: #f0f0f2;
+  --popover: #141416;
+  --popover-foreground: #f0f0f2;
+  --primary: #3dffa0;
+  --primary-foreground: #0a0a0b;
+  --secondary: #1c1c1f;
+  --secondary-foreground: #a0a0a8;
+  --muted: #1c1c1f;
+  --muted-foreground: #a0a0a8;
+  --accent: #242428;
+  --accent-foreground: #f0f0f2;
+  --destructive: #ff4d6a;
+  --border: #2a2a2e;
+  --input: #2a2a2e;
+  --ring: #3dffa0;
+  --chart-1: #3dffa0;
+  --chart-2: #008e97;
+  --chart-3: #ffb612;
+  --chart-4: #4f2683;
+  --chart-5: #fb4f14;
+  --sidebar: #141416;
+  --sidebar-foreground: #f0f0f2;
+  --sidebar-primary: #3dffa0;
+  --sidebar-primary-foreground: #0a0a0b;
+  --sidebar-accent: #242428;
+  --sidebar-accent-foreground: #f0f0f2;
+  --sidebar-border: #2a2a2e;
+  --sidebar-ring: #3dffa0;
 }
 
 @layer base {

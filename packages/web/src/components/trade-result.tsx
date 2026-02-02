@@ -53,7 +53,7 @@ export function TradeResult({
               className={cn(
                 'font-medium',
                 evaluation.netValue >= 0
-                  ? 'text-green-600 dark:text-green-400'
+                  ? 'text-mb-success'
                   : 'text-destructive',
               )}
             >

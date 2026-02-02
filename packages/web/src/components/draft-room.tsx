@@ -15,11 +15,12 @@ import {
   type CpuTradeEvaluation,
 } from '@mockingboard/shared';
 import { useLiveDraft } from '@/hooks/use-live-draft';
-import { getTeamName } from '@/lib/teams';
 import { PlayerPicker } from '@/components/player-picker';
 import { DraftBoard } from '@/components/draft-board';
 import { TradeModal } from '@/components/trade-modal';
 import { TradeResult } from '@/components/trade-result';
+import { DraftClock } from '@/components/draft-clock';
+import { DraftLayout } from '@/components/draft-layout';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
@@ -238,26 +239,23 @@ export function DraftRoom({
     );
   }
 
-  return (
-    <div className="space-y-6">
-      {/* On the Clock (real or animated) */}
-      {(isActive || animating) && clockTeam && (
-        <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
-          <div className="flex items-center gap-3">
-            <Badge>On the Clock</Badge>
-            <span className="text-lg font-bold">
-              {getTeamName(clockTeam as TeamAbbreviation)}
-            </span>
-            {!animating && isUserTurn && (
-              <Badge variant="outline">Your Pick</Badge>
-            )}
-          </div>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Round {clockRound}, Pick {clockPickNum} (Overall #{clockOverall})
-          </p>
-        </div>
-      )}
-
+  const clockNode = (
+    <>
+      {(isActive || animating) &&
+        clockTeam &&
+        clockRound &&
+        clockPickNum &&
+        clockOverall && (
+          <DraftClock
+            overall={clockOverall}
+            picksMade={displayedCount}
+            total={totalPicks}
+            team={clockTeam as TeamAbbreviation}
+            round={clockRound}
+            pick={clockPickNum}
+            isUserTurn={!animating && isUserTurn}
+          />
+        )}
       {isComplete && !animating && (
         <div className="rounded-lg border bg-muted/50 p-4">
           <Badge variant="secondary">Complete</Badge>
@@ -266,8 +264,12 @@ export function DraftRoom({
           </p>
         </div>
       )}
+    </>
+  );
 
-      {/* Progress Bar */}
+  const boardNode = (
+    <>
+      <DraftBoard picks={visiblePicks} playerMap={playerMap} />
       <div>
         <div className="mb-1 flex justify-between text-xs text-muted-foreground">
           <span>
@@ -282,10 +284,13 @@ export function DraftRoom({
           />
         </div>
       </div>
+    </>
+  );
 
+  const sidebarNode = (
+    <>
       {error && <p className="text-sm text-destructive">{error}</p>}
 
-      {/* Trade controls */}
       {canTrade && (
         <Button variant="outline" size="sm" onClick={() => setShowTrade(true)}>
           Propose Trade
@@ -312,7 +317,6 @@ export function DraftRoom({
         />
       )}
 
-      {/* Player Picker (user's turn, not animating, not trading) */}
       {isActive && isUserTurn && !animating && !showTrade && !tradeResult && (
         <PlayerPicker
           players={availablePlayers}
@@ -321,7 +325,6 @@ export function DraftRoom({
         />
       )}
 
-      {/* Waiting / animating CPU picks */}
       {isActive &&
         !showTrade &&
         !tradeResult &&
@@ -330,9 +333,10 @@ export function DraftRoom({
             {animating ? 'CPU picks rolling in...' : 'Waiting for CPU picks...'}
           </div>
         )}
+    </>
+  );
 
-      {/* Pick Board — shows revealed picks only */}
-      <DraftBoard picks={visiblePicks} playerMap={playerMap} />
-    </div>
+  return (
+    <DraftLayout clock={clockNode} board={boardNode} sidebar={sidebarNode} />
   );
 }

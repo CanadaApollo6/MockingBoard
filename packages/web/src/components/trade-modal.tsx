@@ -247,7 +247,7 @@ export function TradeModal({
                   className={cn(
                     'font-medium',
                     receivingValue - givingValue >= 0
-                      ? 'text-green-600 dark:text-green-400'
+                      ? 'text-mb-success'
                       : 'text-destructive',
                   )}
                 >

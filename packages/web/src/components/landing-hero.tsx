@@ -84,8 +84,8 @@ export function LandingHero({ error }: LandingHeroProps) {
             variants={fadeUp}
             className="mt-4 max-w-md text-lg text-muted-foreground"
           >
-            Mock draft with your friends — right inside Discord. View draft
-            history, track picks, and watch live.
+            Mock draft with your friends — right inside Discord or right here.
+            View draft history, track picks, and watch live.
           </motion.p>
 
           {error && (
@@ -119,7 +119,7 @@ export function LandingHero({ error }: LandingHeroProps) {
       </section>
 
       {/* Features section — scroll-triggered */}
-      <section className="mx-auto max-w-4xl px-4 pb-24">
+      <section className="mx-auto max-w-screen-xl px-4 pb-24">
         <div className="grid gap-6 sm:grid-cols-3">
           {FEATURES.map((feature, i) => (
             <motion.div
@@ -134,7 +134,7 @@ export function LandingHero({ error }: LandingHeroProps) {
                 delay: i * 0.1,
               }}
             >
-              <Card className="h-full">
+              <Card className="h-full transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
                 <CardContent className="p-5">
                   <h3 className="font-[family-name:var(--font-display)] text-lg font-bold uppercase">
                     {feature.title}

@@ -38,7 +38,7 @@ export function DraftCard({ draft }: { draft: Draft }) {
 
   return (
     <Link href={href}>
-      <Card className="transition-colors hover:border-primary/30">
+      <Card className="transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-mb-border-strong">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base">

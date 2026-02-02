@@ -7,8 +7,9 @@ import type {
   TeamAbbreviation,
 } from '@mockingboard/shared';
 import { useLiveDraft } from '@/hooks/use-live-draft';
-import { getTeamName } from '@/lib/teams';
 import { DraftBoard } from '@/components/draft-board';
+import { DraftClock } from '@/components/draft-clock';
+import { DraftLayout } from '@/components/draft-layout';
 import { Badge } from '@/components/ui/badge';
 
 interface LiveDraftViewProps {
@@ -37,33 +38,26 @@ export function LiveDraftView({
   const totalPicks = draft.pickOrder.length;
   const progress = totalPicks > 0 ? (picks.length / totalPicks) * 100 : 0;
 
-  return (
-    <div className="space-y-6">
-      {/* On the Clock */}
+  const clockNode = (
+    <>
       {draft.status === 'active' && currentSlot && (
-        <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
-          <div className="flex items-center gap-3">
-            <Badge>On the Clock</Badge>
-            <span className="text-lg font-bold">
-              {getTeamName(currentSlot.team as TeamAbbreviation)}
-            </span>
-          </div>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Round {currentSlot.round}, Pick {currentSlot.pick} (Overall #
-            {currentSlot.overall})
-          </p>
-        </div>
+        <DraftClock
+          overall={currentSlot.overall}
+          picksMade={picks.length}
+          total={totalPicks}
+          team={currentSlot.team as TeamAbbreviation}
+          round={currentSlot.round}
+          pick={currentSlot.pick}
+        />
       )}
-
       {draft.status === 'paused' && (
-        <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/5 p-4">
+        <div className="rounded-lg border border-mb-warning/30 bg-mb-warning/5 p-4">
           <Badge variant="outline">Paused</Badge>
           <p className="mt-1 text-sm text-muted-foreground">
             This draft is currently paused.
           </p>
         </div>
       )}
-
       {draft.status === 'complete' && (
         <div className="rounded-lg border bg-muted/50 p-4">
           <Badge variant="secondary">Complete</Badge>
@@ -72,8 +66,12 @@ export function LiveDraftView({
           </p>
         </div>
       )}
+    </>
+  );
 
-      {/* Progress Bar */}
+  const boardNode = (
+    <>
+      <DraftBoard picks={picks} playerMap={playerMap} />
       <div>
         <div className="mb-1 flex justify-between text-xs text-muted-foreground">
           <span>
@@ -88,9 +86,8 @@ export function LiveDraftView({
           />
         </div>
       </div>
-
-      {/* Pick Board */}
-      <DraftBoard picks={picks} playerMap={playerMap} />
-    </div>
+    </>
   );
+
+  return <DraftLayout clock={clockNode} board={boardNode} />;
 }
