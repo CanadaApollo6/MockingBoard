@@ -107,14 +107,16 @@
 
 ---
 
-## Phase 2.5: Brand & Polish ← CURRENT
+## Phase 2.5: Brand & Polish ✓
 
 **Goal**: Establish visual identity and fix known issues before building new features.
 
-- [ ] Brand restyle: blue jay color scheme matching logo (update CSS variables in globals.css)
-- [ ] Add logo to header and landing page hero
-- [ ] Fix drafter count for single-user all-teams drafts (use `participants` map, not `teamAssignments`)
-- [ ] Clean up debug auth error codes with user-facing messages
+- [x] Brand restyle: blue jay color scheme, custom design system with CSS variables (globals.css, DESIGN_SYSTEM.md)
+- [x] Add logo to header and landing page hero
+- [x] Fix drafter count for single-user all-teams drafts (uses `participants` map)
+- [x] Clean up debug auth error codes with user-facing messages
+
+**Phase 2.5 Complete**: Custom design system with dark/light themes, brand colors, logo, and polished error handling.
 
 ---
 
@@ -122,27 +124,37 @@
 
 **Goal**: Users can run drafts through the web app, not just Discord.
 
-### Milestone 3.0: Shared Package Extraction
+### Milestone 3.0: Shared Package Extraction ✓
 
 Extract platform-agnostic business logic from bot services to `packages/shared`. This is the critical path — every web draft feature depends on it.
 
-- [ ] CPU pick logic (`selectCpuPick`, `CPU_PICK_WEIGHTS`) → `shared/src/cpu.ts`
-- [ ] Pick controller resolution (`getPickController`) → `shared/src/draft.ts`
-- [ ] Draft order building (pure ordering logic) → `shared/src/draft.ts`
-- [ ] Trade validation functions (6 pure functions) → `shared/src/trade.ts`
-- [ ] CPU trade evaluation (`evaluateCpuTrade`) → `shared/src/trade.ts`
-- [ ] Trade execution (pure `computeTradeResult`) → `shared/src/trade.ts`
-- [ ] Update bot imports to use shared; all 218 tests must pass throughout
+- [x] CPU pick logic (`selectCpuPick`, `CPU_PICK_WEIGHTS`) → `shared/src/cpu.ts`
+- [x] Pick controller resolution (`getPickController`) → `shared/src/draft.ts`
+- [x] Draft order building (pure ordering logic) → `shared/src/draft.ts`
+- [x] Trade validation functions (7 pure functions) → `shared/src/trade.ts`
+- [x] CPU trade evaluation (`evaluateCpuTrade`) → `shared/src/trade.ts`
+- [x] Trade execution (pure `computeTradeExecution`) → `shared/src/trade.ts`
+- [x] Update bot imports to use shared; all tests pass throughout
 
-### Milestone 3.1: Solo Draft Mode
+### Milestone 3.1: Solo Draft Mode ✓
 
-- [ ] Draft creation form (year, rounds, format, team, CPU speed, trades toggle)
-- [ ] Interactive picking UI with player search and position filters
-- [ ] Server-side CPU pick advancement (synchronous in pick API route)
-- [ ] Server-side `recordPickAndAdvance` equivalent (Firestore transaction via Admin SDK)
-- [ ] Full draft lifecycle on web: create → pick → complete
+- [x] Draft creation form (year, rounds, format, team, CPU speed, pick timer, trades toggle)
+- [x] Interactive picking UI with player search and position filters
+- [x] Server-side CPU pick advancement (`runCpuCascade` in pick API route)
+- [x] Server-side `recordPick` via Firestore transaction (Admin SDK)
+- [x] Full draft lifecycle on web: create → pick → complete
+- [x] Guest draft mode (no login required, fully client-side state)
+- [x] Trade proposals with CPU evaluation on web (trade modal, result UI, API routes)
+- [x] Pick timer with urgency states and auto-pick on expiry (client-side)
+- [x] Pause/resume (Firestore-persisted for authed drafts, local state for guest)
+- [x] Draft clock with SVG progress ring, countdown, urgency color shifts
+- [x] CPU speed animation (instant/fast/normal) matching bot behavior
+- [x] Dark mode with theme toggle
+- [x] Design system documentation (DESIGN_SYSTEM.md)
 
-### Milestone 3.2: Independent Auth (Email/Password)
+**Phase 3.0–3.1 Complete**: Full solo draft experience on web with feature parity to Discord bot, plus guest mode and design system.
+
+### Milestone 3.2: Independent Auth (Email/Password) ← CURRENT
 
 - [ ] Enable Email/Password provider in Firebase Console
 - [ ] Login page with both Discord and email/password options
@@ -161,7 +173,7 @@ Extract platform-agnostic business logic from bot services to `packages/shared`.
 
 ### Milestone 3.4: Platform Sync
 
-- [ ] Drafts started in Discord viewable live on web (already works via shared Firestore)
+- [x] Drafts started in Discord viewable live on web (already works via shared Firestore)
 - [ ] Drafts started on web optionally send Discord notifications
 
 **Phase 3 Complete**: Full draft functionality on web, with Discord as an alternative entry point.
