@@ -4,7 +4,6 @@ import { vi } from 'vitest';
 const {
   mockGet,
   mockUpdate,
-  mockDoc,
   mockCollection,
   mockRunCpuCascade,
   mockGetPickController,
@@ -42,7 +41,7 @@ vi.mock('@mockingboard/shared', () => ({
   getPickController: (...args: unknown[]) => mockGetPickController(...args),
 }));
 
-import { joinLobby, startDraft, leaveLobby } from './lobby-actions';
+import { joinLobby, startDraft, leaveLobby } from './lobby-actions.js';
 import type { Draft, TeamAbbreviation } from '@mockingboard/shared';
 
 function makeDraft(overrides: Partial<Draft> = {}): Draft {
@@ -124,31 +123,27 @@ describe('joinLobby', () => {
 
   it('throws when user is already a participant', async () => {
     mockDraftDoc(
-      makeDraft({ participants: { 'creator-1': 'creator-1', 'user-2': 'user-2' } }),
+      makeDraft({
+        participants: { 'creator-1': 'creator-1', 'user-2': 'user-2' },
+      }),
     );
     await expect(joinLobby(baseInput)).rejects.toThrow('Already in this draft');
   });
 
   it('throws for private draft without invite code', async () => {
-    mockDraftDoc(
-      makeDraft({ visibility: 'private', inviteCode: 'abc123' }),
-    );
+    mockDraftDoc(makeDraft({ visibility: 'private', inviteCode: 'abc123' }));
     await expect(joinLobby(baseInput)).rejects.toThrow('Invalid invite code');
   });
 
   it('throws for private draft with wrong invite code', async () => {
-    mockDraftDoc(
-      makeDraft({ visibility: 'private', inviteCode: 'abc123' }),
-    );
+    mockDraftDoc(makeDraft({ visibility: 'private', inviteCode: 'abc123' }));
     await expect(
       joinLobby({ ...baseInput, inviteCode: 'wrong' }),
     ).rejects.toThrow('Invalid invite code');
   });
 
   it('accepts correct invite code for private draft', async () => {
-    mockDraftDoc(
-      makeDraft({ visibility: 'private', inviteCode: 'abc123' }),
-    );
+    mockDraftDoc(makeDraft({ visibility: 'private', inviteCode: 'abc123' }));
     const result = await joinLobby({ ...baseInput, inviteCode: 'abc123' });
     expect(result.team).toBe('NYG');
     expect(mockUpdate).toHaveBeenCalled();
@@ -182,9 +177,9 @@ describe('joinLobby', () => {
 
   it('throws in choice mode when no team requested', async () => {
     mockDraftDoc(makeDraft());
-    await expect(
-      joinLobby({ ...baseInput, team: undefined }),
-    ).rejects.toThrow('Team selection required');
+    await expect(joinLobby({ ...baseInput, team: undefined })).rejects.toThrow(
+      'Team selection required',
+    );
   });
 
   it('throws in choice mode when team not available', async () => {

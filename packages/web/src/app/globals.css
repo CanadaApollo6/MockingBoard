@@ -75,6 +75,10 @@
   /* Team colors (set dynamically via inline styles) */
   --color-team-primary: var(--team-primary);
   --color-team-secondary: var(--team-secondary);
+
+  /* School colors (set dynamically via inline styles) */
+  --color-school-primary: var(--school-primary);
+  --color-school-secondary: var(--school-secondary);
 }
 
 :root {
@@ -93,6 +97,10 @@
   /* Team color defaults (overridden inline per-context) */
   --team-primary: #00c468;
   --team-secondary: #d5d5da;
+
+  /* School color defaults (overridden inline per-context) */
+  --school-primary: #6a6a72;
+  --school-secondary: #3a3a3f;
 
   /* MockingBoard design tokens — light mode */
   --mb-black: #ffffff;
@@ -167,6 +175,10 @@
   /* Team color defaults */
   --team-primary: #3dffa0;
   --team-secondary: #2a2a2e;
+
+  /* School color defaults */
+  --school-primary: #a0a0a8;
+  --school-secondary: #2a2a2e;
 
   /* MockingBoard design tokens — dark mode (primary) */
   --mb-black: #0a0a0b;

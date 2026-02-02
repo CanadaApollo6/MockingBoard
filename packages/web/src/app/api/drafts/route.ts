@@ -136,7 +136,8 @@ export async function POST(request: Request) {
     if (notificationLevel && notificationLevel !== 'off') {
       const webhookUrl = user?.discordWebhookUrl as string | undefined;
       if (webhookUrl) {
-        const origin = request.headers.get('origin') ?? process.env.APP_URL ?? '';
+        const origin =
+          request.headers.get('origin') ?? process.env.APP_URL ?? '';
         const draftUrl = `${origin}/drafts/${draft.id}/live`;
 
         sendDraftStarted(webhookUrl, draft, draftUrl, notificationLevel)

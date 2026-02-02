@@ -1,12 +1,7 @@
 import Link from 'next/link';
 import { getPublicLobbies } from '@/lib/data';
 import { Badge } from '@/components/ui/badge';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default async function LobbiesPage() {
   const lobbies = await getPublicLobbies();
@@ -37,7 +32,9 @@ export default async function LobbiesPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                      <span>{playerCount} player{playerCount !== 1 ? 's' : ''}</span>
+                      <span>
+                        {playerCount} player{playerCount !== 1 ? 's' : ''}
+                      </span>
                       <span>{lobby.config.rounds} rounds</span>
                       <span>
                         Teams:{' '}

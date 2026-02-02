@@ -243,7 +243,10 @@ export async function runCpuCascade(
 
     // Lazy-load players once, then filter in memory
     if (!allPlayers) {
-      allPlayers = await getAvailablePlayers(draft.config.year, draft.pickedPlayerIds ?? []);
+      allPlayers = await getAvailablePlayers(
+        draft.config.year,
+        draft.pickedPlayerIds ?? [],
+      );
     }
     const pickedSet = new Set(draft.pickedPlayerIds ?? []);
     const available = allPlayers.filter((p) => !pickedSet.has(p.id));

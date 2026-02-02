@@ -146,9 +146,7 @@ export function LobbyView({
 
   if (!draft) {
     return (
-      <p className="py-8 text-center text-muted-foreground">
-        Draft not found.
-      </p>
+      <p className="py-8 text-center text-muted-foreground">Draft not found.</p>
     );
   }
 
@@ -189,9 +187,7 @@ export function LobbyView({
       {/* Participants */}
       <Card>
         <CardHeader>
-          <CardTitle>
-            Players ({participantList.length})
-          </CardTitle>
+          <CardTitle>Players ({participantList.length})</CardTitle>
         </CardHeader>
         <CardContent>
           {participantList.length === 0 ? (
@@ -320,11 +316,7 @@ export function LobbyView({
         )}
 
         {isParticipant && !isCreator && (
-          <Button
-            variant="outline"
-            onClick={handleLeave}
-            disabled={leaving}
-          >
+          <Button variant="outline" onClick={handleLeave} disabled={leaving}>
             {leaving ? 'Leaving...' : 'Leave Lobby'}
           </Button>
         )}

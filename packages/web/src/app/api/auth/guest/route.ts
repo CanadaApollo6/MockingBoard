@@ -37,18 +37,15 @@ export async function POST(request: Request) {
 
   try {
     const now = FieldValue.serverTimestamp();
-    await adminDb
-      .collection('users')
-      .doc(session.uid)
-      .set(
-        {
-          displayName: name,
-          isGuest: true,
-          createdAt: now,
-          updatedAt: now,
-        },
-        { merge: true },
-      );
+    await adminDb.collection('users').doc(session.uid).set(
+      {
+        displayName: name,
+        isGuest: true,
+        createdAt: now,
+        updatedAt: now,
+      },
+      { merge: true },
+    );
 
     return NextResponse.json({ status: 'ok' });
   } catch (err) {

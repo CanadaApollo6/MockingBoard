@@ -27,8 +27,7 @@ export async function POST(
 
   try {
     const user = await resolveUser(session.uid);
-    const displayName =
-      user?.displayName ?? user?.discordUsername ?? 'Player';
+    const displayName = user?.displayName ?? user?.discordUsername ?? 'Player';
 
     const result = await joinLobby({
       draftId,
@@ -41,8 +40,7 @@ export async function POST(
 
     return NextResponse.json(result);
   } catch (err) {
-    const message =
-      err instanceof Error ? err.message : 'Failed to join draft';
+    const message = err instanceof Error ? err.message : 'Failed to join draft';
     const status = message.includes('not found')
       ? 404
       : message.includes('Invalid invite')

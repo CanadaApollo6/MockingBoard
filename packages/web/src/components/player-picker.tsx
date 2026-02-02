@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import type { Player, PositionFilterGroup } from '@mockingboard/shared';
 import { POSITION_GROUPS } from '@mockingboard/shared';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { PlayerCard } from '@/components/player-card';
 import { getPositionColor } from '@/lib/position-colors';
 import { cn } from '@/lib/utils';
 
@@ -89,28 +91,17 @@ export function PlayerPicker({ players, onPick, disabled }: PlayerPickerProps) {
         ))}
       </div>
 
-      {selectedPlayer && (
-        <div className="flex items-center justify-between rounded-md border border-mb-accent/30 bg-mb-accent-muted p-3">
-          <div className="flex items-center gap-2">
-            <span className="font-medium">{selectedPlayer.name}</span>
-            <Badge
-              style={{
-                backgroundColor: getPositionColor(selectedPlayer.position),
-                color: '#0A0A0B',
-              }}
-              className="text-xs"
-            >
-              {selectedPlayer.position}
-            </Badge>
-            <span className="text-sm text-muted-foreground">
-              {selectedPlayer.school}
-            </span>
-          </div>
-          <Button size="sm" onClick={handleDraft} disabled={disabled}>
-            {disabled ? 'Drafting...' : 'Draft'}
-          </Button>
-        </div>
-      )}
+      <AnimatePresence mode="wait">
+        {selectedPlayer && (
+          <PlayerCard
+            key={selectedPlayer.id}
+            player={selectedPlayer}
+            onDraft={handleDraft}
+            disabled={disabled}
+            onDeselect={() => setSelected(null)}
+          />
+        )}
+      </AnimatePresence>
 
       <div className="max-h-[calc(100vh-20rem)] overflow-y-auto rounded-md border">
         {filtered.length === 0 ? (
