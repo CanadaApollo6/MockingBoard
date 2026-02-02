@@ -35,6 +35,7 @@ export function DraftCreator() {
     null,
   );
   const [cpuSpeed, setCpuSpeed] = useState<CpuSpeed>('normal');
+  const [secondsPerPick, setSecondsPerPick] = useState(0);
   const [tradesEnabled, setTradesEnabled] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,6 +56,7 @@ export function DraftCreator() {
         rounds: String(rounds),
         format,
         cpuSpeed,
+        secondsPerPick: String(secondsPerPick),
         trades: String(tradesEnabled),
       });
       if (selectedTeam) params.set('team', selectedTeam);
@@ -75,6 +77,7 @@ export function DraftCreator() {
           format,
           selectedTeam,
           cpuSpeed,
+          secondsPerPick,
           tradesEnabled,
         }),
       });
@@ -164,6 +167,26 @@ export function DraftCreator() {
             >
               Normal
             </Button>
+          </OptionGroup>
+
+          <OptionGroup label="Pick Timer" subtitle="Auto-pick if time runs out">
+            {[
+              { value: 0, label: 'Off' },
+              { value: 30, label: '30s' },
+              { value: 60, label: '1min' },
+              { value: 120, label: '2min' },
+              { value: 180, label: '3min' },
+              { value: 300, label: '5min' },
+            ].map((opt) => (
+              <Button
+                key={opt.value}
+                variant={secondsPerPick === opt.value ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSecondsPerPick(opt.value)}
+              >
+                {opt.label}
+              </Button>
+            ))}
           </OptionGroup>
 
           <OptionGroup label="Trades">
@@ -266,14 +289,23 @@ export function DraftCreator() {
 
 function OptionGroup({
   label,
+  subtitle,
   children,
 }: {
   label: string;
+  subtitle?: string;
   children: React.ReactNode;
 }) {
   return (
     <div>
-      <label className="mb-2 block text-sm font-medium">{label}</label>
+      <label className="mb-2 block text-sm font-medium">
+        {label}
+        {subtitle && (
+          <span className="ml-1.5 font-normal text-muted-foreground">
+            {subtitle}
+          </span>
+        )}
+      </label>
       <div className="flex flex-wrap gap-2">{children}</div>
     </div>
   );

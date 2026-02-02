@@ -19,12 +19,15 @@ import {
   TableHeader,
 } from '@/components/ui/table';
 
+type ClockUrgency = 'normal' | 'warning' | 'critical';
+
 interface DraftBoardProps {
   picks: Pick[];
   playerMap: Map<string, Player>;
   pickOrder?: DraftSlot[];
   currentPick?: number;
   groupByRound?: boolean;
+  clockUrgency?: ClockUrgency;
 }
 
 export function DraftBoard({
@@ -33,6 +36,7 @@ export function DraftBoard({
   pickOrder,
   currentPick,
   groupByRound = true,
+  clockUrgency = 'normal',
 }: DraftBoardProps) {
   const shouldReduce = useReducedMotion();
   const hasFullBoard = pickOrder && pickOrder.length > 0;
@@ -100,7 +104,11 @@ export function DraftBoard({
                         }
                         if (slot.overall === currentPick) {
                           return (
-                            <OnTheClockRow key={slot.overall} slot={slot} />
+                            <OnTheClockRow
+                              key={slot.overall}
+                              slot={slot}
+                              urgency={clockUrgency}
+                            />
                           );
                         }
                         return <EmptyRow key={slot.overall} slot={slot} />;
@@ -182,21 +190,41 @@ function PickRow({
   );
 }
 
-function OnTheClockRow({ slot }: { slot: DraftSlot }) {
+function OnTheClockRow({
+  slot,
+  urgency = 'normal',
+}: {
+  slot: DraftSlot;
+  urgency?: ClockUrgency;
+}) {
   const teamColor = getTeamColor(slot.team as TeamAbbreviation).primary;
+  // Hex values for framer-motion interpolation (CSS vars can't be animated)
+  const pulseHex =
+    urgency === 'critical'
+      ? '#ff4d6a'
+      : urgency === 'warning'
+        ? '#ffb84d'
+        : teamColor;
+  const pulseDuration =
+    urgency === 'critical' ? 0.75 : urgency === 'warning' ? 1.5 : 3;
 
   return (
     <motion.tr
+      key={`otc-${urgency}`}
       initial={{ opacity: 0 }}
       animate={{
         opacity: 1,
-        backgroundColor: [`${teamColor}0A`, `${teamColor}1A`, `${teamColor}0A`],
+        backgroundColor: [`${pulseHex}0A`, `${pulseHex}1A`, `${pulseHex}0A`],
       }}
       transition={{
         opacity: { duration: 0.3 },
-        backgroundColor: { duration: 3, repeat: Infinity, ease: 'easeInOut' },
+        backgroundColor: {
+          duration: pulseDuration,
+          repeat: Infinity,
+          ease: 'easeInOut',
+        },
       }}
-      style={{ borderLeft: `3px solid ${teamColor}` }}
+      style={{ borderLeft: `3px solid ${pulseHex}` }}
       className="border-b"
     >
       <TableCell className="font-mono text-mb-accent">{slot.overall}</TableCell>

@@ -12,9 +12,12 @@ import type {
 } from '@mockingboard/shared';
 import {
   getPickController,
+  selectCpuPick,
+  teams,
   type CpuTradeEvaluation,
 } from '@mockingboard/shared';
 import { useLiveDraft } from '@/hooks/use-live-draft';
+import { usePickTimer } from '@/hooks/use-pick-timer';
 import { PlayerPicker } from '@/components/player-picker';
 import { DraftBoard } from '@/components/draft-board';
 import { TradeModal } from '@/components/trade-modal';
@@ -29,6 +32,8 @@ const SPEED_DELAY: Record<CpuSpeed, number> = {
   fast: 300,
   normal: 1500,
 };
+
+const teamSeeds = new Map(teams.map((t) => [t.id, t]));
 
 interface DraftRoomProps {
   draftId: string;
@@ -109,6 +114,7 @@ export function DraftRoom({
     draft && currentSlot ? getPickController(draft, currentSlot) : null;
   const isUserTurn = controller === userId;
   const isActive = draft?.status === 'active';
+  const isPaused = draft?.status === 'paused';
   const isComplete = draft?.status === 'complete';
 
   // Trade eligibility
@@ -233,6 +239,76 @@ export function DraftRoom({
     [draftId, tradeResult],
   );
 
+  // Pick timer
+  const timerActive = isActive && isUserTurn && !animating && !submitting;
+
+  const handleTimerExpire = useCallback(() => {
+    if (!draft || submitting) return;
+    const slot = draft.pickOrder[(draft.currentPick ?? 1) - 1];
+    if (!slot) return;
+    const teamSeed = teamSeeds.get(slot.team);
+    const player = selectCpuPick(availablePlayers, teamSeed?.needs ?? []);
+    if (!player) return;
+    handlePick(player.id);
+  }, [draft, submitting, availablePlayers, handlePick]);
+
+  const {
+    remaining,
+    isWarning,
+    isCritical,
+    reset: resetTimer,
+  } = usePickTimer({
+    secondsPerPick: draft?.config.secondsPerPick ?? 0,
+    isActive: timerActive,
+    onExpire: handleTimerExpire,
+  });
+  const clockUrgency = isCritical
+    ? ('critical' as const)
+    : isWarning
+      ? ('warning' as const)
+      : ('normal' as const);
+
+  // Reset timer when pick changes or draft resumes from pause
+  const prevPickRef = useRef(draft?.currentPick);
+  const prevStatusRef = useRef(draft?.status);
+  useEffect(() => {
+    const pickChanged = draft?.currentPick !== prevPickRef.current;
+    const resumed =
+      prevStatusRef.current === 'paused' && draft?.status === 'active';
+    prevPickRef.current = draft?.currentPick;
+    prevStatusRef.current = draft?.status;
+    if (pickChanged || resumed) resetTimer();
+  }, [draft?.currentPick, draft?.status, resetTimer]);
+
+  // Pause / resume
+  const handlePause = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/drafts/${draftId}/pause`, {
+        method: 'POST',
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to pause');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to pause');
+    }
+  }, [draftId]);
+
+  const handleResume = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/drafts/${draftId}/resume`, {
+        method: 'POST',
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to resume');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to resume');
+    }
+  }, [draftId]);
+
   if (!draft) {
     return (
       <p className="py-8 text-center text-muted-foreground">Draft not found.</p>
@@ -241,21 +317,48 @@ export function DraftRoom({
 
   const clockNode = (
     <>
-      {(isActive || animating) &&
+      {(isActive || isPaused || animating) &&
         clockTeam &&
         clockRound &&
         clockPickNum &&
         clockOverall && (
-          <DraftClock
-            overall={clockOverall}
-            picksMade={displayedCount}
-            total={totalPicks}
-            team={clockTeam as TeamAbbreviation}
-            round={clockRound}
-            pick={clockPickNum}
-            isUserTurn={!animating && isUserTurn}
-          />
+          <>
+            <DraftClock
+              overall={clockOverall}
+              picksMade={displayedCount}
+              total={totalPicks}
+              team={clockTeam as TeamAbbreviation}
+              round={clockRound}
+              pick={clockPickNum}
+              isUserTurn={!animating && isUserTurn}
+              remaining={
+                isActive && isUserTurn && !animating ? remaining : null
+              }
+              secondsPerPick={draft?.config.secondsPerPick}
+            />
+            {isActive && userId === draft?.createdBy && (
+              <Button variant="ghost" size="sm" onClick={handlePause}>
+                Pause Draft
+              </Button>
+            )}
+          </>
         )}
+      {isPaused && (
+        <div className="rounded-lg border border-mb-warning/20 bg-mb-warning/5 p-4">
+          <Badge variant="secondary">Paused</Badge>
+          <p className="mt-1 text-sm text-muted-foreground">Draft is paused.</p>
+          {userId === draft?.createdBy && (
+            <Button
+              variant="default"
+              size="sm"
+              className="mt-2"
+              onClick={handleResume}
+            >
+              Resume Draft
+            </Button>
+          )}
+        </div>
+      )}
       {isComplete && !animating && (
         <div className="rounded-lg border bg-muted/50 p-4">
           <Badge variant="secondary">Complete</Badge>
@@ -274,6 +377,7 @@ export function DraftRoom({
         playerMap={playerMap}
         pickOrder={draft?.pickOrder}
         currentPick={draft?.currentPick}
+        clockUrgency={clockUrgency}
       />
       <div>
         <div className="mb-1 flex justify-between text-xs text-muted-foreground">

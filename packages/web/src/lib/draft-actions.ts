@@ -69,6 +69,7 @@ export interface CreateWebDraftInput {
     format: DraftFormat;
     year: number;
     cpuSpeed: CpuSpeed;
+    secondsPerPick?: number;
     tradesEnabled: boolean;
   };
   teamAssignments: Record<TeamAbbreviation, string | null>;
@@ -85,7 +86,7 @@ export async function createWebDraft(
     createdBy: input.userId,
     config: {
       ...input.config,
-      secondsPerPick: 0,
+      secondsPerPick: input.config.secondsPerPick ?? 0,
       teamAssignmentMode: 'choice' as const,
     },
     platform: 'web' as const,

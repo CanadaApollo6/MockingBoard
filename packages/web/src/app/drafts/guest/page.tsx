@@ -30,6 +30,7 @@ export default async function GuestDraftPage({
   )
     ? (params.cpuSpeed as CpuSpeed)
     : 'normal';
+  const secondsPerPick = Math.max(Number(params.secondsPerPick) || 0, 0);
   const tradesEnabled = params.trades === 'true';
 
   if (format === 'single-team' && !selectedTeam) {
@@ -62,7 +63,7 @@ export default async function GuestDraftPage({
       year,
       cpuSpeed,
       tradesEnabled,
-      secondsPerPick: 0,
+      secondsPerPick,
       teamAssignmentMode: 'choice',
     },
     platform: 'web',

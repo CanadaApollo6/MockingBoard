@@ -25,6 +25,7 @@ export async function POST(request: Request) {
     format: DraftFormat;
     selectedTeam: TeamAbbreviation | null;
     cpuSpeed: CpuSpeed;
+    secondsPerPick?: number;
     tradesEnabled: boolean;
   };
 
@@ -37,7 +38,15 @@ export async function POST(request: Request) {
     );
   }
 
-  const { year, rounds, format, selectedTeam, cpuSpeed, tradesEnabled } = body;
+  const {
+    year,
+    rounds,
+    format,
+    selectedTeam,
+    cpuSpeed,
+    secondsPerPick,
+    tradesEnabled,
+  } = body;
 
   if (!year || !rounds || !format || !cpuSpeed) {
     return NextResponse.json(
@@ -75,7 +84,14 @@ export async function POST(request: Request) {
     const draft = await createWebDraft({
       userId: session.uid,
       discordId,
-      config: { rounds, format, year, cpuSpeed, tradesEnabled },
+      config: {
+        rounds,
+        format,
+        year,
+        cpuSpeed,
+        secondsPerPick: secondsPerPick ?? 0,
+        tradesEnabled,
+      },
       teamAssignments,
       pickOrder,
       futurePicks,

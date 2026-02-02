@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import type {
   Draft,
@@ -11,9 +11,12 @@ import type {
 } from '@mockingboard/shared';
 import {
   getPickController,
+  selectCpuPick,
+  teams,
   type CpuTradeEvaluation,
 } from '@mockingboard/shared';
 import { useGuestDraft } from '@/hooks/use-guest-draft';
+import { usePickTimer } from '@/hooks/use-pick-timer';
 import { PlayerPicker } from '@/components/player-picker';
 import { DraftBoard } from '@/components/draft-board';
 import { TradeModal } from '@/components/trade-modal';
@@ -25,6 +28,8 @@ import { Button } from '@/components/ui/button';
 
 const GUEST_ID = '__guest__';
 
+const teamSeeds = new Map(teams.map((t) => [t.id, t]));
+
 interface GuestDraftRoomProps {
   initialDraft: Draft;
   players: Record<string, Player>;
@@ -35,6 +40,7 @@ export function GuestDraftRoom({ initialDraft, players }: GuestDraftRoomProps) {
     useGuestDraft(initialDraft, players);
 
   const [error, setError] = useState<string | null>(null);
+  const [paused, setPaused] = useState(false);
 
   // Trade state
   const [showTrade, setShowTrade] = useState(false);
@@ -122,6 +128,44 @@ export function GuestDraftRoom({ initialDraft, players }: GuestDraftRoomProps) {
     [tradeResult, executeTrade],
   );
 
+  // Pick timer
+  const timerActive = isActive && isUserTurn && !isProcessing && !paused;
+
+  const handleTimerExpire = useCallback(() => {
+    if (!currentSlot) return;
+    const teamSeed = teamSeeds.get(currentSlot.team);
+    const player = selectCpuPick(availablePlayers, teamSeed?.needs ?? []);
+    if (!player) return;
+    handlePick(player.id);
+  }, [currentSlot, availablePlayers, handlePick]);
+
+  const {
+    remaining,
+    isWarning,
+    isCritical,
+    reset: resetTimer,
+  } = usePickTimer({
+    secondsPerPick: draft.config.secondsPerPick ?? 0,
+    isActive: timerActive,
+    onExpire: handleTimerExpire,
+  });
+  const clockUrgency = isCritical
+    ? ('critical' as const)
+    : isWarning
+      ? ('warning' as const)
+      : ('normal' as const);
+
+  // Reset timer when pick changes or draft unpauses
+  const prevPickRef = useRef(draft.currentPick);
+  const prevPausedRef = useRef(paused);
+  useEffect(() => {
+    const pickChanged = draft.currentPick !== prevPickRef.current;
+    const resumed = prevPausedRef.current && !paused;
+    prevPickRef.current = draft.currentPick;
+    prevPausedRef.current = paused;
+    if (pickChanged || resumed) resetTimer();
+  }, [draft.currentPick, paused, resetTimer]);
+
   const bannerNode = (
     <div className="rounded-lg border border-mb-accent/20 bg-mb-accent-muted px-4 py-3 text-sm text-muted-foreground">
       You are drafting as a guest.{' '}
@@ -134,16 +178,45 @@ export function GuestDraftRoom({ initialDraft, players }: GuestDraftRoomProps) {
 
   const clockNode = (
     <>
-      {isActive && clockTeam && clockRound && clockPickNum && clockOverall && (
-        <DraftClock
-          overall={clockOverall}
-          picksMade={picks.length}
-          total={totalPicks}
-          team={clockTeam as TeamAbbreviation}
-          round={clockRound}
-          pick={clockPickNum}
-          isUserTurn={isUserTurn && !isProcessing}
-        />
+      {(isActive || paused) &&
+        clockTeam &&
+        clockRound &&
+        clockPickNum &&
+        clockOverall && (
+          <>
+            <DraftClock
+              overall={clockOverall}
+              picksMade={picks.length}
+              total={totalPicks}
+              team={clockTeam as TeamAbbreviation}
+              round={clockRound}
+              pick={clockPickNum}
+              isUserTurn={isUserTurn && !isProcessing}
+              remaining={
+                isActive && isUserTurn && !isProcessing ? remaining : null
+              }
+              secondsPerPick={draft.config.secondsPerPick}
+            />
+            {isActive && !paused && (
+              <Button variant="ghost" size="sm" onClick={() => setPaused(true)}>
+                Pause Draft
+              </Button>
+            )}
+          </>
+        )}
+      {paused && (
+        <div className="rounded-lg border border-mb-warning/20 bg-mb-warning/5 p-4">
+          <Badge variant="secondary">Paused</Badge>
+          <p className="mt-1 text-sm text-muted-foreground">Draft is paused.</p>
+          <Button
+            variant="default"
+            size="sm"
+            className="mt-2"
+            onClick={() => setPaused(false)}
+          >
+            Resume Draft
+          </Button>
+        </div>
       )}
       {isComplete && (
         <div className="rounded-lg border bg-muted/50 p-4">
@@ -163,6 +236,7 @@ export function GuestDraftRoom({ initialDraft, players }: GuestDraftRoomProps) {
         playerMap={playerMap}
         pickOrder={draft.pickOrder}
         currentPick={draft.currentPick}
+        clockUrgency={clockUrgency}
       />
       <div>
         <div className="mb-1 flex justify-between text-xs text-muted-foreground">
@@ -214,6 +288,7 @@ export function GuestDraftRoom({ initialDraft, players }: GuestDraftRoomProps) {
       {isActive &&
         isUserTurn &&
         !isProcessing &&
+        !paused &&
         !showTrade &&
         !tradeResult && (
           <PlayerPicker
