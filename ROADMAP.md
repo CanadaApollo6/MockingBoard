@@ -154,16 +154,16 @@ Extract platform-agnostic business logic from bot services to `packages/shared`.
 
 **Phase 3.0–3.1 Complete**: Full solo draft experience on web with feature parity to Discord bot, plus guest mode and design system.
 
-### Milestone 3.2: Independent Auth (Email/Password) ← CURRENT
+### Milestone 3.2: Independent Auth (Email/Password) ✓
 
-- [ ] Enable Email/Password provider in Firebase Console
-- [ ] Login page with both Discord and email/password options
-- [ ] Sign-up page with account creation
-- [ ] Update `User` type: make `discordId` optional, add `email`, `displayName`
-- [ ] Fix `getUserDrafts` to look up by `firebaseUid` instead of `discordId`
-- [ ] Account linking: Discord ↔ email via settings page
+- [x] Enable Email/Password provider in Firebase Console
+- [x] Login page with both Discord and email/password options
+- [x] Sign-up page with account creation
+- [x] Update `User` type: make `discordId` optional, add `email`, `displayName`
+- [x] Fix `getUserDrafts` to look up by `firebaseUid` instead of `discordId`
+- [x] Account linking: Discord ↔ email via settings page
 
-### Milestone 3.3: Multiplayer Draft Rooms
+### Milestone 3.3: Multiplayer Draft Rooms ← CURRENT
 
 - [ ] Room creation with privacy settings (public listing / invite-link-only)
 - [ ] Lobby page with real-time participant list and shareable invite link
@@ -171,10 +171,10 @@ Extract platform-agnostic business logic from bot services to `packages/shared`.
 - [ ] Multiplayer turn management via Firestore real-time listeners
 - [ ] Timer support via `clockExpiresAt` field + server-side validation
 
-### Milestone 3.4: Platform Sync
+### Milestone 3.4: Platform Sync ✓
 
 - [x] Drafts started in Discord viewable live on web (already works via shared Firestore)
-- [ ] Drafts started on web optionally send Discord notifications
+- [x] Drafts started on web optionally send Discord notifications (webhook-based, per-draft configurable: off/link-only/pick-by-pick)
 
 **Phase 3 Complete**: Full draft functionality on web, with Discord as an alternative entry point.
 

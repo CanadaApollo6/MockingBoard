@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server';
 import { getSessionUser } from '@/lib/auth-session';
 import { recordPick, runCpuCascade } from '@/lib/draft-actions';
+import { getCachedPlayerMap } from '@/lib/cache';
 import { adminDb } from '@/lib/firebase-admin';
+import {
+  resolveWebhookConfig,
+  sendPickAnnouncement,
+  sendDraftComplete,
+} from '@/lib/discord-webhook';
 import { getPickController } from '@mockingboard/shared';
-import type { Draft } from '@mockingboard/shared';
+import type { Draft, Pick } from '@mockingboard/shared';
 
 export async function POST(
   request: Request,
@@ -63,17 +69,65 @@ export async function POST(
       session.uid,
     );
 
+    // Track all picks + final completion for webhook
+    let allNewPicks: Pick[] = [pick];
+    let draftCompleted = pickComplete;
+
     // Run CPU cascade if appropriate
     if (!pickComplete) {
       const shouldBatchCpu =
         !draft.config.tradesEnabled || draft.config.cpuSpeed === 'instant';
       if (shouldBatchCpu) {
         const cascade = await runCpuCascade(draftId);
-        return NextResponse.json({ pick, isComplete: cascade.isComplete });
+        allNewPicks = [pick, ...cascade.picks];
+        draftCompleted = cascade.isComplete;
       }
     }
 
-    return NextResponse.json({ pick, isComplete: pickComplete });
+    // Fire-and-forget: webhook notifications
+    const webhookConfig = await resolveWebhookConfig(draft);
+    if (webhookConfig?.notificationLevel === 'full' && webhookConfig.threadId) {
+      const origin = request.headers.get('origin') ?? process.env.APP_URL ?? '';
+      const draftUrl = `${origin}/drafts/${draftId}/live`;
+
+      getCachedPlayerMap(draft.config.year)
+        .then(async (playerMap) => {
+          // Send user pick
+          await sendPickAnnouncement(
+            webhookConfig.webhookUrl,
+            webhookConfig.threadId!,
+            [pick],
+            playerMap,
+          );
+
+          // Send batched CPU picks (if any)
+          const cpuPicks = allNewPicks.filter((p) => p.userId === null);
+          if (cpuPicks.length > 0) {
+            await sendPickAnnouncement(
+              webhookConfig.webhookUrl,
+              webhookConfig.threadId!,
+              cpuPicks,
+              playerMap,
+            );
+          }
+
+          // Send completion message
+          if (draftCompleted) {
+            await sendDraftComplete(
+              webhookConfig.webhookUrl,
+              webhookConfig.threadId,
+              draft,
+              draftUrl,
+            );
+          }
+        })
+        .catch((err) => console.error('Webhook notification failed:', err));
+    }
+
+    return NextResponse.json({
+      pick,
+      isComplete: draftCompleted,
+    });
   } catch (err) {
     console.error('Failed to record pick:', err);
     return NextResponse.json(

@@ -15,8 +15,16 @@ export async function GET(request: Request) {
   const origin = getOrigin(request);
   const redirectUri = `${origin}/api/auth/discord/callback`;
 
-  // CSRF protection via random state
-  const state = crypto.randomUUID();
+  const url = new URL(request.url);
+  const isLink = url.searchParams.get('link') === 'true';
+
+  // Encode intent + CSRF nonce in state
+  const state = btoa(
+    JSON.stringify({
+      nonce: crypto.randomUUID(),
+      intent: isLink ? 'link' : 'signin',
+    }),
+  );
 
   const params = new URLSearchParams({
     client_id: clientId,

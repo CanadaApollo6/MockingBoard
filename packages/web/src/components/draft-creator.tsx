@@ -8,6 +8,7 @@ import type {
   TeamAbbreviation,
   DraftFormat,
   CpuSpeed,
+  NotificationLevel,
 } from '@mockingboard/shared';
 import { useAuth } from '@/components/auth-provider';
 import { Button } from '@/components/ui/button';
@@ -26,7 +27,7 @@ for (const team of teams) {
 
 export function DraftCreator() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const isGuest = !user;
   const [year, setYear] = useState(2026);
   const [rounds, setRounds] = useState(3);
@@ -37,6 +38,8 @@ export function DraftCreator() {
   const [cpuSpeed, setCpuSpeed] = useState<CpuSpeed>('normal');
   const [secondsPerPick, setSecondsPerPick] = useState(0);
   const [tradesEnabled, setTradesEnabled] = useState(false);
+  const [notificationLevel, setNotificationLevel] =
+    useState<NotificationLevel>('off');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -79,6 +82,7 @@ export function DraftCreator() {
           cpuSpeed,
           secondsPerPick,
           tradesEnabled,
+          notificationLevel,
         }),
       });
 
@@ -205,6 +209,37 @@ export function DraftCreator() {
               On
             </Button>
           </OptionGroup>
+
+          {profile?.hasWebhook && !isGuest && (
+            <OptionGroup
+              label="Discord Notifications"
+              subtitle="Send updates to your webhook"
+            >
+              <Button
+                variant={notificationLevel === 'off' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setNotificationLevel('off')}
+              >
+                Off
+              </Button>
+              <Button
+                variant={
+                  notificationLevel === 'link-only' ? 'default' : 'outline'
+                }
+                size="sm"
+                onClick={() => setNotificationLevel('link-only')}
+              >
+                Link Only
+              </Button>
+              <Button
+                variant={notificationLevel === 'full' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setNotificationLevel('full')}
+              >
+                Pick-by-Pick
+              </Button>
+            </OptionGroup>
+          )}
         </CardContent>
       </Card>
 

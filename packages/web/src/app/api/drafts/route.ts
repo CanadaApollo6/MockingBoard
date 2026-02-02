@@ -6,11 +6,14 @@ import {
   createWebDraft,
 } from '@/lib/draft-actions';
 import { resolveUser } from '@/lib/user-resolve';
+import { adminDb } from '@/lib/firebase-admin';
+import { sendDraftStarted } from '@/lib/discord-webhook';
 import { teams } from '@mockingboard/shared';
 import type {
   TeamAbbreviation,
   DraftFormat,
   CpuSpeed,
+  NotificationLevel,
 } from '@mockingboard/shared';
 
 export async function POST(request: Request) {
@@ -27,6 +30,7 @@ export async function POST(request: Request) {
     cpuSpeed: CpuSpeed;
     secondsPerPick?: number;
     tradesEnabled: boolean;
+    notificationLevel?: NotificationLevel;
   };
 
   try {
@@ -46,6 +50,7 @@ export async function POST(request: Request) {
     cpuSpeed,
     secondsPerPick,
     tradesEnabled,
+    notificationLevel,
   } = body;
 
   if (!year || !rounds || !format || !cpuSpeed) {
@@ -96,7 +101,28 @@ export async function POST(request: Request) {
       pickOrder,
       futurePicks,
       participantIds: [...new Set([session.uid, discordId])],
+      notificationLevel,
     });
+
+    // Fire-and-forget: send webhook notification if enabled
+    if (notificationLevel && notificationLevel !== 'off') {
+      const webhookUrl = user?.discordWebhookUrl as string | undefined;
+      if (webhookUrl) {
+        const origin = request.headers.get('origin') ?? process.env.APP_URL ?? '';
+        const draftUrl = `${origin}/drafts/${draft.id}/live`;
+
+        sendDraftStarted(webhookUrl, draft, draftUrl, notificationLevel)
+          .then(async (threadId) => {
+            if (threadId) {
+              await adminDb
+                .collection('drafts')
+                .doc(draft.id)
+                .update({ webhookThreadId: threadId });
+            }
+          })
+          .catch((err) => console.error('Webhook notification failed:', err));
+      }
+    }
 
     return NextResponse.json({ draftId: draft.id });
   } catch (err) {

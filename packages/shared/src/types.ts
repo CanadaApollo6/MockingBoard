@@ -76,6 +76,7 @@ export type DraftFormat = 'full' | 'single-team';
 export type DraftPlatform = 'discord' | 'web';
 export type TeamAssignmentMode = 'random' | 'choice';
 export type CpuSpeed = 'instant' | 'fast' | 'normal';
+export type NotificationLevel = 'off' | 'link-only' | 'full';
 
 // ---- Supporting Types ----
 
@@ -105,6 +106,7 @@ export interface User {
   discordUsername?: string;
   discordAvatar?: string;
   createdAt: FirestoreTimestamp;
+  discordWebhookUrl?: string;
   updatedAt: FirestoreTimestamp;
   preferences?: {
     statedWeights?: PreferenceWeights;
@@ -148,6 +150,8 @@ export interface Draft {
   pickedPlayerIds: string[];
   isLocked?: boolean;
   lockedAt?: FirestoreTimestamp;
+  notificationLevel?: NotificationLevel;
+  webhookThreadId?: string;
 }
 
 export interface Pick {

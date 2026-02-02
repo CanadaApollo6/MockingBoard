@@ -2,12 +2,8 @@ import 'server-only';
 
 import { adminDb } from './firebase-admin';
 import { getCachedPlayerMap } from './cache';
+import { sanitize } from './sanitize';
 import type { Draft, Pick, Player, Trade } from '@mockingboard/shared';
-
-/** Strip Firestore class instances (Timestamp, etc.) to plain serializable objects. */
-function sanitize<T>(data: T): T {
-  return JSON.parse(JSON.stringify(data));
-}
 
 export async function getDrafts(options?: {
   status?: Draft['status'];

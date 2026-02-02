@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { adminDb, adminAuth } from '@/lib/firebase-admin';
 import { getOrigin } from '@/lib/url';
+import { getSessionUser } from '@/lib/auth-session';
 
 const DISCORD_TOKEN_URL = 'https://discord.com/api/oauth2/token';
 const DISCORD_USER_URL = 'https://discord.com/api/users/@me';
@@ -9,6 +10,18 @@ interface DiscordUser {
   id: string;
   username: string;
   avatar: string | null;
+}
+
+function parseState(raw: string): { nonce: string; intent: 'signin' | 'link' } {
+  try {
+    const parsed = JSON.parse(atob(raw));
+    if (parsed.intent === 'link')
+      return { nonce: parsed.nonce, intent: 'link' };
+    return { nonce: parsed.nonce, intent: 'signin' };
+  } catch {
+    // Legacy plain UUID state — treat as signin
+    return { nonce: raw, intent: 'signin' };
+  }
 }
 
 export async function GET(request: Request) {
@@ -29,6 +42,8 @@ export async function GET(request: Request) {
     const reason = !code ? 'no_code' : !state ? 'no_state' : 'state_mismatch';
     return NextResponse.redirect(new URL(`/?error=csrf_${reason}`, origin));
   }
+
+  const { intent } = parseState(state);
 
   try {
     // Exchange code for Discord access token
@@ -63,11 +78,52 @@ export async function GET(request: Request) {
 
     const discordUser: DiscordUser = await userRes.json();
 
-    // Lookup or create Firestore user, get doc ID as canonical internal ID
+    // --- Link intent: attach Discord to current session user ---
+    if (intent === 'link') {
+      const session = await getSessionUser();
+      if (!session) {
+        return NextResponse.redirect(
+          new URL('/settings?error=not_authenticated', origin),
+        );
+      }
+
+      // Check if Discord ID is already linked to another user
+      const existing = await adminDb
+        .collection('users')
+        .where('discordId', '==', discordUser.id)
+        .limit(1)
+        .get();
+
+      if (!existing.empty && existing.docs[0].id !== session.uid) {
+        const response = NextResponse.redirect(
+          new URL('/settings?error=discord_already_linked', origin),
+        );
+        response.cookies.delete('discord_oauth_state');
+        return response;
+      }
+
+      // Link Discord to current user
+      await adminDb
+        .collection('users')
+        .doc(session.uid)
+        .update({
+          discordId: discordUser.id,
+          discordUsername: discordUser.username,
+          ...(discordUser.avatar && { discordAvatar: discordUser.avatar }),
+          updatedAt: new Date(),
+        });
+
+      const response = NextResponse.redirect(
+        new URL('/settings?linked=discord', origin),
+      );
+      response.cookies.delete('discord_oauth_state');
+      return response;
+    }
+
+    // --- Signin intent: lookup or create user ---
     const userDocId = await ensureFirestoreUser(discordUser);
 
     // Create Firebase custom token using Firestore doc ID as the UID
-    // This gives a unified identity model: session.uid = Firestore doc ID
     const customToken = await adminAuth.createCustomToken(userDocId);
 
     // Redirect to client callback page with the token
@@ -75,7 +131,6 @@ export async function GET(request: Request) {
     callbackUrl.searchParams.set('token', customToken);
 
     const response = NextResponse.redirect(callbackUrl);
-    // Clear the state cookie
     response.cookies.delete('discord_oauth_state');
     return response;
   } catch (error) {

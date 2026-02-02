@@ -1,7 +1,23 @@
 import type { FirestoreTimestamp } from '@mockingboard/shared';
 
+/** Extract seconds from a timestamp that may use `_seconds` (Firestore Admin SDK
+ *  internal format) or `seconds` (our canonical serialized format). */
+function extractSeconds(ts: FirestoreTimestamp): number {
+  return ts.seconds ?? (ts as unknown as { _seconds: number })._seconds ?? 0;
+}
+
+function extractNanoseconds(ts: FirestoreTimestamp): number {
+  return (
+    ts.nanoseconds ??
+    (ts as unknown as { _nanoseconds: number })._nanoseconds ??
+    0
+  );
+}
+
 export function timestampToDate(ts: FirestoreTimestamp): Date {
-  return new Date(ts.seconds * 1000 + ts.nanoseconds / 1_000_000);
+  return new Date(
+    extractSeconds(ts) * 1000 + extractNanoseconds(ts) / 1_000_000,
+  );
 }
 
 export function formatDraftDate(ts: FirestoreTimestamp): string {
@@ -14,7 +30,7 @@ export function formatDraftDate(ts: FirestoreTimestamp): string {
 
 export function formatRelativeTime(ts: FirestoreTimestamp): string {
   const now = Date.now();
-  const then = ts.seconds * 1000;
+  const then = extractSeconds(ts) * 1000;
   const diffMs = now - then;
   const diffMins = Math.floor(diffMs / 60_000);
 

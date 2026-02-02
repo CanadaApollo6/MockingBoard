@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { adminDb } from './firebase-admin';
+import { sanitize } from './sanitize';
 import type { Player, DraftSlot, FuturePickSeed } from '@mockingboard/shared';
 
 // ---- TTLs ----
@@ -35,8 +36,8 @@ export async function getCachedPlayers(year: number): Promise<Player[]> {
     .orderBy('consensusRank')
     .get();
 
-  const players = snapshot.docs.map(
-    (doc) => ({ id: doc.id, ...doc.data() }) as Player,
+  const players = sanitize(
+    snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Player),
   );
 
   playerCache.set(year, { data: players, expiresAt: Date.now() + PLAYER_TTL });

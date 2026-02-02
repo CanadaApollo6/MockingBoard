@@ -9,6 +9,7 @@ export type {
   DraftPlatform,
   TeamAssignmentMode,
   CpuSpeed,
+  NotificationLevel,
   TradeStatus,
   DraftSlot,
   PreferenceWeights,

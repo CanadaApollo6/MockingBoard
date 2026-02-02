@@ -12,9 +12,12 @@ export function SignInButton() {
   if (user) {
     return (
       <div className="flex items-center gap-2">
-        <span className="text-sm text-muted-foreground">
+        <Link
+          href="/settings"
+          className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
           {profile?.displayName ?? 'User'}
-        </span>
+        </Link>
         <Button variant="ghost" size="sm" onClick={signOut}>
           Sign Out
         </Button>

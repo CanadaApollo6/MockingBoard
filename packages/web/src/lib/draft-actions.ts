@@ -13,6 +13,7 @@ import type {
   DraftSlot,
   FutureDraftPick,
   FuturePickSeed,
+  NotificationLevel,
   Pick,
   Player,
   Trade,
@@ -76,6 +77,7 @@ export interface CreateWebDraftInput {
   pickOrder: DraftSlot[];
   futurePicks: FutureDraftPick[];
   participantIds: string[];
+  notificationLevel?: NotificationLevel;
 }
 
 export async function createWebDraft(
@@ -99,6 +101,10 @@ export async function createWebDraft(
     pickOrder: input.pickOrder,
     futurePicks: input.futurePicks,
     pickedPlayerIds: [] as string[],
+    ...(input.notificationLevel &&
+      input.notificationLevel !== 'off' && {
+        notificationLevel: input.notificationLevel,
+      }),
     createdAt: now,
     updatedAt: now,
   };
