@@ -1,3 +1,4 @@
+/// <reference types="vitest/globals" />
 import { vi } from 'vitest';
 
 // Mock server-only imports so the pure function can be tested
