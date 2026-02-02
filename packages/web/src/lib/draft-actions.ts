@@ -10,12 +10,14 @@ import {
 import type {
   Draft,
   DraftFormat,
+  DraftVisibility,
   DraftSlot,
   FutureDraftPick,
   FuturePickSeed,
   NotificationLevel,
   Pick,
   Player,
+  TeamAssignmentMode,
   Trade,
   TradePiece,
   TradeStatus,
@@ -65,6 +67,7 @@ export async function buildFuturePicks(
 export interface CreateWebDraftInput {
   userId: string;
   discordId: string;
+  displayName?: string;
   config: {
     rounds: number;
     format: DraftFormat;
@@ -72,42 +75,57 @@ export interface CreateWebDraftInput {
     cpuSpeed: CpuSpeed;
     secondsPerPick?: number;
     tradesEnabled: boolean;
+    teamAssignmentMode?: TeamAssignmentMode;
   };
   teamAssignments: Record<TeamAbbreviation, string | null>;
   pickOrder: DraftSlot[];
   futurePicks: FutureDraftPick[];
   participantIds: string[];
   notificationLevel?: NotificationLevel;
+  multiplayer?: boolean;
+  visibility?: DraftVisibility;
 }
 
 export async function createWebDraft(
   input: CreateWebDraftInput,
 ): Promise<Draft> {
   const now = FieldValue.serverTimestamp();
-  const draftData = {
+  const isMultiplayer = !!input.multiplayer;
+
+  const draftData: Record<string, unknown> = {
     createdBy: input.userId,
     config: {
       ...input.config,
       secondsPerPick: input.config.secondsPerPick ?? 0,
-      teamAssignmentMode: 'choice' as const,
+      teamAssignmentMode: input.config.teamAssignmentMode ?? 'choice',
     },
     platform: 'web' as const,
-    status: 'active' as const,
+    status: isMultiplayer ? 'lobby' : 'active',
     currentPick: 1,
     currentRound: 1,
     teamAssignments: input.teamAssignments,
     participants: { [input.userId]: input.discordId },
     participantIds: input.participantIds,
+    participantNames: {
+      [input.userId]: input.displayName ?? 'Player 1',
+    },
     pickOrder: input.pickOrder,
     futurePicks: input.futurePicks,
     pickedPlayerIds: [] as string[],
-    ...(input.notificationLevel &&
-      input.notificationLevel !== 'off' && {
-        notificationLevel: input.notificationLevel,
-      }),
     createdAt: now,
     updatedAt: now,
   };
+
+  if (input.notificationLevel && input.notificationLevel !== 'off') {
+    draftData.notificationLevel = input.notificationLevel;
+  }
+
+  if (isMultiplayer) {
+    draftData.visibility = input.visibility ?? 'public';
+    if (input.visibility === 'private') {
+      draftData.inviteCode = crypto.randomUUID().slice(0, 8);
+    }
+  }
 
   const docRef = await adminDb.collection('drafts').add(draftData);
   const created = await docRef.get();

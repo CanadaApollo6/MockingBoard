@@ -12,6 +12,8 @@ import { teams } from '@mockingboard/shared';
 import type {
   TeamAbbreviation,
   DraftFormat,
+  DraftVisibility,
+  TeamAssignmentMode,
   CpuSpeed,
   NotificationLevel,
 } from '@mockingboard/shared';
@@ -31,6 +33,9 @@ export async function POST(request: Request) {
     secondsPerPick?: number;
     tradesEnabled: boolean;
     notificationLevel?: NotificationLevel;
+    multiplayer?: boolean;
+    visibility?: DraftVisibility;
+    teamAssignmentMode?: TeamAssignmentMode;
   };
 
   try {
@@ -51,6 +56,9 @@ export async function POST(request: Request) {
     secondsPerPick,
     tradesEnabled,
     notificationLevel,
+    multiplayer,
+    visibility,
+    teamAssignmentMode,
   } = body;
 
   if (!year || !rounds || !format || !cpuSpeed) {
@@ -60,7 +68,15 @@ export async function POST(request: Request) {
     );
   }
 
-  if (format === 'single-team' && !selectedTeam) {
+  // Multiplayer requires a selected team (creator's team)
+  if (multiplayer && !selectedTeam) {
+    return NextResponse.json(
+      { error: 'Team selection required for multiplayer drafts' },
+      { status: 400 },
+    );
+  }
+
+  if (!multiplayer && format === 'single-team' && !selectedTeam) {
     return NextResponse.json(
       { error: 'Team selection required for single-team format' },
       { status: 400 },
@@ -75,7 +91,11 @@ export async function POST(request: Request) {
 
     const teamAssignments = {} as Record<TeamAbbreviation, string | null>;
     for (const team of teams) {
-      if (format === 'full') {
+      if (multiplayer) {
+        // Multiplayer: only creator's selected team assigned, rest are null (CPU/unclaimed)
+        teamAssignments[team.id] =
+          team.id === selectedTeam ? session.uid : null;
+      } else if (format === 'full') {
         teamAssignments[team.id] = session.uid;
       } else {
         teamAssignments[team.id] =
@@ -85,10 +105,13 @@ export async function POST(request: Request) {
 
     const user = await resolveUser(session.uid);
     const discordId = user?.discordId ?? session.uid;
+    const displayName =
+      user?.displayName ?? user?.discordUsername ?? 'Player 1';
 
     const draft = await createWebDraft({
       userId: session.uid,
       discordId,
+      displayName,
       config: {
         rounds,
         format,
@@ -96,12 +119,17 @@ export async function POST(request: Request) {
         cpuSpeed,
         secondsPerPick: secondsPerPick ?? 0,
         tradesEnabled,
+        teamAssignmentMode: multiplayer
+          ? (teamAssignmentMode ?? 'choice')
+          : 'choice',
       },
       teamAssignments,
       pickOrder,
       futurePicks,
       participantIds: [...new Set([session.uid, discordId])],
       notificationLevel,
+      multiplayer,
+      visibility,
     });
 
     // Fire-and-forget: send webhook notification if enabled

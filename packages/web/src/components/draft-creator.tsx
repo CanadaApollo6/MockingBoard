@@ -7,6 +7,8 @@ import { teams, type TeamSeed } from '@mockingboard/shared';
 import type {
   TeamAbbreviation,
   DraftFormat,
+  DraftVisibility,
+  TeamAssignmentMode,
   CpuSpeed,
   NotificationLevel,
 } from '@mockingboard/shared';
@@ -29,6 +31,10 @@ export function DraftCreator() {
   const router = useRouter();
   const { user, profile } = useAuth();
   const isGuest = !user;
+  const [multiplayer, setMultiplayer] = useState(false);
+  const [visibility, setVisibility] = useState<DraftVisibility>('public');
+  const [teamAssignmentMode, setTeamAssignmentMode] =
+    useState<TeamAssignmentMode>('choice');
   const [year, setYear] = useState(2026);
   const [rounds, setRounds] = useState(3);
   const [format, setFormat] = useState<DraftFormat>('single-team');
@@ -47,17 +53,21 @@ export function DraftCreator() {
     ? teams.find((t) => t.id === selectedTeam)
     : null;
 
+  // For multiplayer, format is always 'full' and team selection is required
+  const effectiveFormat = multiplayer ? 'full' : format;
+  const needsTeamSelect = multiplayer || effectiveFormat === 'single-team';
+
   async function handleSubmit() {
-    if (format === 'single-team' && !selectedTeam) {
+    if (needsTeamSelect && !selectedTeam) {
       setError('Please select a team');
       return;
     }
 
-    if (isGuest) {
+    if (isGuest && !multiplayer) {
       const params = new URLSearchParams({
         year: String(year),
         rounds: String(rounds),
-        format,
+        format: effectiveFormat,
         cpuSpeed,
         secondsPerPick: String(secondsPerPick),
         trades: String(tradesEnabled),
@@ -77,12 +87,14 @@ export function DraftCreator() {
         body: JSON.stringify({
           year,
           rounds,
-          format,
+          format: effectiveFormat,
           selectedTeam,
           cpuSpeed,
           secondsPerPick,
           tradesEnabled,
           notificationLevel,
+          multiplayer,
+          ...(multiplayer && { visibility, teamAssignmentMode }),
         }),
       });
 
@@ -119,6 +131,77 @@ export function DraftCreator() {
             ))}
           </OptionGroup>
 
+          {!isGuest && (
+            <OptionGroup label="Mode">
+              <Button
+                variant={!multiplayer ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setMultiplayer(false)}
+              >
+                Solo
+              </Button>
+              <Button
+                variant={multiplayer ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setMultiplayer(true)}
+              >
+                Multiplayer
+              </Button>
+            </OptionGroup>
+          )}
+
+          {multiplayer && (
+            <>
+              <OptionGroup label="Visibility">
+                <Button
+                  variant={visibility === 'public' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setVisibility('public')}
+                >
+                  Public
+                </Button>
+                <Button
+                  variant={visibility === 'unlisted' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setVisibility('unlisted')}
+                >
+                  Unlisted
+                </Button>
+                <Button
+                  variant={visibility === 'private' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setVisibility('private')}
+                >
+                  Private
+                </Button>
+              </OptionGroup>
+
+              <OptionGroup
+                label="Team Assignment"
+                subtitle="How players pick teams"
+              >
+                <Button
+                  variant={
+                    teamAssignmentMode === 'choice' ? 'default' : 'outline'
+                  }
+                  size="sm"
+                  onClick={() => setTeamAssignmentMode('choice')}
+                >
+                  Player Choice
+                </Button>
+                <Button
+                  variant={
+                    teamAssignmentMode === 'random' ? 'default' : 'outline'
+                  }
+                  size="sm"
+                  onClick={() => setTeamAssignmentMode('random')}
+                >
+                  Random
+                </Button>
+              </OptionGroup>
+            </>
+          )}
+
           <OptionGroup label="Rounds">
             {[1, 2, 3, 4, 5, 6, 7].map((r) => (
               <Button
@@ -132,22 +215,24 @@ export function DraftCreator() {
             ))}
           </OptionGroup>
 
-          <OptionGroup label="Format">
-            <Button
-              variant={format === 'single-team' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setFormat('single-team')}
-            >
-              Single Team
-            </Button>
-            <Button
-              variant={format === 'full' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setFormat('full')}
-            >
-              All Teams
-            </Button>
-          </OptionGroup>
+          {!multiplayer && (
+            <OptionGroup label="Format">
+              <Button
+                variant={format === 'single-team' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setFormat('single-team')}
+              >
+                Single Team
+              </Button>
+              <Button
+                variant={format === 'full' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setFormat('full')}
+              >
+                All Teams
+              </Button>
+            </OptionGroup>
+          )}
 
           <OptionGroup label="CPU Speed">
             <Button
@@ -243,7 +328,7 @@ export function DraftCreator() {
         </CardContent>
       </Card>
 
-      {format === 'single-team' && (
+      {needsTeamSelect && (
         <Card>
           <CardHeader>
             <CardTitle>
@@ -310,13 +395,15 @@ export function DraftCreator() {
       <Button
         className="w-full"
         onClick={handleSubmit}
-        disabled={submitting || (format === 'single-team' && !selectedTeam)}
+        disabled={submitting || (needsTeamSelect && !selectedTeam)}
       >
         {submitting
-          ? 'Creating Draft...'
-          : isGuest
-            ? 'Start Guest Draft'
-            : 'Start Draft'}
+          ? 'Creating...'
+          : multiplayer
+            ? 'Create Lobby'
+            : isGuest
+              ? 'Start Guest Draft'
+              : 'Start Draft'}
       </Button>
     </div>
   );

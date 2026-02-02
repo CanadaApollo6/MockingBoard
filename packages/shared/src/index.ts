@@ -10,6 +10,7 @@ export type {
   TeamAssignmentMode,
   CpuSpeed,
   NotificationLevel,
+  DraftVisibility,
   TradeStatus,
   DraftSlot,
   PreferenceWeights,

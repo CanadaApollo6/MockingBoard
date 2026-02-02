@@ -439,7 +439,11 @@ export function DraftRoom({
         !tradeResult &&
         (animating || (!isUserTurn && currentSlot)) && (
           <div className="py-4 text-center text-sm text-muted-foreground">
-            {animating ? 'CPU picks rolling in...' : 'Waiting for CPU picks...'}
+            {animating
+              ? 'CPU picks rolling in...'
+              : controller && draft?.participantNames?.[controller]
+                ? `Waiting for ${draft.participantNames[controller]}'s pick...`
+                : 'Waiting for CPU picks...'}
           </div>
         )}
     </>

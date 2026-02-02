@@ -77,6 +77,7 @@ export type DraftPlatform = 'discord' | 'web';
 export type TeamAssignmentMode = 'random' | 'choice';
 export type CpuSpeed = 'instant' | 'fast' | 'normal';
 export type NotificationLevel = 'off' | 'link-only' | 'full';
+export type DraftVisibility = 'public' | 'unlisted' | 'private';
 
 // ---- Supporting Types ----
 
@@ -112,6 +113,7 @@ export interface User {
     statedWeights?: PreferenceWeights;
     revealedWeights?: PreferenceWeights;
   };
+  isGuest?: boolean;
   stats?: {
     totalDrafts: number;
     totalPicks: number;
@@ -152,6 +154,9 @@ export interface Draft {
   lockedAt?: FirestoreTimestamp;
   notificationLevel?: NotificationLevel;
   webhookThreadId?: string;
+  visibility?: DraftVisibility;
+  inviteCode?: string;
+  participantNames?: Record<string, string>;
 }
 
 export interface Pick {

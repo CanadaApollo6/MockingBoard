@@ -57,6 +57,20 @@ export async function getDraftTrades(draftId: string): Promise<Trade[]> {
   );
 }
 
+export async function getPublicLobbies(): Promise<Draft[]> {
+  const snapshot = await adminDb
+    .collection('drafts')
+    .where('visibility', '==', 'public')
+    .where('status', '==', 'lobby')
+    .orderBy('createdAt', 'desc')
+    .limit(20)
+    .get();
+
+  return sanitize(
+    snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Draft),
+  );
+}
+
 export async function getUserDrafts(
   userId: string,
   discordId?: string,

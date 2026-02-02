@@ -21,6 +21,7 @@ export interface UserProfile {
   discordUsername?: string;
   hasDiscord: boolean;
   hasWebhook: boolean;
+  isGuest: boolean;
 }
 
 interface AuthContextValue {
@@ -71,6 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           discordUsername: data.discordUsername,
           hasDiscord: !!data.discordId,
           hasWebhook: !!data.discordWebhookUrl,
+          isGuest: !!data.isGuest,
         });
       }
     });
