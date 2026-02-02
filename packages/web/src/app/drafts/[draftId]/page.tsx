@@ -37,7 +37,7 @@ export default async function DraftDetailPage({
     session && isUserInDraft(draft, session.uid, user?.discordId);
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-8">
+    <main className="mx-auto max-w-screen-xl px-4 py-8">
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-3">

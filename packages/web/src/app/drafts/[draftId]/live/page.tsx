@@ -46,7 +46,7 @@ export default async function LiveDraftPage({
 
   if (isParticipant) {
     return (
-      <main className="mx-auto max-w-4xl px-4 py-8">
+      <main className="mx-auto max-w-screen-xl px-4 py-8">
         <h1 className="mb-6 text-2xl font-bold">
           {draft.config.year} Mock Draft
         </h1>
@@ -62,7 +62,7 @@ export default async function LiveDraftPage({
   }
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-8">
+    <main className="mx-auto max-w-screen-xl px-4 py-8">
       <h1 className="mb-6 text-2xl font-bold">
         {draft.config.year} Mock Draft — Live
       </h1>
