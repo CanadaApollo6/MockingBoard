@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import type { TeamAbbreviation } from '@mockingboard/shared';
 import { getTeamName } from '@/lib/teams';
-import { getTeamColor } from '@/lib/team-colors';
+import { getTeamColor, ensureVisible } from '@/lib/team-colors';
 import { Badge } from '@/components/ui/badge';
 
 interface DraftClockProps {
@@ -81,6 +81,14 @@ export function DraftClock({
 
   return (
     <div className="relative overflow-hidden rounded-lg border border-mb-border-strong bg-card p-4">
+      {/* Team color gradient strip */}
+      <div
+        className="absolute inset-x-0 top-0 h-1"
+        style={{
+          background: `linear-gradient(to right, ${ensureVisible(colors.primary)}, ${ensureVisible(colors.secondary)})`,
+        }}
+      />
+
       {/* Pulse background */}
       <motion.div
         key={`pulse-${urgency}`}

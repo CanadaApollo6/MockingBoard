@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import type {
   Pick,
@@ -8,7 +9,7 @@ import type {
   DraftSlot,
 } from '@mockingboard/shared';
 import { getTeamName } from '@/lib/teams';
-import { getTeamColor } from '@/lib/team-colors';
+import { buildRowColors } from '@/lib/team-colors';
 import { getPositionColor } from '@/lib/position-colors';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -40,6 +41,11 @@ export function DraftBoard({
 }: DraftBoardProps) {
   const shouldReduce = useReducedMotion();
   const hasFullBoard = pickOrder && pickOrder.length > 0;
+
+  const colorMap = useMemo(
+    () => buildRowColors(hasFullBoard ? pickOrder : picks),
+    [hasFullBoard, pickOrder, picks],
+  );
 
   if (!hasFullBoard && picks.length === 0) {
     return (
@@ -92,6 +98,7 @@ export function DraftBoard({
                   {hasFullBoard
                     ? (roundItems as DraftSlot[]).map((slot) => {
                         const pick = pickMap.get(slot.overall);
+                        const tc = colorMap.get(slot.overall)!;
                         if (pick) {
                           return (
                             <PickRow
@@ -99,6 +106,7 @@ export function DraftBoard({
                               pick={pick}
                               player={playerMap.get(pick.playerId)}
                               shouldReduce={shouldReduce ?? false}
+                              teamColor={tc}
                             />
                           );
                         }
@@ -108,10 +116,17 @@ export function DraftBoard({
                               key={slot.overall}
                               slot={slot}
                               urgency={clockUrgency}
+                              teamColor={tc}
                             />
                           );
                         }
-                        return <EmptyRow key={slot.overall} slot={slot} />;
+                        return (
+                          <EmptyRow
+                            key={slot.overall}
+                            slot={slot}
+                            teamColor={tc}
+                          />
+                        );
                       })
                     : (roundItems as Pick[]).map((pick) => (
                         <PickRow
@@ -119,6 +134,7 @@ export function DraftBoard({
                           pick={pick}
                           player={playerMap.get(pick.playerId)}
                           shouldReduce={shouldReduce ?? false}
+                          teamColor={colorMap.get(pick.overall)!}
                         />
                       ))}
                 </AnimatePresence>
@@ -135,13 +151,14 @@ function PickRow({
   pick,
   player,
   shouldReduce,
+  teamColor,
 }: {
   pick: Pick;
   player: Player | undefined;
   shouldReduce: boolean;
+  teamColor: string;
 }) {
   const isCpu = pick.userId === null;
-  const teamColor = getTeamColor(pick.team as TeamAbbreviation).primary;
   const posColor = player?.position
     ? getPositionColor(player.position)
     : undefined;
@@ -193,11 +210,12 @@ function PickRow({
 function OnTheClockRow({
   slot,
   urgency = 'normal',
+  teamColor,
 }: {
   slot: DraftSlot;
   urgency?: ClockUrgency;
+  teamColor: string;
 }) {
-  const teamColor = getTeamColor(slot.team as TeamAbbreviation).primary;
   // Hex values for framer-motion interpolation (CSS vars can't be animated)
   const pulseHex =
     urgency === 'critical'
@@ -238,9 +256,7 @@ function OnTheClockRow({
   );
 }
 
-function EmptyRow({ slot }: { slot: DraftSlot }) {
-  const teamColor = getTeamColor(slot.team as TeamAbbreviation).primary;
-
+function EmptyRow({ slot, teamColor }: { slot: DraftSlot; teamColor: string }) {
   return (
     <tr
       style={{ borderLeft: `3px solid ${teamColor}` }}

@@ -93,10 +93,7 @@ export function PlayerCard({
         {/* Header: rank + position + close */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span
-              className="font-mono text-2xl font-bold"
-              style={{ color: 'var(--school-primary)' }}
-            >
+            <span className="font-mono text-2xl font-bold">
               #{player.consensusRank}
             </span>
             <Badge
