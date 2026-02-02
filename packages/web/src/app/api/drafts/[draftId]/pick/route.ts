@@ -73,15 +73,11 @@ export async function POST(
     let allNewPicks: Pick[] = [pick];
     let draftCompleted = pickComplete;
 
-    // Run CPU cascade if appropriate
+    // Run CPU cascade for all remaining CPU picks
     if (!pickComplete) {
-      const shouldBatchCpu =
-        !draft.config.tradesEnabled || draft.config.cpuSpeed === 'instant';
-      if (shouldBatchCpu) {
-        const cascade = await runCpuCascade(draftId);
-        allNewPicks = [pick, ...cascade.picks];
-        draftCompleted = cascade.isComplete;
-      }
+      const cascade = await runCpuCascade(draftId);
+      allNewPicks = [pick, ...cascade.picks];
+      draftCompleted = cascade.isComplete;
     }
 
     // Fire-and-forget: webhook notifications

@@ -161,7 +161,7 @@ function PickRow({
         {getTeamName(pick.team as TeamAbbreviation)}
       </TableCell>
       <TableCell>
-        <span className="font-medium">{player?.name ?? pick.playerId}</span>
+        <span className="font-medium">{player?.name ?? 'Unknown Player'}</span>
         {isCpu && (
           <Badge variant="outline" className="ml-2 text-xs">
             CPU

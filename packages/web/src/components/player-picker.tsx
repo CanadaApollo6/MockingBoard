@@ -112,7 +112,7 @@ export function PlayerPicker({ players, onPick, disabled }: PlayerPickerProps) {
         </div>
       )}
 
-      <div className="max-h-80 overflow-y-auto rounded-md border">
+      <div className="max-h-[calc(100vh-20rem)] overflow-y-auto rounded-md border">
         {filtered.length === 0 ? (
           <p className="p-4 text-center text-sm text-muted-foreground">
             No players found

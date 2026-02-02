@@ -80,7 +80,7 @@ export function DraftClock({
   const centerY = hasTimer ? SIZE / 2 - 6 : SIZE / 2;
 
   return (
-    <div className="relative overflow-hidden rounded-lg border border-mb-border-strong p-4">
+    <div className="relative overflow-hidden rounded-lg border border-mb-border-strong bg-card p-4">
       {/* Pulse background */}
       <motion.div
         key={`pulse-${urgency}`}
