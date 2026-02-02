@@ -91,7 +91,7 @@ export function PlayerPicker({ players, onPick, disabled }: PlayerPickerProps) {
         ))}
       </div>
 
-      <AnimatePresence mode="popLayout">
+      <AnimatePresence mode="wait">
         {selectedPlayer && (
           <PlayerCard
             key={selectedPlayer.id}
