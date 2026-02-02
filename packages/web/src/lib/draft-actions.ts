@@ -80,7 +80,6 @@ export interface CreateWebDraftInput {
   teamAssignments: Record<TeamAbbreviation, string | null>;
   pickOrder: DraftSlot[];
   futurePicks: FutureDraftPick[];
-  participantIds: string[];
   notificationLevel?: NotificationLevel;
   multiplayer?: boolean;
   visibility?: DraftVisibility;
@@ -105,7 +104,7 @@ export async function createWebDraft(
     currentRound: 1,
     teamAssignments: input.teamAssignments,
     participants: { [input.userId]: input.discordId },
-    participantIds: input.participantIds,
+    participantIds: [...new Set([input.userId, input.discordId])],
     participantNames: {
       [input.userId]: input.displayName ?? 'Player 1',
     },
@@ -310,10 +309,13 @@ export async function advanceSingleCpuPick(
 
 // ---- Trade Operations ----
 
+const TRADE_EXPIRY_MS = 2 * 60 * 1000; // 2 minutes for user-to-user trades
+
 export interface CreateWebTradeInput {
   draftId: string;
   proposerId: string;
   proposerTeam: TeamAbbreviation;
+  recipientId: string | null;
   recipientTeam: TeamAbbreviation;
   proposerGives: TradePiece[];
   proposerReceives: TradePiece[];
@@ -322,7 +324,7 @@ export interface CreateWebTradeInput {
 
 export async function createWebTrade(
   input: CreateWebTradeInput,
-): Promise<{ trade: Trade; evaluation: CpuTradeEvaluation }> {
+): Promise<{ trade: Trade; evaluation: CpuTradeEvaluation | null }> {
   // Fetch draft for validation
   const draftDoc = await adminDb.collection('drafts').doc(input.draftId).get();
   if (!draftDoc.exists) throw new Error('Draft not found');
@@ -345,14 +347,16 @@ export async function createWebTrade(
   );
   if (!ownsGiving.valid) throw new Error(ownsGiving.error);
 
+  const isUserTrade = !!input.recipientId;
+
   // Create trade doc
   const now = FieldValue.serverTimestamp();
-  const tradeData = {
+  const tradeData: Record<string, unknown> = {
     draftId: input.draftId,
     status: 'pending' as TradeStatus,
     proposerId: input.proposerId,
     proposerTeam: input.proposerTeam,
-    recipientId: null, // CPU trade
+    recipientId: input.recipientId,
     recipientTeam: input.recipientTeam,
     proposerGives: input.proposerGives,
     proposerReceives: input.proposerReceives,
@@ -360,12 +364,16 @@ export async function createWebTrade(
     isForceTrade: input.isForceTrade ?? false,
   };
 
+  if (isUserTrade) {
+    tradeData.expiresAt = new Date(Date.now() + TRADE_EXPIRY_MS);
+  }
+
   const docRef = await adminDb.collection('trades').add(tradeData);
   const created = await docRef.get();
   const trade = { id: created.id, ...created.data() } as Trade;
 
-  // Evaluate from CPU perspective
-  const evaluation = evaluateCpuTrade(trade, draft);
+  // Only evaluate CPU trades
+  const evaluation = isUserTrade ? null : evaluateCpuTrade(trade, draft);
 
   return { trade, evaluation };
 }
@@ -375,36 +383,76 @@ export async function executeWebTrade(
   draftId: string,
   force: boolean = false,
 ): Promise<Draft> {
-  const tradeDo = await adminDb.collection('trades').doc(tradeId).get();
-  if (!tradeDo.exists) throw new Error('Trade not found');
-  const trade = { id: tradeDo.id, ...tradeDo.data() } as Trade;
+  return adminDb.runTransaction(async (tx) => {
+    const tradeRef = adminDb.collection('trades').doc(tradeId);
+    const draftRef = adminDb.collection('drafts').doc(draftId);
+    const [tradeSnap, draftSnap] = await Promise.all([
+      tx.get(tradeRef),
+      tx.get(draftRef),
+    ]);
 
-  const draftDoc = await adminDb.collection('drafts').doc(draftId).get();
-  if (!draftDoc.exists) throw new Error('Draft not found');
-  const draft = { id: draftDoc.id, ...draftDoc.data() } as Draft;
+    if (!tradeSnap.exists) throw new Error('Trade not found');
+    if (!draftSnap.exists) throw new Error('Draft not found');
 
-  // Accept trade
-  await adminDb.collection('trades').doc(tradeId).update({
-    status: 'accepted',
-    isForceTrade: force,
-    resolvedAt: FieldValue.serverTimestamp(),
+    const trade = { id: tradeSnap.id, ...tradeSnap.data() } as Trade;
+    const draft = { id: draftSnap.id, ...draftSnap.data() } as Draft;
+
+    if (trade.status !== 'pending') throw new Error('Trade is not pending');
+
+    const { pickOrder, futurePicks } = computeTradeExecution(trade, draft);
+
+    tx.update(tradeRef, {
+      status: 'accepted',
+      isForceTrade: force,
+      resolvedAt: FieldValue.serverTimestamp(),
+    });
+    tx.update(draftRef, {
+      pickOrder,
+      futurePicks,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+
+    return { ...draft, pickOrder, futurePicks };
   });
-
-  // Execute ownership changes
-  const { pickOrder, futurePicks } = computeTradeExecution(trade, draft);
-
-  await adminDb.collection('drafts').doc(draftId).update({
-    pickOrder,
-    futurePicks,
-    updatedAt: FieldValue.serverTimestamp(),
-  });
-
-  return { ...draft, pickOrder, futurePicks };
 }
 
-export async function cancelWebTrade(tradeId: string): Promise<void> {
+export async function rejectWebTrade(
+  tradeId: string,
+  userId: string,
+): Promise<void> {
+  const doc = await adminDb.collection('trades').doc(tradeId).get();
+  if (!doc.exists) throw new Error('Trade not found');
+  const trade = doc.data() as Trade;
+  if (trade.recipientId !== userId) throw new Error('Not authorized');
+  if (trade.status !== 'pending') throw new Error('Trade is not pending');
+
+  await adminDb.collection('trades').doc(tradeId).update({
+    status: 'rejected',
+    resolvedAt: FieldValue.serverTimestamp(),
+  });
+}
+
+export async function cancelWebTrade(
+  tradeId: string,
+  userId: string,
+): Promise<void> {
+  const doc = await adminDb.collection('trades').doc(tradeId).get();
+  if (!doc.exists) throw new Error('Trade not found');
+  const trade = doc.data() as Trade;
+  if (trade.proposerId !== userId) throw new Error('Not authorized');
+  if (trade.status !== 'pending') throw new Error('Trade is not pending');
+
   await adminDb.collection('trades').doc(tradeId).update({
     status: 'cancelled',
     resolvedAt: FieldValue.serverTimestamp(),
   });
+}
+
+export function isTradeExpired(trade: Trade): boolean {
+  if (!trade.expiresAt) return false;
+  const expiresMs =
+    'seconds' in trade.expiresAt
+      ? trade.expiresAt.seconds * 1000
+      : new Date(trade.expiresAt as unknown as string).getTime();
+  return Date.now() > expiresMs;
 }

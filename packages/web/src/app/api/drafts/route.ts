@@ -126,7 +126,6 @@ export async function POST(request: Request) {
       teamAssignments,
       pickOrder,
       futurePicks,
-      participantIds: [...new Set([session.uid, discordId])],
       notificationLevel,
       multiplayer,
       visibility,

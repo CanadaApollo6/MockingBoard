@@ -9,7 +9,6 @@ import type {
   TeamAbbreviation,
 } from '@mockingboard/shared';
 import {
-  teams,
   getAvailableCurrentPicks,
   getAvailableFuturePicks,
   getTeamFuturePicks,
@@ -63,10 +62,15 @@ export function TradeModal({
     new Set(),
   );
 
-  const cpuTeams = useMemo(
-    () => teams.filter((t) => draft.teamAssignments[t.id] === null),
-    [draft],
-  );
+  const { userTeams, cpuTeams } = useMemo(() => {
+    const user: TeamAbbreviation[] = [];
+    const cpu: TeamAbbreviation[] = [];
+    for (const [team, uid] of Object.entries(draft.teamAssignments)) {
+      if (uid === null) cpu.push(team as TeamAbbreviation);
+      else if (uid !== userId) user.push(team as TeamAbbreviation);
+    }
+    return { userTeams: user, cpuTeams: cpu };
+  }, [draft, userId]);
 
   const userCurrentPicks = useMemo(
     () => getAvailableCurrentPicks(draft, userId),
@@ -195,23 +199,57 @@ export function TradeModal({
       <CardContent className="space-y-4">
         <div>
           <label className="mb-2 block text-sm font-medium">Trade with</label>
-          <div className="flex flex-wrap gap-1.5">
-            {cpuTeams.map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => handleTeamChange(t.id)}
-                className={cn(
-                  'rounded-md px-2 py-1 text-xs font-medium transition-colors',
-                  targetTeam === t.id
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted text-muted-foreground hover:bg-accent hover:text-foreground',
-                )}
-              >
-                {t.id}
-              </button>
-            ))}
-          </div>
+          {userTeams.length > 0 && (
+            <div className="mb-2">
+              <p className="mb-1 text-xs text-muted-foreground">Players</p>
+              <div className="flex flex-wrap gap-1.5">
+                {userTeams.map((team) => (
+                  <button
+                    key={team}
+                    type="button"
+                    onClick={() => handleTeamChange(team)}
+                    className={cn(
+                      'rounded-md px-2 py-1 text-xs font-medium transition-colors',
+                      targetTeam === team
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted text-muted-foreground hover:bg-accent hover:text-foreground',
+                    )}
+                  >
+                    {team}
+                    {draft.participantNames?.[draft.teamAssignments[team]!] && (
+                      <span className="ml-1 opacity-70">
+                        ({draft.participantNames[draft.teamAssignments[team]!]})
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          {cpuTeams.length > 0 && (
+            <div>
+              {userTeams.length > 0 && (
+                <p className="mb-1 text-xs text-muted-foreground">CPU</p>
+              )}
+              <div className="flex flex-wrap gap-1.5">
+                {cpuTeams.map((team) => (
+                  <button
+                    key={team}
+                    type="button"
+                    onClick={() => handleTeamChange(team)}
+                    className={cn(
+                      'rounded-md px-2 py-1 text-xs font-medium transition-colors',
+                      targetTeam === team
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted text-muted-foreground hover:bg-accent hover:text-foreground',
+                    )}
+                  >
+                    {team}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {targetTeam && (

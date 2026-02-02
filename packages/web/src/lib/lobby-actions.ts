@@ -10,6 +10,13 @@ import type {
   TeamAssignmentMode,
 } from '@mockingboard/shared';
 
+/** Compute participantIds array from the participants map (source of truth). */
+function buildParticipantIds(participants: Record<string, string>): string[] {
+  return [
+    ...new Set([...Object.keys(participants), ...Object.values(participants)]),
+  ];
+}
+
 // ---- Join Logic ----
 
 export interface JoinLobbyInput {
@@ -57,13 +64,10 @@ export async function joinLobby(
   );
 
   const discordId = input.discordId ?? input.userId;
-  const participantIds = [
-    ...new Set([
-      ...((draftDoc.data()?.participantIds as string[]) ?? []),
-      input.userId,
-      discordId,
-    ]),
-  ];
+  const updatedParticipants = {
+    ...draft.participants,
+    [input.userId]: discordId,
+  };
 
   await adminDb
     .collection('drafts')
@@ -72,7 +76,7 @@ export async function joinLobby(
       [`participants.${input.userId}`]: discordId,
       [`participantNames.${input.userId}`]: input.displayName,
       [`teamAssignments.${assignedTeam}`]: input.userId,
-      participantIds,
+      participantIds: buildParticipantIds(updatedParticipants),
       updatedAt: FieldValue.serverTimestamp(),
     });
 
@@ -184,12 +188,10 @@ export async function leaveLobby(
     updates[`teamAssignments.${userTeam[0]}`] = null;
   }
 
-  // Remove from participantIds array
-  const currentIds = (draftDoc.data()?.participantIds as string[]) ?? [];
-  const discordId = draft.participants[userId];
-  updates.participantIds = currentIds.filter(
-    (id) => id !== userId && id !== discordId,
-  );
+  // Recompute participantIds from remaining participants
+  const remaining = { ...draft.participants };
+  delete remaining[userId];
+  updates.participantIds = buildParticipantIds(remaining);
 
   await adminDb.collection('drafts').doc(draftId).update(updates);
 }

@@ -279,5 +279,6 @@ export interface Trade {
   proposerReceives: TradePiece[];
   proposedAt: FirestoreTimestamp;
   resolvedAt?: FirestoreTimestamp;
+  expiresAt?: FirestoreTimestamp;
   isForceTrade: boolean;
 }

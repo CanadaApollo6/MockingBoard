@@ -17,11 +17,13 @@ import {
   type CpuTradeEvaluation,
 } from '@mockingboard/shared';
 import { useLiveDraft } from '@/hooks/use-live-draft';
+import { useLiveTrades } from '@/hooks/use-live-trades';
 import { usePickTimer } from '@/hooks/use-pick-timer';
 import { PlayerPicker } from '@/components/player-picker';
 import { DraftBoard } from '@/components/draft-board';
 import { TradeModal } from '@/components/trade-modal';
 import { TradeResult } from '@/components/trade-result';
+import { IncomingTrade } from '@/components/incoming-trade';
 import { DraftClock } from '@/components/draft-clock';
 import { DraftLayout } from '@/components/draft-layout';
 import { Badge } from '@/components/ui/badge';
@@ -58,9 +60,31 @@ export function DraftRoom({
   const [showTrade, setShowTrade] = useState(false);
   const [tradeResult, setTradeResult] = useState<{
     trade: Trade;
-    evaluation: CpuTradeEvaluation;
+    evaluation: CpuTradeEvaluation | null;
   } | null>(null);
   const [tradeProcessing, setTradeProcessing] = useState(false);
+
+  // Live trades: real-time pending trades for this draft
+  const liveTrades = useLiveTrades(draftId);
+  const incomingTrades = useMemo(
+    () => liveTrades.filter((t) => t.recipientId === userId),
+    [liveTrades, userId],
+  );
+
+  // Auto-clear user trade result when recipient responds
+  const seenInLiveRef = useRef(false);
+  useEffect(() => {
+    if (!tradeResult || tradeResult.evaluation) {
+      seenInLiveRef.current = false;
+      return;
+    }
+    const inList = liveTrades.some((t) => t.id === tradeResult.trade.id);
+    if (inList) {
+      seenInLiveRef.current = true;
+    } else if (seenInLiveRef.current) {
+      setTradeResult(null);
+    }
+  }, [liveTrades, tradeResult]);
 
   // Animation: stagger reveal of CPU picks
   const [revealedCount, setRevealedCount] = useState(initialPicks.length);
@@ -117,18 +141,18 @@ export function DraftRoom({
   const isPaused = draft?.status === 'paused';
   const isComplete = draft?.status === 'complete';
 
-  // Trade eligibility
-  const hasCpuTeams = useMemo(
+  // Trade eligibility: any team not owned by the current user is a valid target
+  const hasTradeTargets = useMemo(
     () =>
       draft
-        ? Object.values(draft.teamAssignments).some((uid) => uid === null)
+        ? Object.values(draft.teamAssignments).some((uid) => uid !== userId)
         : false,
-    [draft],
+    [draft, userId],
   );
   const canTrade =
     isActive &&
     draft?.config.tradesEnabled &&
-    hasCpuTeams &&
+    hasTradeTargets &&
     !showTrade &&
     !tradeResult &&
     !animating;
@@ -237,6 +261,31 @@ export function DraftRoom({
       }
     },
     [draftId, tradeResult],
+  );
+
+  const handleIncomingTradeAction = useCallback(
+    async (tradeId: string, action: 'accept' | 'reject') => {
+      setTradeProcessing(true);
+      setError(null);
+
+      try {
+        const res = await fetch(`/api/drafts/${draftId}/trade/${tradeId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action }),
+        });
+
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || 'Failed to process trade');
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Trade action failed');
+      } finally {
+        setTradeProcessing(false);
+      }
+    },
+    [draftId],
   );
 
   // Pick timer
@@ -400,6 +449,18 @@ export function DraftRoom({
     <>
       {error && <p className="text-sm text-destructive">{error}</p>}
 
+      {/* Incoming trade proposals from other players */}
+      {incomingTrades.map((trade) => (
+        <IncomingTrade
+          key={trade.id}
+          trade={trade}
+          draft={draft}
+          onAccept={() => handleIncomingTradeAction(trade.id, 'accept')}
+          onReject={() => handleIncomingTradeAction(trade.id, 'reject')}
+          disabled={tradeProcessing}
+        />
+      ))}
+
       {canTrade && (
         <Button variant="outline" size="sm" onClick={() => setShowTrade(true)}>
           Propose Trade
@@ -416,7 +477,7 @@ export function DraftRoom({
         />
       )}
 
-      {tradeResult && (
+      {tradeResult && tradeResult.evaluation && (
         <TradeResult
           evaluation={tradeResult.evaluation}
           onConfirm={() => handleTradeAction('confirm')}
@@ -426,26 +487,41 @@ export function DraftRoom({
         />
       )}
 
-      {isActive && isUserTurn && !animating && !showTrade && !tradeResult && (
-        <PlayerPicker
-          players={availablePlayers}
-          onPick={handlePick}
-          disabled={submitting}
+      {tradeResult && !tradeResult.evaluation && (
+        <TradeResult
+          trade={tradeResult.trade}
+          recipientName={
+            draft.participantNames?.[
+              draft.teamAssignments[tradeResult.trade.recipientTeam] ?? ''
+            ] ?? 'Unknown'
+          }
+          onCancel={() => handleTradeAction('cancel')}
+          disabled={tradeProcessing}
         />
       )}
 
-      {isActive &&
-        !showTrade &&
-        !tradeResult &&
-        (animating || (!isUserTurn && currentSlot)) && (
-          <div className="py-4 text-center text-sm text-muted-foreground">
-            {animating
-              ? 'CPU picks rolling in...'
-              : controller && draft?.participantNames?.[controller]
+      {isActive && !showTrade && !tradeResult && !animating && (
+        <>
+          {!isUserTurn && currentSlot && (
+            <p className="text-sm text-muted-foreground">
+              {controller && draft?.participantNames?.[controller]
                 ? `Waiting for ${draft.participantNames[controller]}'s pick...`
-                : 'Waiting for CPU picks...'}
-          </div>
-        )}
+                : 'CPU picks incoming...'}
+            </p>
+          )}
+          <PlayerPicker
+            players={availablePlayers}
+            onPick={handlePick}
+            disabled={submitting || !isUserTurn}
+          />
+        </>
+      )}
+
+      {isActive && !showTrade && !tradeResult && animating && (
+        <div className="py-4 text-center text-sm text-muted-foreground">
+          CPU picks rolling in...
+        </div>
+      )}
     </>
   );
 

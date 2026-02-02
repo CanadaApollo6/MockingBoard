@@ -47,10 +47,14 @@ export async function POST(
       );
     }
 
+    // Derive recipientId: null for CPU teams, userId for human teams
+    const recipientId = draft.teamAssignments[body.recipientTeam] ?? null;
+
     const { trade, evaluation } = await createWebTrade({
       draftId,
       proposerId: session.uid,
       proposerTeam,
+      recipientId,
       recipientTeam: body.recipientTeam,
       proposerGives: body.proposerGives,
       proposerReceives: body.proposerReceives,
