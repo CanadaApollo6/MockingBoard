@@ -403,3 +403,6 @@ Extract platform-agnostic business logic from bot services to `packages/shared`.
 - **Sliders for Draft**: Allow users to set levels of things like randomness, BPA, and team needs
 - **Revenue share for top scouts**: If community scouting data becomes a major subscription driver, offer revenue share to high-value contributors as a retention tool
 - **Scouting accuracy tracking**: Extend Phase 6 leaderboards to score scout-contributed grades against actual draft position and NFL performance (ties scout profiles into the accuracy ecosystem)
+- Add user configurable preference options for various stats and traits within college prospects
+- Allow users to rapid generate boards for position groups and weight them based on trait and production filters
+- Let users run mock drafts based on their own big boards
