@@ -19,7 +19,7 @@ export const teams: TeamSeed[] = [
     mascot: 'Bills',
     conference: 'AFC',
     division: 'East',
-    needs: ['CB', 'DL', 'WR'],
+    needs: ['WR', 'EDGE', 'LB', 'CB', 'S'],
   },
   {
     id: 'MIA',
@@ -28,7 +28,7 @@ export const teams: TeamSeed[] = [
     mascot: 'Dolphins',
     conference: 'AFC',
     division: 'East',
-    needs: ['DL', 'OG', 'EDGE'],
+    needs: ['QB', 'WR', 'OG', 'CB'],
   },
   {
     id: 'NE',
@@ -37,7 +37,7 @@ export const teams: TeamSeed[] = [
     mascot: 'Patriots',
     conference: 'AFC',
     division: 'East',
-    needs: ['OT', 'WR', 'CB'],
+    needs: ['OG', 'OT', 'EDGE', 'LB', 'S'],
   },
   {
     id: 'NYJ',
@@ -46,7 +46,7 @@ export const teams: TeamSeed[] = [
     mascot: 'Jets',
     conference: 'AFC',
     division: 'East',
-    needs: ['OT', 'TE', 'CB'],
+    needs: ['QB', 'WR', 'DL', 'LB', 'CB'],
   },
   // AFC North
   {
@@ -56,7 +56,7 @@ export const teams: TeamSeed[] = [
     mascot: 'Ravens',
     conference: 'AFC',
     division: 'North',
-    needs: ['S', 'EDGE', 'OG'],
+    needs: ['WR', 'OG', 'DL'],
   },
   {
     id: 'CIN',
@@ -65,7 +65,7 @@ export const teams: TeamSeed[] = [
     mascot: 'Bengals',
     conference: 'AFC',
     division: 'North',
-    needs: ['EDGE', 'OG', 'LB'],
+    needs: ['C', 'OG', 'DL', 'S'],
   },
   {
     id: 'CLE',
@@ -74,7 +74,7 @@ export const teams: TeamSeed[] = [
     mascot: 'Browns',
     conference: 'AFC',
     division: 'North',
-    needs: ['DL', 'LB', 'RB'],
+    needs: ['QB', 'WR', 'OG', 'OT'],
   },
   {
     id: 'PIT',
@@ -83,7 +83,7 @@ export const teams: TeamSeed[] = [
     mascot: 'Steelers',
     conference: 'AFC',
     division: 'North',
-    needs: ['DL', 'RB', 'EDGE'],
+    needs: ['QB', 'WR', 'OT', 'CB', 'S'],
   },
   // AFC South
   {
@@ -93,7 +93,7 @@ export const teams: TeamSeed[] = [
     mascot: 'Texans',
     conference: 'AFC',
     division: 'South',
-    needs: ['WR', 'OT', 'S'],
+    needs: ['RB', 'C', 'OG', 'DL'],
   },
   {
     id: 'IND',
@@ -102,7 +102,7 @@ export const teams: TeamSeed[] = [
     mascot: 'Colts',
     conference: 'AFC',
     division: 'South',
-    needs: ['TE', 'EDGE', 'OT'],
+    needs: ['QB', 'DL', 'LB', 'S'],
   },
   {
     id: 'JAX',
@@ -111,7 +111,7 @@ export const teams: TeamSeed[] = [
     mascot: 'Jaguars',
     conference: 'AFC',
     division: 'South',
-    needs: ['WR', 'CB', 'S'],
+    needs: ['C', 'OG', 'DL', 'S'],
   },
   {
     id: 'TEN',
@@ -120,7 +120,7 @@ export const teams: TeamSeed[] = [
     mascot: 'Titans',
     conference: 'AFC',
     division: 'South',
-    needs: ['QB', 'EDGE', 'WR'],
+    needs: ['RB', 'WR', 'C', 'OG', 'EDGE', 'CB'],
   },
   // AFC West
   {
@@ -130,7 +130,7 @@ export const teams: TeamSeed[] = [
     mascot: 'Broncos',
     conference: 'AFC',
     division: 'West',
-    needs: ['CB', 'RB', 'LB'],
+    needs: ['RB', 'TE', 'C', 'LB'],
   },
   {
     id: 'KC',
@@ -139,7 +139,7 @@ export const teams: TeamSeed[] = [
     mascot: 'Chiefs',
     conference: 'AFC',
     division: 'West',
-    needs: ['OT', 'WR', 'DL'],
+    needs: ['RB', 'WR', 'OG', 'OT', 'DL'],
   },
   {
     id: 'LAC',
@@ -148,7 +148,7 @@ export const teams: TeamSeed[] = [
     mascot: 'Chargers',
     conference: 'AFC',
     division: 'West',
-    needs: ['RB', 'WR', 'EDGE'],
+    needs: ['C', 'OG', 'DL'],
   },
   {
     id: 'LV',
@@ -157,7 +157,7 @@ export const teams: TeamSeed[] = [
     mascot: 'Raiders',
     conference: 'AFC',
     division: 'West',
-    needs: ['RB', 'QB', 'CB'],
+    needs: ['QB', 'WR', 'OG', 'OT', 'DL', 'LB', 'CB'],
   },
   // NFC East
   {
@@ -167,7 +167,7 @@ export const teams: TeamSeed[] = [
     mascot: 'Cowboys',
     conference: 'NFC',
     division: 'East',
-    needs: ['OG', 'EDGE', 'CB'],
+    needs: ['RB', 'EDGE', 'LB', 'S'],
   },
   {
     id: 'NYG',
@@ -176,7 +176,7 @@ export const teams: TeamSeed[] = [
     mascot: 'Giants',
     conference: 'NFC',
     division: 'East',
-    needs: ['EDGE', 'QB', 'DL'],
+    needs: ['WR', 'OG', 'OT', 'CB'],
   },
   {
     id: 'PHI',
@@ -185,7 +185,7 @@ export const teams: TeamSeed[] = [
     mascot: 'Eagles',
     conference: 'NFC',
     division: 'East',
-    needs: ['LB', 'S', 'DL'],
+    needs: ['TE', 'OG', 'EDGE', 'CB'],
   },
   {
     id: 'WAS',
@@ -194,7 +194,7 @@ export const teams: TeamSeed[] = [
     mascot: 'Commanders',
     conference: 'NFC',
     division: 'East',
-    needs: ['OT', 'CB', 'LB'],
+    needs: ['TE', 'OG', 'EDGE', 'LB', 'CB', 'S'],
   },
   // NFC North
   {
@@ -204,7 +204,7 @@ export const teams: TeamSeed[] = [
     mascot: 'Bears',
     conference: 'NFC',
     division: 'North',
-    needs: ['TE', 'WR', 'OG'],
+    needs: ['DL', 'LB', 'S'],
   },
   {
     id: 'DET',
@@ -213,7 +213,7 @@ export const teams: TeamSeed[] = [
     mascot: 'Lions',
     conference: 'NFC',
     division: 'North',
-    needs: ['DL', 'OG', 'WR'],
+    needs: ['C', 'OT', 'EDGE', 'CB'],
   },
   {
     id: 'GB',
@@ -222,7 +222,7 @@ export const teams: TeamSeed[] = [
     mascot: 'Packers',
     conference: 'NFC',
     division: 'North',
-    needs: ['WR', 'OT', 'EDGE'],
+    needs: ['OT', 'DL', 'CB'],
   },
   {
     id: 'MIN',
@@ -231,7 +231,7 @@ export const teams: TeamSeed[] = [
     mascot: 'Vikings',
     conference: 'NFC',
     division: 'North',
-    needs: ['OG', 'EDGE', 'WR'],
+    needs: ['RB', 'C', 'CB', 'S'],
   },
   // NFC South
   {
@@ -241,7 +241,7 @@ export const teams: TeamSeed[] = [
     mascot: 'Falcons',
     conference: 'NFC',
     division: 'South',
-    needs: ['EDGE', 'S', 'OT'],
+    needs: ['WR', 'TE', 'DL', 'CB'],
   },
   {
     id: 'CAR',
@@ -250,7 +250,7 @@ export const teams: TeamSeed[] = [
     mascot: 'Panthers',
     conference: 'NFC',
     division: 'South',
-    needs: ['WR', 'EDGE', 'S'],
+    needs: ['WR', 'DL', 'LB'],
   },
   {
     id: 'NO',
@@ -259,7 +259,7 @@ export const teams: TeamSeed[] = [
     mascot: 'Saints',
     conference: 'NFC',
     division: 'South',
-    needs: ['OT', 'QB', 'S'],
+    needs: ['WR', 'OG', 'DL'],
   },
   {
     id: 'TB',
@@ -268,7 +268,7 @@ export const teams: TeamSeed[] = [
     mascot: 'Buccaneers',
     conference: 'NFC',
     division: 'South',
-    needs: ['WR', 'CB', 'DL'],
+    needs: ['TE', 'OG', 'EDGE', 'LB', 'CB'],
   },
   // NFC West
   {
@@ -278,7 +278,7 @@ export const teams: TeamSeed[] = [
     mascot: 'Cardinals',
     conference: 'NFC',
     division: 'West',
-    needs: ['DL', 'CB', 'EDGE'],
+    needs: ['QB', 'RB', 'OG', 'OT'],
   },
   {
     id: 'LAR',
@@ -287,7 +287,7 @@ export const teams: TeamSeed[] = [
     mascot: 'Rams',
     conference: 'NFC',
     division: 'West',
-    needs: ['TE', 'RB', 'EDGE'],
+    needs: ['QB', 'TE', 'CB'],
   },
   {
     id: 'SEA',
@@ -296,7 +296,7 @@ export const teams: TeamSeed[] = [
     mascot: 'Seahawks',
     conference: 'NFC',
     division: 'West',
-    needs: ['OT', 'S', 'QB'],
+    needs: ['RB', 'C', 'OG', 'LB', 'CB'],
   },
   {
     id: 'SF',
@@ -305,6 +305,6 @@ export const teams: TeamSeed[] = [
     mascot: '49ers',
     conference: 'NFC',
     division: 'West',
-    needs: ['DL', 'CB', 'LB'],
+    needs: ['WR', 'OG', 'EDGE', 'S'],
   },
 ];

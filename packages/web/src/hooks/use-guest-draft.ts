@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import type {
   Draft,
   Pick,
@@ -13,6 +13,8 @@ import type {
 import {
   teams,
   selectCpuPick,
+  getEffectiveNeeds,
+  getTeamDraftedPositions,
   getPickController,
   evaluateCpuTrade,
   computeTradeExecution,
@@ -53,6 +55,10 @@ export function useGuestDraft(
   const [picks, setPicks] = useState<Pick[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const playerMap = useMemo(
+    () => new Map(Object.values(players).map((p) => [p.id, p])),
+    [players],
+  );
 
   // Cancel pending CPU timeouts on unmount
   useEffect(() => {
@@ -148,8 +154,17 @@ export function useGuestDraft(
         }
 
         const teamSeed = teamSeeds.get(slot.team);
-        const teamNeeds = teamSeed?.needs ?? [];
-        const player = selectCpuPick(available, teamNeeds);
+        const draftedPositions = getTeamDraftedPositions(
+          currentDraft.pickOrder,
+          currentDraft.pickedPlayerIds ?? [],
+          slot.team,
+          playerMap,
+        );
+        const effectiveNeeds = getEffectiveNeeds(
+          teamSeed?.needs ?? [],
+          draftedPositions,
+        );
+        const player = selectCpuPick(available, effectiveNeeds);
 
         const result = makePick(currentDraft, currentPicks, player.id, null);
 
@@ -186,8 +201,17 @@ export function useGuestDraft(
           if (available.length === 0) break;
 
           const teamSeed = teamSeeds.get(slot.team);
-          const teamNeeds = teamSeed?.needs ?? [];
-          const player = selectCpuPick(available, teamNeeds);
+          const draftedPositions = getTeamDraftedPositions(
+            d.pickOrder,
+            d.pickedPlayerIds ?? [],
+            slot.team,
+            playerMap,
+          );
+          const effectiveNeeds = getEffectiveNeeds(
+            teamSeed?.needs ?? [],
+            draftedPositions,
+          );
+          const player = selectCpuPick(available, effectiveNeeds);
           const result = makePick(d, p, player.id, null);
           d = result.draft;
           p = result.picks;

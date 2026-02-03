@@ -8,7 +8,11 @@ import type {
   TeamAbbreviation,
   PositionFilterGroup,
 } from '@mockingboard/shared';
-import { teams } from '@mockingboard/shared';
+import {
+  teams,
+  getEffectiveNeeds,
+  getTeamDraftedPositions,
+} from '@mockingboard/shared';
 import { getOrCreateUser } from '../services/user.service.js';
 import {
   getDraft,
@@ -357,6 +361,7 @@ async function doCpuPicksBatch(
     teamName: string;
   }[] = [];
   let currentDraft = draft;
+  const playerMap = new Map(allPlayers.map((p) => [p.id, p]));
 
   // Process all consecutive CPU picks
   while (true) {
@@ -371,8 +376,17 @@ async function doCpuPicksBatch(
     if (available.length === 0) break;
 
     const teamSeed = teamSeeds.get(currentSlot.team);
-    const teamNeeds = teamSeed?.needs ?? [];
-    const player = selectCpuPick(available, teamNeeds);
+    const draftedPositions = getTeamDraftedPositions(
+      currentDraft.pickOrder,
+      currentDraft.pickedPlayerIds ?? [],
+      currentSlot.team,
+      playerMap,
+    );
+    const effectiveNeeds = getEffectiveNeeds(
+      teamSeed?.needs ?? [],
+      draftedPositions,
+    );
+    const player = selectCpuPick(available, effectiveNeeds);
     const teamName = teamSeed?.name ?? currentSlot.team;
 
     const { isComplete } = await recordPickAndAdvance(
@@ -421,8 +435,19 @@ async function doCpuPick(
   available: Player[],
 ): Promise<void> {
   const teamSeed = teamSeeds.get(slot.team);
-  const teamNeeds = teamSeed?.needs ?? [];
-  const player = selectCpuPick(available, teamNeeds);
+  const allPlayers = await getCachedPlayers(draft.config.year);
+  const playerMap = new Map(allPlayers.map((p) => [p.id, p]));
+  const draftedPositions = getTeamDraftedPositions(
+    draft.pickOrder,
+    draft.pickedPlayerIds ?? [],
+    slot.team,
+    playerMap,
+  );
+  const effectiveNeeds = getEffectiveNeeds(
+    teamSeed?.needs ?? [],
+    draftedPositions,
+  );
+  const player = selectCpuPick(available, effectiveNeeds);
   const teamName = teamSeed?.name ?? slot.team;
 
   const { isComplete } = await recordPickAndAdvance(draft.id, player.id, null);
@@ -499,7 +524,18 @@ async function postOnTheClock(
         }
 
         const teamSeed = teamSeeds.get(slot.team);
-        const player = selectCpuPick(avail, teamSeed?.needs ?? []);
+        const playerMap = new Map(allPlayers.map((p) => [p.id, p]));
+        const draftedPositions = getTeamDraftedPositions(
+          freshDraft.pickOrder,
+          freshDraft.pickedPlayerIds ?? [],
+          slot.team,
+          playerMap,
+        );
+        const effectiveNeeds = getEffectiveNeeds(
+          teamSeed?.needs ?? [],
+          draftedPositions,
+        );
+        const player = selectCpuPick(avail, effectiveNeeds);
         const tName = teamSeed?.name ?? slot.team;
 
         const { isComplete } = await recordPickAndAdvance(

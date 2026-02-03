@@ -29,6 +29,8 @@ import {
   filterAndSortPickOrder,
   buildFuturePicksFromSeeds,
   selectCpuPick,
+  getEffectiveNeeds,
+  getTeamDraftedPositions,
   getPickController,
   computeTradeExecution,
   evaluateCpuTrade,
@@ -239,6 +241,7 @@ export async function runCpuCascade(
 ): Promise<{ picks: Pick[]; isComplete: boolean }> {
   const cpuPicks: Pick[] = [];
   let allPlayers: Player[] | null = null;
+  let playerMap: Map<string, Player> | null = null;
 
   while (true) {
     const draftDoc = await adminDb.collection('drafts').doc(draftId).get();
@@ -262,18 +265,25 @@ export async function runCpuCascade(
 
     // Lazy-load players once, then filter in memory
     if (!allPlayers) {
-      allPlayers = await getAvailablePlayers(
-        draft.config.year,
-        draft.pickedPlayerIds ?? [],
-      );
+      allPlayers = await getCachedPlayers(draft.config.year);
+      playerMap = new Map(allPlayers.map((p) => [p.id, p]));
     }
     const pickedSet = new Set(draft.pickedPlayerIds ?? []);
     const available = allPlayers.filter((p) => !pickedSet.has(p.id));
     if (available.length === 0) break;
 
     const teamSeed = teamSeeds.get(currentSlot.team);
-    const teamNeeds = teamSeed?.needs ?? [];
-    const player = selectCpuPick(available, teamNeeds);
+    const draftedPositions = getTeamDraftedPositions(
+      draft.pickOrder,
+      draft.pickedPlayerIds ?? [],
+      currentSlot.team,
+      playerMap!,
+    );
+    const effectiveNeeds = getEffectiveNeeds(
+      teamSeed?.needs ?? [],
+      draftedPositions,
+    );
+    const player = selectCpuPick(available, effectiveNeeds);
 
     const { pick, isComplete } = await recordPick(draftId, player.id, null);
     cpuPicks.push(pick);
@@ -311,17 +321,26 @@ export async function advanceSingleCpuPick(
     return { pick: null, isComplete: false };
   }
 
-  const available = await getAvailablePlayers(
-    draft.config.year,
-    draft.pickedPlayerIds ?? [],
-  );
+  const allPlayers = await getCachedPlayers(draft.config.year);
+  const pickedSet = new Set(draft.pickedPlayerIds ?? []);
+  const available = allPlayers.filter((p) => !pickedSet.has(p.id));
   if (available.length === 0) {
     return { pick: null, isComplete: false };
   }
 
   const teamSeed = teamSeeds.get(currentSlot.team);
-  const teamNeeds = teamSeed?.needs ?? [];
-  const player = selectCpuPick(available, teamNeeds);
+  const playerMap = new Map(allPlayers.map((p) => [p.id, p]));
+  const draftedPositions = getTeamDraftedPositions(
+    draft.pickOrder,
+    draft.pickedPlayerIds ?? [],
+    currentSlot.team,
+    playerMap,
+  );
+  const effectiveNeeds = getEffectiveNeeds(
+    teamSeed?.needs ?? [],
+    draftedPositions,
+  );
+  const player = selectCpuPick(available, effectiveNeeds);
 
   const { pick, isComplete } = await recordPick(draftId, player.id, null);
   return { pick, isComplete };

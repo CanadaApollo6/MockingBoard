@@ -13,6 +13,8 @@ import type {
 import {
   getPickController,
   selectCpuPick,
+  getEffectiveNeeds,
+  getTeamDraftedPositions,
   teams,
   type CpuTradeEvaluation,
 } from '@mockingboard/shared';
@@ -314,10 +316,20 @@ export function DraftRoom({
     const slot = draft.pickOrder[(draft.currentPick ?? 1) - 1];
     if (!slot) return;
     const teamSeed = teamSeeds.get(slot.team);
-    const player = selectCpuPick(availablePlayers, teamSeed?.needs ?? []);
+    const draftedPositions = getTeamDraftedPositions(
+      draft.pickOrder,
+      draft.pickedPlayerIds ?? [],
+      slot.team,
+      playerMap,
+    );
+    const effectiveNeeds = getEffectiveNeeds(
+      teamSeed?.needs ?? [],
+      draftedPositions,
+    );
+    const player = selectCpuPick(availablePlayers, effectiveNeeds);
     if (!player) return;
     handlePick(player.id);
-  }, [draft, submitting, availablePlayers, handlePick]);
+  }, [draft, submitting, availablePlayers, playerMap, handlePick]);
 
   const {
     remaining,

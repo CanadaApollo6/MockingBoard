@@ -12,6 +12,8 @@ import type {
 import {
   getPickController,
   selectCpuPick,
+  getEffectiveNeeds,
+  getTeamDraftedPositions,
   teams,
   type CpuTradeEvaluation,
 } from '@mockingboard/shared';
@@ -140,10 +142,20 @@ export function GuestDraftRoom({ initialDraft, players }: GuestDraftRoomProps) {
   const handleTimerExpire = useCallback(() => {
     if (!currentSlot) return;
     const teamSeed = teamSeeds.get(currentSlot.team);
-    const player = selectCpuPick(availablePlayers, teamSeed?.needs ?? []);
+    const draftedPositions = getTeamDraftedPositions(
+      draft.pickOrder,
+      draft.pickedPlayerIds ?? [],
+      currentSlot.team,
+      playerMap,
+    );
+    const effectiveNeeds = getEffectiveNeeds(
+      teamSeed?.needs ?? [],
+      draftedPositions,
+    );
+    const player = selectCpuPick(availablePlayers, effectiveNeeds);
     if (!player) return;
     handlePick(player.id);
-  }, [currentSlot, availablePlayers, handlePick]);
+  }, [currentSlot, draft, availablePlayers, playerMap, handlePick]);
 
   const {
     remaining,

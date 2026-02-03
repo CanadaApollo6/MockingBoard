@@ -41,7 +41,13 @@ export {
 } from './tradeValues';
 
 // CPU logic
-export { selectCpuPick, CPU_PICK_WEIGHTS } from './cpu';
+export {
+  selectCpuPick,
+  CPU_PICK_WEIGHTS,
+  NEED_MULTIPLIERS,
+  getEffectiveNeeds,
+  getTeamDraftedPositions,
+} from './cpu';
 
 // Draft logic
 export {

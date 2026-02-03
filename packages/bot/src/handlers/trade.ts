@@ -1,5 +1,4 @@
 import type { ButtonInteraction } from 'discord.js';
-import type { Draft } from '@mockingboard/shared';
 import { getOrCreateUser } from '../services/user.service.js';
 import { getDraft, updateDraft } from '../services/draft.service.js';
 import {
@@ -18,14 +17,21 @@ import {
 import { teamSeeds, getSendableChannel, buildTeamInfoMap } from './shared.js';
 import { advanceDraft } from './draftPicking.js';
 
-async function resumeDraftIfPaused(
+async function advanceDraftAfterTrade(
   interaction: ButtonInteraction,
-  draft: Draft,
+  draftId: string,
 ): Promise<void> {
-  if (draft.status !== 'paused') return;
-  await updateDraft(draft.id, { status: 'active' });
-  const updatedDraft = await getDraft(draft.id);
-  if (updatedDraft) await advanceDraft(interaction, updatedDraft);
+  const draft = await getDraft(draftId);
+  if (!draft) return;
+
+  if (draft.status === 'paused') {
+    await updateDraft(draftId, { status: 'active' });
+    draft.status = 'active';
+  }
+
+  if (draft.status === 'active') {
+    await advanceDraft(interaction, draft);
+  }
 }
 
 /**
@@ -100,7 +106,7 @@ export async function handleTradeAccept(
     await channel.send({ embeds: [embed] });
   }
 
-  await resumeDraftIfPaused(interaction, draft);
+  await advanceDraftAfterTrade(interaction, draft.id);
 }
 
 /**
@@ -169,7 +175,7 @@ export async function handleTradeReject(
     await channel.send({ embeds: [embed] });
   }
 
-  await resumeDraftIfPaused(interaction, draft);
+  await advanceDraftAfterTrade(interaction, draft.id);
 }
 
 /**
@@ -234,7 +240,7 @@ export async function handleTradeCancel(
     await channel.send({ embeds: [embed] });
   }
 
-  await resumeDraftIfPaused(interaction, draft);
+  await advanceDraftAfterTrade(interaction, draft.id);
 }
 
 /**
@@ -315,7 +321,7 @@ export async function handleTradeConfirm(
     await channel.send({ embeds: [embed] });
   }
 
-  await resumeDraftIfPaused(interaction, draft);
+  await advanceDraftAfterTrade(interaction, draft.id);
 }
 
 /**
@@ -396,5 +402,5 @@ export async function handleTradeForce(
     await channel.send({ embeds: [embed] });
   }
 
-  await resumeDraftIfPaused(interaction, draft);
+  await advanceDraftAfterTrade(interaction, draft.id);
 }
