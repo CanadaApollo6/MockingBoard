@@ -35,7 +35,6 @@ export function DraftCreator() {
   const [visibility, setVisibility] = useState<DraftVisibility>('public');
   const [teamAssignmentMode, setTeamAssignmentMode] =
     useState<TeamAssignmentMode>('choice');
-  const [draftName, setDraftName] = useState('');
   const [year, setYear] = useState(2026);
   const [rounds, setRounds] = useState(3);
   const [format, setFormat] = useState<DraftFormat>('single-team');
@@ -73,7 +72,6 @@ export function DraftCreator() {
         secondsPerPick: String(secondsPerPick),
         trades: String(tradesEnabled),
       });
-      if (draftName.trim()) params.set('name', draftName.trim());
       if (selectedTeam) params.set('team', selectedTeam);
       router.push(`/drafts/guest?${params}`);
       return;
@@ -87,7 +85,6 @@ export function DraftCreator() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: draftName.trim() || undefined,
           year,
           rounds,
           format: effectiveFormat,
@@ -121,20 +118,6 @@ export function DraftCreator() {
           <CardTitle>Draft Settings</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <OptionGroup
-            label="Draft Name"
-            subtitle="Leave blank for auto-generated name"
-          >
-            <input
-              type="text"
-              value={draftName}
-              onChange={(e) => setDraftName(e.target.value)}
-              placeholder="e.g. Iron Blitz"
-              maxLength={50}
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-            />
-          </OptionGroup>
-
           <OptionGroup label="Draft Year">
             {[2025, 2026].map((y) => (
               <Button

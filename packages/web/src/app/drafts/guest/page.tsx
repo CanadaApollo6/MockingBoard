@@ -33,7 +33,7 @@ export default async function GuestDraftPage({
     : 'normal';
   const secondsPerPick = Math.max(Number(params.secondsPerPick) || 0, 0);
   const tradesEnabled = params.trades === 'true';
-  const draftName = params.name || generateDraftName();
+  const draftName = generateDraftName();
 
   if (format === 'single-team' && !selectedTeam) {
     redirect('/drafts/new');
