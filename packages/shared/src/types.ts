@@ -247,6 +247,8 @@ export interface FutureDraftPick {
   round: number;
   originalTeam: TeamAbbreviation;
   ownerTeam: TeamAbbreviation;
+  /** Overall pick number — only present for current-year extra-round picks. */
+  overall?: number;
 }
 
 // ---- Trade Types ----

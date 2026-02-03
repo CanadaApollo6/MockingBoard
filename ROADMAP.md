@@ -151,6 +151,10 @@ Extract platform-agnostic business logic from bot services to `packages/shared`.
 - [x] CPU speed animation (instant/fast/normal) matching bot behavior
 - [x] Dark mode with theme toggle
 - [x] Design system documentation (DESIGN_SYSTEM.md)
+- [x] Need-adjusted CPU picking (positional need multipliers, effective needs)
+- [x] Auto-generated draft names (football-themed, no user input for content moderation)
+- [x] Cursor-based pagination for draft listing (page size 10)
+- [x] Trade UI: current-year extra-round picks categorized under "Current Picks" with round + overall
 
 **Phase 3.0–3.1 Complete**: Full solo draft experience on web with feature parity to Discord bot, plus guest mode and design system.
 
@@ -163,20 +167,25 @@ Extract platform-agnostic business logic from bot services to `packages/shared`.
 - [x] Fix `getUserDrafts` to look up by `firebaseUid` instead of `discordId`
 - [x] Account linking: Discord ↔ email via settings page
 
-### Milestone 3.3: Multiplayer Draft Rooms ← CURRENT
+### Milestone 3.3: Multiplayer Draft Rooms ✓
 
-- [ ] Room creation with privacy settings (public listing / invite-link-only)
-- [ ] Lobby page with real-time participant list and shareable invite link
-- [ ] Join flow: invite link → auth check → team selection → join
-- [ ] Multiplayer turn management via Firestore real-time listeners
-- [ ] Timer support via `clockExpiresAt` field + server-side validation
+- [x] Room creation with privacy settings (public / unlisted / private with invite codes)
+- [x] Lobby page with real-time participant list, settings display, and shareable invite link
+- [x] Public lobbies browser page (`/lobbies`)
+- [x] Join flow: invite link → auth check → team selection (choice/random modes) → join
+- [x] Guest join support for unauthenticated users
+- [x] Multiplayer turn management via Firestore real-time listeners
+- [x] Client-side pick timer with auto-pick on expiry and urgency states
+- [x] Multiplayer trade support (human-to-human and human-to-CPU)
+- [x] Pause/resume for draft hosts
+- [ ] Server-side timer enforcement via `clockExpiresAt` field
 
 ### Milestone 3.4: Platform Sync ✓
 
 - [x] Drafts started in Discord viewable live on web (already works via shared Firestore)
 - [x] Drafts started on web optionally send Discord notifications (webhook-based, per-draft configurable: off/link-only/pick-by-pick)
 
-**Phase 3 Complete**: Full draft functionality on web, with Discord as an alternative entry point.
+**Phase 3 Complete**: Full draft functionality on web — solo and multiplayer — with Discord as an alternative entry point.
 
 ---
 
@@ -364,6 +373,15 @@ Extract platform-agnostic business logic from bot services to `packages/shared`.
 
 ## Future Considerations (Not Scheduled)
 
+- **Multi-team draft for one user**: Control multiple teams in a single draft session
+- **Slight randomness to CPU picks**: Add variance to CPU selections so drafts don't play out identically
+- **Mobile support**: Responsive web improvements and/or native mobile app
+- **Trade calculator**: Standalone trade value calculator tool (outside of active drafts)
+- **Tankathon-style draft order page**: Visual draft order display combined with trade value chart on web
+- **Ringer-style big board**: Player board section with prospect profiles and randomly generated witty player comps
+- **Team breakdown pages**: Individual team analysis pages (roster, needs, draft capital) — requires content
+- **Cap calculator**: Standalone salary cap calculator tool
+- **Full contract builder**: Create and model contract structures with cap implications
 - **Dynasty/keeper support**: Carry over rosters between years
 - **Collaborative drafting**: Vote-based picks with friends controlling one team
 - **Public draft lobbies**: Join drafts with strangers

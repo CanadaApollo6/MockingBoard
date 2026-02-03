@@ -376,11 +376,17 @@ function PickColumn({
   onToggle: (key: string) => void;
   draftYear: number;
 }) {
+  // Current-year extra-round picks belong under "Current Picks"
+  const currentYearPicks = futurePicks.filter((fp) => fp.year === draftYear);
+  const trueFuturePicks = futurePicks.filter((fp) => fp.year !== draftYear);
+  const hasCurrentPicks =
+    currentPicks.length > 0 || currentYearPicks.length > 0;
+
   return (
     <div className="rounded-md border p-3">
       <h4 className="mb-2 text-sm font-medium">{title}</h4>
 
-      {currentPicks.length > 0 && (
+      {hasCurrentPicks && (
         <div className="mb-2">
           <p className="mb-1 text-xs text-muted-foreground">Current Picks</p>
           <div className="space-y-1">
@@ -407,15 +413,42 @@ function PickColumn({
                 </button>
               );
             })}
+            {currentYearPicks.map((fp) => {
+              const key = futurePickKey(fp);
+              const isSelected = selected.has(key);
+              const value = fp.overall
+                ? getPickValue(fp.overall)
+                : getFuturePickValue(fp.round, 0);
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => onToggle(key)}
+                  className={cn(
+                    'w-full rounded px-2 py-1 text-left text-xs transition-colors',
+                    isSelected
+                      ? 'bg-primary/15 text-foreground'
+                      : 'hover:bg-muted',
+                  )}
+                >
+                  {isSelected ? '\u2713 ' : ''}R{fp.round}
+                  {fp.overall ? ` #${fp.overall}` : ''} —{' '}
+                  {getTeamName(fp.originalTeam)}
+                  <span className="ml-1 text-muted-foreground">
+                    ({value.toFixed(1)})
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
 
-      {futurePicks.length > 0 && (
+      {trueFuturePicks.length > 0 && (
         <div>
           <p className="mb-1 text-xs text-muted-foreground">Future Picks</p>
           <div className="space-y-1">
-            {futurePicks.map((fp) => {
+            {trueFuturePicks.map((fp) => {
               const key = futurePickKey(fp);
               const isSelected = selected.has(key);
               const value = getFuturePickValue(fp.round, fp.year - draftYear);
@@ -443,7 +476,7 @@ function PickColumn({
         </div>
       )}
 
-      {currentPicks.length === 0 && futurePicks.length === 0 && (
+      {!hasCurrentPicks && trueFuturePicks.length === 0 && (
         <p className="text-xs text-muted-foreground">No picks available</p>
       )}
     </div>

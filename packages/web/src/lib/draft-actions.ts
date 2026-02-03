@@ -80,6 +80,7 @@ export async function buildFuturePicks(
       round: s.round,
       originalTeam: s.team,
       ownerTeam: s.team,
+      overall: s.overall,
     }));
     return [...extraPicks, ...future];
   }
