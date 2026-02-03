@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -18,6 +18,7 @@ import {
 import type {
   Player,
   BigBoard,
+  BoardSnapshot,
   CustomPlayer,
   PositionFilterGroup,
 } from '@mockingboard/shared';
@@ -37,6 +38,18 @@ interface BoardEditorProps {
 export function BoardEditor({ players, initialBoard, year }: BoardEditorProps) {
   const [board, setBoard] = useState<BigBoard | null>(initialBoard);
   const [isCreating, setIsCreating] = useState(false);
+  const [restoreKey, setRestoreKey] = useState(0);
+
+  async function handleRestore(snapshotRankings: string[]) {
+    if (!board) return;
+    await fetch(`/api/boards/${board.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rankings: snapshotRankings }),
+    });
+    setBoard({ ...board, rankings: snapshotRankings });
+    setRestoreKey((k) => k + 1);
+  }
 
   const sortedPlayers = useMemo(
     () =>
@@ -104,10 +117,11 @@ export function BoardEditor({ players, initialBoard, year }: BoardEditorProps) {
 
   return (
     <BoardEditorInner
-      key={board.id}
+      key={`${board.id}-${restoreKey}`}
       board={board}
       players={players}
       sortedPlayers={sortedPlayers}
+      onRestore={handleRestore}
     />
   );
 }
@@ -118,17 +132,61 @@ interface BoardEditorInnerProps {
   board: BigBoard;
   players: Record<string, Player>;
   sortedPlayers: Player[];
+  onRestore: (rankings: string[]) => Promise<void>;
 }
 
 function BoardEditorInner({
   board,
   players,
   sortedPlayers,
+  onRestore,
 }: BoardEditorInnerProps) {
   const [search, setSearch] = useState('');
   const [posFilter, setPosFilter] = useState<PositionFilterGroup>(null);
   const [poolSearch, setPoolSearch] = useState('');
   const [poolPosFilter, setPoolPosFilter] = useState<PositionFilterGroup>(null);
+  const [snapshots, setSnapshots] = useState<BoardSnapshot[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
+  const [restoringId, setRestoringId] = useState<string | null>(null);
+
+  const fetchSnapshots = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/boards/${board.id}/snapshots`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setSnapshots(data.snapshots ?? []);
+    } catch {
+      /* ignore */
+    }
+  }, [board.id]);
+
+  useEffect(() => {
+    fetchSnapshots();
+  }, [fetchSnapshots]);
+
+  async function handleSaveSnapshot(label: string) {
+    const res = await fetch(`/api/boards/${board.id}/snapshots`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ label: label || undefined }),
+    });
+    if (res.ok) await fetchSnapshots();
+  }
+
+  async function handleRestore(snapshot: BoardSnapshot) {
+    if (
+      !window.confirm(
+        'Restore this snapshot? Your current rankings will be overwritten.',
+      )
+    )
+      return;
+    setRestoringId(snapshot.id);
+    try {
+      await onRestore(snapshot.rankings);
+    } finally {
+      setRestoringId(null);
+    }
+  }
 
   const {
     rankings,
@@ -246,7 +304,62 @@ function BoardEditorInner({
           isSaving={isSaving}
           isDirty={isDirty}
           onAddCustomPlayer={addCustomPlayer}
+          onSaveSnapshot={handleSaveSnapshot}
         />
+
+        {snapshots.length > 0 && (
+          <div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowHistory(!showHistory)}
+              className="text-xs text-muted-foreground"
+            >
+              {showHistory ? 'Hide' : 'Show'} History ({snapshots.length})
+            </Button>
+
+            {showHistory && (
+              <div className="mt-1 max-h-48 overflow-y-auto rounded-md border bg-muted/30 p-2">
+                {snapshots.map((snap) => (
+                  <div
+                    key={snap.id}
+                    className="flex items-center justify-between gap-2 border-b py-1.5 last:border-0"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <span className="text-sm font-medium">
+                        {snap.label || 'Untitled'}
+                      </span>
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        {snap.createdAt?.seconds
+                          ? new Date(
+                              snap.createdAt.seconds * 1000,
+                            ).toLocaleDateString()
+                          : ''}
+                      </span>
+                    </div>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="outline"
+                        size="xs"
+                        onClick={() => handleRestore(snap)}
+                        disabled={restoringId === snap.id}
+                      >
+                        {restoringId === snap.id ? 'Restoring...' : 'Restore'}
+                      </Button>
+                      <Button variant="outline" size="xs" asChild>
+                        <a
+                          href={`/board/compare?boardId=${board.id}&snapshotId=${snap.id}`}
+                        >
+                          Compare
+                        </a>
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         <DndContext
           sensors={sensors}

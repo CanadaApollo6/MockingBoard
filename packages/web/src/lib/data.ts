@@ -11,6 +11,7 @@ import type {
   Trade,
   ScoutProfile,
   BigBoard,
+  BoardSnapshot,
 } from '@mockingboard/shared';
 
 export async function getDrafts(options?: {
@@ -292,4 +293,34 @@ export async function getUserBoardForYear(
   if (snapshot.empty) return null;
   const doc = snapshot.docs[0];
   return sanitize({ id: doc.id, ...doc.data() } as BigBoard);
+}
+
+export async function getBoardSnapshots(
+  boardId: string,
+): Promise<BoardSnapshot[]> {
+  const snap = await adminDb
+    .collection('bigBoards')
+    .doc(boardId)
+    .collection('snapshots')
+    .orderBy('createdAt', 'desc')
+    .get();
+
+  return snap.docs.map(
+    (doc) => sanitize({ id: doc.id, ...doc.data() }) as BoardSnapshot,
+  );
+}
+
+export async function getBoardSnapshot(
+  boardId: string,
+  snapshotId: string,
+): Promise<BoardSnapshot | null> {
+  const doc = await adminDb
+    .collection('bigBoards')
+    .doc(boardId)
+    .collection('snapshots')
+    .doc(snapshotId)
+    .get();
+
+  if (!doc.exists) return null;
+  return sanitize({ id: doc.id, ...doc.data() }) as BoardSnapshot;
 }

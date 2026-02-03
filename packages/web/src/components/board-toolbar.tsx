@@ -24,6 +24,7 @@ interface BoardToolbarProps {
   isSaving: boolean;
   isDirty: boolean;
   onAddCustomPlayer: (player: CustomPlayer) => void;
+  onSaveSnapshot: (label: string) => Promise<void>;
 }
 
 export function BoardToolbar({
@@ -34,8 +35,12 @@ export function BoardToolbar({
   isSaving,
   isDirty,
   onAddCustomPlayer,
+  onSaveSnapshot,
 }: BoardToolbarProps) {
   const [showCustomForm, setShowCustomForm] = useState(false);
+  const [showSnapshotForm, setShowSnapshotForm] = useState(false);
+  const [snapshotLabel, setSnapshotLabel] = useState('');
+  const [savingSnapshot, setSavingSnapshot] = useState(false);
   const [customName, setCustomName] = useState('');
   const [customPosition, setCustomPosition] = useState<Position>('QB');
   const [customSchool, setCustomSchool] = useState('');
@@ -51,6 +56,17 @@ export function BoardToolbar({
     setCustomName('');
     setCustomSchool('');
     setShowCustomForm(false);
+  }
+
+  async function handleSaveSnapshot() {
+    setSavingSnapshot(true);
+    try {
+      await onSaveSnapshot(snapshotLabel.trim());
+      setSnapshotLabel('');
+      setShowSnapshotForm(false);
+    } finally {
+      setSavingSnapshot(false);
+    }
   }
 
   return (
@@ -98,7 +114,38 @@ export function BoardToolbar({
         >
           {showCustomForm ? 'Cancel' : '+ Custom Player'}
         </Button>
+        <Button
+          variant="outline"
+          size="xs"
+          onClick={() => setShowSnapshotForm(!showSnapshotForm)}
+        >
+          {showSnapshotForm ? 'Cancel' : 'Save Snapshot'}
+        </Button>
       </div>
+
+      {showSnapshotForm && (
+        <div className="flex items-end gap-2 rounded-md border bg-muted/50 p-3">
+          <div className="flex-1">
+            <label className="mb-1 block text-xs text-muted-foreground">
+              Label (optional)
+            </label>
+            <input
+              type="text"
+              value={snapshotLabel}
+              onChange={(e) => setSnapshotLabel(e.target.value)}
+              className="w-full rounded-md border bg-background px-2 py-1 text-sm"
+              placeholder="e.g. Pre-Combine"
+            />
+          </div>
+          <Button
+            size="sm"
+            onClick={handleSaveSnapshot}
+            disabled={savingSnapshot}
+          >
+            {savingSnapshot ? 'Saving...' : 'Save'}
+          </Button>
+        </div>
+      )}
 
       {showCustomForm && (
         <div className="flex flex-wrap items-end gap-2 rounded-md border bg-muted/50 p-3">
