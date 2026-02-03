@@ -11,7 +11,6 @@ interface PlayerCardProps {
   player: Player;
   onDraft: () => void;
   disabled: boolean;
-  onDeselect: () => void;
 }
 
 const YEAR_LABELS: Record<string, string> = {
@@ -45,12 +44,7 @@ function formatMeasurement(value: number): string {
   return `${whole + 1}"`;
 }
 
-export function PlayerCard({
-  player,
-  onDraft,
-  disabled,
-  onDeselect,
-}: PlayerCardProps) {
+export function PlayerCard({ player, onDraft, disabled }: PlayerCardProps) {
   const { attributes, scouting } = player;
   const hasPhysical = attributes?.height || attributes?.weight;
   const combineMetrics = buildCombineMetrics(attributes);
@@ -90,29 +84,20 @@ export function PlayerCard({
       />
 
       <div className="space-y-3 p-4">
-        {/* Header: rank + position + close */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="font-mono text-2xl font-bold">
-              #{player.consensusRank}
-            </span>
-            <Badge
-              style={{
-                backgroundColor: getPositionColor(player.position),
-                color: '#0A0A0B',
-              }}
-              className="text-xs"
-            >
-              {player.position}
-            </Badge>
-          </div>
-          <button
-            onClick={onDeselect}
-            className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            aria-label="Deselect player"
+        {/* Header: rank + position */}
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-2xl font-bold">
+            #{player.consensusRank}
+          </span>
+          <Badge
+            style={{
+              backgroundColor: getPositionColor(player.position),
+              color: '#0A0A0B',
+            }}
+            className="text-xs"
           >
-            &times;
-          </button>
+            {player.position}
+          </Badge>
         </div>
 
         {/* Player name */}

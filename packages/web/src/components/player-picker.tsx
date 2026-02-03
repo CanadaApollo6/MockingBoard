@@ -49,9 +49,15 @@ export function PlayerPicker({ players, onPick, disabled }: PlayerPickerProps) {
     return result;
   }, [players, search, posFilter]);
 
-  const selectedPlayer = selected
-    ? players.find((p) => p.id === selected)
-    : null;
+  // Always have a selection: fall back to top available player
+  const effectiveSelected = useMemo(() => {
+    if (selected && players.some((p) => p.id === selected)) return selected;
+    return players[0]?.id ?? null;
+  }, [selected, players]);
+
+  const selectedPlayer = effectiveSelected
+    ? players.find((p) => p.id === effectiveSelected)
+    : undefined;
 
   function handleDraft() {
     if (!selectedPlayer || disabled) return;
@@ -98,7 +104,6 @@ export function PlayerPicker({ players, onPick, disabled }: PlayerPickerProps) {
             player={selectedPlayer}
             onDraft={handleDraft}
             disabled={disabled}
-            onDeselect={() => setSelected(null)}
           />
         )}
       </AnimatePresence>
@@ -125,7 +130,7 @@ export function PlayerPicker({ players, onPick, disabled }: PlayerPickerProps) {
                   onClick={() => setSelected(player.id)}
                   className={cn(
                     'cursor-pointer border-b transition-colors',
-                    selected === player.id
+                    effectiveSelected === player.id
                       ? 'bg-primary/10'
                       : 'hover:bg-muted/50',
                   )}
