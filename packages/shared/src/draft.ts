@@ -21,7 +21,7 @@ export function getPickController(
   if (slot.ownerOverride !== undefined) {
     return slot.ownerOverride || null;
   }
-  return draft.teamAssignments[slot.team];
+  return draft.teamAssignments[slot.team] ?? null;
 }
 
 /**

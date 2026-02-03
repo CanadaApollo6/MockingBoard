@@ -40,7 +40,7 @@ export default async function GuestDraftPage({
   const [pickOrder, playerMap, futurePicks] = await Promise.all([
     buildPickOrder(rounds, year),
     getPlayerMap(year),
-    tradesEnabled ? buildFuturePicks(year) : Promise.resolve([]),
+    tradesEnabled ? buildFuturePicks(year, rounds) : Promise.resolve([]),
   ]);
 
   const players = Object.fromEntries(playerMap);

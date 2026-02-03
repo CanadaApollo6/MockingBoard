@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { useAuth } from '@/components/auth-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -43,6 +44,8 @@ interface LandingHeroProps {
 }
 
 export function LandingHero({ error }: LandingHeroProps) {
+  const { user, loading } = useAuth();
+
   return (
     <>
       {/* Hero section */}
@@ -101,19 +104,34 @@ export function LandingHero({ error }: LandingHeroProps) {
             variants={fadeUp}
             className="mt-8 flex justify-center gap-3"
           >
-            <Link href="/drafts/new">
-              <Button size="lg">Mock Draft Now</Button>
-            </Link>
-            <Link href="/drafts">
-              <Button variant="outline" size="lg">
-                View Drafts
-              </Button>
-            </Link>
-            <Link href="/auth">
-              <Button variant="outline" size="lg">
-                Sign In
-              </Button>
-            </Link>
+            {!loading && user ? (
+              <>
+                <Link href="/drafts/new">
+                  <Button size="lg">New Draft</Button>
+                </Link>
+                <Link href="/drafts?tab=mine">
+                  <Button variant="outline" size="lg">
+                    My Drafts
+                  </Button>
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link href="/drafts/new">
+                  <Button size="lg">Mock Draft Now</Button>
+                </Link>
+                <Link href="/auth/signin">
+                  <Button variant="outline" size="lg">
+                    Sign In
+                  </Button>
+                </Link>
+                <Link href="/auth/signup">
+                  <Button variant="outline" size="lg">
+                    Create Account
+                  </Button>
+                </Link>
+              </>
+            )}
           </motion.div>
         </motion.div>
       </section>

@@ -95,12 +95,18 @@ export function GuestDraftRoom({ initialDraft, players }: GuestDraftRoomProps) {
 
   const handleTradeSubmit = useCallback(
     (
+      proposerTeam: TeamAbbreviation,
       recipientTeam: TeamAbbreviation,
       giving: TradePiece[],
       receiving: TradePiece[],
     ) => {
       setError(null);
-      const result = proposeTrade(recipientTeam, giving, receiving);
+      const result = proposeTrade(
+        proposerTeam,
+        recipientTeam,
+        giving,
+        receiving,
+      );
 
       if ('error' in result) {
         setError(result.error);

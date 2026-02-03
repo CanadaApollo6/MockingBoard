@@ -24,6 +24,7 @@ interface TradeModalProps {
   draft: Draft;
   userId: string;
   onSubmit: (
+    proposerTeam: TeamAbbreviation,
     recipientTeam: TeamAbbreviation,
     giving: TradePiece[],
     receiving: TradePiece[],
@@ -62,6 +63,22 @@ export function TradeModal({
     new Set(),
   );
 
+  // Teams the current user controls
+  const myTeams = useMemo(() => {
+    return (
+      Object.entries(draft.teamAssignments) as [
+        TeamAbbreviation,
+        string | null,
+      ][]
+    )
+      .filter(([, uid]) => uid === userId)
+      .map(([team]) => team);
+  }, [draft, userId]);
+
+  const [proposerTeam, setProposerTeam] = useState<TeamAbbreviation>(
+    myTeams[0],
+  );
+
   const { userTeams, cpuTeams } = useMemo(() => {
     const user: TeamAbbreviation[] = [];
     const cpu: TeamAbbreviation[] = [];
@@ -72,13 +89,21 @@ export function TradeModal({
     return { userTeams: user, cpuTeams: cpu };
   }, [draft, userId]);
 
+  // Filter picks to the selected proposer team only
   const userCurrentPicks = useMemo(
-    () => getAvailableCurrentPicks(draft, userId),
-    [draft, userId],
+    () =>
+      getAvailableCurrentPicks(draft, userId).filter((slot) => {
+        if (slot.ownerOverride !== undefined) return true;
+        return slot.team === proposerTeam;
+      }),
+    [draft, userId, proposerTeam],
   );
   const userFuturePicks = useMemo(
-    () => getAvailableFuturePicks(draft, userId),
-    [draft, userId],
+    () =>
+      getAvailableFuturePicks(draft, userId).filter(
+        (fp) => fp.ownerTeam === proposerTeam,
+      ),
+    [draft, userId, proposerTeam],
   );
 
   const targetCurrentPicks = useMemo(
@@ -177,7 +202,12 @@ export function TradeModal({
       receivingPieces.length === 0
     )
       return;
-    onSubmit(targetTeam, givingPieces, receivingPieces);
+    onSubmit(proposerTeam, targetTeam, givingPieces, receivingPieces);
+  }
+
+  function handleProposerTeamChange(team: TeamAbbreviation) {
+    setProposerTeam(team);
+    setSelectedGiving(new Set());
   }
 
   function handleTeamChange(team: TeamAbbreviation) {
@@ -197,6 +227,28 @@ export function TradeModal({
         <CardTitle>Propose Trade</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        {myTeams.length > 1 && (
+          <div>
+            <label className="mb-2 block text-sm font-medium">Trade from</label>
+            <div className="flex flex-wrap gap-1.5">
+              {myTeams.map((team) => (
+                <button
+                  key={team}
+                  type="button"
+                  onClick={() => handleProposerTeamChange(team)}
+                  className={cn(
+                    'rounded-md px-2 py-1 text-xs font-medium transition-colors',
+                    proposerTeam === team
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted text-muted-foreground hover:bg-accent hover:text-foreground',
+                  )}
+                >
+                  {getTeamName(team)}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         <div>
           <label className="mb-2 block text-sm font-medium">Trade with</label>
           {userTeams.length > 0 && (

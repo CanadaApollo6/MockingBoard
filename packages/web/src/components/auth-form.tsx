@@ -11,9 +11,13 @@ import { Separator } from '@/components/ui/separator';
 const inputClass =
   'w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:shadow-[var(--shadow-glow)]';
 
-export function AuthForm() {
+interface AuthFormProps {
+  initialMode?: 'signin' | 'signup';
+}
+
+export function AuthForm({ initialMode = 'signin' }: AuthFormProps) {
   const router = useRouter();
-  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
+  const [mode, setMode] = useState<'signin' | 'signup'>(initialMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');

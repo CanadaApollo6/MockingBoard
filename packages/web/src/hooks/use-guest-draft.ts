@@ -37,6 +37,7 @@ export interface UseGuestDraftReturn {
   isProcessing: boolean;
   recordPick: (playerId: string) => void;
   proposeTrade: (
+    proposerTeam: TeamAbbreviation,
     recipientTeam: TeamAbbreviation,
     giving: TradePiece[],
     receiving: TradePiece[],
@@ -229,19 +230,14 @@ export function useGuestDraft(
 
   const proposeTrade = useCallback(
     (
+      proposerTeam: TeamAbbreviation,
       recipientTeam: TeamAbbreviation,
       giving: TradePiece[],
       receiving: TradePiece[],
     ) => {
-      // Find proposer team from teamAssignments
-      const proposerTeam = (
-        Object.entries(draft.teamAssignments) as [
-          TeamAbbreviation,
-          string | null,
-        ][]
-      ).find(([, uid]) => uid === GUEST_ID)?.[0];
-
-      if (!proposerTeam) return { error: 'No team assigned' };
+      if (draft.teamAssignments[proposerTeam] !== GUEST_ID) {
+        return { error: 'You do not control that team' };
+      }
 
       const trade: Trade = {
         id: `trade-${Date.now()}`,
@@ -284,6 +280,21 @@ export function useGuestDraft(
     },
     [draft],
   );
+
+  // Trigger CPU cascade on mount if first pick is CPU
+  const initialCascadeRef = useRef(false);
+  useEffect(() => {
+    if (initialCascadeRef.current) return;
+    const slot = draft.pickOrder[(draft.currentPick ?? 1) - 1];
+    if (!slot) return;
+    const ctrl = getPickController(draft, slot);
+    if (ctrl === null && draft.status === 'active') {
+      initialCascadeRef.current = true;
+      setIsProcessing(true);
+      const t = setTimeout(() => runCpuCascade(draft, picks), 50);
+      timeoutRef.current.push(t);
+    }
+  }, []);
 
   return {
     draft,

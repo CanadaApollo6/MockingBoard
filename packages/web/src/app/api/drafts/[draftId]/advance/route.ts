@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSessionUser } from '@/lib/auth-session';
-import { advanceSingleCpuPick } from '@/lib/draft-actions';
+import { runCpuCascade } from '@/lib/draft-actions';
 import { adminDb } from '@/lib/firebase-admin';
 import type { Draft } from '@mockingboard/shared';
 
@@ -27,8 +27,8 @@ export async function POST(
   }
 
   try {
-    const { pick, isComplete } = await advanceSingleCpuPick(draftId);
-    return NextResponse.json({ pick, isComplete });
+    const { picks, isComplete } = await runCpuCascade(draftId);
+    return NextResponse.json({ picks, isComplete });
   } catch (err) {
     console.error('Failed to advance CPU pick:', err);
     return NextResponse.json(

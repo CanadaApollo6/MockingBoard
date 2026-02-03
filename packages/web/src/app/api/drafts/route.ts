@@ -86,7 +86,7 @@ export async function POST(request: Request) {
   try {
     const [pickOrder, futurePicks] = await Promise.all([
       buildPickOrder(rounds, year),
-      tradesEnabled ? buildFuturePicks(year) : Promise.resolve([]),
+      tradesEnabled ? buildFuturePicks(year, rounds) : Promise.resolve([]),
     ]);
 
     const teamAssignments = {} as Record<TeamAbbreviation, string | null>;

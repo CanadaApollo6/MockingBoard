@@ -52,6 +52,7 @@ export async function buildPickOrder(
 
 export async function buildFuturePicks(
   draftYear: number,
+  draftRounds: number = 7,
 ): Promise<FutureDraftPick[]> {
   const allTeamIds = teams.map((t) => t.id);
   const cachedTeams = await getCachedTeamDocs();
@@ -61,7 +62,26 @@ export async function buildFuturePicks(
     seededPicksByTeam[doc.id] = doc.futurePicks;
   }
 
-  return buildFuturePicksFromSeeds(draftYear, allTeamIds, seededPicksByTeam);
+  const future = buildFuturePicksFromSeeds(
+    draftYear,
+    allTeamIds,
+    seededPicksByTeam,
+  );
+
+  // Add current-year rounds beyond the draft's configured rounds as tradeable assets
+  if (draftRounds < 7) {
+    const allSlots = await getCachedDraftOrderSlots(draftYear);
+    const extraSlots = allSlots.filter((s) => s.round > draftRounds);
+    const extraPicks: FutureDraftPick[] = extraSlots.map((s) => ({
+      year: draftYear,
+      round: s.round,
+      originalTeam: s.team,
+      ownerTeam: s.team,
+    }));
+    return [...extraPicks, ...future];
+  }
+
+  return future;
 }
 
 export interface CreateWebDraftInput {

@@ -141,6 +141,22 @@ export function DraftRoom({
   const isPaused = draft?.status === 'paused';
   const isComplete = draft?.status === 'complete';
 
+  // Auto-trigger CPU cascade when current pick is CPU-controlled
+  const needsCpuAdvance =
+    isActive && !animating && controller === null && !submitting;
+  const advancingRef = useRef(false);
+
+  useEffect(() => {
+    if (!needsCpuAdvance || advancingRef.current) return;
+    advancingRef.current = true;
+
+    fetch(`/api/drafts/${draftId}/advance`, { method: 'POST' })
+      .catch((err: Error) => setError(err.message))
+      .finally(() => {
+        advancingRef.current = false;
+      });
+  }, [needsCpuAdvance, draftId]);
+
   // Trade eligibility: any team not owned by the current user is a valid target
   const hasTradeTargets = useMemo(
     () =>
@@ -197,6 +213,7 @@ export function DraftRoom({
 
   const handleTradeSubmit = useCallback(
     async (
+      proposerTeam: TeamAbbreviation,
       recipientTeam: TeamAbbreviation,
       giving: TradePiece[],
       receiving: TradePiece[],
@@ -209,6 +226,7 @@ export function DraftRoom({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            proposerTeam,
             recipientTeam,
             proposerGives: giving,
             proposerReceives: receiving,

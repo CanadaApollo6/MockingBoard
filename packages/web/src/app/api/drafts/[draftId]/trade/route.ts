@@ -16,6 +16,7 @@ export async function POST(
   const { draftId } = await params;
 
   let body: {
+    proposerTeam: TeamAbbreviation;
     recipientTeam: TeamAbbreviation;
     proposerGives: TradePiece[];
     proposerReceives: TradePiece[];
@@ -36,13 +37,10 @@ export async function POST(
     }
     const draft = { id: draftDoc.id, ...draftDoc.data() } as Draft;
 
-    const proposerTeam = Object.entries(draft.teamAssignments).find(
-      ([, uid]) => uid === session.uid,
-    )?.[0] as TeamAbbreviation | undefined;
-
-    if (!proposerTeam) {
+    const { proposerTeam } = body;
+    if (!proposerTeam || draft.teamAssignments[proposerTeam] !== session.uid) {
       return NextResponse.json(
-        { error: 'You are not controlling a team' },
+        { error: 'You do not control that team' },
         { status: 403 },
       );
     }
