@@ -3,6 +3,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { getSessionUser } from '@/lib/auth-session';
 import { adminDb } from '@/lib/firebase-admin';
 import { invalidateUserDraftsCache } from '@/lib/data';
+import { resolveUser } from '@/lib/user-resolve';
 import type { Draft } from '@mockingboard/shared';
 
 export async function POST(
@@ -23,7 +24,11 @@ export async function POST(
     }
     const draft = { id: draftDoc.id, ...draftDoc.data() } as Draft;
 
-    if (draft.createdBy !== session.uid) {
+    const user = await resolveUser(session.uid);
+    const isCreator =
+      draft.createdBy === session.uid ||
+      (user?.discordId != null && draft.createdBy === user.discordId);
+    if (!isCreator) {
       return NextResponse.json(
         { error: 'Only the draft creator can cancel' },
         { status: 403 },

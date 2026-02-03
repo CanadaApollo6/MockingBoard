@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { X } from 'lucide-react';
 import type { Draft, TeamAbbreviation } from '@mockingboard/shared';
 import { formatDraftDate, getDraftDisplayName } from '@/lib/format';
 import { getTeamColor } from '@/lib/team-colors';
@@ -37,10 +38,16 @@ const STATUS_LABEL: Record<Draft['status'], string> = {
 interface DraftCardProps {
   draft: Draft;
   userId?: string;
+  discordId?: string;
   onRemove?: () => void;
 }
 
-export function DraftCard({ draft, userId, onRemove }: DraftCardProps) {
+export function DraftCard({
+  draft,
+  userId,
+  discordId,
+  onRemove,
+}: DraftCardProps) {
   const participantCount = Object.keys(draft.participants).length;
   const totalPicks = draft.pickOrder.length;
   const picksMade = draft.pickedPlayerIds?.length ?? 0;
@@ -50,7 +57,9 @@ export function DraftCard({ draft, userId, onRemove }: DraftCardProps) {
       ? `/drafts/${draft.id}/live`
       : `/drafts/${draft.id}`;
 
-  const isCreator = userId === draft.createdBy;
+  const isCreator =
+    userId === draft.createdBy ||
+    (discordId != null && discordId === draft.createdBy);
   const canCancel =
     isCreator &&
     (draft.status === 'lobby' ||
@@ -93,9 +102,50 @@ export function DraftCard({ draft, userId, onRemove }: DraftCardProps) {
             <CardTitle className="text-base">
               {getDraftDisplayName(draft)}
             </CardTitle>
-            <Badge variant={STATUS_VARIANT[draft.status]}>
-              {STATUS_LABEL[draft.status]}
-            </Badge>
+            <div className="flex items-center gap-2">
+              {confirming ? (
+                <>
+                  <span className="text-xs text-muted-foreground">
+                    {confirming === 'cancel' ? 'Cancel?' : 'Delete?'}
+                  </span>
+                  <Button
+                    variant="destructive"
+                    size="xs"
+                    onClick={handleAction}
+                    disabled={loading}
+                  >
+                    {loading ? '...' : 'Yes'}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="xs"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setConfirming(null);
+                    }}
+                  >
+                    No
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Badge variant={STATUS_VARIANT[draft.status]}>
+                    {STATUS_LABEL[draft.status]}
+                  </Badge>
+                  {(canCancel || canDelete) && (
+                    <button
+                      className="rounded p-0.5 text-muted-foreground transition-colors hover:text-destructive"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setConfirming(canCancel ? 'cancel' : 'delete');
+                      }}
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
           </div>
           <CardDescription>{formatDraftDate(draft.createdAt)}</CardDescription>
         </CardHeader>
@@ -132,49 +182,6 @@ export function DraftCard({ draft, userId, onRemove }: DraftCardProps) {
               />
             ))}
           </div>
-          {(canCancel || canDelete) && (
-            <div className="mt-3 border-t border-mb-border pt-3">
-              {confirming ? (
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">
-                    {confirming === 'cancel'
-                      ? 'Cancel this draft?'
-                      : 'Delete permanently?'}
-                  </span>
-                  <Button
-                    variant="destructive"
-                    size="xs"
-                    onClick={handleAction}
-                    disabled={loading}
-                  >
-                    {loading ? '...' : 'Yes'}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="xs"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setConfirming(null);
-                    }}
-                  >
-                    No
-                  </Button>
-                </div>
-              ) : (
-                <Button
-                  variant="ghost"
-                  size="xs"
-                  className="text-muted-foreground hover:text-destructive"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setConfirming(canCancel ? 'cancel' : 'delete');
-                  }}
-                >
-                  {canCancel ? 'Cancel Draft' : 'Delete Draft'}
-                </Button>
-              )}
-            </div>
-          )}
         </CardContent>
       </Card>
     </Link>

@@ -10,12 +10,14 @@ interface DraftsGridProps {
   initialDrafts: Draft[];
   initialHasMore: boolean;
   userId?: string;
+  discordId?: string;
 }
 
 export function DraftsGrid({
   initialDrafts,
   initialHasMore,
   userId,
+  discordId,
 }: DraftsGridProps) {
   const [drafts, setDrafts] = useState(initialDrafts);
   const [hasMore, setHasMore] = useState(initialHasMore);
@@ -52,6 +54,7 @@ export function DraftsGrid({
             key={d.id}
             draft={d}
             userId={userId}
+            discordId={discordId}
             onRemove={() =>
               setDrafts((prev) => prev.filter((x) => x.id !== d.id))
             }

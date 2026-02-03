@@ -53,6 +53,7 @@ export default async function DraftsPage() {
         initialDrafts={drafts}
         initialHasMore={hasMore}
         userId={session.uid}
+        discordId={user?.discordId}
       />
     </main>
   );
