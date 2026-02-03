@@ -94,44 +94,58 @@ export function DraftRoom({
   const cpuSpeed = draft?.config.cpuSpeed ?? 'instant';
   const animating = revealedCount < picks.length;
 
+  // Ref for latest picks count so the stagger interval avoids stale closures
+  const picksLengthRef = useRef(picks.length);
+  picksLengthRef.current = picks.length;
+
+  // Persistent interval ref — survives effect re-runs so the stagger keeps its pace
+  const revealIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   useEffect(() => {
     const target = picks.length;
     const current = revealedRef.current;
-
     if (target <= current) return;
 
-    if (cpuSpeed === 'instant' || target - current === 1) {
+    // Instant speed: always reveal all immediately
+    if (cpuSpeed === 'instant') {
       revealedRef.current = target;
       setRevealedCount(target);
       return;
     }
 
-    revealedRef.current = current + 1;
-    setRevealedCount(current + 1);
+    // Single new pick while not in a CPU cascade: reveal immediately (user pick)
+    if (target - current === 1 && !advancingRef.current) {
+      revealedRef.current = target;
+      setRevealedCount(target);
+      return;
+    }
+
+    // CPU cascade with non-instant speed: stagger reveal
+    // If interval already running, let it continue — it reads picksLengthRef
+    if (revealIntervalRef.current) return;
 
     const delay = SPEED_DELAY[cpuSpeed];
-    const interval = setInterval(() => {
-      if (revealedRef.current >= target) {
-        clearInterval(interval);
+    revealIntervalRef.current = setInterval(() => {
+      if (revealedRef.current >= picksLengthRef.current) {
+        clearInterval(revealIntervalRef.current!);
+        revealIntervalRef.current = null;
         return;
       }
       revealedRef.current++;
       setRevealedCount(revealedRef.current);
     }, delay);
-
-    return () => clearInterval(interval);
   }, [picks.length, cpuSpeed]);
+
+  // Cleanup stagger interval on unmount
+  useEffect(() => {
+    return () => {
+      if (revealIntervalRef.current) clearInterval(revealIntervalRef.current);
+    };
+  }, []);
 
   const playerMap = useMemo(() => new Map(Object.entries(players)), [players]);
 
   const visiblePicks = animating ? picks.slice(0, revealedCount) : picks;
-
-  // Batch detection: skip entry animation when multiple picks arrive at once
-  const prevVisibleCountRef = useRef(visiblePicks.length);
-  const isBatch = visiblePicks.length - prevVisibleCountRef.current > 1;
-  useEffect(() => {
-    prevVisibleCountRef.current = visiblePicks.length;
-  });
 
   const availablePlayers = useMemo(() => {
     if (!draft) return [];
@@ -464,7 +478,7 @@ export function DraftRoom({
         pickOrder={draft?.pickOrder}
         currentPick={draft?.currentPick}
         clockUrgency={clockUrgency}
-        isBatch={isBatch}
+        isBatch={animating}
       />
       <div>
         <div className="mb-1 flex justify-between text-xs text-muted-foreground">

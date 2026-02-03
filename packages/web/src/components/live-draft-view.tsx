@@ -1,6 +1,5 @@
 'use client';
 
-import { useRef, useEffect } from 'react';
 import type {
   Draft,
   Pick,
@@ -28,13 +27,6 @@ export function LiveDraftView({
 }: LiveDraftViewProps) {
   const { draft, picks } = useLiveDraft(draftId, initialDraft, initialPicks);
   const playerMap = new Map(Object.entries(players));
-
-  // Batch detection: skip entry animation when multiple picks arrive at once
-  const prevPickCountRef = useRef(picks.length);
-  const isBatch = picks.length - prevPickCountRef.current > 1;
-  useEffect(() => {
-    prevPickCountRef.current = picks.length;
-  });
 
   if (!draft) {
     return (
@@ -84,7 +76,7 @@ export function LiveDraftView({
         playerMap={playerMap}
         pickOrder={draft.pickOrder}
         currentPick={draft.currentPick}
-        isBatch={isBatch}
+        isBatch={false}
       />
       <div>
         <div className="mb-1 flex justify-between text-xs text-muted-foreground">

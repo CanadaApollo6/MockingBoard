@@ -3,7 +3,7 @@ import { getSessionUser } from '@/lib/auth-session';
 import { resolveUser } from '@/lib/user-resolve';
 import { DraftsGrid } from '@/components/drafts-grid';
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 
 export default async function DraftsPage({
   searchParams,

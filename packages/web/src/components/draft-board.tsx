@@ -174,7 +174,6 @@ const PickRow = memo(function PickRow({
 
   return (
     <motion.tr
-      layout
       initial={shouldReduce || isBatch ? false : { opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: 'spring', damping: 25, stiffness: 200 }}

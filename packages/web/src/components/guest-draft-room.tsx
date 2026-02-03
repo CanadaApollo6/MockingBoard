@@ -53,12 +53,13 @@ export function GuestDraftRoom({ initialDraft, players }: GuestDraftRoomProps) {
 
   const playerMap = useMemo(() => new Map(Object.entries(players)), [players]);
 
-  // Batch detection: skip entry animation when multiple picks arrive at once
+  // Skip entry animation during CPU cascade or when many picks land at once
   const prevPickCountRef = useRef(picks.length);
-  const isBatch = picks.length - prevPickCountRef.current > 1;
+  const isLargeBatch = picks.length - prevPickCountRef.current > 1;
   useEffect(() => {
     prevPickCountRef.current = picks.length;
   });
+  const skipAnimation = isProcessing || isLargeBatch;
 
   const availablePlayers = useMemo(() => {
     const pickedSet = new Set(picks.map((p) => p.playerId));
@@ -262,7 +263,7 @@ export function GuestDraftRoom({ initialDraft, players }: GuestDraftRoomProps) {
         pickOrder={draft.pickOrder}
         currentPick={draft.currentPick}
         clockUrgency={clockUrgency}
-        isBatch={isBatch}
+        isBatch={skipAnimation}
       />
       <div>
         <div className="mb-1 flex justify-between text-xs text-muted-foreground">
