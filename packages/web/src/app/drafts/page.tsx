@@ -1,7 +1,9 @@
-import { getDrafts, getUserDrafts } from '@/lib/data';
+import { getDraftsPaginated, getUserDraftsPaginated } from '@/lib/data';
 import { getSessionUser } from '@/lib/auth-session';
 import { resolveUser } from '@/lib/user-resolve';
-import { DraftCard } from '@/components/draft-card';
+import { DraftsGrid } from '@/components/drafts-grid';
+
+const PAGE_SIZE = 20;
 
 export default async function DraftsPage({
   searchParams,
@@ -13,9 +15,14 @@ export default async function DraftsPage({
   const showMyDrafts = tab === 'mine' && session;
 
   const user = showMyDrafts ? await resolveUser(session.uid) : null;
-  const drafts = showMyDrafts
-    ? await getUserDrafts(session.uid, user?.discordId)
-    : await getDrafts();
+  const { drafts, hasMore } = showMyDrafts
+    ? await getUserDraftsPaginated(session.uid, user?.discordId, {
+        limit: PAGE_SIZE,
+      })
+    : await getDraftsPaginated({
+        limit: PAGE_SIZE,
+        excludePrivate: true,
+      });
 
   return (
     <main className="mx-auto max-w-screen-xl px-4 py-8">
@@ -32,19 +39,11 @@ export default async function DraftsPage({
         </div>
       )}
 
-      {drafts.length === 0 ? (
-        <p className="py-12 text-center text-muted-foreground">
-          {showMyDrafts
-            ? "You haven't participated in any drafts yet."
-            : 'No drafts found.'}
-        </p>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
-          {drafts.map((draft) => (
-            <DraftCard key={draft.id} draft={draft} />
-          ))}
-        </div>
-      )}
+      <DraftsGrid
+        initialDrafts={drafts}
+        initialHasMore={hasMore}
+        tab={showMyDrafts ? 'mine' : 'all'}
+      />
     </main>
   );
 }

@@ -28,6 +28,13 @@ export function formatDraftDate(ts: FirestoreTimestamp): string {
   });
 }
 
+export function getDraftDisplayName(draft: {
+  name?: string;
+  config: { year: number };
+}): string {
+  return draft.name ?? `${draft.config.year} Mock Draft`;
+}
+
 export function formatRelativeTime(ts: FirestoreTimestamp): string {
   const now = Date.now();
   const then = extractSeconds(ts) * 1000;

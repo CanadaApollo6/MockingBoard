@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { Timestamp } from 'firebase-admin/firestore';
 import { adminDb } from './firebase-admin';
 import { getCachedPlayerMap } from './cache';
 import { sanitize } from './sanitize';
@@ -69,6 +70,91 @@ export async function getPublicLobbies(): Promise<Draft[]> {
   return sanitize(
     snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Draft),
   );
+}
+
+export async function getDraftsPaginated(options: {
+  limit: number;
+  afterSeconds?: number;
+  excludePrivate?: boolean;
+}): Promise<{ drafts: Draft[]; hasMore: boolean }> {
+  let query: FirebaseFirestore.Query = adminDb
+    .collection('drafts')
+    .orderBy('createdAt', 'desc');
+
+  if (options.afterSeconds) {
+    query = query.startAfter(new Timestamp(options.afterSeconds, 0));
+  }
+
+  // Over-fetch to compensate for JS-side privacy filtering
+  const fetchLimit = options.excludePrivate
+    ? options.limit + 10
+    : options.limit;
+  query = query.limit(fetchLimit + 1);
+
+  const snapshot = await query.get();
+  let drafts = sanitize(
+    snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Draft),
+  );
+
+  if (options.excludePrivate) {
+    drafts = drafts.filter((d) => d.visibility !== 'private');
+  }
+
+  const hasMore = drafts.length > options.limit;
+  return { drafts: drafts.slice(0, options.limit), hasMore };
+}
+
+export async function getUserDraftsPaginated(
+  userId: string,
+  discordId?: string,
+  options?: { limit?: number; afterSeconds?: number },
+): Promise<{ drafts: Draft[]; hasMore: boolean }> {
+  const limit = options?.limit ?? 20;
+  const ids = [userId, ...(discordId ? [discordId] : [])];
+
+  let participantQuery: FirebaseFirestore.Query = adminDb
+    .collection('drafts')
+    .where('participantIds', 'array-contains-any', ids)
+    .orderBy('createdAt', 'desc');
+
+  let creatorQuery: FirebaseFirestore.Query = adminDb
+    .collection('drafts')
+    .where('createdBy', '==', userId)
+    .orderBy('createdAt', 'desc');
+
+  if (options?.afterSeconds) {
+    const cursor = new Timestamp(options.afterSeconds, 0);
+    participantQuery = participantQuery.startAfter(cursor);
+    creatorQuery = creatorQuery.startAfter(cursor);
+  }
+
+  const fetchLimit = limit + 1;
+  participantQuery = participantQuery.limit(fetchLimit);
+  creatorQuery = creatorQuery.limit(fetchLimit);
+
+  const [byParticipant, byCreator] = await Promise.all([
+    participantQuery.get(),
+    creatorQuery.get(),
+  ]);
+
+  const seen = new Set<string>();
+  const drafts: Draft[] = [];
+
+  for (const doc of [...byParticipant.docs, ...byCreator.docs]) {
+    if (seen.has(doc.id)) continue;
+    seen.add(doc.id);
+    drafts.push({ id: doc.id, ...doc.data() } as Draft);
+  }
+
+  drafts.sort((a, b) => {
+    const aTime = a.createdAt?.seconds ?? 0;
+    const bTime = b.createdAt?.seconds ?? 0;
+    return bTime - aTime;
+  });
+
+  const sanitized = sanitize(drafts);
+  const hasMore = sanitized.length > limit;
+  return { drafts: sanitized.slice(0, limit), hasMore };
 }
 
 export async function getUserDrafts(

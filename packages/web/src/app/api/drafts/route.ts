@@ -25,6 +25,7 @@ export async function POST(request: Request) {
   }
 
   let body: {
+    name?: string;
     year: number;
     rounds: number;
     format: DraftFormat;
@@ -112,6 +113,7 @@ export async function POST(request: Request) {
       userId: session.uid,
       discordId,
       displayName,
+      name: body.name,
       config: {
         rounds,
         format,

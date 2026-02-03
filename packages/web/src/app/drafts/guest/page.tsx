@@ -2,7 +2,8 @@ import { redirect } from 'next/navigation';
 import { buildPickOrder, buildFuturePicks } from '@/lib/draft-actions';
 import { getPlayerMap } from '@/lib/data';
 import { GuestDraftRoom } from '@/components/guest-draft-room';
-import { teams } from '@mockingboard/shared';
+import { teams, generateDraftName } from '@mockingboard/shared';
+import { getDraftDisplayName } from '@/lib/format';
 import type {
   TeamAbbreviation,
   DraftFormat,
@@ -32,6 +33,7 @@ export default async function GuestDraftPage({
     : 'normal';
   const secondsPerPick = Math.max(Number(params.secondsPerPick) || 0, 0);
   const tradesEnabled = params.trades === 'true';
+  const draftName = params.name || generateDraftName();
 
   if (format === 'single-team' && !selectedTeam) {
     redirect('/drafts/new');
@@ -56,6 +58,7 @@ export default async function GuestDraftPage({
 
   const initialDraft: Draft = {
     id: 'guest',
+    name: draftName,
     createdBy: GUEST_ID,
     config: {
       rounds,
@@ -81,7 +84,9 @@ export default async function GuestDraftPage({
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8">
-      <h1 className="mb-6 text-2xl font-bold">{year} Mock Draft</h1>
+      <h1 className="mb-6 text-2xl font-bold">
+        {getDraftDisplayName(initialDraft)}
+      </h1>
       <GuestDraftRoom initialDraft={initialDraft} players={players} />
     </main>
   );

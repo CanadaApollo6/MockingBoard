@@ -123,6 +123,7 @@ export interface User {
 
 export interface Draft {
   id: string;
+  name?: string;
   createdBy: string;
   createdAt: FirestoreTimestamp;
   updatedAt: FirestoreTimestamp;

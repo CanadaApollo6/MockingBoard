@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { getDraft, getDraftPicks, getPlayerMap } from '@/lib/data';
 import { getSessionUser } from '@/lib/auth-session';
 import { resolveUser, isUserInDraft } from '@/lib/user-resolve';
+import { getDraftDisplayName } from '@/lib/format';
 import { LiveDraftView } from '@/components/live-draft-view';
 import { DraftRoom } from '@/components/draft-room';
 import { LobbyView } from '@/components/lobby-view';
@@ -48,7 +49,7 @@ export default async function LiveDraftPage({
     return (
       <main className="mx-auto max-w-screen-xl px-4 py-8">
         <h1 className="mb-6 text-2xl font-bold">
-          {draft.config.year} Mock Draft
+          {getDraftDisplayName(draft)}
         </h1>
         <DraftRoom
           draftId={draftId}
@@ -64,7 +65,7 @@ export default async function LiveDraftPage({
   return (
     <main className="mx-auto max-w-screen-xl px-4 py-8">
       <h1 className="mb-6 text-2xl font-bold">
-        {draft.config.year} Mock Draft — Live
+        {getDraftDisplayName(draft)} — Live
       </h1>
       <LiveDraftView
         draftId={draftId}

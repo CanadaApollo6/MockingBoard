@@ -53,6 +53,13 @@ export function GuestDraftRoom({ initialDraft, players }: GuestDraftRoomProps) {
 
   const playerMap = useMemo(() => new Map(Object.entries(players)), [players]);
 
+  // Batch detection: skip entry animation when multiple picks arrive at once
+  const prevPickCountRef = useRef(picks.length);
+  const isBatch = picks.length - prevPickCountRef.current > 1;
+  useEffect(() => {
+    prevPickCountRef.current = picks.length;
+  });
+
   const availablePlayers = useMemo(() => {
     const pickedSet = new Set(picks.map((p) => p.playerId));
     return Object.values(players)
@@ -255,6 +262,7 @@ export function GuestDraftRoom({ initialDraft, players }: GuestDraftRoomProps) {
         pickOrder={draft.pickOrder}
         currentPick={draft.currentPick}
         clockUrgency={clockUrgency}
+        isBatch={isBatch}
       />
       <div>
         <div className="mb-1 flex justify-between text-xs text-muted-foreground">

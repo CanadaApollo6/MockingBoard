@@ -9,6 +9,7 @@ import { GuestJoinModal } from '@/components/guest-join-modal';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { getDraftDisplayName } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 const CONFERENCES = ['AFC', 'NFC'] as const;
@@ -159,7 +160,7 @@ export function LobbyView({
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>{draft.config.year} Mock Draft Lobby</CardTitle>
+            <CardTitle>{getDraftDisplayName(draft)} Lobby</CardTitle>
             <Badge variant="secondary">
               {draft.visibility === 'private'
                 ? 'Private'

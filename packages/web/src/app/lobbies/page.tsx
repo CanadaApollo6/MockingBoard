@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { getPublicLobbies } from '@/lib/data';
+import { getDraftDisplayName } from '@/lib/format';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -28,7 +29,7 @@ export default async function LobbiesPage() {
               <Link key={lobby.id} href={`/drafts/${lobby.id}/live`}>
                 <Card className="transition-colors hover:border-primary/50">
                   <CardHeader>
-                    <CardTitle>{lobby.config.year} Mock Draft</CardTitle>
+                    <CardTitle>{getDraftDisplayName(lobby)}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">

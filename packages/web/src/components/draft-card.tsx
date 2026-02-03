@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { Draft, TeamAbbreviation } from '@mockingboard/shared';
-import { formatDraftDate } from '@/lib/format';
+import { formatDraftDate, getDraftDisplayName } from '@/lib/format';
 import { getTeamColor } from '@/lib/team-colors';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -44,7 +44,7 @@ export function DraftCard({ draft }: { draft: Draft }) {
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base">
-              {draft.config.year} Mock Draft
+              {getDraftDisplayName(draft)}
             </CardTitle>
             <Badge variant={STATUS_VARIANT[draft.status]}>
               {STATUS_LABEL[draft.status]}

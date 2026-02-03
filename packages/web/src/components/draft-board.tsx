@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, memo } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import type {
   Pick,
@@ -29,6 +29,7 @@ interface DraftBoardProps {
   currentPick?: number;
   groupByRound?: boolean;
   clockUrgency?: ClockUrgency;
+  isBatch?: boolean;
 }
 
 export function DraftBoard({
@@ -38,6 +39,7 @@ export function DraftBoard({
   currentPick,
   groupByRound = true,
   clockUrgency = 'normal',
+  isBatch = false,
 }: DraftBoardProps) {
   const shouldReduce = useReducedMotion();
   const hasFullBoard = pickOrder && pickOrder.length > 0;
@@ -81,7 +83,10 @@ export function DraftBoard({
               Round {round}
             </h3>
           )}
-          <div className="overflow-x-auto rounded-md border">
+          <div
+            className="overflow-x-auto rounded-md border"
+            style={{ contain: 'layout' }}
+          >
             <Table>
               <TableHeader>
                 <tr className="border-b">
@@ -107,6 +112,7 @@ export function DraftBoard({
                               player={playerMap.get(pick.playerId)}
                               shouldReduce={shouldReduce ?? false}
                               teamColor={tc}
+                              isBatch={isBatch}
                             />
                           );
                         }
@@ -135,6 +141,7 @@ export function DraftBoard({
                           player={playerMap.get(pick.playerId)}
                           shouldReduce={shouldReduce ?? false}
                           teamColor={colorMap.get(pick.overall)!}
+                          isBatch={isBatch}
                         />
                       ))}
                 </AnimatePresence>
@@ -147,16 +154,18 @@ export function DraftBoard({
   );
 }
 
-function PickRow({
+const PickRow = memo(function PickRow({
   pick,
   player,
   shouldReduce,
   teamColor,
+  isBatch,
 }: {
   pick: Pick;
   player: Player | undefined;
   shouldReduce: boolean;
   teamColor: string;
+  isBatch: boolean;
 }) {
   const isCpu = pick.userId === null;
   const posColor = player?.position
@@ -165,7 +174,8 @@ function PickRow({
 
   return (
     <motion.tr
-      initial={shouldReduce ? false : { opacity: 0, y: -10 }}
+      layout
+      initial={shouldReduce || isBatch ? false : { opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: 'spring', damping: 25, stiffness: 200 }}
       style={{ borderLeft: `3px solid ${teamColor}` }}
@@ -205,7 +215,7 @@ function PickRow({
       </TableCell>
     </motion.tr>
   );
-}
+});
 
 function OnTheClockRow({
   slot,
@@ -228,6 +238,7 @@ function OnTheClockRow({
 
   return (
     <motion.tr
+      layout
       key={`otc-${urgency}`}
       initial={{ opacity: 0 }}
       animate={{
@@ -256,7 +267,13 @@ function OnTheClockRow({
   );
 }
 
-function EmptyRow({ slot, teamColor }: { slot: DraftSlot; teamColor: string }) {
+const EmptyRow = memo(function EmptyRow({
+  slot,
+  teamColor,
+}: {
+  slot: DraftSlot;
+  teamColor: string;
+}) {
   return (
     <tr
       style={{ borderLeft: `3px solid ${teamColor}` }}
@@ -273,4 +290,4 @@ function EmptyRow({ slot, teamColor }: { slot: DraftSlot; teamColor: string }) {
       </TableCell>
     </tr>
   );
-}
+});

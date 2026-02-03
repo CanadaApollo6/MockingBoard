@@ -126,6 +126,13 @@ export function DraftRoom({
 
   const visiblePicks = animating ? picks.slice(0, revealedCount) : picks;
 
+  // Batch detection: skip entry animation when multiple picks arrive at once
+  const prevVisibleCountRef = useRef(visiblePicks.length);
+  const isBatch = visiblePicks.length - prevVisibleCountRef.current > 1;
+  useEffect(() => {
+    prevVisibleCountRef.current = visiblePicks.length;
+  });
+
   const availablePlayers = useMemo(() => {
     if (!draft) return [];
     const pickedSet = new Set(picks.map((p) => p.playerId));
@@ -457,6 +464,7 @@ export function DraftRoom({
         pickOrder={draft?.pickOrder}
         currentPick={draft?.currentPick}
         clockUrgency={clockUrgency}
+        isBatch={isBatch}
       />
       <div>
         <div className="mb-1 flex justify-between text-xs text-muted-foreground">

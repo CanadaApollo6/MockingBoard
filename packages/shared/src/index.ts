@@ -57,6 +57,9 @@ export {
   calculatePickAdvancement,
 } from './draft';
 
+// Draft names
+export { generateDraftName } from './draft-names';
+
 // Trade logic
 export {
   evaluateCpuTrade,

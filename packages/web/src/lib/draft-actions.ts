@@ -36,6 +36,7 @@ import {
   evaluateCpuTrade,
   validateTradePicksAvailable,
   validateUserOwnsPicks,
+  generateDraftName,
   type CpuTradeEvaluation,
 } from '@mockingboard/shared';
 
@@ -90,6 +91,7 @@ export interface CreateWebDraftInput {
   userId: string;
   discordId: string;
   displayName?: string;
+  name?: string;
   config: {
     rounds: number;
     format: DraftFormat;
@@ -114,6 +116,7 @@ export async function createWebDraft(
   const isMultiplayer = !!input.multiplayer;
 
   const draftData: Record<string, unknown> = {
+    name: input.name || generateDraftName(),
     createdBy: input.userId,
     config: {
       ...input.config,

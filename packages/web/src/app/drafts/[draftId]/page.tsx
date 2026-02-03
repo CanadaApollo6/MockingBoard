@@ -8,7 +8,7 @@ import {
 } from '@/lib/data';
 import { getSessionUser } from '@/lib/auth-session';
 import { resolveUser, isUserInDraft } from '@/lib/user-resolve';
-import { formatDraftDate } from '@/lib/format';
+import { formatDraftDate, getDraftDisplayName } from '@/lib/format';
 import { DraftBoard } from '@/components/draft-board';
 import { TradeSummary } from '@/components/trade-summary';
 import { Badge } from '@/components/ui/badge';
@@ -41,7 +41,7 @@ export default async function DraftDetailPage({
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold">{draft.config.year} Mock Draft</h1>
+          <h1 className="text-2xl font-bold">{getDraftDisplayName(draft)}</h1>
           <Badge
             variant={draft.status === 'complete' ? 'secondary' : 'default'}
           >
