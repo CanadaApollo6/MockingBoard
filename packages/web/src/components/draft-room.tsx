@@ -46,6 +46,7 @@ interface DraftRoomProps {
   initialPicks: Pick[];
   players: Record<string, Player>;
   userId: string;
+  bigBoardRankings?: string[];
 }
 
 export function DraftRoom({
@@ -54,6 +55,7 @@ export function DraftRoom({
   initialPicks,
   players,
   userId,
+  bigBoardRankings,
 }: DraftRoomProps) {
   const router = useRouter();
   const { draft, picks } = useLiveDraft(draftId, initialDraft, initialPicks);
@@ -61,6 +63,15 @@ export function DraftRoom({
   const [error, setError] = useState<string | null>(null);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+
+  // Big Board sort mode
+  const [sortMode, setSortMode] = useState<'consensus' | 'board'>(
+    bigBoardRankings ? 'board' : 'consensus',
+  );
+  const boardRankMap = useMemo(() => {
+    if (!bigBoardRankings) return null;
+    return new Map(bigBoardRankings.map((id, i) => [id, i + 1]));
+  }, [bigBoardRankings]);
 
   // Trade state
   const [showTrade, setShowTrade] = useState(false);
@@ -161,10 +172,20 @@ export function DraftRoom({
   const availablePlayers = useMemo(() => {
     if (!draft) return [];
     const pickedSet = new Set(picks.map((p) => p.playerId));
-    return Object.values(players)
-      .filter((p) => !pickedSet.has(p.id))
-      .sort((a, b) => a.consensusRank - b.consensusRank);
-  }, [draft, picks, players]);
+    const available = Object.values(players).filter(
+      (p) => !pickedSet.has(p.id),
+    );
+
+    if (sortMode === 'board' && boardRankMap) {
+      const onBoard = available.filter((p) => boardRankMap.has(p.id));
+      const offBoard = available.filter((p) => !boardRankMap.has(p.id));
+      onBoard.sort((a, b) => boardRankMap.get(a.id)! - boardRankMap.get(b.id)!);
+      offBoard.sort((a, b) => a.consensusRank - b.consensusRank);
+      return [...onBoard, ...offBoard];
+    }
+
+    return available.sort((a, b) => a.consensusRank - b.consensusRank);
+  }, [draft, picks, players, sortMode, boardRankMap]);
 
   // Real draft state
   const currentSlot = draft?.pickOrder[(draft?.currentPick ?? 1) - 1] ?? null;
@@ -712,10 +733,31 @@ export function DraftRoom({
                 : 'CPU picks incoming...'}
             </p>
           )}
+          {boardRankMap && (
+            <div className="flex gap-1.5">
+              <Button
+                variant={sortMode === 'board' ? 'default' : 'outline'}
+                size="xs"
+                onClick={() => setSortMode('board')}
+              >
+                My Board
+              </Button>
+              <Button
+                variant={sortMode === 'consensus' ? 'default' : 'outline'}
+                size="xs"
+                onClick={() => setSortMode('consensus')}
+              >
+                Consensus
+              </Button>
+            </div>
+          )}
           <PlayerPicker
             players={availablePlayers}
             onPick={handlePick}
             disabled={submitting || !isUserTurn}
+            rankOverride={
+              sortMode === 'board' && boardRankMap ? boardRankMap : undefined
+            }
           />
         </>
       )}

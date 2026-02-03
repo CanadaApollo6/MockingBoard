@@ -1,5 +1,10 @@
 import { notFound, redirect } from 'next/navigation';
-import { getDraft, getDraftPicks, getPlayerMap } from '@/lib/data';
+import {
+  getDraft,
+  getDraftPicks,
+  getPlayerMap,
+  getUserBoardForYear,
+} from '@/lib/data';
 import { getSessionUser } from '@/lib/auth-session';
 import { resolveUser, isUserInDraft } from '@/lib/user-resolve';
 import { getDraftDisplayName } from '@/lib/format';
@@ -50,6 +55,8 @@ export default async function LiveDraftPage({
     session && isUserInDraft(draft, session.uid, user?.discordId);
 
   if (isParticipant) {
+    const bigBoard = await getUserBoardForYear(session.uid, draft.config.year);
+
     return (
       <main className="mx-auto max-w-screen-xl px-4 py-8">
         <h1 className="mb-6 text-2xl font-bold">
@@ -61,6 +68,7 @@ export default async function LiveDraftPage({
           initialPicks={picks}
           players={players}
           userId={session.uid}
+          bigBoardRankings={bigBoard?.rankings}
         />
       </main>
     );

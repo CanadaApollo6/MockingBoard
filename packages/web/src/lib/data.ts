@@ -10,6 +10,7 @@ import type {
   Player,
   Trade,
   ScoutProfile,
+  BigBoard,
 } from '@mockingboard/shared';
 
 export async function getDrafts(options?: {
@@ -254,4 +255,41 @@ export async function getScoutContributedPlayers(
   return [...playerMap.values()].filter(
     (p) => p.dataProviders && profileId in p.dataProviders,
   );
+}
+
+// ---- Big Boards ----
+
+export async function getUserBoards(userId: string): Promise<BigBoard[]> {
+  const snapshot = await adminDb
+    .collection('bigBoards')
+    .where('userId', '==', userId)
+    .orderBy('updatedAt', 'desc')
+    .get();
+
+  return sanitize(
+    snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as BigBoard),
+  );
+}
+
+export async function getBigBoard(boardId: string): Promise<BigBoard | null> {
+  const doc = await adminDb.collection('bigBoards').doc(boardId).get();
+  if (!doc.exists) return null;
+  return sanitize({ id: doc.id, ...doc.data() } as BigBoard);
+}
+
+export async function getUserBoardForYear(
+  userId: string,
+  year: number,
+): Promise<BigBoard | null> {
+  const snapshot = await adminDb
+    .collection('bigBoards')
+    .where('userId', '==', userId)
+    .where('year', '==', year)
+    .orderBy('updatedAt', 'desc')
+    .limit(1)
+    .get();
+
+  if (snapshot.empty) return null;
+  const doc = snapshot.docs[0];
+  return sanitize({ id: doc.id, ...doc.data() } as BigBoard);
 }

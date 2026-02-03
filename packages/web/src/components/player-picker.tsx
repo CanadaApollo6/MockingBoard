@@ -14,6 +14,7 @@ interface PlayerPickerProps {
   players: Player[];
   onPick: (playerId: string) => void;
   disabled: boolean;
+  rankOverride?: Map<string, number>;
 }
 
 const FILTER_LABELS: Record<Exclude<PositionFilterGroup, null>, string> = {
@@ -24,7 +25,12 @@ const FILTER_LABELS: Record<Exclude<PositionFilterGroup, null>, string> = {
   DEF: 'DEF',
 };
 
-export function PlayerPicker({ players, onPick, disabled }: PlayerPickerProps) {
+export function PlayerPicker({
+  players,
+  onPick,
+  disabled,
+  rankOverride,
+}: PlayerPickerProps) {
   const [search, setSearch] = useState('');
   const [posFilter, setPosFilter] = useState<PositionFilterGroup>(null);
   const [selected, setSelected] = useState<string | null>(null);
@@ -136,7 +142,13 @@ export function PlayerPicker({ players, onPick, disabled }: PlayerPickerProps) {
                   )}
                 >
                   <td className="p-2 font-mono text-muted-foreground">
-                    {player.consensusRank >= 9999 ? 'NR' : player.consensusRank}
+                    {rankOverride
+                      ? rankOverride.has(player.id)
+                        ? `BB ${rankOverride.get(player.id)}`
+                        : '—'
+                      : player.consensusRank >= 9999
+                        ? 'NR'
+                        : player.consensusRank}
                   </td>
                   <td className="p-2 font-medium">{player.name}</td>
                   <td className="p-2">
