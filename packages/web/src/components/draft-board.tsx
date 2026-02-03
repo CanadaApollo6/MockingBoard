@@ -257,7 +257,7 @@ function OnTheClockRow({
     >
       <TableCell className="font-mono text-mb-accent">{slot.overall}</TableCell>
       <TableCell className="font-medium">
-        {getTeamName(slot.team as TeamAbbreviation)}
+        {getTeamName((slot.teamOverride ?? slot.team) as TeamAbbreviation)}
       </TableCell>
       <TableCell colSpan={4} className="font-medium text-mb-accent">
         On the Clock
@@ -282,7 +282,7 @@ const EmptyRow = memo(function EmptyRow({
         {slot.overall}
       </TableCell>
       <TableCell className="text-mb-text-tertiary">
-        {getTeamName(slot.team as TeamAbbreviation)}
+        {getTeamName((slot.teamOverride ?? slot.team) as TeamAbbreviation)}
       </TableCell>
       <TableCell colSpan={4} className="text-mb-text-tertiary">
         —

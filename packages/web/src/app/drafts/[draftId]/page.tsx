@@ -43,9 +43,19 @@ export default async function DraftDetailPage({
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold">{getDraftDisplayName(draft)}</h1>
           <Badge
-            variant={draft.status === 'complete' ? 'secondary' : 'default'}
+            variant={
+              draft.status === 'cancelled'
+                ? 'destructive'
+                : draft.status === 'complete'
+                  ? 'secondary'
+                  : 'default'
+            }
           >
-            {draft.status === 'active' ? 'Live' : draft.status}
+            {draft.status === 'active'
+              ? 'Live'
+              : draft.status === 'cancelled'
+                ? 'Cancelled'
+                : draft.status}
           </Badge>
         </div>
         <div className="mt-2 flex gap-4 text-sm text-muted-foreground">

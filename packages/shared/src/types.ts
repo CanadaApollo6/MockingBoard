@@ -71,7 +71,12 @@ export type TeamAbbreviation =
   | 'TEN'
   | 'WAS';
 
-export type DraftStatus = 'lobby' | 'active' | 'paused' | 'complete';
+export type DraftStatus =
+  | 'lobby'
+  | 'active'
+  | 'paused'
+  | 'complete'
+  | 'cancelled';
 export type DraftFormat = 'full' | 'single-team';
 export type DraftPlatform = 'discord' | 'web';
 export type TeamAssignmentMode = 'random' | 'choice';
@@ -87,6 +92,7 @@ export interface DraftSlot {
   pick: number;
   team: TeamAbbreviation;
   ownerOverride?: string | null; // User ID if traded to human; null if traded to CPU; undefined if not traded
+  teamOverride?: TeamAbbreviation; // Set by trades: the team that now controls this pick
 }
 
 export interface PreferenceWeights {

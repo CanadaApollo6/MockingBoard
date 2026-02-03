@@ -1,4 +1,4 @@
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { getDraft, getDraftPicks, getPlayerMap } from '@/lib/data';
 import { getSessionUser } from '@/lib/auth-session';
 import { resolveUser, isUserInDraft } from '@/lib/user-resolve';
@@ -26,6 +26,10 @@ export default async function LiveDraftPage({
 
   // Serialize as plain object for the server→client boundary (Map isn't serializable)
   const players = Object.fromEntries(playerMap);
+  if (draft.status === 'cancelled') {
+    redirect(`/drafts/${draftId}`);
+  }
+
   // Lobby: show lobby view for everyone (auth handled inside)
   if (draft.status === 'lobby') {
     return (

@@ -226,14 +226,22 @@ export function computeTradeExecution(
       (p) => p.type === 'current-pick' && p.overall === slot.overall,
     );
     if (isGivenByProposer) {
-      return { ...slot, ownerOverride: trade.recipientId };
+      return {
+        ...slot,
+        ownerOverride: trade.recipientId,
+        teamOverride: trade.recipientTeam,
+      };
     }
 
     const isReceivedByProposer = trade.proposerReceives.some(
       (p) => p.type === 'current-pick' && p.overall === slot.overall,
     );
     if (isReceivedByProposer) {
-      return { ...slot, ownerOverride: trade.proposerId };
+      return {
+        ...slot,
+        ownerOverride: trade.proposerId,
+        teamOverride: trade.proposerTeam,
+      };
     }
 
     return slot;

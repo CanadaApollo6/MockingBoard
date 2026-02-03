@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { teams, type TeamSeed } from '@mockingboard/shared';
 import type { Draft, TeamAbbreviation } from '@mockingboard/shared';
 import { useLiveDraft } from '@/hooks/use-live-draft';
@@ -39,12 +40,15 @@ export function LobbyView({
   isCreator,
   inviteCode,
 }: LobbyViewProps) {
+  const router = useRouter();
   const { draft } = useLiveDraft(draftId, initialDraft, []);
   const { user } = useAuth();
   const [showGuestModal, setShowGuestModal] = useState(false);
   const [joining, setJoining] = useState(false);
   const [starting, setStarting] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -116,6 +120,25 @@ export function LobbyView({
       setStarting(false);
     }
   }, [draftId]);
+
+  const handleCancel = useCallback(async () => {
+    setCancelling(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/drafts/${draftId}/cancel`, {
+        method: 'POST',
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to cancel');
+      }
+      router.push('/drafts');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to cancel');
+      setCancelling(false);
+      setShowCancelConfirm(false);
+    }
+  }, [draftId, router]);
 
   const handleLeave = useCallback(async () => {
     setLeaving(true);
@@ -308,12 +331,44 @@ export function LobbyView({
       {/* Actions */}
       <div className="flex flex-wrap gap-3">
         {isCreator && (
-          <Button
-            onClick={handleStart}
-            disabled={starting || participantList.length < 1}
-          >
-            {starting ? 'Starting...' : 'Start Draft'}
-          </Button>
+          <>
+            <Button
+              onClick={handleStart}
+              disabled={starting || participantList.length < 1}
+            >
+              {starting ? 'Starting...' : 'Start Draft'}
+            </Button>
+            {showCancelConfirm ? (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">
+                  Cancel draft?
+                </span>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleCancel}
+                  disabled={cancelling}
+                >
+                  {cancelling ? 'Cancelling...' : 'Yes'}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowCancelConfirm(false)}
+                >
+                  No
+                </Button>
+              </div>
+            ) : (
+              <Button
+                variant="ghost"
+                className="text-destructive"
+                onClick={() => setShowCancelConfirm(true)}
+              >
+                Cancel Draft
+              </Button>
+            )}
+          </>
         )}
 
         {isParticipant && !isCreator && (

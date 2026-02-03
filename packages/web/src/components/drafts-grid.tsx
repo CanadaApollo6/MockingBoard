@@ -9,9 +9,14 @@ import { loadMoreDrafts } from '@/app/drafts/actions';
 interface DraftsGridProps {
   initialDrafts: Draft[];
   initialHasMore: boolean;
+  userId?: string;
 }
 
-export function DraftsGrid({ initialDrafts, initialHasMore }: DraftsGridProps) {
+export function DraftsGrid({
+  initialDrafts,
+  initialHasMore,
+  userId,
+}: DraftsGridProps) {
   const [drafts, setDrafts] = useState(initialDrafts);
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [loading, setLoading] = useState(false);
@@ -43,7 +48,14 @@ export function DraftsGrid({ initialDrafts, initialHasMore }: DraftsGridProps) {
     <>
       <div className="grid gap-4 sm:grid-cols-2">
         {drafts.map((d) => (
-          <DraftCard key={d.id} draft={d} />
+          <DraftCard
+            key={d.id}
+            draft={d}
+            userId={userId}
+            onRemove={() =>
+              setDrafts((prev) => prev.filter((x) => x.id !== d.id))
+            }
+          />
         ))}
       </div>
       {hasMore && (

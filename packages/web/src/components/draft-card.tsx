@@ -1,8 +1,12 @@
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
 import type { Draft, TeamAbbreviation } from '@mockingboard/shared';
 import { formatDraftDate, getDraftDisplayName } from '@/lib/format';
 import { getTeamColor } from '@/lib/team-colors';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardHeader,
@@ -19,6 +23,7 @@ const STATUS_VARIANT: Record<
   active: 'default',
   paused: 'secondary',
   complete: 'secondary',
+  cancelled: 'destructive',
 };
 
 const STATUS_LABEL: Record<Draft['status'], string> = {
@@ -26,9 +31,16 @@ const STATUS_LABEL: Record<Draft['status'], string> = {
   active: 'Live',
   paused: 'Paused',
   complete: 'Complete',
+  cancelled: 'Cancelled',
 };
 
-export function DraftCard({ draft }: { draft: Draft }) {
+interface DraftCardProps {
+  draft: Draft;
+  userId?: string;
+  onRemove?: () => void;
+}
+
+export function DraftCard({ draft, userId, onRemove }: DraftCardProps) {
   const participantCount = Object.keys(draft.participants).length;
   const totalPicks = draft.pickOrder.length;
   const picksMade = draft.pickedPlayerIds?.length ?? 0;
@@ -37,6 +49,41 @@ export function DraftCard({ draft }: { draft: Draft }) {
     draft.status === 'active'
       ? `/drafts/${draft.id}/live`
       : `/drafts/${draft.id}`;
+
+  const isCreator = userId === draft.createdBy;
+  const canCancel =
+    isCreator &&
+    (draft.status === 'lobby' ||
+      draft.status === 'active' ||
+      draft.status === 'paused');
+  const canDelete =
+    isCreator && (draft.status === 'complete' || draft.status === 'cancelled');
+
+  const [confirming, setConfirming] = useState<'cancel' | 'delete' | null>(
+    null,
+  );
+  const [loading, setLoading] = useState(false);
+
+  async function handleAction(e: React.MouseEvent) {
+    e.preventDefault();
+    const endpoint =
+      confirming === 'cancel'
+        ? `/api/drafts/${draft.id}/cancel`
+        : `/api/drafts/${draft.id}/delete`;
+
+    setLoading(true);
+    try {
+      const res = await fetch(endpoint, { method: 'POST' });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Action failed');
+      }
+      onRemove?.();
+    } catch {
+      setLoading(false);
+      setConfirming(null);
+    }
+  }
 
   return (
     <Link href={href}>
@@ -85,6 +132,49 @@ export function DraftCard({ draft }: { draft: Draft }) {
               />
             ))}
           </div>
+          {(canCancel || canDelete) && (
+            <div className="mt-3 border-t border-mb-border pt-3">
+              {confirming ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">
+                    {confirming === 'cancel'
+                      ? 'Cancel this draft?'
+                      : 'Delete permanently?'}
+                  </span>
+                  <Button
+                    variant="destructive"
+                    size="xs"
+                    onClick={handleAction}
+                    disabled={loading}
+                  >
+                    {loading ? '...' : 'Yes'}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="xs"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setConfirming(null);
+                    }}
+                  >
+                    No
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  className="text-muted-foreground hover:text-destructive"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setConfirming(canCancel ? 'cancel' : 'delete');
+                  }}
+                >
+                  {canCancel ? 'Cancel Draft' : 'Delete Draft'}
+                </Button>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
     </Link>

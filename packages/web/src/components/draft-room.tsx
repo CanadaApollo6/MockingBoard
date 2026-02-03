@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import type {
   Draft,
   Pick,
@@ -54,9 +55,12 @@ export function DraftRoom({
   players,
   userId,
 }: DraftRoomProps) {
+  const router = useRouter();
   const { draft, picks } = useLiveDraft(draftId, initialDraft, initialPicks);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
   // Trade state
   const [showTrade, setShowTrade] = useState(false);
@@ -245,7 +249,9 @@ export function DraftRoom({
 
   // During animation: show the next pick being "made" on the clock
   const animatingPick = animating ? picks[revealedCount] : null;
-  const clockTeam = animating ? animatingPick?.team : currentSlot?.team;
+  const clockTeam = animating
+    ? animatingPick?.team
+    : (currentSlot?.teamOverride ?? currentSlot?.team);
   const clockRound = animating ? animatingPick?.round : currentSlot?.round;
   const clockPickNum = animating ? animatingPick?.pick : currentSlot?.pick;
   const clockOverall = animating
@@ -458,6 +464,24 @@ export function DraftRoom({
     }
   }, [draftId]);
 
+  const handleCancel = useCallback(async () => {
+    setCancelling(true);
+    try {
+      const res = await fetch(`/api/drafts/${draftId}/cancel`, {
+        method: 'POST',
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to cancel');
+      }
+      router.push('/drafts');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to cancel');
+      setCancelling(false);
+      setShowCancelConfirm(false);
+    }
+  }, [draftId, router]);
+
   const handleResume = useCallback(async () => {
     try {
       const res = await fetch(`/api/drafts/${draftId}/resume`, {
@@ -500,9 +524,42 @@ export function DraftRoom({
               secondsPerPick={draft?.config.secondsPerPick}
             />
             {isActive && userId === draft?.createdBy && (
-              <Button variant="ghost" size="sm" onClick={handlePause}>
-                Pause Draft
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="ghost" size="sm" onClick={handlePause}>
+                  Pause Draft
+                </Button>
+                {showCancelConfirm ? (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">
+                      Cancel draft?
+                    </span>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleCancel}
+                      disabled={cancelling}
+                    >
+                      {cancelling ? 'Cancelling...' : 'Yes'}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowCancelConfirm(false)}
+                    >
+                      No
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive"
+                    onClick={() => setShowCancelConfirm(true)}
+                  >
+                    Cancel Draft
+                  </Button>
+                )}
+              </div>
             )}
           </>
         )}
@@ -511,14 +568,40 @@ export function DraftRoom({
           <Badge variant="secondary">Paused</Badge>
           <p className="mt-1 text-sm text-muted-foreground">Draft is paused.</p>
           {userId === draft?.createdBy && (
-            <Button
-              variant="default"
-              size="sm"
-              className="mt-2"
-              onClick={handleResume}
-            >
-              Resume Draft
-            </Button>
+            <div className="mt-2 flex gap-2">
+              <Button variant="default" size="sm" onClick={handleResume}>
+                Resume Draft
+              </Button>
+              {showCancelConfirm ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Cancel?</span>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleCancel}
+                    disabled={cancelling}
+                  >
+                    {cancelling ? 'Cancelling...' : 'Yes'}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowCancelConfirm(false)}
+                  >
+                    No
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-destructive"
+                  onClick={() => setShowCancelConfirm(true)}
+                >
+                  Cancel Draft
+                </Button>
+              )}
+            </div>
           )}
         </div>
       )}

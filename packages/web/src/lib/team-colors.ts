@@ -115,13 +115,18 @@ function colorDistance(hex1: string, hex2: string): number {
  * visibility-adjusted). Returns overall → hex color.
  */
 export function buildRowColors(
-  slots: ReadonlyArray<{ team: string; overall: number }>,
+  slots: ReadonlyArray<{
+    team: string;
+    teamOverride?: string;
+    overall: number;
+  }>,
 ): Map<number, string> {
   const result = new Map<number, string>();
   let prevColor = '';
 
   for (const slot of slots) {
-    const colors = getTeamColor(slot.team as TeamAbbreviation);
+    const displayTeam = (slot.teamOverride ?? slot.team) as TeamAbbreviation;
+    const colors = getTeamColor(displayTeam);
     const primary = ensureVisible(colors.primary);
 
     if (prevColor && colorDistance(primary, prevColor) < SIMILARITY_THRESHOLD) {
