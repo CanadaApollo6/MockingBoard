@@ -223,6 +223,14 @@ export interface Player {
     weaknesses?: string[];
     comparison?: string;
   };
+  dataProviders?: Record<
+    string,
+    {
+      name: string;
+      slug: string;
+      fields: string[];
+    }
+  >;
   updatedAt: FirestoreTimestamp;
 }
 
@@ -292,4 +300,57 @@ export interface Trade {
   resolvedAt?: FirestoreTimestamp;
   expiresAt?: FirestoreTimestamp;
   isForceTrade: boolean;
+}
+
+// ---- Scout & Big Board Types ----
+
+export type ScoutTier = 'contributor' | 'scout' | 'elite';
+
+export interface ScoutProfile {
+  id: string;
+  userId?: string;
+  name: string;
+  slug: string;
+  bio?: string;
+  avatar?: string;
+  links?: {
+    youtube?: string;
+    twitter?: string;
+    bluesky?: string;
+    website?: string;
+  };
+  stats?: {
+    playersContributed: number;
+    positionsCovered: Position[];
+  };
+  tier?: ScoutTier;
+  createdAt: FirestoreTimestamp;
+  updatedAt: FirestoreTimestamp;
+}
+
+export interface BigBoard {
+  id: string;
+  userId: string;
+  name: string;
+  year: number;
+  rankings: string[];
+  customPlayers?: CustomPlayer[];
+  basedOn?: 'consensus' | 'blank';
+  createdAt: FirestoreTimestamp;
+  updatedAt: FirestoreTimestamp;
+}
+
+export interface CustomPlayer {
+  id: string;
+  name: string;
+  position: Position;
+  school: string;
+  note?: string;
+}
+
+export interface BoardSnapshot {
+  id: string;
+  rankings: string[];
+  label?: string;
+  createdAt: FirestoreTimestamp;
 }

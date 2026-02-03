@@ -8,7 +8,8 @@
     "start": "node --import tsx src/index.ts",
     "deploy-commands": "tsx src/deploy-commands.ts",
     "seed": "tsx src/seed.ts",
-    "seed:prospects": "tsx src/seed-prospects.ts"
+    "seed:prospects": "tsx src/seed-prospects.ts",
+    "seed:scouts": "tsx src/seed-scout-profiles.ts"
   },
   "dependencies": {
     "@mockingboard/shared": "*",

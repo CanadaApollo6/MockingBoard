@@ -74,6 +74,33 @@ service cloud.firestore {
     }
 
     // ============================================
+    // Scout Profiles Collection
+    // Public read, admin-only write (seeded data)
+    // ============================================
+    match /scoutProfiles/{profileId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // ============================================
+    // Big Boards Collection
+    // Owner read/write, public read for comparison
+    // ============================================
+    match /bigBoards/{boardId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+
+      match /snapshots/{snapshotId} {
+        allow read: if true;
+        allow create: if isAuthenticated() &&
+          get(/databases/$(database)/documents/bigBoards/$(boardId)).data.userId == request.auth.uid;
+        allow update, delete: if false;
+      }
+    }
+
+    // ============================================
     // Trades Collection
     // Only draft participants can read/write
     // ============================================

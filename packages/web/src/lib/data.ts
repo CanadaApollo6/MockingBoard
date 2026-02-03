@@ -2,9 +2,15 @@ import 'server-only';
 
 import { Timestamp } from 'firebase-admin/firestore';
 import { adminDb } from './firebase-admin';
-import { getCachedPlayerMap } from './cache';
+import { getCachedPlayerMap, getCachedScoutProfiles } from './cache';
 import { sanitize } from './sanitize';
-import type { Draft, Pick, Player, Trade } from '@mockingboard/shared';
+import type {
+  Draft,
+  Pick,
+  Player,
+  Trade,
+  ScoutProfile,
+} from '@mockingboard/shared';
 
 export async function getDrafts(options?: {
   status?: Draft['status'];
@@ -225,4 +231,27 @@ export async function getUserDrafts(
   });
 
   return sanitize(drafts.slice(0, 50));
+}
+
+// ---- Scout Profiles ----
+
+export async function getScoutProfiles(): Promise<ScoutProfile[]> {
+  return getCachedScoutProfiles();
+}
+
+export async function getScoutProfileBySlug(
+  slug: string,
+): Promise<ScoutProfile | null> {
+  const profiles = await getCachedScoutProfiles();
+  return profiles.find((p) => p.slug === slug) ?? null;
+}
+
+export async function getScoutContributedPlayers(
+  profileId: string,
+  year: number,
+): Promise<Player[]> {
+  const playerMap = await getCachedPlayerMap(year);
+  return [...playerMap.values()].filter(
+    (p) => p.dataProviders && profileId in p.dataProviders,
+  );
 }

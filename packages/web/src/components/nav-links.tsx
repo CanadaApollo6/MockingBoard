@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 
 const NAV_ITEMS = [
   { href: '/drafts', label: 'Drafts' },
+  { href: '/scouts', label: 'Scouts' },
   { href: '/invite', label: 'Add Bot' },
 ] as const;
 

@@ -189,53 +189,87 @@ Extract platform-agnostic business logic from bot services to `packages/shared`.
 
 ---
 
-## Phase 4: Preference Engine & Scouting Profiles
+## Phase 4: Big Board & Community Scouting
+
+**Goal**: Personalized prospect rankings and a community-driven scouting data layer. Content creators contribute data and get attribution + traffic; premium subscribers get access to enriched player cards.
+
+**Design partner**: Brett Kollmann (NFL YouTube creator, already providing prospect data and QA feedback).
+
+### Milestone 4.1: Big Board Builder
+
+- [ ] Drag-and-drop interface for ranking players
+- [ ] Start from consensus ADP or blank
+- [ ] Add custom players (for deep sleepers)
+- [ ] Use personal board during drafts (sort available players by your ranking)
+- [ ] Compare your board to consensus, friends, and community scouts
+- [ ] Track how your board evolves over time
+
+### Milestone 4.2: Community Scouting Data
+
+- [ ] Structured data upload flow (CSV/sheet import via web UI)
+- [ ] Data schema templates per position group (reuse stat key structure from prospect import)
+- [ ] Data validation and normalization on upload (school names, measurement formats)
+- [ ] Attribution on player cards: "Scouting data by [Provider Name]" linking to provider profile
+- [ ] Community data visible to premium subscribers (gated once Stripe is integrated; visible to all until then)
+
+### Milestone 4.3: Scout Profiles
+
+- [ ] Provider profile page: name, bio, avatar, social links (YouTube, Twitter/X, Bluesky, website)
+- [ ] Contribution stats: players covered, positions, data completeness
+- [ ] Contributor badge/tier system based on volume and quality
+- [ ] Profile designed as a landing page to funnel traffic back to the creator's channels
+
+**Phase 4 Complete**: Users have personalized big boards and access to community-contributed scouting data. Content creators have a profile and attribution system that drives traffic to their channels.
+
+---
+
+## Phase 5: Preference Engine & Scouting Profiles
 
 **Goal**: Learn user preferences from their drafting behavior, surface insights.
 
-### Milestone 4.1: Data Collection
+### Milestone 5.1: Data Collection
 
 - [ ] Track every pick with context (available players, team needs, pick position)
 - [ ] Store player attributes for analysis (conference, combine metrics, position, etc.)
 
-### Milestone 4.2: Preference Modeling
+### Milestone 5.2: Preference Modeling
 
 - [ ] Analyze drafting patterns: position preferences, school/conference biases, athleticism vs. production
 - [ ] Generate "scouting profile" summary for each user
 - [ ] Compare stated preferences (if implemented) vs. revealed preferences
 
-### Milestone 4.3: Recommendations
+### Milestone 5.3: Recommendations
 
 - [ ] "Prospects you might like" based on drafting history
 - [ ] During draft: highlight players that match user's tendencies
 - [ ] Sleeper alerts: undervalued players matching user's profile
 
-### Milestone 4.4: Shareable Profiles
+### Milestone 5.4: Shareable Profiles
 
 - [ ] Public profile page with scouting identity
 - [ ] Shareable graphics/cards for social media
 
-**Phase 4 Complete**: Users have a persistent scouting identity that evolves with each draft.
+**Phase 5 Complete**: Users have a persistent scouting identity that evolves with each draft.
 
 ---
 
-## Phase 5: Leaderboards & Accuracy Tracking
+## Phase 6: Leaderboards & Accuracy Tracking
 
 **Goal**: Track prediction accuracy, create year-round engagement.
 
-### Milestone 5.1: Prediction Locking
+### Milestone 6.1: Prediction Locking
 
 - [ ] Allow users to "lock in" a mock draft as a prediction
 - [ ] Timestamp and freeze locked predictions
 - [ ] Support multiple locked predictions per user (track best, average, etc.)
 
-### Milestone 5.2: Real Draft Integration
+### Milestone 6.2: Real Draft Integration
 
 - [ ] Ingest actual NFL draft results (manual entry initially, API later)
 - [ ] Score predictions against real results
 - [ ] Scoring algorithm in `shared/src/scoring.ts`: exact pick, correct round, correct team, etc.
 
-### Milestone 5.3: Leaderboards
+### Milestone 6.3: Leaderboards
 
 - [ ] Global leaderboard by accuracy score
 - [ ] Leaderboard by server/community
@@ -243,71 +277,45 @@ Extract platform-agnostic business logic from bot services to `packages/shared`.
 - [ ] "Bold take" bonus: extra credit for correctly predicting reaches/slides
 - [ ] Filter: "vs all users", "vs analysts", "vs friends"
 
-### Milestone 5.4: Receipts & Sharing
+### Milestone 6.4: Receipts & Sharing
 
 - [ ] Auto-generate "I called it" graphics when predictions hit
 - [ ] Historical accuracy stats on user profiles
 - [ ] Live draft companion: surface correct predictions in real time as picks happen
 
-### Milestone 5.5: Analyst Mock Draft Aggregation
+### Milestone 6.5: Analyst Mock Draft Aggregation
 
 - [ ] Ingest analyst mock drafts (similar to Mock Draft Database)
 - [ ] Display analyst predictions alongside user mocks
 - [ ] Include analysts in leaderboard comparisons
 
-**Phase 5 Complete**: Full accountability system with year-round leaderboard engagement.
+**Phase 6 Complete**: Full accountability system with year-round leaderboard engagement.
 
 ---
 
-## Phase 6: Cost & Monetization
+## Phase 7: Cost & Monetization
 
 **Goal**: Sustainable cost structure with a paid tier. No ads, ever.
 
-### Milestone 6.1: Cost Optimization
+### Milestone 7.1: Cost Optimization
 
 - [ ] Optimize `getUserDrafts` query (denormalized subcollection vs. fetch-and-filter)
 - [ ] Cache player data (read-heavy, rarely changes)
 - [ ] Monitor Firestore reads from real-time listeners during active drafts
 - [ ] GCP budget alerts and spending dashboards
 
-### Milestone 6.2: Custom Domain
+### Milestone 7.2: Custom Domain
 
 - [ ] Register domain
 - [ ] Configure via Firebase App Hosting console (DNS verification)
 
-### Milestone 6.3: Paid Tier (Stripe)
+### Milestone 7.3: Paid Tier (Stripe)
 
 - [ ] Stripe integration (webhook handler, subscription management)
 - [ ] Pricing page
-- [ ] Premium features: unlimited draft history, advanced leaderboard filters, custom room settings, scouting profiles, draft result exports
+- [ ] Premium features: unlimited draft history, advanced leaderboard filters, custom room settings, scouting profiles, community scouting data, draft result exports
 
-**Phase 6 Complete**: Revenue offsets hosting costs; free tier remains generous.
-
----
-
-## Phase 7: Big Board Builder
-
-**Goal**: Users can create and maintain their own prospect rankings.
-
-### Milestone 7.1: Board Creation
-
-- [ ] Drag-and-drop interface for ranking players
-- [ ] Start from consensus ADP or blank
-- [ ] Add custom players (for deep sleepers)
-
-### Milestone 7.2: Philosophy Weighting
-
-- [ ] User sets preferences: athleticism vs. production, positional value, conference trust, etc.
-- [ ] System generates recommended board based on weights
-- [ ] User can accept, modify, or ignore recommendations
-
-### Milestone 7.3: Board Integration
-
-- [ ] Use personal board during drafts (sort available players by your ranking)
-- [ ] Compare your board to consensus, friends, experts
-- [ ] Track how your board evolves over time
-
-**Phase 7 Complete**: Users have a living, personalized big board integrated into the draft experience.
+**Phase 7 Complete**: Revenue offsets hosting costs; free tier remains generous.
 
 ---
 
@@ -387,11 +395,11 @@ Extract platform-agnostic business logic from bot services to `packages/shared`.
 - **Public draft lobbies**: Join drafts with strangers
 - **Content creator tools**: Spectator mode, stream overlays
 - **Mobile native app**: If iMessage extension proves too limiting
-- **Paid data integration**: Licensed scouting reports, combine data
 - **Full NFL trade simulator**: Akin to the NBA trade emulator with full accountings of cap rules
 - **Multi-faceted and multi-step cap manager**: Comprehensive cap manager with the ability to see the implications of multiple moves at once/in sequence (example: automate move this year into future years alongside multiple other moves)
 - **Expansion to other pro sports leagues (NBA, NHL, MLB)**: Taking this process feature set from just the NFL all the way into the other 3 of the 4 major North American sports
 - **Rework nav**: Move nav to left sidebar style navigation rather than top of screen
 - **Configurable styling**: Allow users to configure site theming based on their favourite NFL team
 - **Sliders for Draft**: Allow users to set levels of things like randomness, BPA, and team needs
-- **NFL Scouting Data Ecosystem**: Build a data layer similar to Stripe where users can access scouting datasets. Perhaps I allow content creators/scouts to charge for this data. This would provide a revenue source both for the people collecting the data and myself (would also need to build an attestation page that the user has the rights to share this data)
+- **Revenue share for top scouts**: If community scouting data becomes a major subscription driver, offer revenue share to high-value contributors as a retention tool
+- **Scouting accuracy tracking**: Extend Phase 6 leaderboards to score scout-contributed grades against actual draft position and NFL performance (ties scout profiles into the accuracy ecosystem)

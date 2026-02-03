@@ -12,6 +12,7 @@ export type {
   NotificationLevel,
   DraftVisibility,
   TradeStatus,
+  ScoutTier,
   DraftSlot,
   PreferenceWeights,
   FuturePickSeed,
@@ -23,6 +24,10 @@ export type {
   Team,
   TradePiece,
   Trade,
+  ScoutProfile,
+  BigBoard,
+  CustomPlayer,
+  BoardSnapshot,
 } from './types';
 
 // Constants

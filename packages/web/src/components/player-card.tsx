@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { getPositionColor } from '@/lib/position-colors';
 import { schoolColorStyle } from '@/lib/school-colors';
+import { AttributionBadge } from '@/components/attribution-badge';
 
 const UNRANKED = 9999;
 
@@ -219,6 +220,11 @@ export function PlayerCard({ player, onDraft, disabled }: PlayerCardProps) {
               </Badge>
             ))}
           </div>
+        )}
+
+        {/* Attribution */}
+        {player.dataProviders && (
+          <AttributionBadge dataProviders={player.dataProviders} />
         )}
 
         {/* Draft button */}

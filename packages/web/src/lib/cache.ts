@@ -2,13 +2,19 @@ import 'server-only';
 
 import { adminDb } from './firebase-admin';
 import { sanitize } from './sanitize';
-import type { Player, DraftSlot, FuturePickSeed } from '@mockingboard/shared';
+import type {
+  Player,
+  DraftSlot,
+  FuturePickSeed,
+  ScoutProfile,
+} from '@mockingboard/shared';
 
 // ---- TTLs ----
 
 const PLAYER_TTL = 60 * 60 * 1000; // 1 hour
 const DRAFT_ORDER_TTL = 24 * 60 * 60 * 1000; // 24 hours
 const TEAMS_TTL = 24 * 60 * 60 * 1000; // 24 hours
+const SCOUT_PROFILES_TTL = 24 * 60 * 60 * 1000; // 24 hours
 
 // ---- Internal cache structure ----
 
@@ -100,4 +106,24 @@ export async function getCachedTeamDocs(): Promise<CachedTeamDoc[]> {
 
   teamsCache = { data: docs, expiresAt: Date.now() + TEAMS_TTL };
   return docs;
+}
+
+// ---- Scout profiles cache (singleton) ----
+
+let scoutProfilesCache: CacheEntry<ScoutProfile[]> | null = null;
+
+/** Returns all scout profiles. Cached for 24 hours. */
+export async function getCachedScoutProfiles(): Promise<ScoutProfile[]> {
+  if (!isExpired(scoutProfilesCache)) return scoutProfilesCache!.data;
+
+  const snapshot = await adminDb.collection('scoutProfiles').get();
+  const profiles = sanitize(
+    snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as ScoutProfile),
+  );
+
+  scoutProfilesCache = {
+    data: profiles,
+    expiresAt: Date.now() + SCOUT_PROFILES_TTL,
+  };
+  return profiles;
 }
