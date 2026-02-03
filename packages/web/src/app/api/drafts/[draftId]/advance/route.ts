@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import { getSessionUser } from '@/lib/auth-session';
-import { runCpuCascade } from '@/lib/draft-actions';
+import { runCpuCascade, advanceSingleCpuPick } from '@/lib/draft-actions';
 import { adminDb } from '@/lib/firebase-admin';
 import type { Draft } from '@mockingboard/shared';
 
 export async function POST(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ draftId: string }> },
 ) {
   const session = await getSessionUser();
@@ -27,6 +27,14 @@ export async function POST(
   }
 
   try {
+    const url = new URL(request.url);
+    const mode = url.searchParams.get('mode');
+
+    if (mode === 'single') {
+      const { pick, isComplete } = await advanceSingleCpuPick(draftId);
+      return NextResponse.json({ pick, isComplete });
+    }
+
     const { picks, isComplete } = await runCpuCascade(draftId);
     return NextResponse.json({ picks, isComplete });
   } catch (err) {

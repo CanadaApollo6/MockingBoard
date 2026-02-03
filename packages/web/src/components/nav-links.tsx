@@ -7,7 +7,6 @@ import { cn } from '@/lib/utils';
 const NAV_ITEMS = [
   { href: '/drafts', label: 'Drafts' },
   { href: '/lobbies', label: 'Lobbies' },
-  { href: '/drafts/new', label: 'New Draft' },
   { href: '/invite', label: 'Add Bot' },
 ] as const;
 

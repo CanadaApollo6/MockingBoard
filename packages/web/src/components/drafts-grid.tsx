@@ -9,14 +9,9 @@ import { loadMoreDrafts } from '@/app/drafts/actions';
 interface DraftsGridProps {
   initialDrafts: Draft[];
   initialHasMore: boolean;
-  tab: 'all' | 'mine';
 }
 
-export function DraftsGrid({
-  initialDrafts,
-  initialHasMore,
-  tab,
-}: DraftsGridProps) {
+export function DraftsGrid({ initialDrafts, initialHasMore }: DraftsGridProps) {
   const [drafts, setDrafts] = useState(initialDrafts);
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [loading, setLoading] = useState(false);
@@ -28,7 +23,7 @@ export function DraftsGrid({
     setLoading(true);
     try {
       const afterSeconds = lastDraft.createdAt?.seconds ?? 0;
-      const result = await loadMoreDrafts({ tab, afterSeconds });
+      const result = await loadMoreDrafts({ afterSeconds });
       setDrafts((prev) => [...prev, ...result.drafts]);
       setHasMore(result.hasMore);
     } finally {
@@ -39,9 +34,7 @@ export function DraftsGrid({
   if (drafts.length === 0) {
     return (
       <p className="py-12 text-center text-muted-foreground">
-        {tab === 'mine'
-          ? "You haven't participated in any drafts yet."
-          : 'No drafts found.'}
+        {"You haven't participated in any drafts yet."}
       </p>
     );
   }

@@ -391,3 +391,6 @@ Extract platform-agnostic business logic from bot services to `packages/shared`.
 - **Full NFL trade simulator**: Akin to the NBA trade emulator with full accountings of cap rules
 - **Multi-faceted and multi-step cap manager**: Comprehensive cap manager with the ability to see the implications of multiple moves at once/in sequence (example: automate move this year into future years alongside multiple other moves)
 - **Expansion to other pro sports leagues (NBA, NHL, MLB)**: Taking this process feature set from just the NFL all the way into the other 3 of the 4 major North American sports
+- **Rework nav**: Move nav to left sidebar style navigation rather than top of screen
+- **Configurable styling**: Allow users to configure site theming based on their favourite NFL team
+- **Sliders for Draft**: Allow users to set levels of things like randomness, BPA, and team needs

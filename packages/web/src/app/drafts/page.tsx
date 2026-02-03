@@ -1,72 +1,47 @@
-import { getDraftsPaginated, getUserDraftsPaginated } from '@/lib/data';
+import { getCachedUserDraftsPaginated } from '@/lib/data';
 import { getSessionUser } from '@/lib/auth-session';
 import { resolveUser } from '@/lib/user-resolve';
 import { DraftsGrid } from '@/components/drafts-grid';
+import Link from 'next/link';
 
 const PAGE_SIZE = 10;
 
-export default async function DraftsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ tab?: string }>;
-}) {
-  const { tab } = await searchParams;
+export default async function DraftsPage() {
   const session = await getSessionUser();
-  const showMyDrafts = tab === 'mine' && session;
 
-  const user = showMyDrafts ? await resolveUser(session.uid) : null;
-  const { drafts, hasMore } = showMyDrafts
-    ? await getUserDraftsPaginated(session.uid, user?.discordId, {
-        limit: PAGE_SIZE,
-      })
-    : await getDraftsPaginated({
-        limit: PAGE_SIZE,
-        excludePrivate: true,
-      });
+  if (!session) {
+    return (
+      <main className="mx-auto max-w-screen-xl px-4 py-8">
+        <h1 className="mb-6 text-2xl font-bold">Drafts</h1>
+        <p className="py-12 text-center text-muted-foreground">
+          <Link href="/login" className="text-primary hover:underline">
+            Sign in
+          </Link>{' '}
+          to view your drafts.
+        </p>
+      </main>
+    );
+  }
+
+  const user = await resolveUser(session.uid);
+  const { drafts, hasMore } = await getCachedUserDraftsPaginated(
+    session.uid,
+    user?.discordId,
+    { limit: PAGE_SIZE },
+  );
 
   return (
     <main className="mx-auto max-w-screen-xl px-4 py-8">
-      <h1 className="mb-6 text-2xl font-bold">Drafts</h1>
-
-      {session && (
-        <div className="mb-6 flex gap-2">
-          <TabLink href="/drafts" active={!showMyDrafts}>
-            All Drafts
-          </TabLink>
-          <TabLink href="/drafts?tab=mine" active={!!showMyDrafts}>
-            My Drafts
-          </TabLink>
-        </div>
-      )}
-
-      <DraftsGrid
-        initialDrafts={drafts}
-        initialHasMore={hasMore}
-        tab={showMyDrafts ? 'mine' : 'all'}
-      />
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-2xl font-bold">My Drafts</h1>
+        <Link
+          href="/drafts/new"
+          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+        >
+          + New Draft
+        </Link>
+      </div>
+      <DraftsGrid initialDrafts={drafts} initialHasMore={hasMore} />
     </main>
-  );
-}
-
-function TabLink({
-  href,
-  active,
-  children,
-}: {
-  href: string;
-  active: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <a
-      href={href}
-      className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-        active
-          ? 'bg-primary text-primary-foreground'
-          : 'text-muted-foreground hover:text-foreground'
-      }`}
-    >
-      {children}
-    </a>
   );
 }
