@@ -202,6 +202,7 @@ export interface Player {
     shuttle?: number;
     armLength?: number;
     handSize?: number;
+    wingSpan?: number;
     captain?: boolean;
     yearInSchool?:
       | 'FR'
@@ -215,6 +216,7 @@ export interface Player {
     gamesStarted?: number;
     previousSchools?: string[];
   };
+  stats?: Record<string, number | string | null>;
   scouting?: {
     summary?: string;
     strengths?: string[];

@@ -136,7 +136,7 @@ export function PlayerPicker({ players, onPick, disabled }: PlayerPickerProps) {
                   )}
                 >
                   <td className="p-2 font-mono text-muted-foreground">
-                    {player.consensusRank}
+                    {player.consensusRank >= 9999 ? 'NR' : player.consensusRank}
                   </td>
                   <td className="p-2 font-medium">{player.name}</td>
                   <td className="p-2">

@@ -1,11 +1,13 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import type { Player } from '@mockingboard/shared';
+import type { Player, Position } from '@mockingboard/shared';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { getPositionColor } from '@/lib/position-colors';
 import { schoolColorStyle } from '@/lib/school-colors';
+
+const UNRANKED = 9999;
 
 interface PlayerCardProps {
   player: Player;
@@ -48,7 +50,8 @@ export function PlayerCard({ player, onDraft, disabled }: PlayerCardProps) {
   const { attributes, scouting } = player;
   const hasPhysical = attributes?.height || attributes?.weight;
   const combineMetrics = buildCombineMetrics(attributes);
-  const hasMeasurements = attributes?.armLength || attributes?.handSize;
+  const hasMeasurements =
+    attributes?.armLength || attributes?.handSize || attributes?.wingSpan;
 
   const subtitle = [
     player.school,
@@ -87,7 +90,9 @@ export function PlayerCard({ player, onDraft, disabled }: PlayerCardProps) {
         {/* Header: rank + position */}
         <div className="flex items-center gap-2">
           <span className="font-mono text-2xl font-bold">
-            #{player.consensusRank}
+            {player.consensusRank >= UNRANKED
+              ? 'NR'
+              : `#${player.consensusRank}`}
           </span>
           <Badge
             style={{
@@ -171,7 +176,20 @@ export function PlayerCard({ player, onDraft, disabled }: PlayerCardProps) {
                 hand
               </span>
             )}
+            {attributes?.wingSpan && (
+              <span>
+                <span className="font-medium text-foreground">
+                  {formatMeasurement(attributes.wingSpan)}
+                </span>{' '}
+                wing
+              </span>
+            )}
           </div>
+        )}
+
+        {/* Position stats */}
+        {player.stats && KEY_STATS[player.position] && (
+          <StatsSection stats={player.stats} position={player.position} />
         )}
 
         {/* Scouting summary */}
@@ -240,4 +258,143 @@ function buildCombineMetrics(
   if (attributes.shuttle)
     metrics.push({ label: 'Shuttle', value: attributes.shuttle.toFixed(2) });
   return metrics;
+}
+
+// ---- Position Stats ----
+
+interface StatDef {
+  key: string;
+  label: string;
+}
+
+const KEY_STATS: Partial<Record<Position, StatDef[]>> = {
+  QB: [
+    { key: 'pass_grd', label: 'PFF Grade' },
+    { key: 'epa_play', label: 'EPA/Play' },
+    { key: 'acomp_pct', label: 'Adj Comp%' },
+    { key: 'pass_rtg', label: 'Rating' },
+    { key: 'btt_pct', label: 'BTT%' },
+    { key: 'twp_pct', label: 'TWP%' },
+  ],
+  WR: [
+    { key: 'rec_grd', label: 'PFF Grade' },
+    { key: 'yprr', label: 'YPRR' },
+    { key: 'yac_rec', label: 'YAC/REC' },
+    { key: 'deep_tgt_pct', label: 'Deep TGT%' },
+    { key: 'rec_td', label: 'Rec TD' },
+    { key: 'mtf_rec', label: 'MTF' },
+  ],
+  TE: [
+    { key: 'rec_grd', label: 'Rec Grade' },
+    { key: 'pblk_grd', label: 'Block Grade' },
+    { key: 'yprr', label: 'YPRR' },
+    { key: 'yac_rec', label: 'YAC/REC' },
+    { key: 'rec_td', label: 'Rec TD' },
+    { key: 'rec_comp_pct', label: 'Comp%' },
+  ],
+  RB: [
+    { key: 'rush_grd', label: 'Rush Grade' },
+    { key: 'rush_ypc', label: 'YPC' },
+    { key: 'mtf_att', label: 'MTF/ATT' },
+    { key: 'rec_grd', label: 'Rec Grade' },
+    { key: 'stuff_rate', label: 'Stuff Rate' },
+    { key: 'rush_td', label: 'Rush TD' },
+  ],
+  OT: [
+    { key: 'pblk_grd', label: 'PFF Grade' },
+    { key: 'pblk_pbe', label: 'PBE' },
+    { key: 'pblk_kd_pct', label: 'KD%' },
+    { key: 'pblk_hu', label: 'Hurries' },
+    { key: 'pblk_sk', label: 'Sacks' },
+    { key: 'pblk_pr_pct', label: 'Pressure%' },
+  ],
+  OG: [
+    { key: 'pblk_grd', label: 'PFF Grade' },
+    { key: 'pblk_pbe', label: 'PBE' },
+    { key: 'pblk_kd_pct', label: 'KD%' },
+    { key: 'pblk_hu', label: 'Hurries' },
+    { key: 'pblk_sk', label: 'Sacks' },
+    { key: 'pblk_pr_pct', label: 'Pressure%' },
+  ],
+  EDGE: [
+    { key: 'prsh_grd', label: 'Rush Grade' },
+    { key: 'prsh_win_pct', label: 'Win%' },
+    { key: 'prsh_sk', label: 'Sacks' },
+    { key: 'rund_tfl', label: 'TFL' },
+    { key: 'rund_grd', label: 'Run Def' },
+    { key: 'prsh_tpr', label: 'Pressures' },
+  ],
+  DL: [
+    { key: 'prsh_grd', label: 'Rush Grade' },
+    { key: 'prsh_win_pct', label: 'Win%' },
+    { key: 'prsh_sk', label: 'Sacks' },
+    { key: 'rund_tfl', label: 'TFL' },
+    { key: 'rund_grd', label: 'Run Def' },
+    { key: 'prsh_tpr', label: 'Pressures' },
+  ],
+  LB: [
+    { key: 'rund_grd', label: 'Run Def' },
+    { key: 'cov_grd', label: 'Coverage' },
+    { key: 'prsh_grd', label: 'Rush Grade' },
+    { key: 'rund_tkl', label: 'Tackles' },
+    { key: 'cov_rtg', label: 'COV RTG' },
+    { key: 'cov_int', label: 'INT' },
+  ],
+  CB: [
+    { key: 'cov_grd', label: 'COV Grade' },
+    { key: 'cov_rtg', label: 'COV RTG' },
+    { key: 'cov_int', label: 'INT' },
+    { key: 'cov_pbu', label: 'PBU' },
+    { key: 'cov_finc_pct', label: 'Forced Inc%' },
+    { key: 'cov_yds_cov', label: 'YDS/COV' },
+  ],
+  S: [
+    { key: 'cov_grd', label: 'COV Grade' },
+    { key: 'rund_grd', label: 'Run Def' },
+    { key: 'cov_rtg', label: 'COV RTG' },
+    { key: 'cov_int', label: 'INT' },
+    { key: 'rund_tkl', label: 'Tackles' },
+    { key: 'cov_pbu', label: 'PBU' },
+  ],
+};
+
+function formatStatValue(val: number | string | null): string {
+  if (val == null) return '';
+  if (typeof val === 'string') return val;
+  return Number.isInteger(val) ? String(val) : val.toFixed(1);
+}
+
+function StatsSection({
+  stats,
+  position,
+}: {
+  stats: Record<string, number | string | null>;
+  position: Position;
+}) {
+  const defs = KEY_STATS[position];
+  if (!defs) return null;
+
+  const items = defs
+    .map((d) => ({ ...d, val: stats[d.key] }))
+    .filter((d) => d.val != null);
+
+  if (items.length === 0) return null;
+
+  return (
+    <div>
+      <p className="mb-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">
+        Stats
+      </p>
+      <div className="grid grid-cols-3 gap-x-4 gap-y-3">
+        {items.map(({ key, label, val }) => (
+          <div key={key} className="text-center">
+            <p className="font-mono text-sm font-bold">
+              {formatStatValue(val)}
+            </p>
+            <p className="text-xs text-muted-foreground">{label}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }

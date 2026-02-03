@@ -394,3 +394,4 @@ Extract platform-agnostic business logic from bot services to `packages/shared`.
 - **Rework nav**: Move nav to left sidebar style navigation rather than top of screen
 - **Configurable styling**: Allow users to configure site theming based on their favourite NFL team
 - **Sliders for Draft**: Allow users to set levels of things like randomness, BPA, and team needs
+- **NFL Scouting Data Ecosystem**: Build a data layer similar to Stripe where users can access scouting datasets. Perhaps I allow content creators/scouts to charge for this data. This would provide a revenue source both for the people collecting the data and myself (would also need to build an attestation page that the user has the rights to share this data)

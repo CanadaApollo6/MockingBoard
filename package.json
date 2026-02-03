@@ -22,7 +22,8 @@
     "clean_artifacts": "rm -rf packages/**/dist packages/**/node_modules",
     "clean_code": "eslint . --fix && prettier --write .",
     "clean_install": "npm run clean_artifacts && npm install",
-    "register_commands": "npm run deploy-commands -w packages/bot"
+    "register_commands": "npm run deploy-commands -w packages/bot",
+    "seed:prospects": "npm run seed:prospects -w packages/bot"
   },
   "devDependencies": {
     "@eslint/js": "^9.18.0",
