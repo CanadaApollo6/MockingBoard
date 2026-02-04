@@ -18,6 +18,7 @@ import {
   generateDraftRecap,
   computeOptimalBaseline,
   analyzeAllTrades,
+  suggestPick,
 } from './draft-analytics';
 
 const TS: FirestoreTimestamp = { seconds: 0, nanoseconds: 0 };
@@ -771,5 +772,67 @@ describe('generateDraftRecap', () => {
 
     const ariGrade = recap.teamGrades.find((g) => g.team === 'ARI')!;
     expect(ariGrade.picks[0].boardDelta).toBe(1 - 5);
+  });
+});
+
+// --- suggestPick ---
+
+describe('suggestPick', () => {
+  it('returns null for empty player list', () => {
+    expect(suggestPick([], ['QB'], 1)).toBeNull();
+  });
+
+  it('returns the BPA when no needs match', () => {
+    const p1 = makePlayer({ consensusRank: 1, position: 'WR', id: 'wr1' });
+    const p2 = makePlayer({ consensusRank: 10, position: 'CB', id: 'cb10' });
+
+    const result = suggestPick([p1, p2], ['EDGE'], 5);
+    expect(result).not.toBeNull();
+    expect(result!.playerId).toBe('wr1');
+    expect(result!.reason).toContain('BPA');
+  });
+
+  it('favors a need fill when close in rank to BPA', () => {
+    const wr = makePlayer({ consensusRank: 4, position: 'WR', id: 'wr4' });
+    const cb = makePlayer({ consensusRank: 5, position: 'CB', id: 'cb5' });
+
+    const result = suggestPick([wr, cb], ['CB'], 5);
+    expect(result).not.toBeNull();
+    expect(result!.playerId).toBe('cb5');
+    expect(result!.reason).toMatch(/need/i);
+  });
+
+  it('returns a reason string', () => {
+    const p = makePlayer({ consensusRank: 1, id: 'p1' });
+    const result = suggestPick([p], [], 1);
+    expect(result!.reason).toBeTruthy();
+    expect(typeof result!.reason).toBe('string');
+  });
+
+  it('respects board rankings when provided', () => {
+    const p1 = makePlayer({ consensusRank: 10, id: 'p1' });
+    const p2 = makePlayer({ consensusRank: 1, id: 'p2' });
+
+    // Board says p1 is rank 1, p2 is rank 2
+    const result = suggestPick([p1, p2], [], 5, ['p1', 'p2']);
+    expect(result!.playerId).toBe('p1');
+  });
+
+  it('favors premium positions at early picks', () => {
+    const qb = makePlayer({ consensusRank: 5, position: 'QB', id: 'qb' });
+    const rb = makePlayer({ consensusRank: 5, position: 'RB', id: 'rb' });
+
+    // At pick 5 (premium slot), QB positional value should push it above RB
+    const result = suggestPick([qb, rb], [], 5);
+    expect(result!.playerId).toBe('qb');
+  });
+
+  it('score is a number between 0 and 100', () => {
+    const p1 = makePlayer({ consensusRank: 1, position: 'QB', id: 'qb1' });
+    const p2 = makePlayer({ consensusRank: 50, position: 'K', id: 'k50' });
+
+    const result = suggestPick([p1, p2], ['QB'], 1);
+    expect(result!.score).toBeGreaterThanOrEqual(0);
+    expect(result!.score).toBeLessThanOrEqual(100);
   });
 });

@@ -14,6 +14,10 @@ export interface CpuPickOptions {
    *  as the ranking instead of consensusRank. Players not on the board fall back
    *  to consensusRank. */
   boardRankings?: string[];
+  /** Positional value multipliers from analytics engine. When provided, premium
+   *  positions (QB, EDGE, etc.) get a subtle scoring boost. Pass POSITIONAL_VALUE
+   *  from draft-analytics. */
+  positionalWeights?: Partial<Record<Position, number>>;
 }
 
 /** Max need multipliers at needsWeight=1. Calibrated so 0.5 reproduces NEED_MULTIPLIERS. */
@@ -41,6 +45,7 @@ export function selectCpuPick(
   const nw = options?.needsWeight ?? 0.5;
 
   const boardRankings = options?.boardRankings;
+  const positionalWeights = options?.positionalWeights;
 
   const scored = availablePlayers.map((player) => {
     const ni = teamNeeds.indexOf(player.position);
@@ -49,7 +54,10 @@ export function selectCpuPick(
     const rank = boardRankings
       ? boardRankings.indexOf(player.id) + 1 || player.consensusRank
       : player.consensusRank;
-    const base = rank * mult;
+    // Positional value: fourth-root scaling so premium positions get a subtle boost
+    const posWeight = positionalWeights?.[player.position] ?? 1.0;
+    const posFactor = posWeight > 0 ? 1 / Math.pow(posWeight, 0.25) : 1.0;
+    const base = rank * mult * posFactor;
     const jitter = r > 0 ? (Math.random() - 0.5) * rank * r * 0.2 : 0;
     return { player, score: base + jitter };
   });

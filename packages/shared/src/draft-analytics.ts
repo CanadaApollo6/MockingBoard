@@ -22,6 +22,7 @@ import type {
   DraftRecap,
   TradeAnalysis,
   OptimalPick,
+  SuggestedPick,
 } from './types';
 import { getPickValue, getFuturePickValue } from './tradeValues';
 import { getEffectiveNeeds } from './cpu';
@@ -511,4 +512,59 @@ export function generateDraftRecap(
     tradeAnalysis: analyzeAllTrades(trades, draftYear),
     optimalComparison: computeOptimalBaseline(picks, players),
   };
+}
+
+// --- Pick Suggestion ---
+
+/**
+ * Compute the best analytics-scored pick suggestion for the current slot.
+ * Reuses the same scoring dimensions as gradePick but weighted for
+ * pre-pick advisory (stronger value emphasis, surplus-aware positional scoring).
+ */
+export function suggestPick(
+  availablePlayers: Player[],
+  teamNeeds: Position[],
+  pickOverall: number,
+  boardRankings?: string[],
+): SuggestedPick | null {
+  if (availablePlayers.length === 0) return null;
+
+  const threshold = Math.max(3, pickOverall * 0.08);
+  const slotWeight = Math.max(0, 1 - (pickOverall - 1) / 127);
+
+  let best: SuggestedPick | null = null;
+
+  for (const player of availablePlayers) {
+    const rank = boardRankings
+      ? boardRankings.indexOf(player.id) + 1 || player.consensusRank
+      : player.consensusRank;
+
+    const valueDelta = pickOverall - rank;
+    const valueScore = clamp((valueDelta / (threshold * 3)) * 35, -35, 35);
+
+    const posMultiplier = POSITIONAL_VALUE[player.position] ?? 1.0;
+    const posScore = (posMultiplier - 1.0) * slotWeight * 15;
+
+    const needIndex = teamNeeds.indexOf(player.position);
+    const needScore =
+      needIndex >= 0
+        ? (NEED_REWARDS[Math.min(needIndex, NEED_REWARDS.length - 1)] ?? 0)
+        : 0;
+
+    const total = Math.round(50 + valueScore + posScore + needScore);
+
+    if (!best || total > best.score) {
+      let reason: string;
+      if (needScore >= valueScore && needScore >= posScore && needIndex >= 0) {
+        reason = `Fills #${needIndex + 1} need at ${player.position}`;
+      } else if (posScore >= valueScore && posScore > 0) {
+        reason = `Premium ${player.position} at a value slot`;
+      } else {
+        reason = `BPA \u2014 ranked #${rank}`;
+      }
+      best = { playerId: player.id, score: total, reason };
+    }
+  }
+
+  return best;
 }

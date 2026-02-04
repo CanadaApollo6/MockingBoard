@@ -14,6 +14,8 @@ interface PlayerPickerProps {
   onPick: (playerId: string) => void;
   disabled: boolean;
   rankOverride?: Map<string, number>;
+  suggestedPlayerId?: string;
+  suggestionReason?: string;
 }
 
 const POSITIONS: Position[] = [
@@ -36,6 +38,8 @@ export function PlayerPicker({
   onPick,
   disabled,
   rankOverride,
+  suggestedPlayerId,
+  suggestionReason,
 }: PlayerPickerProps) {
   const [search, setSearch] = useState('');
   const [posFilter, setPosFilter] = useState<Position | null>(null);
@@ -141,7 +145,9 @@ export function PlayerPicker({
                     'cursor-pointer border-b transition-colors',
                     effectiveSelected === player.id
                       ? 'bg-primary/10'
-                      : 'hover:bg-muted/50',
+                      : suggestedPlayerId === player.id
+                        ? 'bg-mb-accent-muted/50 hover:bg-mb-accent-muted/70'
+                        : 'hover:bg-muted/50',
                   )}
                 >
                   <td className="p-2 font-mono text-muted-foreground">
@@ -153,7 +159,18 @@ export function PlayerPicker({
                         ? 'NR'
                         : player.consensusRank}
                   </td>
-                  <td className="p-2 font-medium">{player.name}</td>
+                  <td className="p-2 font-medium">
+                    {player.name}
+                    {suggestedPlayerId === player.id && (
+                      <Badge
+                        variant="outline"
+                        className="ml-2 border-mb-accent text-mb-accent text-[10px] px-1.5 py-0"
+                        title={suggestionReason}
+                      >
+                        Suggested
+                      </Badge>
+                    )}
+                  </td>
                   <td className="p-2">
                     <Badge
                       style={{

@@ -38,6 +38,7 @@ import {
   validateTradePicksAvailable,
   validateUserOwnsPicks,
   generateDraftName,
+  POSITIONAL_VALUE,
   type CpuTradeEvaluation,
 } from '@mockingboard/shared';
 
@@ -298,6 +299,7 @@ export async function runCpuCascade(
       randomness: (draft.config.cpuRandomness ?? 50) / 100,
       needsWeight: (draft.config.cpuNeedsWeight ?? 50) / 100,
       boardRankings,
+      positionalWeights: POSITIONAL_VALUE,
     });
 
     const { pick, isComplete } = await recordPick(draftId, player.id, null);
@@ -365,6 +367,7 @@ export async function advanceSingleCpuPick(
     randomness: (draft.config.cpuRandomness ?? 50) / 100,
     needsWeight: (draft.config.cpuNeedsWeight ?? 50) / 100,
     boardRankings,
+    positionalWeights: POSITIONAL_VALUE,
   });
 
   const { pick, isComplete } = await recordPick(draftId, player.id, null);

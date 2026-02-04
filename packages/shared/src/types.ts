@@ -493,3 +493,9 @@ export interface OptimalPick {
   actualRank: number;
   optimalRank: number;
 }
+
+export interface SuggestedPick {
+  playerId: string;
+  score: number;
+  reason: string;
+}

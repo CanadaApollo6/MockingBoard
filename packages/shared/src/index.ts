@@ -38,6 +38,7 @@ export type {
   DraftRecap,
   TradeAnalysis,
   OptimalPick,
+  SuggestedPick,
 } from './types';
 
 // Constants
@@ -101,6 +102,7 @@ export {
   generateDraftRecap,
   computeOptimalBaseline,
   analyzeAllTrades,
+  suggestPick,
 } from './draft-analytics';
 
 // Prospect import
