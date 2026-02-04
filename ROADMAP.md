@@ -185,7 +185,38 @@ Extract platform-agnostic business logic from bot services to `packages/shared`.
 - [x] Drafts started in Discord viewable live on web (already works via shared Firestore)
 - [x] Drafts started on web optionally send Discord notifications (webhook-based, per-draft configurable: off/link-only/pick-by-pick)
 
-**Phase 3 Complete**: Full draft functionality on web — solo and multiplayer — with Discord as an alternative entry point.
+**Phase 3.0–3.4 Complete**: Full draft functionality on web — solo and multiplayer — with Discord as an alternative entry point.
+
+### Milestone 3.8: Additional Sign-In Providers
+
+- [ ] Google OAuth (Firebase Auth provider — largest potential user base)
+- [ ] Sign in with Apple (required for iOS App Store if native app ever ships; good practice regardless)
+- [ ] X (Twitter) OAuth (aligns with NFL/draft community presence on the platform)
+- [ ] Unified account linking: link any combination of providers in settings
+- [ ] Auth UI updates: provider buttons on sign-in/sign-up pages
+
+### Milestone 3.5: Draft Enhancements
+
+- [ ] CPU pick randomness/variance so drafts don't play out identically
+- [ ] Configurable draft sliders (randomness weight, BPA vs. team needs balance)
+- [ ] Multi-team draft mode (one user controls multiple teams)
+- [ ] Collaborative drafting (vote-based picks with friends controlling one team)
+- [ ] Finish public draft lobbies (join drafts with strangers — mostly done)
+- [ ] Run mock drafts using personal big board rankings as the CPU pick order
+- [ ] In-draft web chat for multiplayer (message feed alongside pick UI)
+
+### Milestone 3.7: Post-Draft Recap & Analytics
+
+- [ ] Post-draft team grades (needs filled, BPA adherence, reach/value picks)
+- [ ] Draft recap page with per-team analysis and highlights
+- [ ] Comparison to consensus: show where user diverged and by how much
+- [ ] Shareable recap cards (extend existing image sharing)
+
+### Milestone 3.6: Dynasty/Keeper Mode
+
+- [ ] Carry over rosters between draft years
+- [ ] Keeper slot designation and management
+- [ ] Multi-year draft history per league
 
 ---
 
@@ -203,7 +234,6 @@ Extract platform-agnostic business logic from bot services to `packages/shared`.
 - [x] Use personal board during drafts (sort available players by your ranking)
 - [x] Board history: save labeled snapshots, restore previous versions
 - [x] Compare board to snapshots with rank delta visualization (↑/↓/NEW indicators)
-- [ ] Compare your board to friends' boards and community scouts
 
 ### Milestone 4.2: Community Scouting Data ✓
 
@@ -249,7 +279,111 @@ Extract platform-agnostic business logic from bot services to `packages/shared`.
 - [x] Fix traded picks showing original team instead of new owner in Discord embeds
 - [x] Add `slotTeam()` helper to resolve `teamOverride ?? team` across all pick/announce code paths
 
-**Phase 4 Complete**: Users have personalized big boards with snapshot history and comparison. Public prospect big board with editorial cards. Shareable draft result images. Community scouting data pipeline is live with attribution. Content creators have profile pages driving traffic to their channels.
+### Milestone 4.6: Advanced Board Generation
+
+- [ ] Rapid-generate boards filtered by position group with trait and production weighting
+- [ ] Compare your board to friends' boards and community scouts (moved from 4.1)
+
+### Milestone 4.7: Data Pipeline
+
+- [ ] Semi-automated prospect data ingestion (scheduled fetches from public sources + admin review)
+- [ ] Automated combine/pro day data refresh when results are published
+- [ ] Annual draft class rollover workflow (archive current year, seed next year's class)
+- [ ] Data freshness indicators on player cards (last updated timestamp)
+
+**Phase 4 Complete (4.1–4.5)**: Users have personalized big boards with snapshot history and comparison. Public prospect big board with editorial cards. Shareable draft result images. Community scouting data pipeline is live with attribution. Content creators have profile pages driving traffic to their channels.
+
+---
+
+## Phase 4.5: Community Content Platform ✓
+
+**Goal**: Transform MockingBoard from a mock draft tool into a community-sourced scouting and content creation platform. Public boards, crowdsourced reports, player pages, social features, video breakdowns, and PDF draft guides.
+
+### Milestone 4.5.1: Public Big Boards ✓
+
+- [x] Board visibility toggle (private/public) and URL slug system
+- [x] Public board browse page at `/boards` with search and filtering
+- [x] Public board view at `/boards/[slug]` with Skim / Peruse / Deep Dive view modes
+- [x] Slug uniqueness validation at API level
+
+### Milestone 4.5.2: User Scouting Reports ✓
+
+- [x] `ScoutingReport` type with structured fields (grade, NFL comp, strengths, weaknesses)
+- [x] TipTap rich text editor for long-form scouting analysis
+- [x] One report per user per player per year (upsert semantics)
+- [x] Report API endpoints (create/update, delete, list by player or author)
+
+### Milestone 4.5.3: Individual Player Pages ✓
+
+- [x] `/players/[id]` page as hub for all community content about a player
+- [x] PlayerHero component with school color gradient, rank, position badge
+- [x] CommunityGradeSummary: average grade, top NFL comps, report count
+- [x] CommunityReports: inline report list with write CTA and auto-refresh
+- [x] Linked player names in ProspectCard and ProspectRow to player pages
+
+### Milestone 4.5.4: Social & Discovery ✓
+
+- [x] Public user profiles at `/profile/[slug]` with bio, avatar, social links
+- [x] Follow system with composite document IDs for idempotent follow/unfollow
+- [x] Profile editor in settings page (slug, bio, avatar, social links, public toggle)
+- [x] Community discovery hub at `/community` (analysts grid, recent boards)
+- [x] AnalystProfileCard with follower/board/report counts
+
+### Milestone 4.5.5: Video Breakdowns ✓
+
+- [x] `VideoBreakdown` type with YouTube URL parsing (watch, youtu.be, embed, shorts)
+- [x] VideoGallery on player pages with responsive YouTube embeds
+- [x] VideoSubmitForm for authenticated users (URL, title, timestamp, tags)
+- [x] Author-only delete for submitted videos
+
+### Milestone 4.5.6: PDF Draft Guide Generation ✓
+
+- [x] `@react-pdf/renderer` for client-side PDF generation (no server cost)
+- [x] DraftGuidePdf document: cover page, per-player entries, headers/footers, MockingBoard branding
+- [x] Three depth levels: Quick Look (table), Detailed (+ measurables/comp/tags), Full Breakdown (full cards)
+- [x] DraftGuideOptions: detail level selector + "All" vs "Top N" player count
+- [x] "Draft Guide PDF" button on public board pages and board editor
+- [x] Downloads as `mockingboard-{boardName}-{year}.pdf`
+
+**Phase 4.5 Complete**: Full community content platform with public boards, crowdsourced scouting reports, player hub pages, social profiles with follow system, YouTube video breakdowns, and PDF draft guide export.
+
+---
+
+## Phase 4.75: Platform Infrastructure
+
+**Goal**: Foundation systems that make the social features work at scale and prepare the platform for public growth. Should be tackled before the more ambitious Phases 5+.
+
+### Milestone 4.75.1: Notification System
+
+- [ ] In-app notification feed (bell icon, unread count, notification drawer)
+- [ ] Notification triggers: new follower, new report on a player you've scouted, new board from someone you follow, new video on a player you've scouted
+- [ ] Draft notifications: trade proposals, your turn (multiplayer), draft completed
+- [ ] Email digest option (daily/weekly summary of activity)
+- [ ] Notification preferences per user (toggle categories on/off)
+
+### Milestone 4.75.2: Moderation & Admin Tools
+
+- [ ] Report/flag system for user-generated content (reports, videos, profiles)
+- [ ] Admin review queue with approve/remove actions
+- [ ] Admin dashboard: platform health metrics, user management, content stats
+- [ ] Content removal with author notification
+- [ ] Rate limiting on content creation (prevent spam)
+
+### Milestone 4.75.3: SEO & Social Sharing
+
+- [ ] Dynamic Open Graph meta tags for player pages, public boards, and analyst profiles
+- [ ] Social card images (auto-generated or template-based) for link previews
+- [ ] Structured data (JSON-LD) for player pages (searchable by Google)
+- [ ] Sitemap generation for public pages
+- [ ] Canonical URLs and proper meta titles/descriptions
+
+### Milestone 4.75.4: Unified Search
+
+- [ ] Global search bar in navigation (search players, boards, reports, users from one input)
+- [ ] Search results grouped by type with quick-jump
+- [ ] Firestore full-text search strategy (Algolia, Typesense, or Firestore-native with `contentText` fields)
+
+**Phase 4.75 Complete**: Platform has the operational backbone to support community growth — users stay engaged through notifications, content stays clean through moderation, and public pages are discoverable through search engines.
 
 ---
 
@@ -264,9 +398,10 @@ Extract platform-agnostic business logic from bot services to `packages/shared`.
 
 ### Milestone 5.2: Preference Modeling
 
+- [ ] User-configurable preference options for prospect stats and traits (explicit preferences)
 - [ ] Analyze drafting patterns: position preferences, school/conference biases, athleticism vs. production
 - [ ] Generate "scouting profile" summary for each user
-- [ ] Compare stated preferences (if implemented) vs. revealed preferences
+- [ ] Compare stated preferences vs. revealed preferences (drafting behavior)
 
 ### Milestone 5.3: Recommendations
 
@@ -280,6 +415,33 @@ Extract platform-agnostic business logic from bot services to `packages/shared`.
 - [ ] Shareable graphics/cards for social media
 
 **Phase 5 Complete**: Users have a persistent scouting identity that evolves with each draft.
+
+---
+
+## Phase 5.5: Content Creator Tools
+
+**Goal**: First-class support for content creators broadcasting drafts and scouting content. High strategic priority — Brett Kollmann and similar creators drive community growth.
+
+### Milestone 5.5.1: Spectator Mode
+
+- [ ] Read-only live draft view optimized for stream embedding
+- [ ] Minimal/clean UI mode that hides navigation and controls
+- [ ] Configurable overlay themes (dark, light, transparent)
+
+### Milestone 5.5.2: Stream Overlays
+
+- [ ] OBS-compatible browser source overlays for live drafts
+- [ ] Current pick overlay (team, pick number, countdown)
+- [ ] Recent picks ticker overlay
+- [ ] Draft board overlay (full or condensed)
+
+### Milestone 5.5.3: Embeddable Widgets
+
+- [ ] Embeddable big board widget for external sites/blogs
+- [ ] Embeddable player card widget
+- [ ] Configurable widget theming and sizing
+
+**Phase 5.5 Complete**: Content creators can stream drafts with professional overlays and embed MockingBoard content on their own platforms.
 
 ---
 
@@ -319,13 +481,39 @@ Extract platform-agnostic business logic from bot services to `packages/shared`.
 - [ ] Display analyst predictions alongside user mocks
 - [ ] Include analysts in leaderboard comparisons
 
-**Phase 6 Complete**: Full accountability system with year-round leaderboard engagement.
+### Milestone 6.6: Scouting Accuracy Tracking
+
+- [ ] Score scout-contributed grades against actual draft position and NFL performance
+- [ ] Accuracy badges on scout profiles (ties into Phase 4.5 community profiles)
+- [ ] Scout leaderboard: most accurate community evaluators
+
+**Phase 6 Complete**: Full accountability system with year-round leaderboard engagement for both mock drafters and scouts.
+
+---
+
+## Phase 6.5: Reference & Tools
+
+**Goal**: Standalone reference pages and tools that enrich the platform and drive organic search traffic.
+
+### Milestone 6.5.1: Team Breakdown Pages
+
+- [ ] Individual team analysis pages: current roster, positional needs, draft capital
+- [ ] Visual draft pick inventory per team
+- [ ] Team needs auto-derived from roster composition (or manually curated)
+
+### Milestone 6.5.2: Draft Order & Trade Value
+
+- [ ] Tankathon-style draft order page with pick ownership and trade value chart
+- [ ] Standalone trade value calculator (outside of active drafts)
+- [ ] Support for salary cap implications in trade evaluation (precursor to Phase 9)
+
+**Phase 6.5 Complete**: Reference tools drive organic traffic and provide standalone utility beyond drafting.
 
 ---
 
 ## Phase 7: Cost & Monetization
 
-**Goal**: Sustainable cost structure with a paid tier. No ads, ever.
+**Goal**: Sustainable cost structure with a paid tier. No ads, ever. See [MONETIZATION.md](MONETIZATION.md) for full strategy, pricing, and philosophy.
 
 ### Milestone 7.1: Cost Optimization
 
@@ -339,13 +527,97 @@ Extract platform-agnostic business logic from bot services to `packages/shared`.
 - [ ] Register domain
 - [ ] Configure via Firebase App Hosting console (DNS verification)
 
-### Milestone 7.3: Paid Tier (Stripe)
+### Milestone 7.3: Stripe Foundation
 
-- [ ] Stripe integration (webhook handler, subscription management)
-- [ ] Pricing page
-- [ ] Premium features: unlimited draft history, advanced leaderboard filters, custom room settings, scouting profiles, community scouting data, draft result exports
+Core payment infrastructure that all paid features depend on.
 
-**Phase 7 Complete**: Revenue offsets hosting costs; free tier remains generous.
+- [ ] Stripe account setup with product/price objects (Pro Monthly, Pro Annual, Team Plan)
+- [ ] Webhook handler API route (`/api/stripe/webhook`) for subscription lifecycle events (created, updated, canceled, payment failed)
+- [ ] `subscriptionStatus` field on User document (`free | pro | team`) with `stripeCustomerId` and `stripeSubscriptionId`
+- [ ] Server-side subscription status helper: `getUserTier(userId)` for use in API routes and middleware
+- [ ] Client-side subscription context provider (read tier from user doc, expose `isPro` / `isTeam` booleans)
+
+### Milestone 7.4: Individual Pro Subscription
+
+- [ ] Pricing page with Free vs. Pro comparison table, monthly/annual toggle
+- [ ] Checkout flow: Stripe Checkout Session → redirect to success page → webhook updates user doc
+- [ ] Account management page: current plan, next billing date, payment method, cancel/resume
+- [ ] Billing history page (Stripe Customer Portal or custom with invoice list)
+- [ ] Free trial: 14-day Pro on signup (Stripe trial period, no payment method required)
+- [ ] Student discount: .edu email verification → apply 50% coupon
+- [ ] Upgrade/downgrade proration handling (Stripe handles this, surface in UI)
+
+### Milestone 7.5: Feature Gating
+
+Server-side and client-side enforcement of Free/Pro boundaries across the platform. Each gate is a check against `getUserTier()`.
+
+- [ ] **Scouting report cap**: track monthly report count per user (`reportCounts/{userId}_{yearMonth}` doc), block creation at 10 for free tier, show count in report form ("3 of 10 this month")
+- [ ] **PDF draft guide**: free tier limited to 32 players and default formatting; Pro unlocks unlimited players, custom covers, watermark removal, community report integration. Gate in `DraftGuideOptions` and `DraftGuideButton`
+- [ ] **Board comparison**: Pro-only (Milestone 4.6). Show locked state with upgrade CTA for free users
+- [ ] **Draft analytics**: Pro-only (Milestone 3.7 post-draft grades). Free users see summary, Pro sees full breakdown
+- [ ] **Advanced leaderboard filters**: Pro-only (Phase 6). Free users get global leaderboard, Pro gets year/position/user filters
+- [ ] **Historical access**: free tier = current year + 1 prior for draft history. Pro = all years
+- [ ] **Pro badge**: display on profile cards, report cards, and community feeds for Pro/Team subscribers
+- [ ] **Soft conversion prompts**: contextual upgrade CTAs at each gate boundary (non-blocking, dismissible)
+
+### Milestone 7.6: Team Plan (Group Subscription)
+
+- [ ] `teams` Firestore collection: `{ ownerId, name, stripeSubscriptionId, memberIds[], maxMembers, createdAt }`
+- [ ] Stripe product with per-seat pricing (3–6 members)
+- [ ] Team creation flow: owner creates team → selects member count → Stripe Checkout → team doc created
+- [ ] Invitation system: owner generates invite link or sends email → invitee accepts → added to `memberIds` and user's `subscriptionStatus` set to `team`
+- [ ] Member management: owner can remove members, members can leave. Seat freed for replacement
+- [ ] Billing adjustment: when members change, update Stripe subscription quantity
+- [ ] Team dashboard page (`/settings/team`): member list, invite link, billing info, plan status
+- [ ] Pro status resolution: `getUserTier()` checks individual subscription first, then team membership
+
+### Milestone 7.7: Creator Program
+
+- [ ] Creator application form (linked from profile page for users meeting minimum criteria: 10+ reports or 100+ followers)
+- [ ] Admin review queue for creator applications (approve/reject with optional message)
+- [ ] Creator tier tracking: automated promotion from Contributor → Verified Creator → Partner based on criteria in MONETIZATION.md
+- [ ] Engagement attribution: track referral links per creator, log `referredBy` on new user signups
+- [ ] Content engagement metrics: report views, board views, follower growth, video views — stored as daily aggregates
+- [ ] Stripe Connect onboarding for Verified Creator+ tier (connected accounts for payouts)
+- [ ] Revenue share calculation: attribute Pro subscriptions to creator-driven signups, compute monthly share
+- [ ] Creator dashboard page (`/creator`): earnings summary, payout history, engagement metrics, referral stats
+- [ ] Payout system: monthly cycle, $25 minimum threshold, Stripe Connect transfers
+
+### Milestone 7.8: Conversion & Optimization
+
+- [ ] Analytics events for all conversion touchpoints (PDF gate hit, report cap hit, comparison gate, etc.)
+- [ ] Conversion funnel tracking: free user → pricing page → checkout → subscriber
+- [ ] A/B test pricing (feature flag for price variants)
+- [ ] Adjust free/Pro boundaries based on usage data (make data-driven decisions on caps)
+- [ ] Annual plan promotions and seasonal discounts (draft season push)
+
+**Phase 7 Complete**: Revenue offsets hosting costs; free tier remains generous. Team plans capture group value. Top creators share in platform success.
+
+---
+
+## Phase 7.5: UX Overhaul
+
+**Goal**: Comprehensive UX refresh for usability, mobile experience, and personalization.
+
+### Milestone 7.5.1: Navigation Rework
+
+- [ ] Move from top navbar to left sidebar navigation
+- [ ] Collapsible sidebar for mobile/small screens
+- [ ] Navigation grouping by feature area (Drafts, Boards, Community, Tools)
+
+### Milestone 7.5.2: Responsive Mobile
+
+- [ ] Audit and fix all pages for mobile breakpoints
+- [ ] Touch-friendly interactions (drag-and-drop, modals, dropdowns)
+- [ ] Mobile-optimized draft picking interface
+
+### Milestone 7.5.3: Configurable Theming
+
+- [ ] Team-based theming (select your favorite NFL team, app adopts their colors)
+- [ ] Theme persistence in user profile
+- [ ] Extend existing dark/light toggle to support team color palettes
+
+**Phase 7.5 Complete**: Polished, mobile-friendly experience with personalized theming.
 
 ---
 
@@ -409,27 +681,6 @@ Extract platform-agnostic business logic from bot services to `packages/shared`.
 
 ---
 
-## Future Considerations (Not Scheduled but planned)
+## Future Considerations
 
-- **Multi-team draft for one user**: Control multiple teams in a single draft session
-- **Slight randomness to CPU picks**: Add variance to CPU selections so drafts don't play out identically
-- **Mobile support**: Responsive web improvements (high effort, high value)
-- **Trade calculator**: Standalone trade value calculator tool (outside of active drafts) with full accounting of salary cap and trade rules
-- **Tankathon-style draft order page**: Visual draft order display combined with trade value chart on web (low effort but potentially high value)
-- **Team breakdown pages**: Individual team analysis pages (roster, needs, draft capital) — requires content
-- **Cap calculator**: Standalone salary cap calculator tool
-- **Full contract builder**: Create and model contract structures with cap implications (basically an OTC clone with better UX and no ads everywhere)
-- **Dynasty/keeper support**: Carry over rosters between years (deferred)
-- **Collaborative drafting**: Vote-based picks with friends controlling one team
-- **Public draft lobbies**: Join drafts with strangers (mostly done)
-- **Content creator tools**: Spectator mode, stream overlays (this may take a high priority if Brett pushes to friends)
-- **Mobile native app**: Only if popularity demands it
-- **Multi-faceted and multi-step cap manager**: Comprehensive cap manager with the ability to see the implications of multiple moves at once/in sequence (example: automate move this year into future years alongside multiple other moves)
-- **Rework nav**: Move nav to left sidebar style navigation rather than top of screen
-- **Configurable styling**: Allow users to configure site theming based on their favourite NFL team
-- **Sliders for Draft**: Allow users to set levels of things like randomness, BPA, and team needs
-- **Revenue share for top scouts**: If community scouting data becomes a major subscription driver, offer revenue share to high-value contributors as a retention tool
-- **Scouting accuracy tracking**: Extend Phase 6 leaderboards to score scout-contributed grades against actual draft position and NFL performance (ties scout profiles into the accuracy ecosystem)
-- Add user configurable preference options for various stats and traits within college prospects
-- Allow users to rapid generate boards for position groups and weight them based on trait and production filters
-- Let users run mock drafts based on their own big boards
+- **Mobile native app**: Only if popularity demands it — responsive web (Phase 7.5.2) is the priority path
