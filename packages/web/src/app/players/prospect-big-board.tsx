@@ -33,7 +33,7 @@ export function ProspectBigBoard({ players }: ProspectBigBoardProps) {
   const [search, setSearch] = useState('');
   const [posFilter, setPosFilter] = useState<Position | null>(null);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  const [view, setView] = useState<ViewMode>('full');
+  const [view, setView] = useState<ViewMode>('condensed');
 
   const filtered = useMemo(() => {
     let result = players;
