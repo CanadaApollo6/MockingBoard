@@ -61,28 +61,35 @@ export function SettingsClient() {
         </div>
       )}
 
-      <AccountInfoSection profile={profile} />
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        {/* Left column: identity & profile */}
+        <div className="space-y-6">
+          <AccountInfoSection profile={profile} />
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Profile</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ProfileEditor
+                initial={{
+                  slug: profile.slug,
+                  bio: profile.bio,
+                  avatar: profile.avatar,
+                  links: profile.links,
+                  isPublic: profile.isPublic,
+                }}
+              />
+            </CardContent>
+          </Card>
+        </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Profile</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ProfileEditor
-            initial={{
-              slug: profile.slug,
-              bio: profile.bio,
-              avatar: profile.avatar,
-              links: profile.links,
-              isPublic: profile.isPublic,
-            }}
-          />
-        </CardContent>
-      </Card>
-
-      <TeamThemeSection />
-      <AccountLinkingSection profile={profile} />
-      <WebhookSection />
+        {/* Right column: preferences & integrations */}
+        <div className="space-y-6">
+          <TeamThemeSection />
+          <AccountLinkingSection profile={profile} />
+          <WebhookSection />
+        </div>
+      </div>
     </div>
   );
 }
