@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { getSessionUser } from '@/lib/auth-session';
 import { resolveUser } from '@/lib/user-resolve';
 import { joinLobby } from '@/lib/lobby-actions';
-import { invalidateUserDraftsCache } from '@/lib/data';
 import type { TeamAbbreviation } from '@mockingboard/shared';
 
 export async function POST(
@@ -39,7 +38,6 @@ export async function POST(
       inviteCode: body.inviteCode,
     });
 
-    invalidateUserDraftsCache(session.uid);
     return NextResponse.json(result);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to join draft';

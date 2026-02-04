@@ -1,4 +1,4 @@
-import { getCachedUserDraftsPaginated } from '@/lib/data';
+import { getUserDraftsPaginated } from '@/lib/data';
 import { getSessionUser } from '@/lib/auth-session';
 import { resolveUser } from '@/lib/user-resolve';
 import { DraftsGrid } from '@/components/drafts-grid';
@@ -24,7 +24,7 @@ export default async function DraftsPage() {
   }
 
   const user = await resolveUser(session.uid);
-  const { drafts, hasMore } = await getCachedUserDraftsPaginated(
+  const { drafts, hasMore } = await getUserDraftsPaginated(
     session.uid,
     user?.discordId,
     { limit: PAGE_SIZE },

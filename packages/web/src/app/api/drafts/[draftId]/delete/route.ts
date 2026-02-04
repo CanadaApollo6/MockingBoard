@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSessionUser } from '@/lib/auth-session';
 import { adminDb } from '@/lib/firebase-admin';
-import { invalidateUserDraftsCache } from '@/lib/data';
 import { resolveUser } from '@/lib/user-resolve';
 import type { Draft } from '@mockingboard/shared';
 
@@ -67,8 +66,6 @@ export async function POST(
       }
       await batch.commit();
     }
-
-    invalidateUserDraftsCache(session.uid);
 
     return NextResponse.json({ success: true });
   } catch (err) {

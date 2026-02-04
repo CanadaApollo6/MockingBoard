@@ -165,37 +165,6 @@ export async function getUserDraftsPaginated(
   return { drafts: sanitized.slice(0, limit), hasMore };
 }
 
-// ---- User drafts cache (first page only, keyed by userId) ----
-
-const USER_DRAFTS_TTL = 5 * 60 * 1000; // 5 min fallback
-
-const userDraftsCache = new Map<
-  string,
-  { data: { drafts: Draft[]; hasMore: boolean }; expiresAt: number }
->();
-
-/** Invalidate cached My Drafts listing for a user. Call after creating or joining a draft. */
-export function invalidateUserDraftsCache(userId: string): void {
-  userDraftsCache.delete(userId);
-}
-
-/** Cached first-page fetch of a user's drafts. Pagination bypasses cache. */
-export async function getCachedUserDraftsPaginated(
-  userId: string,
-  discordId: string | undefined,
-  options?: { limit?: number },
-): Promise<{ drafts: Draft[]; hasMore: boolean }> {
-  const entry = userDraftsCache.get(userId);
-  if (entry && Date.now() < entry.expiresAt) return entry.data;
-
-  const result = await getUserDraftsPaginated(userId, discordId, options);
-  userDraftsCache.set(userId, {
-    data: result,
-    expiresAt: Date.now() + USER_DRAFTS_TTL,
-  });
-  return result;
-}
-
 export async function getUserDrafts(
   userId: string,
   discordId?: string,

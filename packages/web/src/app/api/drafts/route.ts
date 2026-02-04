@@ -5,7 +5,6 @@ import {
   buildFuturePicks,
   createWebDraft,
 } from '@/lib/draft-actions';
-import { invalidateUserDraftsCache } from '@/lib/data';
 import { resolveUser } from '@/lib/user-resolve';
 import { adminDb } from '@/lib/firebase-admin';
 import { sendDraftStarted } from '@/lib/discord-webhook';
@@ -131,8 +130,6 @@ export async function POST(request: Request) {
       multiplayer,
       visibility,
     });
-
-    invalidateUserDraftsCache(session.uid);
 
     // Fire-and-forget: send webhook notification if enabled
     if (notificationLevel && notificationLevel !== 'off') {
