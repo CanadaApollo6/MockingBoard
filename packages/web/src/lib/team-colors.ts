@@ -46,7 +46,7 @@ export function getTeamColor(team: TeamAbbreviation): TeamColorPair {
 
 // --- Color visibility utilities ---
 
-function hexToHsl(hex: string): [number, number, number] {
+export function hexToHsl(hex: string): [number, number, number] {
   const r = parseInt(hex.slice(1, 3), 16) / 255;
   const g = parseInt(hex.slice(3, 5), 16) / 255;
   const b = parseInt(hex.slice(5, 7), 16) / 255;
@@ -73,7 +73,7 @@ function hexToHsl(hex: string): [number, number, number] {
   return [h * 360, s * 100, l * 100];
 }
 
-function hslToHex(h: number, s: number, l: number): string {
+export function hslToHex(h: number, s: number, l: number): string {
   s /= 100;
   l /= 100;
   const a = s * Math.min(l, 1 - l);
@@ -149,4 +149,93 @@ export function teamColorStyle(team: TeamAbbreviation): React.CSSProperties {
     '--team-primary': c.primary,
     '--team-secondary': c.secondary,
   } as React.CSSProperties;
+}
+
+// --- Theme derivation ---
+
+const ACHROMATIC_THRESHOLD = 8;
+
+/**
+ * Derive accent color palette from a hex color, adjusted for the given mode.
+ * Dark mode: bright vibrant accents (lightness 55–75%).
+ * Light mode: muted readable accents (lightness 30–45%).
+ */
+function deriveAccentPalette(
+  hex: string,
+  mode: 'dark' | 'light',
+): { accent: string; accentHover: string; accentMuted: string } {
+  const [h, s] = hexToHsl(hex);
+
+  if (mode === 'dark') {
+    const l = Math.max(55, Math.min(75, hexToHsl(hex)[2]));
+    const sat = Math.max(s, 60);
+    const accent = hslToHex(h, sat, l);
+    const hover = hslToHex(h, sat, Math.max(45, l - 10));
+    const [r, g, b] = hexToRgb(accent);
+    return {
+      accent,
+      accentHover: hover,
+      accentMuted: `rgba(${r}, ${g}, ${b}, 0.12)`,
+    };
+  }
+
+  const l = Math.max(30, Math.min(45, hexToHsl(hex)[2]));
+  const sat = Math.max(s, 50);
+  const accent = hslToHex(h, sat, l);
+  const hover = hslToHex(h, sat, Math.min(55, l + 10));
+  const [r, g, b] = hexToRgb(accent);
+  return {
+    accent,
+    accentHover: hover,
+    accentMuted: `rgba(${r}, ${g}, ${b}, 0.10)`,
+  };
+}
+
+function hexToRgb(hex: string): [number, number, number] {
+  return [
+    parseInt(hex.slice(1, 3), 16),
+    parseInt(hex.slice(3, 5), 16),
+    parseInt(hex.slice(5, 7), 16),
+  ];
+}
+
+/**
+ * Derive a full set of CSS variable overrides for team/school theming.
+ * Accepts a TeamAbbreviation or a raw {primary, secondary} color pair.
+ * Returns empty object for achromatic colors (no viable accent).
+ */
+export function deriveThemeOverrides(
+  teamOrColors: TeamAbbreviation | { primary: string; secondary: string },
+  mode: 'dark' | 'light',
+): Record<string, string> {
+  const { primary, secondary } =
+    typeof teamOrColors === 'string' ? TEAM_COLORS[teamOrColors] : teamOrColors;
+
+  // Use primary unless achromatic, then try secondary
+  const [, ps] = hexToHsl(primary);
+  const sourceHex = ps < ACHROMATIC_THRESHOLD ? secondary : primary;
+  const [, ss] = hexToHsl(sourceHex);
+  if (ss < ACHROMATIC_THRESHOLD) return {};
+
+  const { accent, accentHover, accentMuted } = deriveAccentPalette(
+    sourceHex,
+    mode,
+  );
+
+  const [, , al] = hexToHsl(accent);
+  const foreground = al > 55 ? '#0a0a0b' : '#ffffff';
+
+  return {
+    '--primary': accent,
+    '--primary-foreground': foreground,
+    '--ring': accent,
+    '--mb-accent': accent,
+    '--mb-accent-hover': accentHover,
+    '--mb-accent-muted': accentMuted,
+    '--sidebar-primary': accent,
+    '--sidebar-primary-foreground': foreground,
+    '--sidebar-ring': accent,
+    '--chart-1': accent,
+    '--shadow-glow': `0 0 20px ${accentMuted}`,
+  };
 }

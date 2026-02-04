@@ -371,11 +371,11 @@ Extract platform-agnostic business logic from bot services to `packages/shared`.
 
 ### Milestone 4.75.3: SEO & Social Sharing
 
-- [ ] Dynamic Open Graph meta tags for player pages, public boards, and analyst profiles
-- [ ] Social card images (auto-generated or template-based) for link previews
-- [ ] Structured data (JSON-LD) for player pages (searchable by Google)
-- [ ] Sitemap generation for public pages
-- [ ] Canonical URLs and proper meta titles/descriptions
+- [x] Dynamic Open Graph meta tags for player pages, public boards, and analyst profiles
+- [x] Social card images (auto-generated or template-based) for link previews
+- [x] Structured data (JSON-LD) for player pages (searchable by Google)
+- [x] Sitemap generation for public pages
+- [x] Canonical URLs and proper meta titles/descriptions
 
 ### Milestone 4.75.4: Unified Search
 
@@ -524,8 +524,8 @@ Extract platform-agnostic business logic from bot services to `packages/shared`.
 
 ### Milestone 7.2: Custom Domain
 
-- [ ] Register domain
-- [ ] Configure via Firebase App Hosting console (DNS verification)
+- [x] Register domain
+- [x] Configure via Firebase App Hosting console (DNS verification)
 
 ### Milestone 7.3: Stripe Foundation
 
@@ -601,21 +601,35 @@ Server-side and client-side enforcement of Free/Pro boundaries across the platfo
 
 ### Milestone 7.5.1: Navigation Rework
 
-- [ ] Move from top navbar to left sidebar navigation
-- [ ] Collapsible sidebar for mobile/small screens
-- [ ] Navigation grouping by feature area (Drafts, Boards, Community, Tools)
+- [x] Move from top navbar to left sidebar navigation
+- [x] Collapsible sidebar for mobile/small screens
+- [x] Navigation grouping by feature area (Drafts, Boards, Community, Tools)
 
 ### Milestone 7.5.2: Responsive Mobile
 
-- [ ] Audit and fix all pages for mobile breakpoints
-- [ ] Touch-friendly interactions (drag-and-drop, modals, dropdowns)
-- [ ] Mobile-optimized draft picking interface
+- [x] Audit and fix all pages for mobile breakpoints
+- [x] Touch-friendly interactions (drag-and-drop, modals, dropdowns)
+- [x] Mobile-optimized draft picking interface
 
-### Milestone 7.5.3: Configurable Theming
+### Milestone 7.5.3: Auth & Dashboard Polish ✓
 
-- [ ] Team-based theming (select your favorite NFL team, app adopts their colors)
-- [ ] Theme persistence in user profile
-- [ ] Extend existing dark/light toggle to support team color palettes
+- [x] Authenticated dashboard at `/` with widgets (Prospect of the Day, Mock Draft of the Week, Leaderboard Top 5, Quick Actions, User Stats)
+- [x] Landing page single-viewport layout with animated sign-in transition
+- [x] OAuth sign-in buttons with provider logos (Discord, Google)
+- [x] Green glow background on auth pages matching landing page
+- [x] Sign-out redirect to landing page (full server re-render)
+
+### Milestone 7.5.4: Player Page Polish ✓
+
+- [x] Community reports overhaul: tier-based grade buttons replacing slider
+- [x] Word cloud visualization for community strengths/weaknesses
+- [x] Full-width player page layout
+
+### Milestone 7.5.5: Configurable Theming
+
+- [x] Team-based theming (select your favorite NFL or college team, app adopts their colors)
+- [x] Theme persistence in user profile
+- [x] Extend existing dark/light toggle to support team color palettes
 
 **Phase 7.5 Complete**: Polished, mobile-friendly experience with personalized theming.
 
@@ -639,8 +653,8 @@ Server-side and client-side enforcement of Free/Pro boundaries across the platfo
 
 ### Milestone 8.3: Feature Parity
 
-- [ ] Match core Discord functionality where possible
-- [ ] Graceful degradation for features that can't translate
+- [x] Match core Discord functionality where possible
+- [x] Graceful degradation for features that can't translate
 
 **Phase 8 Complete**: Users can draft in iMessage group chats.
 

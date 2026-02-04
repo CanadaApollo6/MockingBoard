@@ -36,7 +36,7 @@ export function AuthCallbackClient() {
           return;
         }
 
-        router.replace('/drafts');
+        router.replace('/');
       } catch (error) {
         console.error('Auth callback failed:', error);
         router.replace('/?error=client_auth');

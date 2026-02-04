@@ -6,7 +6,8 @@ import {
   getTopDrafters,
 } from '@/lib/data';
 import { LandingHero } from '@/components/landing-hero';
-import { Dashboard, getProspectOfTheDay } from '@/components/dashboard';
+import { Dashboard } from '@/components/dashboard';
+import { getProspectOfTheDay } from '@/lib/prospect';
 
 const CURRENT_YEAR = 2026;
 
@@ -19,10 +20,10 @@ export default async function Home({
 
   if (session) {
     const [user, playerMap, draftOfWeek, leaderboard] = await Promise.all([
-      resolveUser(session.uid),
-      getPlayerMap(CURRENT_YEAR),
-      getRecentCompletedDraft(),
-      getTopDrafters(5),
+      resolveUser(session.uid).catch(() => null),
+      getPlayerMap(CURRENT_YEAR).catch(() => new Map<string, never>()),
+      getRecentCompletedDraft().catch(() => null),
+      getTopDrafters(5).catch(() => [] as never[]),
     ]);
 
     return (
