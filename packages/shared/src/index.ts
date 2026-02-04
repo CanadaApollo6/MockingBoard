@@ -32,6 +32,12 @@ export type {
   ScoutingReport,
   Follow,
   VideoBreakdown,
+  PickLabel,
+  PickGrade,
+  TeamDraftGrade,
+  DraftRecap,
+  TradeAnalysis,
+  OptimalPick,
 } from './types';
 
 // Constants
@@ -82,6 +88,20 @@ export {
   computeTradeExecution,
   type CpuTradeEvaluation,
 } from './trade';
+
+// Draft analytics
+export {
+  POSITIONAL_VALUE,
+  baseSurplusValue,
+  positionAdjustedSurplus,
+  classifyPick,
+  getGradeTier,
+  gradePick,
+  gradeTeamDraft,
+  generateDraftRecap,
+  computeOptimalBaseline,
+  analyzeAllTrades,
+} from './draft-analytics';
 
 // Prospect import
 export {

@@ -8,27 +8,34 @@ import type {
   Player,
   TeamAbbreviation,
   Draft,
+  DraftRecap,
 } from '@mockingboard/shared';
 import { getTeamName } from '@/lib/teams';
 import { formatDraftDate, getDraftDisplayName } from '@/lib/format';
 import { Button } from '@/components/ui/button';
 import { DraftShareCard } from './draft-share-card';
 import { MyTeamShareCard } from './my-team-share-card';
+import { RecapShareCard } from './recap-share-card';
 
 interface ShareButtonProps {
   draft: Draft;
   picks: Pick[];
   players: Record<string, Player>;
   userTeams: TeamAbbreviation[];
+  recap?: DraftRecap | null;
 }
 
-type CardMode = { type: 'full' } | { type: 'team'; team: TeamAbbreviation };
+type CardMode =
+  | { type: 'full' }
+  | { type: 'team'; team: TeamAbbreviation }
+  | { type: 'recap'; team: TeamAbbreviation };
 
 export function ShareButton({
   draft,
   picks,
   players,
   userTeams,
+  recap,
 }: ShareButtonProps) {
   const [open, setOpen] = useState(false);
   const [capturing, setCapturing] = useState(false);
@@ -72,7 +79,11 @@ export function ShareButton({
 
         const link = document.createElement('a');
         const suffix =
-          mode.type === 'team' ? `-${mode.team.toLowerCase()}` : '';
+          mode.type === 'team'
+            ? `-${mode.team.toLowerCase()}`
+            : mode.type === 'recap'
+              ? `-recap-${mode.team.toLowerCase()}`
+              : '';
         link.download = `mockingboard-${draft.id}${suffix}.png`;
         link.href = dataUrl;
         link.click();
@@ -120,6 +131,35 @@ export function ShareButton({
                 ))}
               </>
             )}
+            {recap && recap.teamGrades.length > 0 && (
+              <>
+                <div className="my-1 border-t" />
+                <p className="px-3 py-1 text-xs text-muted-foreground">
+                  Recap Cards
+                </p>
+                {userTeams.length > 0
+                  ? userTeams.map((team) => (
+                      <button
+                        key={`recap-${team}`}
+                        className="w-full rounded-md px-3 py-2 text-left text-sm hover:bg-muted"
+                        onClick={() => capture({ type: 'recap', team })}
+                      >
+                        {getTeamName(team)} Recap
+                      </button>
+                    ))
+                  : recap.teamGrades.slice(0, 5).map((tg) => (
+                      <button
+                        key={`recap-${tg.team}`}
+                        className="w-full rounded-md px-3 py-2 text-left text-sm hover:bg-muted"
+                        onClick={() =>
+                          capture({ type: 'recap', team: tg.team })
+                        }
+                      >
+                        {getTeamName(tg.team)} Recap
+                      </button>
+                    ))}
+              </>
+            )}
           </div>
         )}
       </div>
@@ -144,6 +184,20 @@ export function ShareButton({
                 picks={picks}
                 players={players}
               />
+            ) : cardMode.type === 'recap' ? (
+              (() => {
+                const teamGrade = recap?.teamGrades.find(
+                  (tg) => tg.team === cardMode.team,
+                );
+                return teamGrade ? (
+                  <RecapShareCard
+                    draftName={draftName}
+                    draftDate={draftDate}
+                    grade={teamGrade}
+                    players={players}
+                  />
+                ) : null;
+              })()
             ) : (
               <MyTeamShareCard
                 draftName={draftName}

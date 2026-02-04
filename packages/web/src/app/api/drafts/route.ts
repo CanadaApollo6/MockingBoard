@@ -39,6 +39,7 @@ export async function POST(request: Request) {
     multiplayer?: boolean;
     visibility?: DraftVisibility;
     teamAssignmentMode?: TeamAssignmentMode;
+    boardId?: string;
   };
 
   try {
@@ -65,6 +66,7 @@ export async function POST(request: Request) {
     multiplayer,
     visibility,
     teamAssignmentMode,
+    boardId,
   } = body;
 
   if (!year || !rounds || !format || !cpuSpeed) {
@@ -146,6 +148,7 @@ export async function POST(request: Request) {
           : 'choice',
         ...(cpuRandomness != null && { cpuRandomness }),
         ...(cpuNeedsWeight != null && { cpuNeedsWeight }),
+        ...(boardId && { boardId }),
       },
       teamAssignments,
       pickOrder,

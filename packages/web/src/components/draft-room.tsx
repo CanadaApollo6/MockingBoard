@@ -448,10 +448,18 @@ export function DraftRoom({
     const player = selectCpuPick(availablePlayers, effectiveNeeds, {
       randomness: (draft.config.cpuRandomness ?? 50) / 100,
       needsWeight: (draft.config.cpuNeedsWeight ?? 50) / 100,
+      boardRankings: bigBoardRankings,
     });
     if (!player) return;
     handlePick(player.id);
-  }, [draft, submitting, availablePlayers, playerMap, handlePick]);
+  }, [
+    draft,
+    submitting,
+    availablePlayers,
+    playerMap,
+    handlePick,
+    bigBoardRankings,
+  ]);
 
   const {
     remaining,

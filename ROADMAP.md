@@ -40,7 +40,7 @@
 
 ### Milestone 1.5: Polish & Testing ✓
 
-- [x] Comprehensive unit tests for draft logic (218 tests across all packages)
+- [x] Comprehensive unit tests for draft logic (439 tests across 28 files)
 - [x] Error handling and user-friendly error messages (custom error classes, timer error handling)
 - [x] Rate limiting and basic abuse prevention (rateLimit.service.ts)
 - [x] Documentation for bot commands (/help command, bot README)
@@ -189,19 +189,19 @@ Extract platform-agnostic business logic from bot services to `packages/shared`.
 
 ### Milestone 3.8: Additional Sign-In Providers
 
-- [ ] Google OAuth (Firebase Auth provider — largest potential user base)
+- [x] Google OAuth (Firebase Auth provider — largest potential user base)
 - [ ] Sign in with Apple (required for iOS App Store if native app ever ships; good practice regardless)
 - [ ] X (Twitter) OAuth (aligns with NFL/draft community presence on the platform)
-- [ ] Unified account linking: link any combination of providers in settings
-- [ ] Auth UI updates: provider buttons on sign-in/sign-up pages
+- [x] Unified account linking: link any combination of providers in settings
+- [x] Auth UI updates: provider buttons on sign-in/sign-up pages
 
-### Milestone 3.5: Draft Enhancements
+### Milestone 3.5: Draft Enhancements (Partial) ✓
 
-- [ ] CPU pick randomness/variance so drafts don't play out identically
-- [ ] Configurable draft sliders (randomness weight, BPA vs. team needs balance)
-- [ ] Multi-team draft mode (one user controls multiple teams)
+- [x] CPU pick randomness/variance so drafts don't play out identically (`CpuPickOptions` with jitter + interpolated probability windows)
+- [x] Configurable draft sliders (CPU Randomness and CPU Draft Strategy range inputs on draft creator, persisted through API and guest URL params)
+- [x] Multi-team draft mode (one user controls 2–31 teams; multi-select team grid, "Picking for [TEAM]" indicator in draft rooms)
+- [x] Public draft lobbies polish (ISR revalidation every 30s, "Possibly inactive" badge for lobbies older than 2 hours)
 - [ ] Collaborative drafting (vote-based picks with friends controlling one team)
-- [ ] Finish public draft lobbies (join drafts with strangers — mostly done)
 - [ ] Run mock drafts using personal big board rankings as the CPU pick order
 - [ ] In-draft web chat for multiplayer (message feed alongside pick UI)
 
@@ -698,3 +698,4 @@ Server-side and client-side enforcement of Free/Pro boundaries across the platfo
 ## Future Considerations
 
 - **Mobile native app**: Only if popularity demands it — responsive web (Phase 7.5.2) is the priority path
+- **Draft suggestion algo**: Top of the market algorithm to drive cpu picks and suggestions based on a variety of studies from Massey, Kevin Cole, and Ben Baldwin that attempt to quantify positional value, how teams actually use draft picks, and how they SHOULD use draft picks

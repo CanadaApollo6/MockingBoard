@@ -10,6 +10,10 @@ export interface CpuPickOptions {
   randomness?: number;
   /** 0.0 = pure BPA, 1.0 = heavily needs-based. Default: 0.5 */
   needsWeight?: number;
+  /** Player IDs ordered by user's big board. When provided, board index is used
+   *  as the ranking instead of consensusRank. Players not on the board fall back
+   *  to consensusRank. */
+  boardRankings?: string[];
 }
 
 /** Max need multipliers at needsWeight=1. Calibrated so 0.5 reproduces NEED_MULTIPLIERS. */
@@ -36,12 +40,17 @@ export function selectCpuPick(
   const r = options?.randomness ?? 0.5;
   const nw = options?.needsWeight ?? 0.5;
 
+  const boardRankings = options?.boardRankings;
+
   const scored = availablePlayers.map((player) => {
     const ni = teamNeeds.indexOf(player.position);
     const mult = needMultiplier(ni, nw);
-    const base = player.consensusRank * mult;
-    const jitter =
-      r > 0 ? (Math.random() - 0.5) * player.consensusRank * r * 0.2 : 0;
+    // Use board ranking if provided; fall back to consensusRank for unlisted players
+    const rank = boardRankings
+      ? boardRankings.indexOf(player.id) + 1 || player.consensusRank
+      : player.consensusRank;
+    const base = rank * mult;
+    const jitter = r > 0 ? (Math.random() - 0.5) * rank * r * 0.2 : 0;
     return { player, score: base + jitter };
   });
 

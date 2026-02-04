@@ -215,6 +215,69 @@ describe('selectCpuPick with CpuPickOptions', () => {
   });
 });
 
+describe('selectCpuPick with boardRankings', () => {
+  beforeEach(() => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('uses board ranking instead of consensusRank when provided', () => {
+    // Consensus: p1=rank1, p2=rank2. Board: p2 first, p1 second.
+    const p1 = makePlayer({ consensusRank: 1, id: 'p1' });
+    const p2 = makePlayer({ consensusRank: 2, id: 'p2' });
+
+    const pick = selectCpuPick([p1, p2], [], {
+      randomness: 0,
+      boardRankings: ['p2', 'p1'],
+    });
+    // p2 is board rank 1, p1 is board rank 2 → p2 wins
+    expect(pick.id).toBe('p2');
+  });
+
+  it('falls back to consensusRank for players not on the board', () => {
+    const p1 = makePlayer({ consensusRank: 5, id: 'p1' });
+    const p2 = makePlayer({ consensusRank: 3, id: 'p2' });
+
+    // Board only has p1 at index 0 (rank 1). p2 is not on board → uses consensus 3.
+    const pick = selectCpuPick([p1, p2], [], {
+      randomness: 0,
+      boardRankings: ['p1'],
+    });
+    // p1 board rank 1, p2 consensus rank 3 → p1 wins
+    expect(pick.id).toBe('p1');
+  });
+
+  it('board rankings interact correctly with needs', () => {
+    const qb = makePlayer({ consensusRank: 10, position: 'QB', id: 'qb' });
+    const cb = makePlayer({ consensusRank: 20, position: 'CB', id: 'cb' });
+
+    // Board puts CB first. With needs boost, CB should clearly win.
+    const pick = selectCpuPick([qb, cb], ['CB'], {
+      randomness: 0,
+      needsWeight: 0.5,
+      boardRankings: ['cb', 'qb'],
+    });
+    // CB board rank 1 * need multiplier 0.85 = 0.85
+    // QB board rank 2 * no need 1.0 = 2.0
+    expect(pick.id).toBe('cb');
+  });
+
+  it('empty board rankings array falls back to consensus for all', () => {
+    const p1 = makePlayer({ consensusRank: 1, id: 'p1' });
+    const p2 = makePlayer({ consensusRank: 2, id: 'p2' });
+
+    const pick = selectCpuPick([p1, p2], [], {
+      randomness: 0,
+      boardRankings: [],
+    });
+    // Both fall back to consensus → p1 wins
+    expect(pick.id).toBe('p1');
+  });
+});
+
 describe('getEffectiveNeeds', () => {
   it('removes a drafted position from needs', () => {
     const needs: Position[] = ['CB', 'EDGE', 'WR'];

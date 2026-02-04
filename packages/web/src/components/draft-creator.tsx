@@ -48,6 +48,9 @@ export function DraftCreator() {
   const [tradesEnabled, setTradesEnabled] = useState(false);
   const [notificationLevel, setNotificationLevel] =
     useState<NotificationLevel>('off');
+  const [useMyBoard, setUseMyBoard] = useState(false);
+  const [boardId, setBoardId] = useState<string | null>(null);
+  const [boardLoading, setBoardLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -83,6 +86,34 @@ export function DraftCreator() {
       });
     } else {
       setSelectedTeams(new Set([teamId]));
+    }
+  }
+
+  async function handleBoardToggle(enabled: boolean) {
+    setUseMyBoard(enabled);
+    if (!enabled) {
+      setBoardId(null);
+      return;
+    }
+    setBoardLoading(true);
+    try {
+      const res = await fetch(`/api/boards/mine?year=${year}`);
+      if (res.ok) {
+        const data = await res.json();
+        setBoardId(data.boardId ?? null);
+        if (!data.boardId) {
+          setUseMyBoard(false);
+          setError(
+            'No board found for this year. Create one in the Board Builder first.',
+          );
+        }
+      } else {
+        setUseMyBoard(false);
+      }
+    } catch {
+      setUseMyBoard(false);
+    } finally {
+      setBoardLoading(false);
     }
   }
 
@@ -135,6 +166,7 @@ export function DraftCreator() {
           notificationLevel,
           multiplayer,
           ...(multiplayer && { visibility, teamAssignmentMode }),
+          ...(boardId && { boardId }),
         }),
       });
 
@@ -323,6 +355,29 @@ export function DraftCreator() {
                 leftLabel="Best Available"
                 rightLabel="Team Needs"
               />
+              {!isGuest && (
+                <OptionGroup
+                  label="CPU Pick Order"
+                  subtitle="Use your big board rankings for CPU picks"
+                >
+                  <Button
+                    variant={!useMyBoard ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handleBoardToggle(false)}
+                    disabled={boardLoading}
+                  >
+                    Consensus
+                  </Button>
+                  <Button
+                    variant={useMyBoard ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handleBoardToggle(true)}
+                    disabled={boardLoading}
+                  >
+                    {boardLoading ? 'Loading...' : 'My Board'}
+                  </Button>
+                </OptionGroup>
+              )}
             </>
           )}
 

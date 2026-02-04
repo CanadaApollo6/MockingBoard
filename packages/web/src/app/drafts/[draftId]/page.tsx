@@ -1,17 +1,23 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import type { TeamAbbreviation } from '@mockingboard/shared';
+import type { TeamAbbreviation, Position } from '@mockingboard/shared';
+import { teams, generateDraftRecap } from '@mockingboard/shared';
 import {
   getDraft,
   getDraftPicks,
   getPlayerMap,
   getDraftTrades,
+  getBigBoard,
 } from '@/lib/data';
 import { getSessionUser } from '@/lib/auth-session';
 import { resolveUser, isUserInDraft } from '@/lib/user-resolve';
 import { formatDraftDate, getDraftDisplayName } from '@/lib/format';
 import { DraftBoard } from '@/components/draft-board';
 import { TradeSummary } from '@/components/trade-summary';
+import { DraftRecapSummary } from '@/components/recap/draft-recap-summary';
+import { TeamGradeCard } from '@/components/recap/team-grade-card';
+import { PickBreakdown } from '@/components/recap/pick-breakdown';
+import { TradeAnalysisCard } from '@/components/recap/trade-analysis-card';
 import { ShareButton } from '@/components/share/share-button';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -46,6 +52,32 @@ export default async function DraftDetailPage({
 
   const playersObj = Object.fromEntries(playerMap);
 
+  // Generate recap for completed drafts
+  const recap =
+    draft.status === 'complete' && picks.length > 0
+      ? await (async () => {
+          const teamNeeds = new Map<TeamAbbreviation, Position[]>(
+            teams.map((t) => [t.id, t.needs]),
+          );
+          const boardRankings = draft.config.boardId
+            ? (await getBigBoard(draft.config.boardId))?.rankings
+            : undefined;
+          return generateDraftRecap(
+            draft,
+            picks,
+            playersObj,
+            teamNeeds,
+            trades,
+            boardRankings,
+          );
+        })()
+      : null;
+
+  const hasBoardDelta =
+    recap?.teamGrades.some((tg) =>
+      tg.picks.some((p) => p.boardDelta != null),
+    ) ?? false;
+
   return (
     <main className="mx-auto max-w-screen-xl px-4 py-8">
       {/* Header */}
@@ -73,6 +105,7 @@ export default async function DraftDetailPage({
               picks={picks}
               players={playersObj}
               userTeams={userTeams}
+              recap={recap}
             />
           )}
         </div>
@@ -97,6 +130,48 @@ export default async function DraftDetailPage({
       </div>
 
       <Separator className="mb-6" />
+
+      {/* Draft Recap */}
+      {recap && (
+        <>
+          <DraftRecapSummary recap={recap} />
+
+          <h2 className="mb-4 mt-6 text-lg font-semibold">Team Grades</h2>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {recap.teamGrades.map((grade) => (
+              <TeamGradeCard
+                key={grade.team}
+                grade={grade}
+                players={playersObj}
+              />
+            ))}
+          </div>
+
+          <Separator className="my-6" />
+
+          <h2 className="mb-4 text-lg font-semibold">Pick Breakdown</h2>
+          <PickBreakdown
+            recap={recap}
+            players={playersObj}
+            hasBoardDelta={hasBoardDelta}
+          />
+
+          {recap.tradeAnalysis.length > 0 && (
+            <>
+              <h2 className="mb-4 mt-6 text-lg font-semibold">
+                Trade Analysis
+              </h2>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {recap.tradeAnalysis.map((trade) => (
+                  <TradeAnalysisCard key={trade.tradeId} trade={trade} />
+                ))}
+              </div>
+            </>
+          )}
+
+          <Separator className="my-6" />
+        </>
+      )}
 
       {/* Draft Board */}
       <DraftBoard picks={picks} playerMap={playerMap} />
