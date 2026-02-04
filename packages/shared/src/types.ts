@@ -396,3 +396,18 @@ export interface Follow {
   followeeId: string;
   createdAt: FirestoreTimestamp;
 }
+
+// ---- Video Breakdown Types ----
+
+export interface VideoBreakdown {
+  id: string;
+  playerId: string;
+  authorId: string;
+  authorName: string;
+  youtubeUrl: string;
+  youtubeVideoId: string;
+  title: string;
+  timestamp?: number;
+  tags?: string[];
+  createdAt: FirestoreTimestamp;
+}

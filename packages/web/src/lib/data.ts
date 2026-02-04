@@ -14,6 +14,7 @@ import type {
   BoardSnapshot,
   ScoutingReport,
   User,
+  VideoBreakdown,
 } from '@mockingboard/shared';
 
 export async function getDrafts(options?: {
@@ -444,6 +445,25 @@ export async function getUserReports(
   return sanitize(
     snapshot.docs.map(
       (doc) => ({ id: doc.id, ...doc.data() }) as ScoutingReport,
+    ),
+  );
+}
+
+// ---- Video Breakdowns ----
+
+export async function getPlayerVideos(
+  playerId: string,
+): Promise<VideoBreakdown[]> {
+  const snapshot = await adminDb
+    .collection('videoBreakdowns')
+    .where('playerId', '==', playerId)
+    .orderBy('createdAt', 'desc')
+    .limit(30)
+    .get();
+
+  return sanitize(
+    snapshot.docs.map(
+      (doc) => ({ id: doc.id, ...doc.data() }) as VideoBreakdown,
     ),
   );
 }

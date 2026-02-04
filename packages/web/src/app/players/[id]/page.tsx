@@ -1,9 +1,10 @@
 import { notFound } from 'next/navigation';
-import { getPlayerMap, getPlayerReports } from '@/lib/data';
+import { getPlayerMap, getPlayerReports, getPlayerVideos } from '@/lib/data';
 import { PlayerHero } from '@/components/player-hero';
 import { ProspectDetails } from '@/components/prospect-details';
 import { CommunityGradeSummary } from '@/components/community-grade-summary';
 import { CommunityReports } from '@/components/community-reports';
+import { VideoGallery } from '@/components/video-gallery';
 
 const CURRENT_YEAR = 2026;
 
@@ -18,7 +19,10 @@ export default async function PlayerPage({ params }: Props) {
 
   if (!player) notFound();
 
-  const reports = await getPlayerReports(id);
+  const [reports, videos] = await Promise.all([
+    getPlayerReports(id),
+    getPlayerVideos(id),
+  ]);
 
   return (
     <main className="mx-auto max-w-screen-xl px-4 py-8">
@@ -42,6 +46,15 @@ export default async function PlayerPage({ params }: Props) {
             initialReports={reports}
           />
         </div>
+      </div>
+
+      {/* Video breakdowns — full width below the two-column layout */}
+      <div className="mt-10">
+        <VideoGallery
+          playerId={id}
+          playerName={player.name}
+          initialVideos={videos}
+        />
       </div>
     </main>
   );

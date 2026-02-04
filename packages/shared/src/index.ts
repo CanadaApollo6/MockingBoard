@@ -31,6 +31,7 @@ export type {
   BoardVisibility,
   ScoutingReport,
   Follow,
+  VideoBreakdown,
 } from './types';
 
 // Constants
