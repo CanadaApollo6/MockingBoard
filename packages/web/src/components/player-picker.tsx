@@ -2,8 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import type { Player, PositionFilterGroup } from '@mockingboard/shared';
-import { POSITION_GROUPS } from '@mockingboard/shared';
+import type { Player, Position } from '@mockingboard/shared';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { PlayerCard } from '@/components/player-card';
@@ -17,13 +16,20 @@ interface PlayerPickerProps {
   rankOverride?: Map<string, number>;
 }
 
-const FILTER_LABELS: Record<Exclude<PositionFilterGroup, null>, string> = {
-  QB: 'QB',
-  WR_TE: 'WR/TE',
-  RB: 'RB',
-  OL: 'OL',
-  DEF: 'DEF',
-};
+const POSITIONS: Position[] = [
+  'QB',
+  'RB',
+  'WR',
+  'TE',
+  'OT',
+  'OG',
+  'C',
+  'EDGE',
+  'DL',
+  'LB',
+  'CB',
+  'S',
+];
 
 export function PlayerPicker({
   players,
@@ -32,7 +38,7 @@ export function PlayerPicker({
   rankOverride,
 }: PlayerPickerProps) {
   const [search, setSearch] = useState('');
-  const [posFilter, setPosFilter] = useState<PositionFilterGroup>(null);
+  const [posFilter, setPosFilter] = useState<Position | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
@@ -48,8 +54,7 @@ export function PlayerPicker({
     }
 
     if (posFilter) {
-      const positions = POSITION_GROUPS[posFilter];
-      result = result.filter((p) => positions.includes(p.position));
+      result = result.filter((p) => p.position === posFilter);
     }
 
     return result;
@@ -89,16 +94,14 @@ export function PlayerPicker({
         >
           All
         </Button>
-        {(
-          Object.keys(FILTER_LABELS) as Exclude<PositionFilterGroup, null>[]
-        ).map((group) => (
+        {POSITIONS.map((pos) => (
           <Button
-            key={group}
-            variant={posFilter === group ? 'default' : 'outline'}
+            key={pos}
+            variant={posFilter === pos ? 'default' : 'outline'}
             size="xs"
-            onClick={() => setPosFilter(group)}
+            onClick={() => setPosFilter(pos)}
           >
-            {FILTER_LABELS[group]}
+            {pos}
           </Button>
         ))}
       </div>

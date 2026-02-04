@@ -17,12 +17,11 @@ import {
 } from '@dnd-kit/sortable';
 import type {
   Player,
+  Position,
   BigBoard,
   BoardSnapshot,
   CustomPlayer,
-  PositionFilterGroup,
 } from '@mockingboard/shared';
-import { POSITION_GROUPS } from '@mockingboard/shared';
 import { useBigBoard } from '@/hooks/use-big-board';
 import { BoardPlayerRow } from '@/components/board-player-row';
 import { BoardToolbar } from '@/components/board-toolbar';
@@ -142,9 +141,9 @@ function BoardEditorInner({
   onRestore,
 }: BoardEditorInnerProps) {
   const [search, setSearch] = useState('');
-  const [posFilter, setPosFilter] = useState<PositionFilterGroup>(null);
+  const [posFilter, setPosFilter] = useState<Position | null>(null);
   const [poolSearch, setPoolSearch] = useState('');
-  const [poolPosFilter, setPoolPosFilter] = useState<PositionFilterGroup>(null);
+  const [poolPosFilter, setPoolPosFilter] = useState<Position | null>(null);
   const [snapshots, setSnapshots] = useState<BoardSnapshot[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [restoringId, setRestoringId] = useState<string | null>(null);
@@ -231,7 +230,7 @@ function BoardEditorInner({
       }
 
       if (posFilter && position) {
-        if (!POSITION_GROUPS[posFilter].includes(position)) return false;
+        if (position !== posFilter) return false;
       }
 
       return true;
@@ -253,9 +252,7 @@ function BoardEditorInner({
     }
 
     if (poolPosFilter) {
-      result = result.filter((p) =>
-        POSITION_GROUPS[poolPosFilter].includes(p.position),
-      );
+      result = result.filter((p) => p.position === poolPosFilter);
     }
 
     return result;
@@ -281,16 +278,20 @@ function BoardEditorInner({
     }
   }
 
-  const POOL_FILTER_LABELS: Record<
-    Exclude<PositionFilterGroup, null>,
-    string
-  > = {
-    QB: 'QB',
-    WR_TE: 'WR/TE',
-    RB: 'RB',
-    OL: 'OL',
-    DEF: 'DEF',
-  };
+  const POSITIONS: Position[] = [
+    'QB',
+    'RB',
+    'WR',
+    'TE',
+    'OT',
+    'OG',
+    'C',
+    'EDGE',
+    'DL',
+    'LB',
+    'CB',
+    'S',
+  ];
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
@@ -427,19 +428,14 @@ function BoardEditorInner({
           >
             All
           </Button>
-          {(
-            Object.keys(POOL_FILTER_LABELS) as Exclude<
-              PositionFilterGroup,
-              null
-            >[]
-          ).map((group) => (
+          {POSITIONS.map((pos) => (
             <Button
-              key={group}
-              variant={poolPosFilter === group ? 'default' : 'outline'}
+              key={pos}
+              variant={poolPosFilter === pos ? 'default' : 'outline'}
               size="xs"
-              onClick={() => setPoolPosFilter(group)}
+              onClick={() => setPoolPosFilter(pos)}
             >
-              {POOL_FILTER_LABELS[group]}
+              {pos}
             </Button>
           ))}
         </div>

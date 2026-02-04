@@ -1,29 +1,39 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import type { Player, PositionFilterGroup } from '@mockingboard/shared';
-import { POSITION_GROUPS } from '@mockingboard/shared';
+import type { Player, Position } from '@mockingboard/shared';
 import { Button } from '@/components/ui/button';
 import { ProspectCard } from '@/components/prospect-card';
+import { ProspectRow } from '@/components/prospect-row';
 
 interface ProspectBigBoardProps {
   players: Player[];
 }
 
-const FILTER_LABELS: Record<Exclude<PositionFilterGroup, null>, string> = {
-  QB: 'QB',
-  WR_TE: 'WR/TE',
-  RB: 'RB',
-  OL: 'OL',
-  DEF: 'DEF',
-};
+const POSITIONS: Position[] = [
+  'QB',
+  'RB',
+  'WR',
+  'TE',
+  'OT',
+  'OG',
+  'C',
+  'EDGE',
+  'DL',
+  'LB',
+  'CB',
+  'S',
+];
 
 const PAGE_SIZE = 50;
 
+type ViewMode = 'full' | 'condensed';
+
 export function ProspectBigBoard({ players }: ProspectBigBoardProps) {
   const [search, setSearch] = useState('');
-  const [posFilter, setPosFilter] = useState<PositionFilterGroup>(null);
+  const [posFilter, setPosFilter] = useState<Position | null>(null);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [view, setView] = useState<ViewMode>('full');
 
   const filtered = useMemo(() => {
     let result = players;
@@ -39,8 +49,7 @@ export function ProspectBigBoard({ players }: ProspectBigBoardProps) {
     }
 
     if (posFilter) {
-      const positions = POSITION_GROUPS[posFilter];
-      result = result.filter((p) => positions.includes(p.position));
+      result = result.filter((p) => p.position === posFilter);
     }
 
     return result;
@@ -52,7 +61,7 @@ export function ProspectBigBoard({ players }: ProspectBigBoardProps) {
   return (
     <div>
       {/* Sticky filter bar */}
-      <div className="sticky top-14 z-10 -mx-4 mb-6 border-b bg-background/80 px-4 py-3 backdrop-blur-sm">
+      <div className="sticky top-0 z-10 -mx-4 mb-6 border-b bg-background px-4 py-3">
         <div className="flex flex-wrap items-center gap-3">
           <input
             type="text"
@@ -75,25 +84,41 @@ export function ProspectBigBoard({ players }: ProspectBigBoardProps) {
             >
               All
             </Button>
-            {(
-              Object.keys(FILTER_LABELS) as Exclude<PositionFilterGroup, null>[]
-            ).map((group) => (
+            {POSITIONS.map((pos) => (
               <Button
-                key={group}
-                variant={posFilter === group ? 'default' : 'outline'}
+                key={pos}
+                variant={posFilter === pos ? 'default' : 'outline'}
                 size="xs"
                 onClick={() => {
-                  setPosFilter(group);
+                  setPosFilter(pos);
                   setVisibleCount(PAGE_SIZE);
                 }}
               >
-                {FILTER_LABELS[group]}
+                {pos}
               </Button>
             ))}
           </div>
           <span className="text-sm text-muted-foreground">
             {filtered.length} prospect{filtered.length !== 1 ? 's' : ''}
           </span>
+          <div className="ml-auto flex gap-1">
+            <Button
+              variant={view === 'full' ? 'default' : 'outline'}
+              size="xs"
+              onClick={() => setView('full')}
+              aria-label="Full view"
+            >
+              Full
+            </Button>
+            <Button
+              variant={view === 'condensed' ? 'default' : 'outline'}
+              size="xs"
+              onClick={() => setView('condensed')}
+              aria-label="Condensed view"
+            >
+              List
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -102,10 +127,16 @@ export function ProspectBigBoard({ players }: ProspectBigBoardProps) {
         <p className="py-12 text-center text-muted-foreground">
           No prospects found.
         </p>
-      ) : (
+      ) : view === 'full' ? (
         <div className="space-y-6">
           {visible.map((player) => (
             <ProspectCard key={player.id} player={player} />
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {visible.map((player) => (
+            <ProspectRow key={player.id} player={player} />
           ))}
         </div>
       )}

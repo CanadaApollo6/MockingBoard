@@ -1,26 +1,29 @@
 'use client';
 
 import { useState } from 'react';
-import type {
-  PositionFilterGroup,
-  Position,
-  CustomPlayer,
-} from '@mockingboard/shared';
+import type { Position, CustomPlayer } from '@mockingboard/shared';
 import { Button } from '@/components/ui/button';
 
-const FILTER_LABELS: Record<Exclude<PositionFilterGroup, null>, string> = {
-  QB: 'QB',
-  WR_TE: 'WR/TE',
-  RB: 'RB',
-  OL: 'OL',
-  DEF: 'DEF',
-};
+const POSITIONS: Position[] = [
+  'QB',
+  'RB',
+  'WR',
+  'TE',
+  'OT',
+  'OG',
+  'C',
+  'EDGE',
+  'DL',
+  'LB',
+  'CB',
+  'S',
+];
 
 interface BoardToolbarProps {
   search: string;
   onSearchChange: (value: string) => void;
-  posFilter: PositionFilterGroup;
-  onPosFilterChange: (value: PositionFilterGroup) => void;
+  posFilter: Position | null;
+  onPosFilterChange: (value: Position | null) => void;
   isSaving: boolean;
   isDirty: boolean;
   onAddCustomPlayer: (player: CustomPlayer) => void;
@@ -92,16 +95,14 @@ export function BoardToolbar({
         >
           All
         </Button>
-        {(
-          Object.keys(FILTER_LABELS) as Exclude<PositionFilterGroup, null>[]
-        ).map((group) => (
+        {POSITIONS.map((pos) => (
           <Button
-            key={group}
-            variant={posFilter === group ? 'default' : 'outline'}
+            key={pos}
+            variant={posFilter === pos ? 'default' : 'outline'}
             size="xs"
-            onClick={() => onPosFilterChange(group)}
+            onClick={() => onPosFilterChange(pos)}
           >
-            {FILTER_LABELS[group]}
+            {pos}
           </Button>
         ))}
 
