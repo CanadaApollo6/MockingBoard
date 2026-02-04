@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
+  Home,
   FileText,
   Users,
   Search,
@@ -23,6 +24,10 @@ import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 
 const NAV_GROUPS = [
+  {
+    label: '',
+    items: [{ href: '/', label: 'Home', icon: Home }],
+  },
   {
     label: 'Drafts',
     items: [
@@ -52,7 +57,8 @@ const NAV_GROUPS = [
 ] as const;
 
 function isNavActive(href: string, pathname: string): boolean {
-  if (href === '/drafts' || href === '/board') return pathname === href;
+  if (href === '/' || href === '/drafts' || href === '/board')
+    return pathname === href;
   return pathname.startsWith(href);
 }
 
@@ -91,11 +97,13 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
 
       {/* Navigation */}
       <nav className="flex-1 space-y-4 overflow-y-auto px-2 py-4">
-        {NAV_GROUPS.map((group) => (
-          <div key={group.label}>
-            <p className="mb-1 px-3 text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/50">
-              {group.label}
-            </p>
+        {NAV_GROUPS.map((group, gi) => (
+          <div key={group.label || gi}>
+            {group.label && (
+              <p className="mb-1 px-3 text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/50">
+                {group.label}
+              </p>
+            )}
             <div className="space-y-0.5">
               {group.items.map(({ href, label, icon: Icon }) => {
                 const active = isNavActive(href, pathname);

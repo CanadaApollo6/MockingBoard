@@ -236,7 +236,7 @@ export function AuthForm({ initialMode = 'signin' }: AuthFormProps) {
 
         <div className="space-y-3">
           <a href="/api/auth/discord">
-            <Button variant="outline" className="w-full">
+            <Button variant="outline" className="w-full mb-1">
               <svg
                 className="size-5"
                 viewBox="0 0 24 24"
