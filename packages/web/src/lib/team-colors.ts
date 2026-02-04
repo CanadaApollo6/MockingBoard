@@ -153,7 +153,7 @@ export function teamColorStyle(team: TeamAbbreviation): React.CSSProperties {
 
 // --- Theme derivation ---
 
-const ACHROMATIC_THRESHOLD = 5;
+const ACHROMATIC_THRESHOLD = 8;
 
 /**
  * Derive accent color palette from a hex color, adjusted for the given mode.

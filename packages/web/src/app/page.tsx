@@ -6,7 +6,8 @@ import {
   getTopDrafters,
 } from '@/lib/data';
 import { LandingHero } from '@/components/landing-hero';
-import { Dashboard, getProspectOfTheDay } from '@/components/dashboard';
+import { Dashboard } from '@/components/dashboard';
+import { getProspectOfTheDay } from '@/lib/prospect';
 
 const CURRENT_YEAR = 2026;
 
