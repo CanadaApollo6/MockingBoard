@@ -4,14 +4,25 @@ import { useState } from 'react';
 import { signInAnonymously } from 'firebase/auth';
 import { getClientAuth } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface GuestJoinModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   onComplete: () => void;
-  onCancel: () => void;
 }
 
-export function GuestJoinModal({ onComplete, onCancel }: GuestJoinModalProps) {
+export function GuestJoinModal({
+  open,
+  onOpenChange,
+  onComplete,
+}: GuestJoinModalProps) {
   const [displayName, setDisplayName] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,53 +67,54 @@ export function GuestJoinModal({ onComplete, onCancel }: GuestJoinModalProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle>Join as Guest</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label
-                htmlFor="guest-name"
-                className="mb-2 block text-sm font-medium"
-              >
-                Display Name
-              </label>
-              <input
-                id="guest-name"
-                type="text"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="Enter your name"
-                maxLength={32}
-                autoFocus
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-            {error && <p className="text-sm text-destructive">{error}</p>}
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                className="flex-1"
-                onClick={onCancel}
-                disabled={submitting}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                className="flex-1"
-                disabled={submitting || !displayName.trim()}
-              >
-                {submitting ? 'Joining...' : 'Continue'}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Join as Guest</DialogTitle>
+          <DialogDescription>
+            Enter a display name to join the draft.
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label
+              htmlFor="guest-name"
+              className="mb-2 block text-sm font-medium"
+            >
+              Display Name
+            </label>
+            <input
+              id="guest-name"
+              type="text"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="Enter your name"
+              maxLength={32}
+              autoFocus
+              className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+          {error && <p className="text-sm text-destructive">{error}</p>}
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1"
+              onClick={() => onOpenChange(false)}
+              disabled={submitting}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              className="flex-1"
+              disabled={submitting || !displayName.trim()}
+            >
+              {submitting ? 'Joining...' : 'Continue'}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

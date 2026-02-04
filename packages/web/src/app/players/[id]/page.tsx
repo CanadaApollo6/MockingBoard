@@ -6,6 +6,7 @@ import { PlayerJsonLd } from './json-ld';
 import { ProspectDetails } from '@/components/prospect-details';
 import { CommunityGradeSummary } from '@/components/community-grade-summary';
 import { CommunityReports } from '@/components/community-reports';
+import { WordCloud } from '@/components/word-cloud';
 import { VideoGallery } from '@/components/video-gallery';
 
 const CURRENT_YEAR = 2026;
@@ -50,16 +51,15 @@ export default async function PlayerPage({ params }: Props) {
       <PlayerJsonLd player={player} />
       <PlayerHero player={player} />
 
-      <div className="mt-8 grid gap-4 sm:gap-6 lg:gap-8 lg:grid-cols-[1fr_340px]">
-        {/* Left: Consensus scouting data */}
-        <div className="space-y-6">
+      <div className="mt-8 space-y-10">
+        <section className="space-y-6">
           <h2 className="text-lg font-bold">Consensus Scouting</h2>
           <ProspectDetails player={player} reportCount={reports.length} />
-        </div>
+        </section>
 
-        {/* Right: Community content */}
-        <div className="space-y-6">
+        <section className="space-y-6">
           {reports.length > 0 && <CommunityGradeSummary reports={reports} />}
+          {reports.length > 0 && <WordCloud reports={reports} />}
 
           <CommunityReports
             playerId={id}
@@ -67,7 +67,7 @@ export default async function PlayerPage({ params }: Props) {
             year={CURRENT_YEAR}
             initialReports={reports}
           />
-        </div>
+        </section>
       </div>
 
       {/* Video breakdowns — full width below the two-column layout */}

@@ -58,7 +58,7 @@ export function BoardPlayerRow({
       {/* Drag handle */}
       <button
         type="button"
-        className="cursor-grab touch-none text-muted-foreground hover:text-foreground"
+        className="cursor-grab active:cursor-grabbing touch-none text-muted-foreground hover:text-foreground"
         {...attributes}
         {...listeners}
       >

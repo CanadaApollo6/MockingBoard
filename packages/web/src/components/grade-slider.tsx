@@ -1,68 +1,110 @@
 'use client';
 
+import { cn } from '@/lib/utils';
+
 interface GradeSliderProps {
   value: number | undefined;
   onChange: (value: number | undefined) => void;
 }
 
-function gradeColor(grade: number): string {
+const TIERS = [
+  {
+    label: 'Practice Squad',
+    value: 25,
+    min: 0,
+    max: 39,
+    color: 'text-mb-danger',
+    bg: 'bg-mb-danger/15 border-mb-danger/30',
+  },
+  {
+    label: 'Roster',
+    value: 45,
+    min: 40,
+    max: 49,
+    color: 'text-yellow-500',
+    bg: 'bg-yellow-500/15 border-yellow-500/30',
+  },
+  {
+    label: 'Backup',
+    value: 55,
+    min: 50,
+    max: 59,
+    color: 'text-yellow-500',
+    bg: 'bg-yellow-500/15 border-yellow-500/30',
+  },
+  {
+    label: 'Contributor',
+    value: 65,
+    min: 60,
+    max: 69,
+    color: 'text-mb-accent',
+    bg: 'bg-mb-accent/15 border-mb-accent/30',
+  },
+  {
+    label: 'Starter',
+    value: 75,
+    min: 70,
+    max: 79,
+    color: 'text-mb-accent',
+    bg: 'bg-mb-accent/15 border-mb-accent/30',
+  },
+  {
+    label: 'Pro Bowl',
+    value: 85,
+    min: 80,
+    max: 89,
+    color: 'text-mb-success',
+    bg: 'bg-mb-success/15 border-mb-success/30',
+  },
+  {
+    label: 'Elite',
+    value: 95,
+    min: 90,
+    max: 100,
+    color: 'text-mb-success',
+    bg: 'bg-mb-success/15 border-mb-success/30',
+  },
+] as const;
+
+function findTier(grade: number) {
+  return TIERS.find((t) => grade >= t.min && grade <= t.max) ?? null;
+}
+
+export function gradeColor(grade: number): string {
   if (grade >= 80) return 'text-mb-success';
   if (grade >= 60) return 'text-mb-accent';
   if (grade >= 40) return 'text-yellow-500';
   return 'text-mb-danger';
 }
 
-function gradeLabel(grade: number): string {
-  if (grade >= 90) return 'Elite';
-  if (grade >= 80) return 'Pro Bowl';
-  if (grade >= 70) return 'Starter';
-  if (grade >= 60) return 'Contributor';
-  if (grade >= 50) return 'Backup';
-  if (grade >= 40) return 'Roster';
-  return 'Practice Squad';
-}
-
 export function GradeSlider({ value, onChange }: GradeSliderProps) {
+  const activeTier = value != null ? findTier(value) : null;
+
   return (
-    <div className="space-y-1">
-      <div className="flex items-center justify-between">
-        <label className="text-xs font-medium text-muted-foreground">
-          Grade
-        </label>
-        {value != null && (
-          <div className="flex items-center gap-2">
-            <span
-              className={`font-mono text-sm font-bold ${gradeColor(value)}`}
-            >
-              {value}
-            </span>
-            <span className="text-xs text-muted-foreground">
-              {gradeLabel(value)}
-            </span>
+    <div className="space-y-2">
+      <label className="text-xs font-medium text-muted-foreground">
+        Grade <span className="font-normal">(optional)</span>
+      </label>
+      <div className="flex flex-wrap gap-1.5">
+        {TIERS.map((tier) => {
+          const isActive = activeTier?.value === tier.value;
+          return (
             <button
+              key={tier.label}
               type="button"
-              onClick={() => onChange(undefined)}
-              className="text-xs text-muted-foreground hover:text-foreground"
+              onClick={() => onChange(isActive ? undefined : tier.value)}
+              className={cn(
+                'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
+                isActive
+                  ? `${tier.bg} ${tier.color}`
+                  : 'border-transparent bg-muted text-muted-foreground hover:text-foreground',
+              )}
             >
-              Clear
+              {tier.label}
             </button>
-          </div>
-        )}
+          );
+        })}
       </div>
-      <input
-        type="range"
-        min={0}
-        max={100}
-        step={1}
-        value={value ?? 50}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full accent-mb-accent"
-      />
-      {value == null && (
-        <p className="text-xs text-muted-foreground">
-          Drag to set a grade (optional)
-        </p>
-      )}
     </div>
   );
 }

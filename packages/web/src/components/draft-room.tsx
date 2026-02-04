@@ -29,6 +29,7 @@ import { TradeResult } from '@/components/trade-result';
 import { IncomingTrade } from '@/components/incoming-trade';
 import { DraftClock } from '@/components/draft-clock';
 import { DraftLayout } from '@/components/draft-layout';
+import { ConfirmDialog } from '@/components/confirm-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
@@ -549,37 +550,14 @@ export function DraftRoom({
                 <Button variant="ghost" size="sm" onClick={handlePause}>
                   Pause Draft
                 </Button>
-                {showCancelConfirm ? (
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">
-                      Cancel draft?
-                    </span>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={handleCancel}
-                      disabled={cancelling}
-                    >
-                      {cancelling ? 'Cancelling...' : 'Yes'}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowCancelConfirm(false)}
-                    >
-                      No
-                    </Button>
-                  </div>
-                ) : (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-destructive"
-                    onClick={() => setShowCancelConfirm(true)}
-                  >
-                    Cancel Draft
-                  </Button>
-                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-destructive"
+                  onClick={() => setShowCancelConfirm(true)}
+                >
+                  Cancel Draft
+                </Button>
               </div>
             )}
           </>
@@ -593,35 +571,14 @@ export function DraftRoom({
               <Button variant="default" size="sm" onClick={handleResume}>
                 Resume Draft
               </Button>
-              {showCancelConfirm ? (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Cancel?</span>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={handleCancel}
-                    disabled={cancelling}
-                  >
-                    {cancelling ? 'Cancelling...' : 'Yes'}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowCancelConfirm(false)}
-                  >
-                    No
-                  </Button>
-                </div>
-              ) : (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-destructive"
-                  onClick={() => setShowCancelConfirm(true)}
-                >
-                  Cancel Draft
-                </Button>
-              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-destructive"
+                onClick={() => setShowCancelConfirm(true)}
+              >
+                Cancel Draft
+              </Button>
             </div>
           )}
         </div>
@@ -764,7 +721,27 @@ export function DraftRoom({
     </>
   );
 
+  const mobileLabel =
+    isUserTurn && !animating ? 'Make Your Pick' : 'Draft Room';
+
   return (
-    <DraftLayout clock={clockNode} board={boardNode} sidebar={sidebarNode} />
+    <>
+      <DraftLayout
+        clock={clockNode}
+        board={boardNode}
+        sidebar={sidebarNode}
+        mobileLabel={mobileLabel}
+      />
+      <ConfirmDialog
+        open={showCancelConfirm}
+        onOpenChange={setShowCancelConfirm}
+        title="Cancel Draft"
+        description="This will permanently cancel the draft for all participants."
+        confirmLabel="Cancel Draft"
+        onConfirm={handleCancel}
+        loading={cancelling}
+        variant="destructive"
+      />
+    </>
   );
 }

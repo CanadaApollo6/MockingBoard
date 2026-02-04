@@ -333,12 +333,16 @@ export function GuestDraftRoom({ initialDraft, players }: GuestDraftRoomProps) {
     </>
   );
 
+  const mobileLabel =
+    isUserTurn && !isProcessing && !paused ? 'Make Your Pick' : 'Draft Room';
+
   return (
     <DraftLayout
       banner={bannerNode}
       clock={clockNode}
       board={boardNode}
       sidebar={sidebarNode}
+      mobileLabel={mobileLabel}
     />
   );
 }
