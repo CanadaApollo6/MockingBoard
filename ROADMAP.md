@@ -513,7 +513,7 @@ Extract platform-agnostic business logic from bot services to `packages/shared`.
 
 ### Milestone 6.5.2: Draft Order & Trade Value
 
-- [ ] Tankathon-style draft order page with pick ownership and trade value chart
+- [x] Tankathon-style draft order page with pick ownership and trade value chart
 - [ ] Standalone trade value calculator (outside of active drafts)
 - [ ] Support for salary cap implications in trade evaluation (precursor to Phase 9)
 
@@ -709,3 +709,4 @@ Server-side and client-side enforcement of Free/Pro boundaries across the platfo
 
 - **Mobile native app**: Only if popularity demands it — responsive web (Phase 7.5.2) is the priority path
 - **Draft suggestion algo** ✓: Implemented in Milestone 3.7. Research-calibrated analytics engine drawing from Massey/Thaler (Weibull market value, 52% accuracy baseline), Baldwin (surplus curves, OFV tables), Unexpected Points (positional surplus tiers), OTC (Positional Value Index), PFF (Pro-Adjusted WAA), and Keefer (sunk-cost fallacy). Powers CPU positional weighting, suggested pick highlighting, and full post-draft grading.
+- **Add my other packages**: Incorporate my espn-api and nflverse-ts packages into this site to drive further reference ability and tooling powers (need to get these to 1.0 versions first)
