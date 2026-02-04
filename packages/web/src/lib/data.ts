@@ -449,6 +449,39 @@ export async function getUserReports(
   );
 }
 
+// ---- Dashboard ----
+
+export async function getRecentCompletedDraft(): Promise<Draft | null> {
+  const snapshot = await adminDb
+    .collection('drafts')
+    .where('status', '==', 'complete')
+    .orderBy('updatedAt', 'desc')
+    .limit(5)
+    .get();
+
+  const drafts = snapshot.docs
+    .map((doc) => ({ id: doc.id, ...doc.data() }) as Draft)
+    .filter((d) => d.visibility !== 'private');
+
+  if (drafts.length === 0) return null;
+  return sanitize(drafts[0]);
+}
+
+export async function getTopDrafters(limit = 5): Promise<User[]> {
+  const snapshot = await adminDb
+    .collection('users')
+    .orderBy('stats.totalDrafts', 'desc')
+    .limit(limit + 5)
+    .get();
+
+  return sanitize(
+    snapshot.docs
+      .map((doc) => ({ id: doc.id, ...doc.data() }) as User)
+      .filter((u) => !u.isGuest && (u.stats?.totalDrafts ?? 0) > 0)
+      .slice(0, limit),
+  );
+}
+
 // ---- Video Breakdowns ----
 
 export async function getPlayerVideos(

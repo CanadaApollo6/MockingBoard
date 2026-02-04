@@ -6,20 +6,19 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Menu } from 'lucide-react';
 import { Sidebar } from '@/components/sidebar';
+import { useAuth } from '@/components/auth-provider';
 
-const BARE_PATTERNS = ['/', '/auth'];
-
-function isBare(pathname: string): boolean {
-  return BARE_PATTERNS.some((p) =>
-    p === '/' ? pathname === '/' : pathname.startsWith(p),
-  );
+function isBare(pathname: string, isAuthenticated: boolean): boolean {
+  if (pathname === '/') return !isAuthenticated;
+  return pathname.startsWith('/auth');
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { user, loading } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  if (isBare(pathname)) return <>{children}</>;
+  if (isBare(pathname, !loading && !!user)) return <>{children}</>;
 
   return (
     <div className="flex min-h-screen">

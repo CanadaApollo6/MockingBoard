@@ -99,6 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await fetch('/api/auth/session', { method: 'DELETE' });
     setProfile(null);
     setUser(null);
+    window.location.href = '/';
   }
 
   return (

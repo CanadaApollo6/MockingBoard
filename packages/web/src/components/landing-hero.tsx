@@ -52,7 +52,7 @@ export function LandingHero({ error }: LandingHeroProps) {
   const [view, setView] = useState<View>('hero');
 
   return (
-    <section className="relative flex min-h-screen flex-col items-center px-4">
+    <section className="relative flex h-screen flex-col items-center overflow-hidden px-4">
       {/* Animated background orb — persists across views */}
       <motion.div
         className="pointer-events-none absolute inset-0 -top-14 overflow-hidden"
