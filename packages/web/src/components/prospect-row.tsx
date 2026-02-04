@@ -61,7 +61,7 @@ export function ProspectRow({ player }: ProspectRowProps) {
         </div>
 
         {/* Height / Weight */}
-        <div className="hidden w-40 shrink-0 text-right text-sm text-muted-foreground sm:block">
+        <div className="hidden w-40 shrink-0 text-sm text-muted-foreground sm:block">
           {attributes?.height && (
             <span className="font-medium text-foreground">
               {formatHeight(attributes.height)}
@@ -78,7 +78,7 @@ export function ProspectRow({ player }: ProspectRowProps) {
         </div>
 
         {/* Position badge */}
-        <div className="flex w-14 shrink-0 justify-end">
+        <div className="flex w-14 shrink-0">
           <Badge
             style={{
               backgroundColor: getPositionColor(player.position),
