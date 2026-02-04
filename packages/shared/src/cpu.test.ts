@@ -147,6 +147,74 @@ describe('selectCpuPick', () => {
   });
 });
 
+describe('selectCpuPick with CpuPickOptions', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('always picks top-scored player when randomness is 0', () => {
+    // Roll of 0.95 normally picks 3rd+, but randomness=0 forces deterministic #1
+    vi.spyOn(Math, 'random').mockReturnValue(0.95);
+    const players = [
+      makePlayer({ consensusRank: 1 }),
+      makePlayer({ consensusRank: 2 }),
+      makePlayer({ consensusRank: 3 }),
+    ];
+    const pick = selectCpuPick(players, [], { randomness: 0 });
+    expect(pick.consensusRank).toBe(1);
+  });
+
+  it('can select from wider pool at high randomness', () => {
+    // At randomness=1, thresholds are [0.40, 0.65, 0.83, 0.93, 1.0]
+    // Roll of 0.95 lands in the 5th bucket (93–100%)
+    vi.spyOn(Math, 'random').mockReturnValue(0.95);
+    const players = [1, 2, 3, 4, 5].map((r) =>
+      makePlayer({ consensusRank: r }),
+    );
+    const pick = selectCpuPick(players, [], { randomness: 1.0 });
+    expect(pick.consensusRank).toBe(5);
+  });
+
+  it('ignores team needs when needsWeight is 0', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    const players = [
+      makePlayer({ consensusRank: 10, position: 'WR' }),
+      makePlayer({ consensusRank: 11, position: 'CB' }),
+    ];
+    // CB would win at default needsWeight (11*0.85=9.35 < 10), but not at 0
+    const pick = selectCpuPick(players, ['CB'], {
+      randomness: 0,
+      needsWeight: 0,
+    });
+    expect(pick.position).toBe('WR');
+  });
+
+  it('heavily boosts needs when needsWeight is 1', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    const players = [
+      makePlayer({ consensusRank: 10, position: 'WR' }),
+      makePlayer({ consensusRank: 11, position: 'CB' }),
+    ];
+    // CB at needsWeight=1: 11*0.70=7.70, WR: 10.0 → CB wins
+    const pick = selectCpuPick(players, ['CB'], {
+      randomness: 0,
+      needsWeight: 1,
+    });
+    expect(pick.position).toBe('CB');
+  });
+
+  it('default options match original behavior', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    // Same scenario as "picks need player when close in rank to BPA"
+    const players = [
+      makePlayer({ consensusRank: 4, position: 'CB' }),
+      makePlayer({ consensusRank: 5, position: 'WR' }),
+    ];
+    const pick = selectCpuPick(players, ['CB', 'S']);
+    expect(pick.position).toBe('CB');
+  });
+});
+
 describe('getEffectiveNeeds', () => {
   it('removes a drafted position from needs', () => {
     const needs: Position[] = ['CB', 'EDGE', 'WR'];

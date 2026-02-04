@@ -56,6 +56,7 @@ export {
   NEED_MULTIPLIERS,
   getEffectiveNeeds,
   getTeamDraftedPositions,
+  type CpuPickOptions,
 } from './cpu';
 
 // Draft logic

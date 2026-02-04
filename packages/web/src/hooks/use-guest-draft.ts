@@ -164,7 +164,10 @@ export function useGuestDraft(
           teamSeed?.needs ?? [],
           draftedPositions,
         );
-        const player = selectCpuPick(available, effectiveNeeds);
+        const player = selectCpuPick(available, effectiveNeeds, {
+          randomness: (currentDraft.config.cpuRandomness ?? 50) / 100,
+          needsWeight: (currentDraft.config.cpuNeedsWeight ?? 50) / 100,
+        });
 
         const result = makePick(currentDraft, currentPicks, player.id, null);
 
@@ -211,7 +214,10 @@ export function useGuestDraft(
             teamSeed?.needs ?? [],
             draftedPositions,
           );
-          const player = selectCpuPick(available, effectiveNeeds);
+          const player = selectCpuPick(available, effectiveNeeds, {
+            randomness: (d.config.cpuRandomness ?? 50) / 100,
+            needsWeight: (d.config.cpuNeedsWeight ?? 50) / 100,
+          });
           const result = makePick(d, p, player.id, null);
           d = result.draft;
           p = result.picks;

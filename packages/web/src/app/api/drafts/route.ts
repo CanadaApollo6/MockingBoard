@@ -29,7 +29,10 @@ export async function POST(request: Request) {
     rounds: number;
     format: DraftFormat;
     selectedTeam: TeamAbbreviation | null;
+    selectedTeams?: TeamAbbreviation[];
     cpuSpeed: CpuSpeed;
+    cpuRandomness?: number;
+    cpuNeedsWeight?: number;
     secondsPerPick?: number;
     tradesEnabled: boolean;
     notificationLevel?: NotificationLevel;
@@ -52,7 +55,10 @@ export async function POST(request: Request) {
     rounds,
     format,
     selectedTeam,
+    selectedTeams,
     cpuSpeed,
+    cpuRandomness,
+    cpuNeedsWeight,
     secondsPerPick,
     tradesEnabled,
     notificationLevel,
@@ -83,6 +89,17 @@ export async function POST(request: Request) {
     );
   }
 
+  if (
+    !multiplayer &&
+    format === 'multi-team' &&
+    (!selectedTeams || selectedTeams.length < 2)
+  ) {
+    return NextResponse.json(
+      { error: 'At least 2 teams required for multi-team format' },
+      { status: 400 },
+    );
+  }
+
   try {
     const [pickOrder, futurePicks] = await Promise.all([
       buildPickOrder(rounds, year),
@@ -90,13 +107,18 @@ export async function POST(request: Request) {
     ]);
 
     const teamAssignments = {} as Record<TeamAbbreviation, string | null>;
+    const multiTeamSet =
+      format === 'multi-team' && selectedTeams ? new Set(selectedTeams) : null;
     for (const team of teams) {
       if (multiplayer) {
-        // Multiplayer: only creator's selected team assigned, rest are null (CPU/unclaimed)
         teamAssignments[team.id] =
           team.id === selectedTeam ? session.uid : null;
       } else if (format === 'full') {
         teamAssignments[team.id] = session.uid;
+      } else if (multiTeamSet) {
+        teamAssignments[team.id] = multiTeamSet.has(team.id)
+          ? session.uid
+          : null;
       } else {
         teamAssignments[team.id] =
           team.id === selectedTeam ? session.uid : null;
@@ -122,6 +144,8 @@ export async function POST(request: Request) {
         teamAssignmentMode: multiplayer
           ? (teamAssignmentMode ?? 'choice')
           : 'choice',
+        ...(cpuRandomness != null && { cpuRandomness }),
+        ...(cpuNeedsWeight != null && { cpuNeedsWeight }),
       },
       teamAssignments,
       pickOrder,

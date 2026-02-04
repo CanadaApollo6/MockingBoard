@@ -4,6 +4,10 @@ import { getDraftDisplayName } from '@/lib/format';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
+export const revalidate = 30;
+
+const STALE_MS = 2 * 60 * 60 * 1000; // 2 hours
+
 export default async function LobbiesPage() {
   const lobbies = await getPublicLobbies();
 
@@ -25,6 +29,9 @@ export default async function LobbiesPage() {
             const playerCount = lobby.participantNames
               ? Object.keys(lobby.participantNames).length
               : 0;
+            const isStale =
+              lobby.createdAt &&
+              Date.now() - lobby.createdAt.seconds * 1000 > STALE_MS;
             return (
               <Link key={lobby.id} href={`/drafts/${lobby.id}/live`}>
                 <Card className="transition-colors hover:border-primary/50">
@@ -47,8 +54,16 @@ export default async function LobbiesPage() {
                         <span>Timer: {lobby.config.secondsPerPick}s</span>
                       )}
                     </div>
-                    <div className="mt-3">
+                    <div className="mt-3 flex gap-2">
                       <Badge variant="secondary">Open</Badge>
+                      {isStale && (
+                        <Badge
+                          variant="outline"
+                          className="text-muted-foreground"
+                        >
+                          Possibly inactive
+                        </Badge>
+                      )}
                     </div>
                   </CardContent>
                 </Card>

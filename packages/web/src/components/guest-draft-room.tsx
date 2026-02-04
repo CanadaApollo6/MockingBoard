@@ -74,6 +74,14 @@ export function GuestDraftRoom({ initialDraft, players }: GuestDraftRoomProps) {
   const isActive = draft.status === 'active';
   const isComplete = draft.status === 'complete';
 
+  const userTeamCount = useMemo(
+    () =>
+      Object.values(draft.teamAssignments).filter((uid) => uid === GUEST_ID)
+        .length,
+    [draft],
+  );
+  const isMultiTeam = userTeamCount > 1 && userTeamCount < 32;
+
   // Trade eligibility
   const hasCpuTeams = useMemo(
     () => Object.values(draft.teamAssignments).some((uid) => uid === null),
@@ -160,7 +168,10 @@ export function GuestDraftRoom({ initialDraft, players }: GuestDraftRoomProps) {
       teamSeed?.needs ?? [],
       draftedPositions,
     );
-    const player = selectCpuPick(availablePlayers, effectiveNeeds);
+    const player = selectCpuPick(availablePlayers, effectiveNeeds, {
+      randomness: (draft.config.cpuRandomness ?? 50) / 100,
+      needsWeight: (draft.config.cpuNeedsWeight ?? 50) / 100,
+    });
     if (!player) return;
     handlePick(player.id);
   }, [currentSlot, draft, availablePlayers, playerMap, handlePick]);
@@ -310,6 +321,12 @@ export function GuestDraftRoom({ initialDraft, players }: GuestDraftRoomProps) {
           onCancel={() => handleTradeAction('cancel')}
           disabled={false}
         />
+      )}
+
+      {isMultiTeam && isUserTurn && currentSlot && (
+        <p className="text-sm font-medium text-primary">
+          Picking for {currentSlot.teamOverride ?? currentSlot.team}
+        </p>
       )}
 
       {isActive &&

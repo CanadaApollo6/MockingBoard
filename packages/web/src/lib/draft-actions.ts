@@ -287,7 +287,10 @@ export async function runCpuCascade(
       teamSeed?.needs ?? [],
       draftedPositions,
     );
-    const player = selectCpuPick(available, effectiveNeeds);
+    const player = selectCpuPick(available, effectiveNeeds, {
+      randomness: (draft.config.cpuRandomness ?? 50) / 100,
+      needsWeight: (draft.config.cpuNeedsWeight ?? 50) / 100,
+    });
 
     const { pick, isComplete } = await recordPick(draftId, player.id, null);
     cpuPicks.push(pick);
@@ -344,7 +347,10 @@ export async function advanceSingleCpuPick(
     teamSeed?.needs ?? [],
     draftedPositions,
   );
-  const player = selectCpuPick(available, effectiveNeeds);
+  const player = selectCpuPick(available, effectiveNeeds, {
+    randomness: (draft.config.cpuRandomness ?? 50) / 100,
+    needsWeight: (draft.config.cpuNeedsWeight ?? 50) / 100,
+  });
 
   const { pick, isComplete } = await recordPick(draftId, player.id, null);
   return { pick, isComplete };

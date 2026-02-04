@@ -77,7 +77,7 @@ export type DraftStatus =
   | 'paused'
   | 'complete'
   | 'cancelled';
-export type DraftFormat = 'full' | 'single-team';
+export type DraftFormat = 'full' | 'single-team' | 'multi-team';
 export type DraftPlatform = 'discord' | 'web';
 export type TeamAssignmentMode = 'random' | 'choice';
 export type CpuSpeed = 'instant' | 'fast' | 'normal';
@@ -154,6 +154,10 @@ export interface Draft {
     teamAssignmentMode: TeamAssignmentMode;
     cpuSpeed: CpuSpeed;
     tradesEnabled: boolean;
+    /** 0–100, maps to 0.0–1.0 for CPU pick algorithm. Default: 50 */
+    cpuRandomness?: number;
+    /** 0–100, maps to 0.0–1.0 for CPU pick algorithm. Default: 50 */
+    cpuNeedsWeight?: number;
   };
   status: DraftStatus;
   currentPick: number;

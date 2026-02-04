@@ -197,6 +197,13 @@ export function DraftRoom({
   const isPaused = draft?.status === 'paused';
   const isComplete = draft?.status === 'complete';
 
+  const userTeamCount = useMemo(() => {
+    if (!draft) return 0;
+    return Object.values(draft.teamAssignments).filter((uid) => uid === userId)
+      .length;
+  }, [draft, userId]);
+  const isMultiTeam = userTeamCount > 1 && userTeamCount < 32;
+
   // Auto-trigger CPU advancement when current pick is CPU-controlled
   const needsCpuAdvance =
     isActive &&
@@ -438,7 +445,10 @@ export function DraftRoom({
       teamSeed?.needs ?? [],
       draftedPositions,
     );
-    const player = selectCpuPick(availablePlayers, effectiveNeeds);
+    const player = selectCpuPick(availablePlayers, effectiveNeeds, {
+      randomness: (draft.config.cpuRandomness ?? 50) / 100,
+      needsWeight: (draft.config.cpuNeedsWeight ?? 50) / 100,
+    });
     if (!player) return;
     handlePick(player.id);
   }, [draft, submitting, availablePlayers, playerMap, handlePick]);
@@ -682,6 +692,11 @@ export function DraftRoom({
             <div className="py-4 text-center text-sm text-muted-foreground">
               CPU picks rolling in...
             </div>
+          )}
+          {isUserTurn && isMultiTeam && currentSlot && (
+            <p className="text-sm font-medium text-primary">
+              Picking for {currentSlot.teamOverride ?? currentSlot.team}
+            </p>
           )}
           {!animating && !isUserTurn && currentSlot && (
             <p className="text-sm text-muted-foreground">
