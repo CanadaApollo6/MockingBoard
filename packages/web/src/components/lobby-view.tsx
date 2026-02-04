@@ -7,6 +7,7 @@ import type { Draft, TeamAbbreviation } from '@mockingboard/shared';
 import { useLiveDraft } from '@/hooks/use-live-draft';
 import { useAuth } from '@/components/auth-provider';
 import { GuestJoinModal } from '@/components/guest-join-modal';
+import { ConfirmDialog } from '@/components/confirm-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -338,36 +339,23 @@ export function LobbyView({
             >
               {starting ? 'Starting...' : 'Start Draft'}
             </Button>
-            {showCancelConfirm ? (
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">
-                  Cancel draft?
-                </span>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={handleCancel}
-                  disabled={cancelling}
-                >
-                  {cancelling ? 'Cancelling...' : 'Yes'}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowCancelConfirm(false)}
-                >
-                  No
-                </Button>
-              </div>
-            ) : (
-              <Button
-                variant="ghost"
-                className="text-destructive"
-                onClick={() => setShowCancelConfirm(true)}
-              >
-                Cancel Draft
-              </Button>
-            )}
+            <Button
+              variant="ghost"
+              className="text-destructive"
+              onClick={() => setShowCancelConfirm(true)}
+            >
+              Cancel Draft
+            </Button>
+            <ConfirmDialog
+              open={showCancelConfirm}
+              onOpenChange={setShowCancelConfirm}
+              title="Cancel Draft"
+              description="This will permanently cancel the draft. All participants will be removed."
+              confirmLabel="Cancel Draft"
+              onConfirm={handleCancel}
+              loading={cancelling}
+              variant="destructive"
+            />
           </>
         )}
 
@@ -383,16 +371,14 @@ export function LobbyView({
       </div>
 
       {/* Guest join modal */}
-      {showGuestModal && (
-        <GuestJoinModal
-          onComplete={() => {
-            setShowGuestModal(false);
-            // Page will re-render with auth state
-            window.location.reload();
-          }}
-          onCancel={() => setShowGuestModal(false)}
-        />
-      )}
+      <GuestJoinModal
+        open={showGuestModal}
+        onOpenChange={setShowGuestModal}
+        onComplete={() => {
+          setShowGuestModal(false);
+          window.location.reload();
+        }}
+      />
     </div>
   );
 }
