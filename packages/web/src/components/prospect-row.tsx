@@ -62,7 +62,7 @@ export function ProspectRow({ player }: ProspectRowProps) {
         </div>
 
         {/* Height / Weight */}
-        <div className="hidden w-40 shrink-0 text-sm text-muted-foreground sm:block">
+        <div className="hidden w-32 shrink-0 sm:w-40 text-sm text-muted-foreground sm:block">
           {attributes?.height && (
             <span className="font-medium text-foreground">
               {formatHeight(attributes.height)}

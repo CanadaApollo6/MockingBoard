@@ -49,7 +49,7 @@ export function LandingHero({ error }: LandingHeroProps) {
   return (
     <>
       {/* Hero section */}
-      <section className="relative flex min-h-[calc(100vh-3.5rem)] flex-col items-center justify-center px-4 text-center">
+      <section className="relative flex min-h-screen flex-col items-center justify-center px-4 text-center">
         {/* Animated background orb */}
         <motion.div
           className="pointer-events-none absolute inset-0 -top-14 overflow-hidden"
