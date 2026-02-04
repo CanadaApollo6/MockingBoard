@@ -1,7 +1,14 @@
+import type { Metadata } from 'next';
 import { getPublicBoards } from '@/lib/data';
 import { BoardBrowse } from './board-browse';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: 'Community Boards',
+  description:
+    'Browse big boards created by the MockingBoard community. See how analysts rank the top prospects.',
+};
 
 export default async function BoardsPage() {
   const { boards: initialBoards, hasMore: initialHasMore } =

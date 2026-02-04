@@ -1,6 +1,8 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getPlayerMap, getPlayerReports, getPlayerVideos } from '@/lib/data';
 import { PlayerHero } from '@/components/player-hero';
+import { PlayerJsonLd } from './json-ld';
 import { ProspectDetails } from '@/components/prospect-details';
 import { CommunityGradeSummary } from '@/components/community-grade-summary';
 import { CommunityReports } from '@/components/community-reports';
@@ -10,6 +12,25 @@ const CURRENT_YEAR = 2026;
 
 interface Props {
   params: Promise<{ id: string }>;
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  const playerMap = await getPlayerMap(CURRENT_YEAR);
+  const player = playerMap.get(id);
+
+  if (!player) return {};
+
+  const title = `${player.name} – ${player.position}, ${player.school}`;
+  const description =
+    player.scouting?.summary ??
+    `${player.name} is a ${player.position} from ${player.school}. View scouting reports, measurables, and community grades on MockingBoard.`;
+
+  return {
+    title,
+    description,
+    openGraph: { title, description, type: 'profile' },
+  };
 }
 
 export default async function PlayerPage({ params }: Props) {
@@ -26,6 +47,7 @@ export default async function PlayerPage({ params }: Props) {
 
   return (
     <main className="mx-auto max-w-screen-xl px-4 py-8">
+      <PlayerJsonLd player={player} />
       <PlayerHero player={player} />
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_380px]">

@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getBigBoardBySlug, getPlayerMap } from '@/lib/data';
 import { PublicBoardView } from '@/components/public-board-view';
@@ -6,6 +7,24 @@ import type { Player } from '@mockingboard/shared';
 
 interface Props {
   params: Promise<{ slug: string }>;
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  const board = await getBigBoardBySlug(slug);
+
+  if (!board) return {};
+
+  const title = board.name;
+  const description =
+    board.description ??
+    `${board.name} by ${board.authorName ?? 'Anonymous'} – ${board.rankings.length} prospects ranked for the ${board.year} NFL Draft.`;
+
+  return {
+    title,
+    description,
+    openGraph: { title, description, type: 'article' },
+  };
 }
 
 export default async function PublicBoardPage({ params }: Props) {

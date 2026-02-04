@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -15,6 +16,23 @@ const CURRENT_YEAR = 2026;
 
 interface Props {
   params: Promise<{ slug: string }>;
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  const user = await getUserBySlug(slug);
+
+  if (!user) return {};
+
+  const title = user.displayName;
+  const description =
+    user.bio ?? `${user.displayName}'s draft analyst profile on MockingBoard.`;
+
+  return {
+    title,
+    description,
+    openGraph: { title, description, type: 'profile' },
+  };
 }
 
 export default async function ProfilePage({ params }: Props) {

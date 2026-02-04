@@ -2,7 +2,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import {
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  GoogleAuthProvider,
+} from 'firebase/auth';
 import { getClientAuth } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,6 +35,37 @@ export function AuthForm({ initialMode = 'signin' }: AuthFormProps) {
       body: JSON.stringify({ idToken }),
     });
     if (!res.ok) throw new Error('Failed to create session');
+  }
+
+  async function handleGoogleSignIn() {
+    setError(null);
+    setLoading(true);
+
+    try {
+      const result = await signInWithPopup(
+        getClientAuth(),
+        new GoogleAuthProvider(),
+      );
+      const idToken = await result.user.getIdToken();
+
+      // Ensure Firestore user doc exists (idempotent for returning users)
+      await fetch('/api/auth/google/setup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken }),
+      });
+
+      await createSession(idToken);
+      router.replace('/drafts');
+    } catch (err) {
+      const code = (err as { code?: string }).code;
+      // User closed the popup — not an error
+      if (code !== 'auth/popup-closed-by-user') {
+        setError('Google sign-in failed. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function handleSignIn(e: React.FormEvent) {
@@ -204,6 +239,15 @@ export function AuthForm({ initialMode = 'signin' }: AuthFormProps) {
             Sign in with Discord
           </Button>
         </a>
+
+        <Button
+          variant="outline"
+          className="w-full"
+          onClick={handleGoogleSignIn}
+          disabled={loading}
+        >
+          Sign in with Google
+        </Button>
       </CardContent>
     </Card>
   );

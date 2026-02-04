@@ -19,8 +19,16 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'MockingBoard',
-  description: 'Mock draft with your friends',
+  metadataBase: new URL(process.env.APP_URL || 'http://localhost:3000'),
+  title: { default: 'MockingBoard', template: '%s | MockingBoard' },
+  description:
+    'Community-powered NFL mock draft platform. Draft with friends, build big boards, write scouting reports, and track your accuracy.',
+  openGraph: {
+    type: 'website',
+    siteName: 'MockingBoard',
+    images: ['/logo.png'],
+  },
+  twitter: { card: 'summary' },
 };
 
 export default function RootLayout({

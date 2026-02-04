@@ -1,8 +1,15 @@
+import type { Metadata } from 'next';
 import { getPublicBoards, getPublicUsers } from '@/lib/data';
 import { BoardCard } from '@/components/board-card';
 import { AnalystProfileCard } from '@/components/analyst-profile-card';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: 'Community',
+  description:
+    'Discover analysts, big boards, and scouting reports from the MockingBoard community.',
+};
 
 export default async function CommunityPage() {
   const [{ boards }, { users }] = await Promise.all([

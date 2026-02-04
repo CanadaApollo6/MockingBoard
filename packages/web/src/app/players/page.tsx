@@ -1,7 +1,14 @@
+import type { Metadata } from 'next';
 import { getCachedPlayers } from '@/lib/cache';
 import { ProspectBigBoard } from './prospect-big-board';
 
 const CURRENT_YEAR = 2026;
+
+export const metadata: Metadata = {
+  title: '2026 Big Board',
+  description:
+    'Consensus 2026 NFL Draft prospect rankings with scouting reports, combine measurables, and stats.',
+};
 
 export default async function PlayersPage() {
   const players = await getCachedPlayers(CURRENT_YEAR);
