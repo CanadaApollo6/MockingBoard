@@ -125,6 +125,17 @@ export interface User {
     totalPicks: number;
     accuracyScore?: number;
   };
+  // Public profile fields
+  slug?: string;
+  bio?: string;
+  avatar?: string;
+  links?: {
+    youtube?: string;
+    twitter?: string;
+    bluesky?: string;
+    website?: string;
+  };
+  isPublic?: boolean;
 }
 
 export interface Draft {
@@ -377,4 +388,11 @@ export interface ScoutingReport {
   contentText?: string;
   createdAt: FirestoreTimestamp;
   updatedAt: FirestoreTimestamp;
+}
+
+export interface Follow {
+  id: string;
+  followerId: string;
+  followeeId: string;
+  createdAt: FirestoreTimestamp;
 }

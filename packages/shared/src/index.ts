@@ -30,6 +30,7 @@ export type {
   BoardSnapshot,
   BoardVisibility,
   ScoutingReport,
+  Follow,
 } from './types';
 
 // Constants

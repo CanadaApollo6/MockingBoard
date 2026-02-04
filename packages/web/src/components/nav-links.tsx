@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { href: '/players', label: 'Players' },
   { href: '/board', label: 'My Board' },
   { href: '/boards', label: 'Boards' },
+  { href: '/community', label: 'Community' },
   { href: '/scouts', label: 'Scouts' },
   { href: '/invite', label: 'Add Bot' },
 ] as const;

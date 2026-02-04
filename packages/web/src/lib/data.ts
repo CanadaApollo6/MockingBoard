@@ -13,6 +13,7 @@ import type {
   BigBoard,
   BoardSnapshot,
   ScoutingReport,
+  User,
 } from '@mockingboard/shared';
 
 export async function getDrafts(options?: {
@@ -352,4 +353,97 @@ export async function getBigBoardBySlug(
   if (snapshot.empty) return null;
   const doc = snapshot.docs[0];
   return sanitize({ id: doc.id, ...doc.data() } as BigBoard);
+}
+
+// ---- User Profiles ----
+
+export async function getUserBySlug(slug: string): Promise<User | null> {
+  const snapshot = await adminDb
+    .collection('users')
+    .where('slug', '==', slug)
+    .where('isPublic', '==', true)
+    .limit(1)
+    .get();
+
+  if (snapshot.empty) return null;
+  const doc = snapshot.docs[0];
+  return sanitize({ id: doc.id, ...doc.data() } as User);
+}
+
+export async function getPublicUsers(options?: {
+  limit?: number;
+  afterSeconds?: number;
+}): Promise<{ users: User[]; hasMore: boolean }> {
+  const limit = options?.limit ?? 20;
+  let query: FirebaseFirestore.Query = adminDb
+    .collection('users')
+    .where('isPublic', '==', true)
+    .orderBy('updatedAt', 'desc');
+
+  if (options?.afterSeconds) {
+    query = query.startAfter(new Timestamp(options.afterSeconds, 0));
+  }
+
+  query = query.limit(limit + 1);
+
+  const snapshot = await query.get();
+  const users = sanitize(
+    snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as User),
+  );
+
+  const hasMore = users.length > limit;
+  return { users: users.slice(0, limit), hasMore };
+}
+
+export async function getFollowCounts(
+  userId: string,
+): Promise<{ followers: number; following: number }> {
+  const [followersSnap, followingSnap] = await Promise.all([
+    adminDb
+      .collection('follows')
+      .where('followeeId', '==', userId)
+      .count()
+      .get(),
+    adminDb
+      .collection('follows')
+      .where('followerId', '==', userId)
+      .count()
+      .get(),
+  ]);
+
+  return {
+    followers: followersSnap.data().count,
+    following: followingSnap.data().count,
+  };
+}
+
+export async function getUserPublicBoards(userId: string): Promise<BigBoard[]> {
+  const snapshot = await adminDb
+    .collection('bigBoards')
+    .where('userId', '==', userId)
+    .where('visibility', '==', 'public')
+    .orderBy('updatedAt', 'desc')
+    .limit(10)
+    .get();
+
+  return sanitize(
+    snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as BigBoard),
+  );
+}
+
+export async function getUserReports(
+  authorId: string,
+): Promise<ScoutingReport[]> {
+  const snapshot = await adminDb
+    .collection('scoutingReports')
+    .where('authorId', '==', authorId)
+    .orderBy('createdAt', 'desc')
+    .limit(20)
+    .get();
+
+  return sanitize(
+    snapshot.docs.map(
+      (doc) => ({ id: doc.id, ...doc.data() }) as ScoutingReport,
+    ),
+  );
 }

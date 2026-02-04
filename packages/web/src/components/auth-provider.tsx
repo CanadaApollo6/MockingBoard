@@ -22,6 +22,16 @@ export interface UserProfile {
   hasDiscord: boolean;
   hasWebhook: boolean;
   isGuest: boolean;
+  slug?: string;
+  bio?: string;
+  avatar?: string;
+  links?: {
+    youtube?: string;
+    twitter?: string;
+    bluesky?: string;
+    website?: string;
+  };
+  isPublic?: boolean;
 }
 
 interface AuthContextValue {
@@ -73,6 +83,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           hasDiscord: !!data.discordId,
           hasWebhook: !!data.discordWebhookUrl,
           isGuest: !!data.isGuest,
+          slug: data.slug,
+          bio: data.bio,
+          avatar: data.avatar,
+          links: data.links,
+          isPublic: data.isPublic,
         });
       }
     });

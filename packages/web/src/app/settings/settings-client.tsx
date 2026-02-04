@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { ProfileEditor } from '@/components/profile-editor';
 
 const inputClass =
   'w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:shadow-[var(--shadow-glow)]';
@@ -57,6 +58,24 @@ export function SettingsClient() {
       )}
 
       <AccountInfoSection profile={profile} />
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Profile</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ProfileEditor
+            initial={{
+              slug: profile.slug,
+              bio: profile.bio,
+              avatar: profile.avatar,
+              links: profile.links,
+              isPublic: profile.isPublic,
+            }}
+          />
+        </CardContent>
+      </Card>
+
       <AccountLinkingSection profile={profile} />
       <WebhookSection />
     </div>
