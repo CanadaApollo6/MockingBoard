@@ -50,7 +50,7 @@ export default async function PlayerPage({ params }: Props) {
       <PlayerJsonLd player={player} />
       <PlayerHero player={player} />
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_380px]">
+      <div className="mt-8 grid gap-4 sm:gap-6 lg:gap-8 lg:grid-cols-[1fr_340px]">
         {/* Left: Consensus scouting data */}
         <div className="space-y-6">
           <h2 className="text-lg font-bold">Consensus Scouting</h2>

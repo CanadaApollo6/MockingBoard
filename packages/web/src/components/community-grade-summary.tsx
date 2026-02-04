@@ -33,7 +33,7 @@ export function CommunityGradeSummary({ reports }: CommunityGradeSummaryProps) {
   if (reports.length === 0) return null;
 
   return (
-    <div className="grid grid-cols-3 gap-4 rounded-lg border bg-card p-4">
+    <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-4 rounded-lg border bg-card p-4">
       <div className="text-center">
         <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
           Reports

@@ -64,7 +64,7 @@ export function PublicBoardView({ rankedPlayers }: PublicBoardViewProps) {
     <div>
       {/* Filter bar */}
       <div className="sticky top-0 z-10 -mx-4 mb-6 border-b bg-background px-4 py-3">
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-col items-start gap-3 sm:flex-row sm:flex-wrap sm:items-center">
           <input
             type="text"
             placeholder="Search by name, school, or comp..."
@@ -167,7 +167,7 @@ export function PublicBoardView({ rankedPlayers }: PublicBoardViewProps) {
 
 function SkimView({ players }: { players: Player[] }) {
   return (
-    <div className="overflow-hidden rounded-lg border">
+    <div className="overflow-x-auto rounded-lg border">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b bg-muted/50 text-left text-xs text-muted-foreground">

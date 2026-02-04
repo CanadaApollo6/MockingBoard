@@ -76,7 +76,7 @@ export default async function DraftDetailPage({
             />
           )}
         </div>
-        <div className="mt-2 flex gap-4 text-sm text-muted-foreground">
+        <div className="mt-2 flex flex-wrap gap-2 text-sm text-muted-foreground sm:gap-4">
           <span>{formatDraftDate(draft.createdAt)}</span>
           <span>
             {participantCount} drafter{participantCount !== 1 ? 's' : ''}

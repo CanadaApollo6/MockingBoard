@@ -100,7 +100,7 @@ export function ProspectDetails({ player, reportCount }: ProspectDetailsProps) {
           <p className="mb-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">
             Combine
           </p>
-          <div className="grid grid-cols-3 gap-x-4 gap-y-3 sm:grid-cols-6">
+          <div className="grid grid-cols-3 gap-x-2 gap-y-2 sm:gap-x-4 sm:gap-y-3 sm:grid-cols-6">
             {combineMetrics.map(({ label, value }) => (
               <div key={label} className="text-center">
                 <p className="font-mono text-sm font-bold">{value}</p>
@@ -174,7 +174,7 @@ function StatsSection({
       <p className="mb-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">
         Stats
       </p>
-      <div className="grid grid-cols-3 gap-x-4 gap-y-3 sm:grid-cols-6">
+      <div className="grid grid-cols-3 gap-x-2 gap-y-2 sm:gap-x-4 sm:gap-y-3 sm:grid-cols-6">
         {items.map(({ key, label, val }) => (
           <div key={key} className="text-center">
             <p className="font-mono text-sm font-bold">
