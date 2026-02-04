@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import type { TeamAbbreviation } from '@mockingboard/shared';
 import {
   getDraft,
   getDraftPicks,
@@ -11,6 +12,7 @@ import { resolveUser, isUserInDraft } from '@/lib/user-resolve';
 import { formatDraftDate, getDraftDisplayName } from '@/lib/format';
 import { DraftBoard } from '@/components/draft-board';
 import { TradeSummary } from '@/components/trade-summary';
+import { ShareButton } from '@/components/share/share-button';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -36,6 +38,14 @@ export default async function DraftDetailPage({
   const isParticipant =
     session && isUserInDraft(draft, session.uid, user?.discordId);
 
+  // Determine which teams the user controls (for "My Team" share option)
+  const userIds = [session?.uid, user?.discordId].filter(Boolean) as string[];
+  const userTeams = Object.entries(draft.teamAssignments)
+    .filter(([, userId]) => userId !== null && userIds.includes(userId))
+    .map(([team]) => team as TeamAbbreviation);
+
+  const playersObj = Object.fromEntries(playerMap);
+
   return (
     <main className="mx-auto max-w-screen-xl px-4 py-8">
       {/* Header */}
@@ -57,6 +67,14 @@ export default async function DraftDetailPage({
                 ? 'Cancelled'
                 : draft.status}
           </Badge>
+          {draft.status === 'complete' && (
+            <ShareButton
+              draft={draft}
+              picks={picks}
+              players={playersObj}
+              userTeams={userTeams}
+            />
+          )}
         </div>
         <div className="mt-2 flex gap-4 text-sm text-muted-foreground">
           <span>{formatDraftDate(draft.createdAt)}</span>

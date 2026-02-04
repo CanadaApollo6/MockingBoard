@@ -189,37 +189,67 @@ Extract platform-agnostic business logic from bot services to `packages/shared`.
 
 ---
 
-## Phase 4: Big Board & Community Scouting
+## Phase 4: Big Board & Community Scouting ✓
 
 **Goal**: Personalized prospect rankings and a community-driven scouting data layer. Content creators contribute data and get attribution + traffic; premium subscribers get access to enriched player cards.
 
 **Design partner**: Brett Kollmann (NFL YouTube creator, already providing prospect data and QA feedback).
 
-### Milestone 4.1: Big Board Builder
+### Milestone 4.1: Big Board Builder ✓
 
-- [ ] Drag-and-drop interface for ranking players
-- [ ] Start from consensus ADP or blank
-- [ ] Add custom players (for deep sleepers)
-- [ ] Use personal board during drafts (sort available players by your ranking)
-- [ ] Compare your board to consensus, friends, and community scouts
-- [ ] Track how your board evolves over time
+- [x] Drag-and-drop interface for ranking players (`@dnd-kit/core` + `@dnd-kit/sortable`)
+- [x] Start from consensus ADP or blank
+- [x] Add custom players (for deep sleepers)
+- [x] Use personal board during drafts (sort available players by your ranking)
+- [x] Board history: save labeled snapshots, restore previous versions
+- [x] Compare board to snapshots with rank delta visualization (↑/↓/NEW indicators)
+- [ ] Compare your board to friends' boards and community scouts
 
-### Milestone 4.2: Community Scouting Data
+### Milestone 4.2: Community Scouting Data ✓
 
-- [ ] Structured data upload flow (CSV/sheet import via web UI)
-- [ ] Data schema templates per position group (reuse stat key structure from prospect import)
-- [ ] Data validation and normalization on upload (school names, measurement formats)
-- [ ] Attribution on player cards: "Scouting data by [Provider Name]" linking to provider profile
+- [x] Structured data upload flow (CSV/sheet import via web UI, admin-only)
+- [x] Data schema templates per position group (shared `POSITION_STAT_SECTIONS` map)
+- [x] Data validation and normalization on upload (school names, measurement formats)
+- [x] Prospect import parsers extracted to `@mockingboard/shared` (33 unit tests)
+- [x] Attribution on player cards: "Scouting data by [Provider Name]" linking to provider profile
 - [ ] Community data visible to premium subscribers (gated once Stripe is integrated; visible to all until then)
 
-### Milestone 4.3: Scout Profiles
+### Milestone 4.3: Scout Profiles ✓
 
-- [ ] Provider profile page: name, bio, avatar, social links (YouTube, Twitter/X, Bluesky, website)
-- [ ] Contribution stats: players covered, positions, data completeness
-- [ ] Contributor badge/tier system based on volume and quality
-- [ ] Profile designed as a landing page to funnel traffic back to the creator's channels
+- [x] Provider profile page: name, bio, avatar, social links (YouTube, Twitter/X, Bluesky, website)
+- [x] Scout directory page at `/scouts` with profile cards
+- [x] Contribution stats: players covered, positions, data completeness
+- [x] Contributor badge/tier system based on volume and quality
+- [x] Profile designed as a landing page to funnel traffic back to the creator's channels
+- [x] Cached scout profile data for performance
 
-**Phase 4 Complete**: Users have personalized big boards and access to community-contributed scouting data. Content creators have a profile and attribution system that drives traffic to their channels.
+### Milestone 4.4: Prospect Big Board Page ✓
+
+- [x] Extract shared player utilities to `lib/player-utils.ts` (DRY refactor from `player-card.tsx`)
+- [x] Public `/players` page with editorial, magazine-style prospect cards (Ringer-inspired)
+- [x] ProspectCard component: large rank, display font name, NFL Comp callout, scouting summary, measurables, combine metrics, position stats, strength/weakness tags, attribution
+- [x] Search by player name, school, or NFL comp
+- [x] Position group filters (All / QB / WR-TE / RB / OL / DEF)
+- [x] Load-more pagination (50 prospects at a time)
+- [x] Sticky filter bar with backdrop blur
+- [x] Loading skeleton matching card layout
+- [x] "Players" nav link added between Drafts and Board
+
+### Milestone 4.5: Draft Image Sharing ✓
+
+- [x] `html-to-image` library for client-side PNG capture
+- [x] Full Board share card (1200px dark theme, round-by-round table, team color borders, position badges, CPU labels)
+- [x] My Team share card (800px, team color gradient, filtered picks with round.pick column)
+- [x] Share button with dropdown menu on completed draft detail pages
+- [x] 2x resolution capture with automatic PNG download
+- [x] User team detection from `teamAssignments` (shows per-team download options)
+
+### Bug Fix: Traded Picks in Discord
+
+- [x] Fix traded picks showing original team instead of new owner in Discord embeds
+- [x] Add `slotTeam()` helper to resolve `teamOverride ?? team` across all pick/announce code paths
+
+**Phase 4 Complete**: Users have personalized big boards with snapshot history and comparison. Public prospect big board with editorial cards. Shareable draft result images. Community scouting data pipeline is live with attribution. Content creators have profile pages driving traffic to their channels.
 
 ---
 
@@ -386,7 +416,6 @@ Extract platform-agnostic business logic from bot services to `packages/shared`.
 - **Mobile support**: Responsive web improvements and/or native mobile app
 - **Trade calculator**: Standalone trade value calculator tool (outside of active drafts)
 - **Tankathon-style draft order page**: Visual draft order display combined with trade value chart on web
-- **Ringer-style big board**: Player board section with prospect profiles and randomly generated witty player comps
 - **Team breakdown pages**: Individual team analysis pages (roster, needs, draft capital) — requires content
 - **Cap calculator**: Standalone salary cap calculator tool
 - **Full contract builder**: Create and model contract structures with cap implications

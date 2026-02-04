@@ -1,9 +1,5 @@
-'use client';
-
-import { motion } from 'framer-motion';
-import type { Player } from '@mockingboard/shared';
+import type { Player, Position } from '@mockingboard/shared';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { getPositionColor } from '@/lib/position-colors';
 import { schoolColorStyle } from '@/lib/school-colors';
 import { AttributionBadge } from '@/components/attribution-badge';
@@ -17,13 +13,11 @@ import {
   KEY_STATS,
 } from '@/lib/player-utils';
 
-interface PlayerCardProps {
+interface ProspectCardProps {
   player: Player;
-  onDraft: () => void;
-  disabled: boolean;
 }
 
-export function PlayerCard({ player, onDraft, disabled }: PlayerCardProps) {
+export function ProspectCard({ player }: ProspectCardProps) {
   const { attributes, scouting } = player;
   const hasPhysical = attributes?.height || attributes?.weight;
   const combineMetrics = buildCombineMetrics(attributes);
@@ -39,34 +33,23 @@ export function PlayerCard({ player, onDraft, disabled }: PlayerCardProps) {
     .join(' \u00B7 ');
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{
-        opacity: 1,
-        y: 0,
-        transition: { duration: 0.25, ease: 'easeOut' },
-      }}
-      exit={{
-        opacity: 0,
-        y: -6,
-        transition: { duration: 0.15, ease: 'easeIn' },
-      }}
-      className="overflow-hidden rounded-lg border border-mb-border-strong bg-card"
+    <div
+      className="overflow-hidden rounded-xl border border-mb-border-strong bg-card"
       style={schoolColorStyle(player.school)}
     >
       {/* School color gradient strip */}
       <div
-        className="h-1"
+        className="h-[2px]"
         style={{
           background:
             'linear-gradient(to right, var(--school-primary), var(--school-secondary))',
         }}
       />
 
-      <div className="space-y-3 p-4">
+      <div className="space-y-4 p-5 sm:p-8">
         {/* Header: rank + position */}
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-2xl font-bold">
+        <div className="flex items-center justify-between">
+          <span className="font-mono text-4xl font-bold text-muted-foreground">
             {player.consensusRank >= UNRANKED
               ? 'NR'
               : `#${player.consensusRank}`}
@@ -76,24 +59,43 @@ export function PlayerCard({ player, onDraft, disabled }: PlayerCardProps) {
               backgroundColor: getPositionColor(player.position),
               color: '#0A0A0B',
             }}
-            className="text-xs"
+            className="text-sm"
           >
             {player.position}
           </Badge>
         </div>
 
-        {/* Player name */}
+        {/* Player name + school */}
         <div>
-          <h3 className="font-[family-name:var(--font-display)] text-2xl font-bold uppercase leading-tight tracking-tight">
+          <h2 className="font-[family-name:var(--font-display)] text-2xl font-bold uppercase leading-tight tracking-tight sm:text-3xl">
             {player.name}
-          </h3>
-          <p className="mt-0.5 text-sm text-muted-foreground">{subtitle}</p>
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
           {attributes?.previousSchools?.length ? (
             <p className="mt-0.5 text-xs text-muted-foreground">
               via {attributes.previousSchools.join(', ')}
             </p>
           ) : null}
         </div>
+
+        {/* NFL Comp callout */}
+        {scouting?.comparison && (
+          <div className="rounded-lg bg-muted/50 px-4 py-3">
+            <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+              NFL Comp
+            </p>
+            <p className="font-[family-name:var(--font-display)] text-lg font-bold uppercase tracking-tight">
+              {scouting.comparison}
+            </p>
+          </div>
+        )}
+
+        {/* Scouting summary */}
+        {scouting?.summary && (
+          <p className="text-[15px] leading-relaxed text-muted-foreground">
+            {scouting.summary}
+          </p>
+        )}
 
         {/* Physical profile */}
         {hasPhysical && (
@@ -114,23 +116,6 @@ export function PlayerCard({ player, onDraft, disabled }: PlayerCardProps) {
                 Captain
               </Badge>
             )}
-          </div>
-        )}
-
-        {/* Combine metrics */}
-        {combineMetrics.length > 0 && (
-          <div>
-            <p className="mb-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">
-              Combine
-            </p>
-            <div className="grid grid-cols-3 gap-x-4 gap-y-3">
-              {combineMetrics.map(({ label, value }) => (
-                <div key={label} className="text-center">
-                  <p className="font-mono text-sm font-bold">{value}</p>
-                  <p className="text-xs text-muted-foreground">{label}</p>
-                </div>
-              ))}
-            </div>
           </div>
         )}
 
@@ -164,16 +149,26 @@ export function PlayerCard({ player, onDraft, disabled }: PlayerCardProps) {
           </div>
         )}
 
+        {/* Combine metrics */}
+        {combineMetrics.length > 0 && (
+          <div>
+            <p className="mb-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">
+              Combine
+            </p>
+            <div className="grid grid-cols-3 gap-x-4 gap-y-3 sm:grid-cols-6">
+              {combineMetrics.map(({ label, value }) => (
+                <div key={label} className="text-center">
+                  <p className="font-mono text-sm font-bold">{value}</p>
+                  <p className="text-xs text-muted-foreground">{label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Position stats */}
         {player.stats && KEY_STATS[player.position] && (
           <StatsSection stats={player.stats} position={player.position} />
-        )}
-
-        {/* Scouting summary */}
-        {scouting?.summary && (
-          <p className="text-sm leading-relaxed text-muted-foreground">
-            {scouting.summary}
-          </p>
         )}
 
         {/* Scouting tags */}
@@ -202,18 +197,8 @@ export function PlayerCard({ player, onDraft, disabled }: PlayerCardProps) {
         {player.dataProviders && (
           <AttributionBadge dataProviders={player.dataProviders} />
         )}
-
-        {/* Draft button */}
-        <Button
-          className="w-full"
-          size="lg"
-          onClick={onDraft}
-          disabled={disabled}
-        >
-          {disabled ? 'Drafting...' : `Draft ${player.name}`}
-        </Button>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -238,7 +223,7 @@ function StatsSection({
       <p className="mb-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">
         Stats
       </p>
-      <div className="grid grid-cols-3 gap-x-4 gap-y-3">
+      <div className="grid grid-cols-3 gap-x-4 gap-y-3 sm:grid-cols-6">
         {items.map(({ key, label, val }) => (
           <div key={key} className="text-center">
             <p className="font-mono text-sm font-bold">
