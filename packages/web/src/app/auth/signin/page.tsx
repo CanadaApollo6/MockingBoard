@@ -7,8 +7,13 @@ export default async function SignInPage() {
   if (session) redirect('/drafts');
 
   return (
-    <main className="mx-auto flex min-h-[60vh] max-w-sm items-center px-4 py-8">
-      <AuthForm initialMode="signin" />
+    <main className="relative flex min-h-screen items-center justify-center px-4">
+      <div className="pointer-events-none absolute inset-0 -top-14 overflow-hidden">
+        <div className="absolute left-1/2 top-0 h-[480px] w-[720px] -translate-x-1/2 rounded-full bg-primary/8 blur-3xl" />
+      </div>
+      <div className="relative w-full max-w-sm">
+        <AuthForm initialMode="signin" />
+      </div>
     </main>
   );
 }
