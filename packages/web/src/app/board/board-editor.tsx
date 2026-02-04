@@ -306,6 +306,20 @@ function BoardEditorInner({
           isDirty={isDirty}
           onAddCustomPlayer={addCustomPlayer}
           onSaveSnapshot={handleSaveSnapshot}
+          visibility={board.visibility}
+          slug={board.slug}
+          description={board.description}
+          onVisibilityChange={async (vis, s, desc) => {
+            await fetch(`/api/boards/${board.id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                visibility: vis,
+                slug: s || undefined,
+                description: desc || undefined,
+              }),
+            });
+          }}
         />
 
         {snapshots.length > 0 && (

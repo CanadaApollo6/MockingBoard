@@ -15,6 +15,13 @@ export async function GET(
     return NextResponse.json({ error: 'Board not found' }, { status: 404 });
   }
 
+  if (board.visibility !== 'public') {
+    const session = await getSessionUser();
+    if (!session || session.uid !== board.userId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+  }
+
   return NextResponse.json({ board });
 }
 
@@ -48,6 +55,9 @@ export async function PUT(
       school: string;
       note?: string;
     }>;
+    visibility?: 'private' | 'public';
+    slug?: string;
+    description?: string;
   };
 
   try {
@@ -59,6 +69,22 @@ export async function PUT(
     );
   }
 
+  if (body.slug !== undefined) {
+    const existing = await adminDb
+      .collection('bigBoards')
+      .where('slug', '==', body.slug)
+      .limit(1)
+      .get();
+
+    const taken = existing.docs.some((doc) => doc.id !== boardId);
+    if (taken) {
+      return NextResponse.json(
+        { error: 'Slug is already in use' },
+        { status: 409 },
+      );
+    }
+  }
+
   try {
     const updates: Record<string, unknown> = {
       updatedAt: FieldValue.serverTimestamp(),
@@ -68,6 +94,9 @@ export async function PUT(
     if (body.name !== undefined) updates.name = body.name;
     if (body.customPlayers !== undefined)
       updates.customPlayers = body.customPlayers;
+    if (body.visibility !== undefined) updates.visibility = body.visibility;
+    if (body.slug !== undefined) updates.slug = body.slug;
+    if (body.description !== undefined) updates.description = body.description;
 
     await adminDb.collection('bigBoards').doc(boardId).update(updates);
 

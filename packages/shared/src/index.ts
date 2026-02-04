@@ -28,6 +28,8 @@ export type {
   BigBoard,
   CustomPlayer,
   BoardSnapshot,
+  BoardVisibility,
+  ScoutingReport,
 } from './types';
 
 // Constants

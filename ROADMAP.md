@@ -409,24 +409,22 @@ Extract platform-agnostic business logic from bot services to `packages/shared`.
 
 ---
 
-## Future Considerations (Not Scheduled)
+## Future Considerations (Not Scheduled but planned)
 
 - **Multi-team draft for one user**: Control multiple teams in a single draft session
 - **Slight randomness to CPU picks**: Add variance to CPU selections so drafts don't play out identically
-- **Mobile support**: Responsive web improvements and/or native mobile app
-- **Trade calculator**: Standalone trade value calculator tool (outside of active drafts)
-- **Tankathon-style draft order page**: Visual draft order display combined with trade value chart on web
+- **Mobile support**: Responsive web improvements (high effort, high value)
+- **Trade calculator**: Standalone trade value calculator tool (outside of active drafts) with full accounting of salary cap and trade rules
+- **Tankathon-style draft order page**: Visual draft order display combined with trade value chart on web (low effort but potentially high value)
 - **Team breakdown pages**: Individual team analysis pages (roster, needs, draft capital) — requires content
 - **Cap calculator**: Standalone salary cap calculator tool
-- **Full contract builder**: Create and model contract structures with cap implications
-- **Dynasty/keeper support**: Carry over rosters between years
+- **Full contract builder**: Create and model contract structures with cap implications (basically an OTC clone with better UX and no ads everywhere)
+- **Dynasty/keeper support**: Carry over rosters between years (deferred)
 - **Collaborative drafting**: Vote-based picks with friends controlling one team
-- **Public draft lobbies**: Join drafts with strangers
-- **Content creator tools**: Spectator mode, stream overlays
-- **Mobile native app**: If iMessage extension proves too limiting
-- **Full NFL trade simulator**: Akin to the NBA trade emulator with full accountings of cap rules
+- **Public draft lobbies**: Join drafts with strangers (mostly done)
+- **Content creator tools**: Spectator mode, stream overlays (this may take a high priority if Brett pushes to friends)
+- **Mobile native app**: Only if popularity demands it
 - **Multi-faceted and multi-step cap manager**: Comprehensive cap manager with the ability to see the implications of multiple moves at once/in sequence (example: automate move this year into future years alongside multiple other moves)
-- **Expansion to other pro sports leagues (NBA, NHL, MLB)**: Taking this process feature set from just the NFL all the way into the other 3 of the 4 major North American sports
 - **Rework nav**: Move nav to left sidebar style navigation rather than top of screen
 - **Configurable styling**: Allow users to configure site theming based on their favourite NFL team
 - **Sliders for Draft**: Allow users to set levels of things like randomness, BPA, and team needs

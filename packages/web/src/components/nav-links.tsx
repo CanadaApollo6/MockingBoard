@@ -7,7 +7,8 @@ import { cn } from '@/lib/utils';
 const NAV_ITEMS = [
   { href: '/drafts', label: 'Drafts' },
   { href: '/players', label: 'Players' },
-  { href: '/board', label: 'Board' },
+  { href: '/board', label: 'My Board' },
+  { href: '/boards', label: 'Boards' },
   { href: '/scouts', label: 'Scouts' },
   { href: '/invite', label: 'Add Bot' },
 ] as const;
@@ -19,8 +20,8 @@ export function NavLinks() {
     <nav className="flex gap-4 text-sm">
       {NAV_ITEMS.map(({ href, label }) => {
         const isActive =
-          href === '/drafts'
-            ? pathname === '/drafts'
+          href === '/drafts' || href === '/board'
+            ? pathname === href
             : pathname.startsWith(href);
 
         return (

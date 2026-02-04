@@ -293,3 +293,43 @@ export async function getBoardSnapshot(
   if (!doc.exists) return null;
   return sanitize({ id: doc.id, ...doc.data() }) as BoardSnapshot;
 }
+
+export async function getPublicBoards(options?: {
+  limit?: number;
+  afterSeconds?: number;
+}): Promise<{ boards: BigBoard[]; hasMore: boolean }> {
+  const limit = options?.limit ?? 20;
+  let query: FirebaseFirestore.Query = adminDb
+    .collection('bigBoards')
+    .where('visibility', '==', 'public')
+    .orderBy('updatedAt', 'desc');
+
+  if (options?.afterSeconds) {
+    query = query.startAfter(new Timestamp(options.afterSeconds, 0));
+  }
+
+  query = query.limit(limit + 1);
+
+  const snapshot = await query.get();
+  const boards = sanitize(
+    snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as BigBoard),
+  );
+
+  const hasMore = boards.length > limit;
+  return { boards: boards.slice(0, limit), hasMore };
+}
+
+export async function getBigBoardBySlug(
+  slug: string,
+): Promise<BigBoard | null> {
+  const snapshot = await adminDb
+    .collection('bigBoards')
+    .where('slug', '==', slug)
+    .where('visibility', '==', 'public')
+    .limit(1)
+    .get();
+
+  if (snapshot.empty) return null;
+  const doc = snapshot.docs[0];
+  return sanitize({ id: doc.id, ...doc.data() } as BigBoard);
+}

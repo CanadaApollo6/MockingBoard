@@ -328,6 +328,8 @@ export interface ScoutProfile {
   updatedAt: FirestoreTimestamp;
 }
 
+export type BoardVisibility = 'private' | 'public';
+
 export interface BigBoard {
   id: string;
   userId: string;
@@ -336,6 +338,10 @@ export interface BigBoard {
   rankings: string[];
   customPlayers?: CustomPlayer[];
   basedOn?: 'consensus' | 'blank';
+  visibility?: BoardVisibility;
+  slug?: string;
+  description?: string;
+  authorName?: string;
   createdAt: FirestoreTimestamp;
   updatedAt: FirestoreTimestamp;
 }
@@ -353,4 +359,22 @@ export interface BoardSnapshot {
   rankings: string[];
   label?: string;
   createdAt: FirestoreTimestamp;
+}
+
+// ---- Scouting Report Types ----
+
+export interface ScoutingReport {
+  id: string;
+  playerId: string;
+  authorId: string;
+  authorName: string;
+  year: number;
+  grade?: number;
+  comparison?: string;
+  strengths?: string[];
+  weaknesses?: string[];
+  content?: Record<string, unknown>;
+  contentText?: string;
+  createdAt: FirestoreTimestamp;
+  updatedAt: FirestoreTimestamp;
 }

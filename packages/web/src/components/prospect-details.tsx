@@ -11,9 +11,10 @@ import {
 
 interface ProspectDetailsProps {
   player: Player;
+  reportCount?: number;
 }
 
-export function ProspectDetails({ player }: ProspectDetailsProps) {
+export function ProspectDetails({ player, reportCount }: ProspectDetailsProps) {
   const { attributes, scouting } = player;
   const hasPhysical = attributes?.height || attributes?.weight;
   const combineMetrics = buildCombineMetrics(attributes);
@@ -135,6 +136,13 @@ export function ProspectDetails({ player }: ProspectDetailsProps) {
             </Badge>
           ))}
         </div>
+      )}
+
+      {/* Community reports count */}
+      {reportCount != null && reportCount > 0 && (
+        <p className="text-xs text-muted-foreground">
+          {reportCount} community {reportCount === 1 ? 'report' : 'reports'}
+        </p>
       )}
 
       {/* Attribution */}
