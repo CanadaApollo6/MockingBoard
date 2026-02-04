@@ -12,6 +12,7 @@ import type {
   ScoutProfile,
   BigBoard,
   BoardSnapshot,
+  ScoutingReport,
 } from '@mockingboard/shared';
 
 export async function getDrafts(options?: {
@@ -317,6 +318,25 @@ export async function getPublicBoards(options?: {
 
   const hasMore = boards.length > limit;
   return { boards: boards.slice(0, limit), hasMore };
+}
+
+// ---- Scouting Reports ----
+
+export async function getPlayerReports(
+  playerId: string,
+): Promise<ScoutingReport[]> {
+  const snapshot = await adminDb
+    .collection('scoutingReports')
+    .where('playerId', '==', playerId)
+    .orderBy('createdAt', 'desc')
+    .limit(50)
+    .get();
+
+  return sanitize(
+    snapshot.docs.map(
+      (doc) => ({ id: doc.id, ...doc.data() }) as ScoutingReport,
+    ),
+  );
 }
 
 export async function getBigBoardBySlug(
