@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { teams } from '@mockingboard/shared';
 import { useAuth } from '@/components/auth-provider';
@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ProfileEditor } from '@/components/profile-editor';
 import { TEAM_COLORS, hexToHsl } from '@/lib/team-colors';
+import { SCHOOL_COLORS } from '@/lib/school-colors';
 import { cn } from '@/lib/utils';
 
 const inputClass =
@@ -94,57 +95,113 @@ function teamForeground(hex: string): string {
   return l > 55 ? '#0a0a0b' : '#ffffff';
 }
 
+const SCHOOL_NAMES = Object.keys(SCHOOL_COLORS).sort();
+
+function titleCase(s: string): string {
+  return s.replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 function TeamThemeSection() {
   const { profile } = useAuth();
   const [saving, setSaving] = useState(false);
-  const [selected, setSelected] = useState<string | null>(
+  const [selectedTeam, setSelectedTeam] = useState<string | null>(
     profile?.favoriteTeam ?? null,
   );
+  const [selectedSchool, setSelectedSchool] = useState<string | null>(
+    profile?.favoriteSchool ?? null,
+  );
+  const [schoolSearch, setSchoolSearch] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setSelected(profile?.favoriteTeam ?? null);
-  }, [profile?.favoriteTeam]);
+    setSelectedTeam(profile?.favoriteTeam ?? null);
+    setSelectedSchool(profile?.favoriteSchool ?? null);
+  }, [profile?.favoriteTeam, profile?.favoriteSchool]);
 
-  async function handleSelect(team: string | null) {
-    setSelected(team);
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
+        setShowDropdown(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  const filteredSchools = useMemo(() => {
+    if (!schoolSearch.trim()) return [];
+    const q = schoolSearch.toLowerCase();
+    return SCHOOL_NAMES.filter((s) => s.includes(q)).slice(0, 12);
+  }, [schoolSearch]);
+
+  async function save(body: { team?: string | null; school?: string | null }) {
     setSaving(true);
     try {
       await fetch('/api/settings/favorite-team', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ team }),
+        body: JSON.stringify(body),
       });
     } finally {
       setSaving(false);
     }
   }
 
+  function handleSelectTeam(team: string | null) {
+    if (team) {
+      setSelectedTeam(team);
+      setSelectedSchool(null);
+      save({ team });
+    } else {
+      setSelectedTeam(null);
+      setSelectedSchool(null);
+      save({ team: null });
+    }
+  }
+
+  function handleSelectSchool(school: string) {
+    setSelectedSchool(school);
+    setSelectedTeam(null);
+    setSchoolSearch('');
+    setShowDropdown(false);
+    save({ school });
+  }
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">Team Theme</CardTitle>
+        <CardTitle className="text-lg">Color Theme</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">
-          Choose your favorite NFL team to customize accent colors across the
-          app.
+          Choose a favorite NFL team or college to customize accent colors
+          across the app.
         </p>
 
+        {/* NFL Teams */}
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          NFL
+        </p>
         {(['AFC', 'NFC'] as const).map((conf) => {
           const confTeams = conf === 'AFC' ? AFC_TEAMS : NFC_TEAMS;
           return (
             <div key={conf}>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <p className="mb-2 text-xs font-medium text-muted-foreground">
                 {conf}
               </p>
               <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-8">
                 {confTeams.map((t) => {
                   const colors = TEAM_COLORS[t.id];
-                  const isSelected = selected === t.id;
+                  const isSelected = selectedTeam === t.id && !selectedSchool;
                   return (
                     <button
                       key={t.id}
-                      onClick={() => handleSelect(t.id)}
+                      onClick={() => handleSelectTeam(t.id)}
                       disabled={saving}
                       title={t.name}
                       className={cn(
@@ -167,12 +224,78 @@ function TeamThemeSection() {
           );
         })}
 
+        {/* College Search */}
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          College
+        </p>
+        <div ref={dropdownRef} className="relative">
+          {selectedSchool && !schoolSearch ? (
+            <div className="flex items-center gap-2">
+              <span
+                className="inline-block h-4 w-4 rounded-sm"
+                style={{
+                  backgroundColor:
+                    SCHOOL_COLORS[selectedSchool]?.primary ?? '#6A6A72',
+                }}
+              />
+              <span className="text-sm font-medium">
+                {titleCase(selectedSchool)}
+              </span>
+              <button
+                onClick={() => {
+                  setSchoolSearch('');
+                  setShowDropdown(true);
+                }}
+                className="ml-1 text-xs text-muted-foreground hover:text-foreground"
+              >
+                Change
+              </button>
+            </div>
+          ) : (
+            <input
+              type="text"
+              value={schoolSearch}
+              onChange={(e) => {
+                setSchoolSearch(e.target.value);
+                setShowDropdown(true);
+              }}
+              onFocus={() => {
+                if (schoolSearch.trim()) setShowDropdown(true);
+              }}
+              placeholder="Search for a school..."
+              className={inputClass}
+            />
+          )}
+          {showDropdown && filteredSchools.length > 0 && (
+            <div className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-md border bg-popover shadow-md">
+              {filteredSchools.map((s) => {
+                const colors = SCHOOL_COLORS[s];
+                return (
+                  <button
+                    key={s}
+                    onClick={() => handleSelectSchool(s)}
+                    disabled={saving}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent"
+                  >
+                    <span
+                      className="inline-block h-3 w-3 shrink-0 rounded-sm"
+                      style={{ backgroundColor: colors.primary }}
+                    />
+                    {titleCase(s)}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Reset */}
         <button
-          onClick={() => handleSelect(null)}
+          onClick={() => handleSelectTeam(null)}
           disabled={saving}
           className={cn(
             'w-full rounded-md border px-3 py-2 text-sm transition-colors',
-            selected === null
+            !selectedTeam && !selectedSchool
               ? 'border-primary bg-primary/10 text-primary'
               : 'border-border text-muted-foreground hover:border-primary/50',
           )}

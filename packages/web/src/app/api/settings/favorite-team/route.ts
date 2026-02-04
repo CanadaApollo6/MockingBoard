@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { getSessionUser } from '@/lib/auth-session';
+import { SCHOOL_COLORS } from '@/lib/school-colors';
 
 const VALID_TEAMS = new Set([
   'ARI',
@@ -43,7 +44,7 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  let body: { team: string | null };
+  let body: { team?: string | null; school?: string | null };
   try {
     body = await request.json();
   } catch {
@@ -53,26 +54,50 @@ export async function PUT(request: Request) {
     );
   }
 
-  const { team } = body;
+  const { team, school } = body;
 
-  if (team !== null && !VALID_TEAMS.has(team)) {
+  // Validate: at most one of team/school should be set
+  if (team && school) {
+    return NextResponse.json(
+      { error: 'Cannot set both team and school' },
+      { status: 400 },
+    );
+  }
+
+  if (team !== undefined && team !== null && !VALID_TEAMS.has(team)) {
     return NextResponse.json({ error: 'Invalid team' }, { status: 400 });
   }
 
+  if (
+    school !== undefined &&
+    school !== null &&
+    !SCHOOL_COLORS[school.toLowerCase()]
+  ) {
+    return NextResponse.json({ error: 'Invalid school' }, { status: 400 });
+  }
+
   try {
+    const { FieldValue } = await import('firebase-admin/firestore');
     const update: Record<string, unknown> = { updatedAt: new Date() };
 
-    if (team === null) {
-      const { FieldValue } = await import('firebase-admin/firestore');
+    if (team) {
+      // Setting a team clears school
+      update.favoriteTeam = team;
+      update.favoriteSchool = FieldValue.delete();
+    } else if (school) {
+      // Setting a school clears team
+      update.favoriteSchool = school.toLowerCase();
       update.favoriteTeam = FieldValue.delete();
     } else {
-      update.favoriteTeam = team;
+      // Clearing both
+      update.favoriteTeam = FieldValue.delete();
+      update.favoriteSchool = FieldValue.delete();
     }
 
     await adminDb.collection('users').doc(session.uid).update(update);
     return NextResponse.json({ success: true });
   } catch (err) {
-    console.error('Failed to save favorite team:', err);
+    console.error('Failed to save theme preference:', err);
     return NextResponse.json({ error: 'Failed to save' }, { status: 500 });
   }
 }

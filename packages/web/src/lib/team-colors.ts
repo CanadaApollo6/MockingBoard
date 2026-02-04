@@ -200,14 +200,16 @@ function hexToRgb(hex: string): [number, number, number] {
 }
 
 /**
- * Derive a full set of CSS variable overrides for team theming.
- * Returns empty object for achromatic teams (no viable accent color).
+ * Derive a full set of CSS variable overrides for team/school theming.
+ * Accepts a TeamAbbreviation or a raw {primary, secondary} color pair.
+ * Returns empty object for achromatic colors (no viable accent).
  */
 export function deriveThemeOverrides(
-  team: TeamAbbreviation,
+  teamOrColors: TeamAbbreviation | { primary: string; secondary: string },
   mode: 'dark' | 'light',
 ): Record<string, string> {
-  const { primary, secondary } = TEAM_COLORS[team];
+  const { primary, secondary } =
+    typeof teamOrColors === 'string' ? TEAM_COLORS[teamOrColors] : teamOrColors;
 
   // Use primary unless achromatic, then try secondary
   const [, ps] = hexToHsl(primary);

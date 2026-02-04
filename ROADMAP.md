@@ -627,9 +627,9 @@ Server-side and client-side enforcement of Free/Pro boundaries across the platfo
 
 ### Milestone 7.5.5: Configurable Theming
 
-- [ ] Team-based theming (select your favorite NFL team, app adopts their colors)
-- [ ] Theme persistence in user profile
-- [ ] Extend existing dark/light toggle to support team color palettes
+- [x] Team-based theming (select your favorite NFL or college team, app adopts their colors)
+- [x] Theme persistence in user profile
+- [x] Extend existing dark/light toggle to support team color palettes
 
 **Phase 7.5 Complete**: Polished, mobile-friendly experience with personalized theming.
 

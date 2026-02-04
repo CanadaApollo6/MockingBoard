@@ -34,6 +34,7 @@ export interface UserProfile {
   };
   isPublic?: boolean;
   favoriteTeam?: TeamAbbreviation;
+  favoriteSchool?: string;
 }
 
 interface AuthContextValue {
@@ -91,6 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           links: data.links,
           isPublic: data.isPublic,
           favoriteTeam: data.favoriteTeam || undefined,
+          favoriteSchool: data.favoriteSchool || undefined,
         });
       }
     });

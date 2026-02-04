@@ -232,4 +232,23 @@ describe('deriveThemeOverrides', () => {
     const overrides = deriveThemeOverrides('BUF', 'dark');
     expect(overrides['--shadow-glow']).toMatch(/^0 0 20px rgba\(/);
   });
+
+  it('accepts a raw color pair instead of team abbreviation', () => {
+    const colors = { primary: '#E31837', secondary: '#FFB81C' };
+    const overrides = deriveThemeOverrides(colors, 'dark');
+    expect(Object.keys(overrides).length).toBeGreaterThan(0);
+    expect(overrides['--primary']).toMatch(/^#[0-9a-f]{6}$/);
+  });
+
+  it('produces identical results for team abbreviation and equivalent color pair', () => {
+    const teamOverrides = deriveThemeOverrides('KC', 'dark');
+    const colorOverrides = deriveThemeOverrides(TEAM_COLORS['KC'], 'dark');
+    expect(teamOverrides).toEqual(colorOverrides);
+  });
+
+  it('returns empty object for achromatic color pair', () => {
+    const colors = { primary: '#000000', secondary: '#A0A0A0' };
+    const overrides = deriveThemeOverrides(colors, 'dark');
+    expect(Object.keys(overrides)).toHaveLength(0);
+  });
 });
