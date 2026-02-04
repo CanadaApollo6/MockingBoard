@@ -40,7 +40,7 @@
 
 ### Milestone 1.5: Polish & Testing ✓
 
-- [x] Comprehensive unit tests for draft logic (218 tests across all packages)
+- [x] Comprehensive unit tests for draft logic (439 tests across 28 files)
 - [x] Error handling and user-friendly error messages (custom error classes, timer error handling)
 - [x] Rate limiting and basic abuse prevention (rateLimit.service.ts)
 - [x] Documentation for bot commands (/help command, bot README)
@@ -189,30 +189,40 @@ Extract platform-agnostic business logic from bot services to `packages/shared`.
 
 ### Milestone 3.8: Additional Sign-In Providers
 
-- [ ] Google OAuth (Firebase Auth provider — largest potential user base)
+- [x] Google OAuth (Firebase Auth provider — largest potential user base)
 - [ ] Sign in with Apple (required for iOS App Store if native app ever ships; good practice regardless)
 - [ ] X (Twitter) OAuth (aligns with NFL/draft community presence on the platform)
-- [ ] Unified account linking: link any combination of providers in settings
-- [ ] Auth UI updates: provider buttons on sign-in/sign-up pages
+- [x] Unified account linking: link any combination of providers in settings
+- [x] Auth UI updates: provider buttons on sign-in/sign-up pages
 
-### Milestone 3.5: Draft Enhancements
+### Milestone 3.5: Draft Enhancements (Partial) ✓
 
-- [ ] CPU pick randomness/variance so drafts don't play out identically
-- [ ] Configurable draft sliders (randomness weight, BPA vs. team needs balance)
-- [ ] Multi-team draft mode (one user controls multiple teams)
+- [x] CPU pick randomness/variance so drafts don't play out identically (`CpuPickOptions` with jitter + interpolated probability windows)
+- [x] Configurable draft sliders (CPU Randomness and CPU Draft Strategy range inputs on draft creator, persisted through API and guest URL params)
+- [x] Multi-team draft mode (one user controls 2–31 teams; multi-select team grid, "Picking for [TEAM]" indicator in draft rooms)
+- [x] Public draft lobbies polish (ISR revalidation every 30s, "Possibly inactive" badge for lobbies older than 2 hours)
 - [ ] Collaborative drafting (vote-based picks with friends controlling one team)
-- [ ] Finish public draft lobbies (join drafts with strangers — mostly done)
-- [ ] Run mock drafts using personal big board rankings as the CPU pick order
+- [x] Run mock drafts using personal big board rankings as the CPU pick order
 - [ ] In-draft web chat for multiplayer (message feed alongside pick UI)
 
-### Milestone 3.7: Post-Draft Recap & Analytics
+### Milestone 3.6: Post-Draft Recap & Analytics ✓
 
-- [ ] Post-draft team grades (needs filled, BPA adherence, reach/value picks)
-- [ ] Draft recap page with per-team analysis and highlights
-- [ ] Comparison to consensus: show where user diverged and by how much
-- [ ] Shareable recap cards (extend existing image sharing)
+- [x] Analytics engine with research-calibrated models (Massey/Thaler, Baldwin surplus curves, OTC/PFF positional value, Unexpected Points surplus tiers)
+- [x] Positional value model (`POSITIONAL_VALUE`): 15-position multiplier table synthesized from four independent sources
+- [x] Surplus value curve calibrated to Baldwin's empirical data (peaks at pick 12, not pick 1)
+- [x] Pick classification with position-adaptive thresholds (great-value through big-reach)
+- [x] Pick scoring (0–100 composite: value, positional value, need fill, base)
+- [x] Team grading across five dimensions (value 30%, positional value 20%, surplus 15%, needs 20%, BPA adherence 15%)
+- [x] Full draft recap generation: 32-team grades, trade analysis with Rich Hill chart, optimal BPA comparison
+- [x] Post-draft team grades (needs filled, BPA adherence, reach/value picks)
+- [x] Draft recap page with per-team analysis and highlights (DraftRecapSummary, TeamGradeCard, PickBreakdown, TradeAnalysisCard)
+- [x] Comparison to consensus: show where user diverged and by how much (valueDelta, boardDelta)
+- [x] Shareable recap cards (extend existing image sharing — RecapShareCard with team color gradient, dimension bars, graded pick table)
+- [x] Suggested pick highlighting during user's turn (analytics-scored best available with reason string)
+- [x] CPU positional value weighting across all pick call sites (fourth-root scaling for subtle premium-position boost)
+- [x] 60 analytics tests + 5 CPU positional weight tests + 7 suggestPick tests (508 total)
 
-### Milestone 3.6: Dynasty/Keeper Mode
+### Milestone 3.7: Dynasty/Keeper Mode
 
 - [ ] Carry over rosters between draft years
 - [ ] Keeper slot designation and management
@@ -503,7 +513,7 @@ Extract platform-agnostic business logic from bot services to `packages/shared`.
 
 ### Milestone 6.5.2: Draft Order & Trade Value
 
-- [ ] Tankathon-style draft order page with pick ownership and trade value chart
+- [x] Tankathon-style draft order page with pick ownership and trade value chart
 - [ ] Standalone trade value calculator (outside of active drafts)
 - [ ] Support for salary cap implications in trade evaluation (precursor to Phase 9)
 
@@ -698,3 +708,5 @@ Server-side and client-side enforcement of Free/Pro boundaries across the platfo
 ## Future Considerations
 
 - **Mobile native app**: Only if popularity demands it — responsive web (Phase 7.5.2) is the priority path
+- **Draft suggestion algo** ✓: Implemented in Milestone 3.7. Research-calibrated analytics engine drawing from Massey/Thaler (Weibull market value, 52% accuracy baseline), Baldwin (surplus curves, OFV tables), Unexpected Points (positional surplus tiers), OTC (Positional Value Index), PFF (Pro-Adjusted WAA), and Keefer (sunk-cost fallacy). Powers CPU positional weighting, suggested pick highlighting, and full post-draft grading.
+- **Add my other packages**: Incorporate my espn-api and nflverse-ts packages into this site to drive further reference ability and tooling powers (need to get these to 1.0 versions first)

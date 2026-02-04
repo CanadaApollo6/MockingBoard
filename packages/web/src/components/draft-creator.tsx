@@ -38,28 +38,90 @@ export function DraftCreator() {
   const [year, setYear] = useState(2026);
   const [rounds, setRounds] = useState(3);
   const [format, setFormat] = useState<DraftFormat>('single-team');
-  const [selectedTeam, setSelectedTeam] = useState<TeamAbbreviation | null>(
-    null,
+  const [selectedTeams, setSelectedTeams] = useState<Set<TeamAbbreviation>>(
+    new Set(),
   );
   const [cpuSpeed, setCpuSpeed] = useState<CpuSpeed>('normal');
+  const [cpuRandomness, setCpuRandomness] = useState(50);
+  const [cpuNeedsWeight, setCpuNeedsWeight] = useState(50);
   const [secondsPerPick, setSecondsPerPick] = useState(0);
   const [tradesEnabled, setTradesEnabled] = useState(false);
   const [notificationLevel, setNotificationLevel] =
     useState<NotificationLevel>('off');
+  const [useMyBoard, setUseMyBoard] = useState(false);
+  const [boardId, setBoardId] = useState<string | null>(null);
+  const [boardLoading, setBoardLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // For multiplayer, format is always 'full' and team selection is required
+  const effectiveFormat = multiplayer ? 'full' : format;
+  const needsTeamSelect = multiplayer || effectiveFormat !== 'full';
+  const hasCpuPicks = effectiveFormat !== 'full' || multiplayer;
+  const isMultiTeam = effectiveFormat === 'multi-team';
+
+  const selectedTeam = selectedTeams.size === 1 ? [...selectedTeams][0] : null;
   const selectedTeamData = selectedTeam
     ? teams.find((t) => t.id === selectedTeam)
     : null;
 
-  // For multiplayer, format is always 'full' and team selection is required
-  const effectiveFormat = multiplayer ? 'full' : format;
-  const needsTeamSelect = multiplayer || effectiveFormat === 'single-team';
+  const isTeamValid = isMultiTeam
+    ? selectedTeams.size >= 2
+    : selectedTeams.size >= 1;
+
+  function handleFormatChange(newFormat: DraftFormat) {
+    setFormat(newFormat);
+    if (newFormat === 'single-team' && selectedTeams.size > 1) {
+      setSelectedTeams(new Set());
+    }
+  }
+
+  function handleTeamClick(teamId: TeamAbbreviation) {
+    if (isMultiTeam) {
+      setSelectedTeams((prev) => {
+        const next = new Set(prev);
+        if (next.has(teamId)) next.delete(teamId);
+        else next.add(teamId);
+        return next;
+      });
+    } else {
+      setSelectedTeams(new Set([teamId]));
+    }
+  }
+
+  async function handleBoardToggle(enabled: boolean) {
+    setUseMyBoard(enabled);
+    if (!enabled) {
+      setBoardId(null);
+      return;
+    }
+    setBoardLoading(true);
+    try {
+      const res = await fetch(`/api/boards/mine?year=${year}`);
+      if (res.ok) {
+        const data = await res.json();
+        setBoardId(data.boardId ?? null);
+        if (!data.boardId) {
+          setUseMyBoard(false);
+          setError(
+            'No board found for this year. Create one in the Board Builder first.',
+          );
+        }
+      } else {
+        setUseMyBoard(false);
+      }
+    } catch {
+      setUseMyBoard(false);
+    } finally {
+      setBoardLoading(false);
+    }
+  }
 
   async function handleSubmit() {
-    if (needsTeamSelect && !selectedTeam) {
-      setError('Please select a team');
+    if (needsTeamSelect && !isTeamValid) {
+      setError(
+        isMultiTeam ? 'Please select at least 2 teams' : 'Please select a team',
+      );
       return;
     }
 
@@ -71,8 +133,14 @@ export function DraftCreator() {
         cpuSpeed,
         secondsPerPick: String(secondsPerPick),
         trades: String(tradesEnabled),
+        cpuRandomness: String(cpuRandomness),
+        cpuNeedsWeight: String(cpuNeedsWeight),
       });
-      if (selectedTeam) params.set('team', selectedTeam);
+      if (isMultiTeam) {
+        params.set('teams', [...selectedTeams].join(','));
+      } else if (selectedTeam) {
+        params.set('team', selectedTeam);
+      }
       router.push(`/drafts/guest?${params}`);
       return;
     }
@@ -89,12 +157,16 @@ export function DraftCreator() {
           rounds,
           format: effectiveFormat,
           selectedTeam,
+          selectedTeams: isMultiTeam ? [...selectedTeams] : undefined,
           cpuSpeed,
+          cpuRandomness,
+          cpuNeedsWeight,
           secondsPerPick,
           tradesEnabled,
           notificationLevel,
           multiplayer,
           ...(multiplayer && { visibility, teamAssignmentMode }),
+          ...(boardId && { boardId }),
         }),
       });
 
@@ -220,14 +292,21 @@ export function DraftCreator() {
               <Button
                 variant={format === 'single-team' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setFormat('single-team')}
+                onClick={() => handleFormatChange('single-team')}
               >
                 Single Team
               </Button>
               <Button
+                variant={format === 'multi-team' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => handleFormatChange('multi-team')}
+              >
+                Multi-Team
+              </Button>
+              <Button
                 variant={format === 'full' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setFormat('full')}
+                onClick={() => handleFormatChange('full')}
               >
                 All Teams
               </Button>
@@ -257,6 +336,50 @@ export function DraftCreator() {
               Normal
             </Button>
           </OptionGroup>
+
+          {hasCpuPicks && (
+            <>
+              <SliderGroup
+                label="CPU Randomness"
+                subtitle="How unpredictable CPU picks are"
+                value={cpuRandomness}
+                onChange={setCpuRandomness}
+                leftLabel="Predictable"
+                rightLabel="Wild"
+              />
+              <SliderGroup
+                label="CPU Draft Strategy"
+                subtitle="How CPU teams evaluate players"
+                value={cpuNeedsWeight}
+                onChange={setCpuNeedsWeight}
+                leftLabel="Best Available"
+                rightLabel="Team Needs"
+              />
+              {!isGuest && (
+                <OptionGroup
+                  label="CPU Pick Order"
+                  subtitle="Use your big board rankings for CPU picks"
+                >
+                  <Button
+                    variant={!useMyBoard ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handleBoardToggle(false)}
+                    disabled={boardLoading}
+                  >
+                    Consensus
+                  </Button>
+                  <Button
+                    variant={useMyBoard ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handleBoardToggle(true)}
+                    disabled={boardLoading}
+                  >
+                    {boardLoading ? 'Loading...' : 'My Board'}
+                  </Button>
+                </OptionGroup>
+              )}
+            </>
+          )}
 
           <OptionGroup label="Pick Timer" subtitle="Auto-pick if time runs out">
             {[
@@ -332,8 +455,13 @@ export function DraftCreator() {
         <Card>
           <CardHeader>
             <CardTitle>
-              Select Your Team
-              {selectedTeamData && (
+              {isMultiTeam ? 'Select Your Teams' : 'Select Your Team'}
+              {isMultiTeam && selectedTeams.size > 0 && (
+                <span className="ml-2 text-sm font-normal text-muted-foreground">
+                  — {selectedTeams.size} selected
+                </span>
+              )}
+              {!isMultiTeam && selectedTeamData && (
                 <span className="ml-2 text-sm font-normal text-muted-foreground">
                   — {selectedTeamData.name}
                 </span>
@@ -357,10 +485,10 @@ export function DraftCreator() {
                           <button
                             key={team.id}
                             type="button"
-                            onClick={() => setSelectedTeam(team.id)}
+                            onClick={() => handleTeamClick(team.id)}
                             className={cn(
                               'rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors',
-                              selectedTeam === team.id
+                              selectedTeams.has(team.id)
                                 ? 'bg-primary text-primary-foreground'
                                 : 'bg-muted text-muted-foreground hover:bg-accent hover:text-foreground',
                             )}
@@ -395,7 +523,7 @@ export function DraftCreator() {
       <Button
         className="w-full"
         onClick={handleSubmit}
-        disabled={submitting || (needsTeamSelect && !selectedTeam)}
+        disabled={submitting || (needsTeamSelect && !isTeamValid)}
       >
         {submitting
           ? 'Creating...'
@@ -429,6 +557,47 @@ function OptionGroup({
         )}
       </label>
       <div className="flex flex-wrap gap-2">{children}</div>
+    </div>
+  );
+}
+
+function SliderGroup({
+  label,
+  subtitle,
+  value,
+  onChange,
+  leftLabel,
+  rightLabel,
+}: {
+  label: string;
+  subtitle?: string;
+  value: number;
+  onChange: (v: number) => void;
+  leftLabel: string;
+  rightLabel: string;
+}) {
+  return (
+    <div>
+      <label className="mb-2 block text-sm font-medium">
+        {label}
+        {subtitle && (
+          <span className="ml-1.5 font-normal text-muted-foreground">
+            {subtitle}
+          </span>
+        )}
+      </label>
+      <input
+        type="range"
+        min={0}
+        max={100}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-muted accent-primary"
+      />
+      <div className="mt-1 flex justify-between text-xs text-muted-foreground">
+        <span>{leftLabel}</span>
+        <span>{rightLabel}</span>
+      </div>
     </div>
   );
 }

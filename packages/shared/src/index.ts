@@ -32,6 +32,13 @@ export type {
   ScoutingReport,
   Follow,
   VideoBreakdown,
+  PickLabel,
+  PickGrade,
+  TeamDraftGrade,
+  DraftRecap,
+  TradeAnalysis,
+  OptimalPick,
+  SuggestedPick,
 } from './types';
 
 // Constants
@@ -56,6 +63,7 @@ export {
   NEED_MULTIPLIERS,
   getEffectiveNeeds,
   getTeamDraftedPositions,
+  type CpuPickOptions,
 } from './cpu';
 
 // Draft logic
@@ -81,6 +89,21 @@ export {
   computeTradeExecution,
   type CpuTradeEvaluation,
 } from './trade';
+
+// Draft analytics
+export {
+  POSITIONAL_VALUE,
+  baseSurplusValue,
+  positionAdjustedSurplus,
+  classifyPick,
+  getGradeTier,
+  gradePick,
+  gradeTeamDraft,
+  generateDraftRecap,
+  computeOptimalBaseline,
+  analyzeAllTrades,
+  suggestPick,
+} from './draft-analytics';
 
 // Prospect import
 export {

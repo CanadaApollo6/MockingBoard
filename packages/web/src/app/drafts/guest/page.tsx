@@ -24,8 +24,16 @@ export default async function GuestDraftPage({
 
   const year = Number(params.year) || 2026;
   const rounds = Math.min(Math.max(Number(params.rounds) || 3, 1), 7);
-  const format: DraftFormat = params.format === 'full' ? 'full' : 'single-team';
+  const format: DraftFormat =
+    params.format === 'full'
+      ? 'full'
+      : params.format === 'multi-team'
+        ? 'multi-team'
+        : 'single-team';
   const selectedTeam = (params.team as TeamAbbreviation) ?? null;
+  const selectedTeams = params.teams
+    ? (params.teams.split(',') as TeamAbbreviation[])
+    : null;
   const cpuSpeed: CpuSpeed = VALID_CPU_SPEEDS.includes(
     params.cpuSpeed as CpuSpeed,
   )
@@ -33,9 +41,21 @@ export default async function GuestDraftPage({
     : 'normal';
   const secondsPerPick = Math.max(Number(params.secondsPerPick) || 0, 0);
   const tradesEnabled = params.trades === 'true';
+  const cpuRandomness = Math.min(
+    Math.max(Number(params.cpuRandomness) || 50, 0),
+    100,
+  );
+  const cpuNeedsWeight = Math.min(
+    Math.max(Number(params.cpuNeedsWeight) || 50, 0),
+    100,
+  );
   const draftName = generateDraftName();
 
   if (format === 'single-team' && !selectedTeam) {
+    redirect('/drafts/new');
+  }
+
+  if (format === 'multi-team' && (!selectedTeams || selectedTeams.length < 2)) {
     redirect('/drafts/new');
   }
 
@@ -48,9 +68,13 @@ export default async function GuestDraftPage({
   const players = Object.fromEntries(playerMap);
 
   const teamAssignments = {} as Record<TeamAbbreviation, string | null>;
+  const multiTeamSet =
+    format === 'multi-team' && selectedTeams ? new Set(selectedTeams) : null;
   for (const t of teams) {
     if (format === 'full') {
       teamAssignments[t.id] = GUEST_ID;
+    } else if (multiTeamSet) {
+      teamAssignments[t.id] = multiTeamSet.has(t.id) ? GUEST_ID : null;
     } else {
       teamAssignments[t.id] = t.id === selectedTeam ? GUEST_ID : null;
     }
@@ -68,6 +92,8 @@ export default async function GuestDraftPage({
       tradesEnabled,
       secondsPerPick,
       teamAssignmentMode: 'choice',
+      cpuRandomness,
+      cpuNeedsWeight,
     },
     platform: 'web',
     status: 'active',

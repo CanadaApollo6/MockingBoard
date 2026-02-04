@@ -147,6 +147,204 @@ describe('selectCpuPick', () => {
   });
 });
 
+describe('selectCpuPick with CpuPickOptions', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('always picks top-scored player when randomness is 0', () => {
+    // Roll of 0.95 normally picks 3rd+, but randomness=0 forces deterministic #1
+    vi.spyOn(Math, 'random').mockReturnValue(0.95);
+    const players = [
+      makePlayer({ consensusRank: 1 }),
+      makePlayer({ consensusRank: 2 }),
+      makePlayer({ consensusRank: 3 }),
+    ];
+    const pick = selectCpuPick(players, [], { randomness: 0 });
+    expect(pick.consensusRank).toBe(1);
+  });
+
+  it('can select from wider pool at high randomness', () => {
+    // At randomness=1, thresholds are [0.40, 0.65, 0.83, 0.93, 1.0]
+    // Roll of 0.95 lands in the 5th bucket (93–100%)
+    vi.spyOn(Math, 'random').mockReturnValue(0.95);
+    const players = [1, 2, 3, 4, 5].map((r) =>
+      makePlayer({ consensusRank: r }),
+    );
+    const pick = selectCpuPick(players, [], { randomness: 1.0 });
+    expect(pick.consensusRank).toBe(5);
+  });
+
+  it('ignores team needs when needsWeight is 0', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    const players = [
+      makePlayer({ consensusRank: 10, position: 'WR' }),
+      makePlayer({ consensusRank: 11, position: 'CB' }),
+    ];
+    // CB would win at default needsWeight (11*0.85=9.35 < 10), but not at 0
+    const pick = selectCpuPick(players, ['CB'], {
+      randomness: 0,
+      needsWeight: 0,
+    });
+    expect(pick.position).toBe('WR');
+  });
+
+  it('heavily boosts needs when needsWeight is 1', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    const players = [
+      makePlayer({ consensusRank: 10, position: 'WR' }),
+      makePlayer({ consensusRank: 11, position: 'CB' }),
+    ];
+    // CB at needsWeight=1: 11*0.70=7.70, WR: 10.0 → CB wins
+    const pick = selectCpuPick(players, ['CB'], {
+      randomness: 0,
+      needsWeight: 1,
+    });
+    expect(pick.position).toBe('CB');
+  });
+
+  it('default options match original behavior', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    // Same scenario as "picks need player when close in rank to BPA"
+    const players = [
+      makePlayer({ consensusRank: 4, position: 'CB' }),
+      makePlayer({ consensusRank: 5, position: 'WR' }),
+    ];
+    const pick = selectCpuPick(players, ['CB', 'S']);
+    expect(pick.position).toBe('CB');
+  });
+});
+
+describe('selectCpuPick with boardRankings', () => {
+  beforeEach(() => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('uses board ranking instead of consensusRank when provided', () => {
+    // Consensus: p1=rank1, p2=rank2. Board: p2 first, p1 second.
+    const p1 = makePlayer({ consensusRank: 1, id: 'p1' });
+    const p2 = makePlayer({ consensusRank: 2, id: 'p2' });
+
+    const pick = selectCpuPick([p1, p2], [], {
+      randomness: 0,
+      boardRankings: ['p2', 'p1'],
+    });
+    // p2 is board rank 1, p1 is board rank 2 → p2 wins
+    expect(pick.id).toBe('p2');
+  });
+
+  it('falls back to consensusRank for players not on the board', () => {
+    const p1 = makePlayer({ consensusRank: 5, id: 'p1' });
+    const p2 = makePlayer({ consensusRank: 3, id: 'p2' });
+
+    // Board only has p1 at index 0 (rank 1). p2 is not on board → uses consensus 3.
+    const pick = selectCpuPick([p1, p2], [], {
+      randomness: 0,
+      boardRankings: ['p1'],
+    });
+    // p1 board rank 1, p2 consensus rank 3 → p1 wins
+    expect(pick.id).toBe('p1');
+  });
+
+  it('board rankings interact correctly with needs', () => {
+    const qb = makePlayer({ consensusRank: 10, position: 'QB', id: 'qb' });
+    const cb = makePlayer({ consensusRank: 20, position: 'CB', id: 'cb' });
+
+    // Board puts CB first. With needs boost, CB should clearly win.
+    const pick = selectCpuPick([qb, cb], ['CB'], {
+      randomness: 0,
+      needsWeight: 0.5,
+      boardRankings: ['cb', 'qb'],
+    });
+    // CB board rank 1 * need multiplier 0.85 = 0.85
+    // QB board rank 2 * no need 1.0 = 2.0
+    expect(pick.id).toBe('cb');
+  });
+
+  it('empty board rankings array falls back to consensus for all', () => {
+    const p1 = makePlayer({ consensusRank: 1, id: 'p1' });
+    const p2 = makePlayer({ consensusRank: 2, id: 'p2' });
+
+    const pick = selectCpuPick([p1, p2], [], {
+      randomness: 0,
+      boardRankings: [],
+    });
+    // Both fall back to consensus → p1 wins
+    expect(pick.id).toBe('p1');
+  });
+});
+
+describe('selectCpuPick with positionalWeights', () => {
+  beforeEach(() => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('favors premium position when ranks are equal', () => {
+    const qb = makePlayer({ consensusRank: 5, position: 'QB', id: 'qb' });
+    const rb = makePlayer({ consensusRank: 5, position: 'RB', id: 'rb' });
+
+    const pick = selectCpuPick([qb, rb], [], {
+      randomness: 0,
+      positionalWeights: { QB: 2.5, RB: 0.55 },
+    });
+    expect(pick.id).toBe('qb');
+  });
+
+  it('does not override large rank difference', () => {
+    const qb = makePlayer({ consensusRank: 20, position: 'QB', id: 'qb' });
+    const rb = makePlayer({ consensusRank: 1, position: 'RB', id: 'rb' });
+
+    const pick = selectCpuPick([qb, rb], [], {
+      randomness: 0,
+      positionalWeights: { QB: 2.5, RB: 0.55 },
+    });
+    expect(pick.id).toBe('rb');
+  });
+
+  it('has no effect when positionalWeights is undefined', () => {
+    const p1 = makePlayer({ consensusRank: 1, id: 'p1' });
+    const p2 = makePlayer({ consensusRank: 2, id: 'p2' });
+
+    const pick = selectCpuPick([p1, p2], [], { randomness: 0 });
+    expect(pick.id).toBe('p1');
+  });
+
+  it('interacts correctly with needs', () => {
+    // WR and OG at same rank; OG is #1 need. Positional difference is small
+    // enough that needs boost wins.
+    const wr = makePlayer({ consensusRank: 5, position: 'WR', id: 'wr' });
+    const og = makePlayer({ consensusRank: 5, position: 'OG', id: 'og' });
+
+    const pick = selectCpuPick([wr, og], ['OG'], {
+      randomness: 0,
+      needsWeight: 0.5,
+      positionalWeights: { WR: 1.2, OG: 0.75 },
+    });
+    // OG gets needs boost (mult ~0.85) which offsets WR's positional advantage
+    expect(pick.id).toBe('og');
+  });
+
+  it('treats missing positions as weight 1.0', () => {
+    const ls = makePlayer({ consensusRank: 1, position: 'LS', id: 'ls' });
+    const qb = makePlayer({ consensusRank: 2, position: 'QB', id: 'qb' });
+
+    const pick = selectCpuPick([ls, qb], [], {
+      randomness: 0,
+      positionalWeights: { QB: 2.5 }, // LS not specified → 1.0
+    });
+    // LS rank 1 * 1.0 = 1.0; QB rank 2 * ~0.80 = ~1.59 → LS wins on rank
+    expect(pick.id).toBe('ls');
+  });
+});
+
 describe('getEffectiveNeeds', () => {
   it('removes a drafted position from needs', () => {
     const needs: Position[] = ['CB', 'EDGE', 'WR'];

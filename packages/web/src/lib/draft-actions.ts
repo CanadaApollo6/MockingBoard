@@ -7,6 +7,7 @@ import {
   getCachedTeamDocs,
   getCachedPlayers,
 } from './cache';
+import { getBigBoard } from './data';
 import type {
   Draft,
   DraftFormat,
@@ -37,6 +38,7 @@ import {
   validateTradePicksAvailable,
   validateUserOwnsPicks,
   generateDraftName,
+  POSITIONAL_VALUE,
   type CpuTradeEvaluation,
 } from '@mockingboard/shared';
 
@@ -101,6 +103,7 @@ export interface CreateWebDraftInput {
     secondsPerPick?: number;
     tradesEnabled: boolean;
     teamAssignmentMode?: TeamAssignmentMode;
+    boardId?: string;
   };
   teamAssignments: Record<TeamAbbreviation, string | null>;
   pickOrder: DraftSlot[];
@@ -246,6 +249,7 @@ export async function runCpuCascade(
   const cpuPicks: Pick[] = [];
   let allPlayers: Player[] | null = null;
   let playerMap: Map<string, Player> | null = null;
+  let boardRankings: string[] | undefined;
 
   while (true) {
     const draftDoc = await adminDb.collection('drafts').doc(draftId).get();
@@ -267,10 +271,14 @@ export async function runCpuCascade(
       return { picks: cpuPicks, isComplete: false };
     }
 
-    // Lazy-load players once, then filter in memory
+    // Lazy-load players and board once, then filter in memory
     if (!allPlayers) {
       allPlayers = await getCachedPlayers(draft.config.year);
       playerMap = new Map(allPlayers.map((p) => [p.id, p]));
+      if (draft.config.boardId) {
+        const board = await getBigBoard(draft.config.boardId);
+        boardRankings = board?.rankings;
+      }
     }
     const pickedSet = new Set(draft.pickedPlayerIds ?? []);
     const available = allPlayers.filter((p) => !pickedSet.has(p.id));
@@ -287,7 +295,12 @@ export async function runCpuCascade(
       teamSeed?.needs ?? [],
       draftedPositions,
     );
-    const player = selectCpuPick(available, effectiveNeeds);
+    const player = selectCpuPick(available, effectiveNeeds, {
+      randomness: (draft.config.cpuRandomness ?? 50) / 100,
+      needsWeight: (draft.config.cpuNeedsWeight ?? 50) / 100,
+      boardRankings,
+      positionalWeights: POSITIONAL_VALUE,
+    });
 
     const { pick, isComplete } = await recordPick(draftId, player.id, null);
     cpuPicks.push(pick);
@@ -332,6 +345,12 @@ export async function advanceSingleCpuPick(
     return { pick: null, isComplete: false };
   }
 
+  let boardRankings: string[] | undefined;
+  if (draft.config.boardId) {
+    const board = await getBigBoard(draft.config.boardId);
+    boardRankings = board?.rankings;
+  }
+
   const teamSeed = teamSeeds.get(currentSlot.team);
   const playerMap = new Map(allPlayers.map((p) => [p.id, p]));
   const draftedPositions = getTeamDraftedPositions(
@@ -344,7 +363,12 @@ export async function advanceSingleCpuPick(
     teamSeed?.needs ?? [],
     draftedPositions,
   );
-  const player = selectCpuPick(available, effectiveNeeds);
+  const player = selectCpuPick(available, effectiveNeeds, {
+    randomness: (draft.config.cpuRandomness ?? 50) / 100,
+    needsWeight: (draft.config.cpuNeedsWeight ?? 50) / 100,
+    boardRankings,
+    positionalWeights: POSITIONAL_VALUE,
+  });
 
   const { pick, isComplete } = await recordPick(draftId, player.id, null);
   return { pick, isComplete };

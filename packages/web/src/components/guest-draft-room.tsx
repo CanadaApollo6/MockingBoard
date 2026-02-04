@@ -15,6 +15,8 @@ import {
   getEffectiveNeeds,
   getTeamDraftedPositions,
   teams,
+  suggestPick,
+  POSITIONAL_VALUE,
   type CpuTradeEvaluation,
 } from '@mockingboard/shared';
 import { useGuestDraft } from '@/hooks/use-guest-draft';
@@ -73,6 +75,39 @@ export function GuestDraftRoom({ initialDraft, players }: GuestDraftRoomProps) {
   const isUserTurn = controller === GUEST_ID;
   const isActive = draft.status === 'active';
   const isComplete = draft.status === 'complete';
+
+  const userTeamCount = useMemo(
+    () =>
+      Object.values(draft.teamAssignments).filter((uid) => uid === GUEST_ID)
+        .length,
+    [draft],
+  );
+  const isMultiTeam = userTeamCount > 1 && userTeamCount < 32;
+
+  // Suggested pick for the user
+  const suggestion = useMemo(() => {
+    if (!isUserTurn || !isActive || isProcessing || !currentSlot) return null;
+    const teamSeed = teamSeeds.get(currentSlot.team);
+    const draftedPositions = getTeamDraftedPositions(
+      draft.pickOrder,
+      draft.pickedPlayerIds ?? [],
+      currentSlot.team,
+      playerMap,
+    );
+    const effectiveNeeds = getEffectiveNeeds(
+      teamSeed?.needs ?? [],
+      draftedPositions,
+    );
+    return suggestPick(availablePlayers, effectiveNeeds, currentSlot.overall);
+  }, [
+    isUserTurn,
+    isActive,
+    isProcessing,
+    currentSlot,
+    draft,
+    availablePlayers,
+    playerMap,
+  ]);
 
   // Trade eligibility
   const hasCpuTeams = useMemo(
@@ -160,7 +195,11 @@ export function GuestDraftRoom({ initialDraft, players }: GuestDraftRoomProps) {
       teamSeed?.needs ?? [],
       draftedPositions,
     );
-    const player = selectCpuPick(availablePlayers, effectiveNeeds);
+    const player = selectCpuPick(availablePlayers, effectiveNeeds, {
+      randomness: (draft.config.cpuRandomness ?? 50) / 100,
+      needsWeight: (draft.config.cpuNeedsWeight ?? 50) / 100,
+      positionalWeights: POSITIONAL_VALUE,
+    });
     if (!player) return;
     handlePick(player.id);
   }, [currentSlot, draft, availablePlayers, playerMap, handlePick]);
@@ -312,6 +351,12 @@ export function GuestDraftRoom({ initialDraft, players }: GuestDraftRoomProps) {
         />
       )}
 
+      {isMultiTeam && isUserTurn && currentSlot && (
+        <p className="text-sm font-medium text-primary">
+          Picking for {currentSlot.teamOverride ?? currentSlot.team}
+        </p>
+      )}
+
       {isActive &&
         isUserTurn &&
         !isProcessing &&
@@ -322,6 +367,8 @@ export function GuestDraftRoom({ initialDraft, players }: GuestDraftRoomProps) {
             players={availablePlayers}
             onPick={handlePick}
             disabled={false}
+            suggestedPlayerId={suggestion?.playerId}
+            suggestionReason={suggestion?.reason}
           />
         )}
 

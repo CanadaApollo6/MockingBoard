@@ -70,6 +70,25 @@ describe('getPickController', () => {
     const slot = makeSlot({ ownerOverride: '' });
     expect(getPickController(draft, slot)).toBeNull();
   });
+
+  it('returns same user for multiple teams in multi-team mode', () => {
+    const draft = makeDraft({
+      teamAssignments: {
+        TEN: 'user-1',
+        CLE: 'user-1',
+        NYJ: null,
+      } as Draft['teamAssignments'],
+    });
+    expect(
+      getPickController(draft, makeSlot({ team: 'TEN' as TeamAbbreviation })),
+    ).toBe('user-1');
+    expect(
+      getPickController(draft, makeSlot({ team: 'CLE' as TeamAbbreviation })),
+    ).toBe('user-1');
+    expect(
+      getPickController(draft, makeSlot({ team: 'NYJ' as TeamAbbreviation })),
+    ).toBeNull();
+  });
 });
 
 describe('filterAndSortPickOrder', () => {

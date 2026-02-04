@@ -17,6 +17,8 @@ import {
   getEffectiveNeeds,
   getTeamDraftedPositions,
   teams,
+  suggestPick,
+  POSITIONAL_VALUE,
   type CpuTradeEvaluation,
 } from '@mockingboard/shared';
 import { useLiveDraft } from '@/hooks/use-live-draft';
@@ -196,6 +198,44 @@ export function DraftRoom({
   const isActive = draft?.status === 'active';
   const isPaused = draft?.status === 'paused';
   const isComplete = draft?.status === 'complete';
+
+  const userTeamCount = useMemo(() => {
+    if (!draft) return 0;
+    return Object.values(draft.teamAssignments).filter((uid) => uid === userId)
+      .length;
+  }, [draft, userId]);
+  const isMultiTeam = userTeamCount > 1 && userTeamCount < 32;
+
+  // Suggested pick for the user
+  const suggestion = useMemo(() => {
+    if (!isUserTurn || !isActive || animating || !currentSlot) return null;
+    const teamSeed = teamSeeds.get(currentSlot.team);
+    const draftedPositions = getTeamDraftedPositions(
+      draft!.pickOrder,
+      draft!.pickedPlayerIds ?? [],
+      currentSlot.team,
+      playerMap,
+    );
+    const effectiveNeeds = getEffectiveNeeds(
+      teamSeed?.needs ?? [],
+      draftedPositions,
+    );
+    return suggestPick(
+      availablePlayers,
+      effectiveNeeds,
+      currentSlot.overall,
+      bigBoardRankings,
+    );
+  }, [
+    isUserTurn,
+    isActive,
+    animating,
+    currentSlot,
+    draft,
+    availablePlayers,
+    playerMap,
+    bigBoardRankings,
+  ]);
 
   // Auto-trigger CPU advancement when current pick is CPU-controlled
   const needsCpuAdvance =
@@ -438,10 +478,22 @@ export function DraftRoom({
       teamSeed?.needs ?? [],
       draftedPositions,
     );
-    const player = selectCpuPick(availablePlayers, effectiveNeeds);
+    const player = selectCpuPick(availablePlayers, effectiveNeeds, {
+      randomness: (draft.config.cpuRandomness ?? 50) / 100,
+      needsWeight: (draft.config.cpuNeedsWeight ?? 50) / 100,
+      boardRankings: bigBoardRankings,
+      positionalWeights: POSITIONAL_VALUE,
+    });
     if (!player) return;
     handlePick(player.id);
-  }, [draft, submitting, availablePlayers, playerMap, handlePick]);
+  }, [
+    draft,
+    submitting,
+    availablePlayers,
+    playerMap,
+    handlePick,
+    bigBoardRankings,
+  ]);
 
   const {
     remaining,
@@ -683,6 +735,11 @@ export function DraftRoom({
               CPU picks rolling in...
             </div>
           )}
+          {isUserTurn && isMultiTeam && currentSlot && (
+            <p className="text-sm font-medium text-primary">
+              Picking for {currentSlot.teamOverride ?? currentSlot.team}
+            </p>
+          )}
           {!animating && !isUserTurn && currentSlot && (
             <p className="text-sm text-muted-foreground">
               {controller && draft?.participantNames?.[controller]
@@ -715,6 +772,8 @@ export function DraftRoom({
             rankOverride={
               sortMode === 'board' && boardRankMap ? boardRankMap : undefined
             }
+            suggestedPlayerId={suggestion?.playerId}
+            suggestionReason={suggestion?.reason}
           />
         </>
       )}

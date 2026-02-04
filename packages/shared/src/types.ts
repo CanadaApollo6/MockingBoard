@@ -77,7 +77,7 @@ export type DraftStatus =
   | 'paused'
   | 'complete'
   | 'cancelled';
-export type DraftFormat = 'full' | 'single-team';
+export type DraftFormat = 'full' | 'single-team' | 'multi-team';
 export type DraftPlatform = 'discord' | 'web';
 export type TeamAssignmentMode = 'random' | 'choice';
 export type CpuSpeed = 'instant' | 'fast' | 'normal';
@@ -154,6 +154,12 @@ export interface Draft {
     teamAssignmentMode: TeamAssignmentMode;
     cpuSpeed: CpuSpeed;
     tradesEnabled: boolean;
+    /** 0–100, maps to 0.0–1.0 for CPU pick algorithm. Default: 50 */
+    cpuRandomness?: number;
+    /** 0–100, maps to 0.0–1.0 for CPU pick algorithm. Default: 50 */
+    cpuNeedsWeight?: number;
+    /** Big board to use for CPU pick ordering */
+    boardId?: string;
   };
   status: DraftStatus;
   currentPick: number;
@@ -412,4 +418,84 @@ export interface VideoBreakdown {
   timestamp?: number;
   tags?: string[];
   createdAt: FirestoreTimestamp;
+}
+
+// ---- Draft Analytics Types ----
+
+export type PickLabel =
+  | 'great-value'
+  | 'good-value'
+  | 'fair'
+  | 'slight-reach'
+  | 'reach'
+  | 'big-reach';
+
+export interface PickGrade {
+  overall: number;
+  playerId: string;
+  position: Position;
+  consensusRank: number;
+  /** overall - consensusRank. Positive = steal (got better player than slot). */
+  valueDelta: number;
+  /** 0-100 composite score */
+  pickScore: number;
+  label: PickLabel;
+  /** Position's index in team needs, or -1 if not a need */
+  needIndex: number;
+  hadBetterAlternative: boolean;
+  surplusValue: number;
+  positionalMultiplier: number;
+  /** Board rank - overall, if board provided */
+  boardDelta?: number;
+}
+
+export interface TeamDraftGrade {
+  team: TeamAbbreviation;
+  /** 0-100 overall grade */
+  overallGrade: number;
+  tier: string;
+  picks: PickGrade[];
+  scores: {
+    value: number;
+    positionalValue: number;
+    surplusValue: number;
+    needs: number;
+    bpaAdherence: number;
+  };
+  /** Rich Hill chart points gained/lost via trades */
+  tradeNetValue: number;
+  needsFilled: number;
+  totalNeeds: number;
+  highlights: string[];
+}
+
+export interface DraftRecap {
+  draftId: string;
+  teamGrades: TeamDraftGrade[];
+  overallClassGrade: number;
+  tradeAnalysis: TradeAnalysis[];
+  optimalComparison: OptimalPick[];
+}
+
+export interface TradeAnalysis {
+  tradeId: string;
+  proposerTeam: TeamAbbreviation;
+  recipientTeam: TeamAbbreviation;
+  proposerNetValue: number;
+  recipientNetValue: number;
+  winner: TeamAbbreviation | 'even';
+}
+
+export interface OptimalPick {
+  overall: number;
+  actualPlayerId: string;
+  optimalPlayerId: string;
+  actualRank: number;
+  optimalRank: number;
+}
+
+export interface SuggestedPick {
+  playerId: string;
+  score: number;
+  reason: string;
 }
