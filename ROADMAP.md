@@ -202,17 +202,27 @@ Extract platform-agnostic business logic from bot services to `packages/shared`.
 - [x] Multi-team draft mode (one user controls 2–31 teams; multi-select team grid, "Picking for [TEAM]" indicator in draft rooms)
 - [x] Public draft lobbies polish (ISR revalidation every 30s, "Possibly inactive" badge for lobbies older than 2 hours)
 - [ ] Collaborative drafting (vote-based picks with friends controlling one team)
-- [ ] Run mock drafts using personal big board rankings as the CPU pick order
+- [x] Run mock drafts using personal big board rankings as the CPU pick order
 - [ ] In-draft web chat for multiplayer (message feed alongside pick UI)
 
-### Milestone 3.7: Post-Draft Recap & Analytics
+### Milestone 3.6: Post-Draft Recap & Analytics ✓
 
-- [ ] Post-draft team grades (needs filled, BPA adherence, reach/value picks)
-- [ ] Draft recap page with per-team analysis and highlights
-- [ ] Comparison to consensus: show where user diverged and by how much
-- [ ] Shareable recap cards (extend existing image sharing)
+- [x] Analytics engine with research-calibrated models (Massey/Thaler, Baldwin surplus curves, OTC/PFF positional value, Unexpected Points surplus tiers)
+- [x] Positional value model (`POSITIONAL_VALUE`): 15-position multiplier table synthesized from four independent sources
+- [x] Surplus value curve calibrated to Baldwin's empirical data (peaks at pick 12, not pick 1)
+- [x] Pick classification with position-adaptive thresholds (great-value through big-reach)
+- [x] Pick scoring (0–100 composite: value, positional value, need fill, base)
+- [x] Team grading across five dimensions (value 30%, positional value 20%, surplus 15%, needs 20%, BPA adherence 15%)
+- [x] Full draft recap generation: 32-team grades, trade analysis with Rich Hill chart, optimal BPA comparison
+- [x] Post-draft team grades (needs filled, BPA adherence, reach/value picks)
+- [x] Draft recap page with per-team analysis and highlights (DraftRecapSummary, TeamGradeCard, PickBreakdown, TradeAnalysisCard)
+- [x] Comparison to consensus: show where user diverged and by how much (valueDelta, boardDelta)
+- [x] Shareable recap cards (extend existing image sharing — RecapShareCard with team color gradient, dimension bars, graded pick table)
+- [x] Suggested pick highlighting during user's turn (analytics-scored best available with reason string)
+- [x] CPU positional value weighting across all pick call sites (fourth-root scaling for subtle premium-position boost)
+- [x] 60 analytics tests + 5 CPU positional weight tests + 7 suggestPick tests (508 total)
 
-### Milestone 3.6: Dynasty/Keeper Mode
+### Milestone 3.7: Dynasty/Keeper Mode
 
 - [ ] Carry over rosters between draft years
 - [ ] Keeper slot designation and management
@@ -698,4 +708,4 @@ Server-side and client-side enforcement of Free/Pro boundaries across the platfo
 ## Future Considerations
 
 - **Mobile native app**: Only if popularity demands it — responsive web (Phase 7.5.2) is the priority path
-- **Draft suggestion algo**: Top of the market algorithm to drive cpu picks and suggestions based on a variety of studies from Massey, Kevin Cole, and Ben Baldwin that attempt to quantify positional value, how teams actually use draft picks, and how they SHOULD use draft picks
+- **Draft suggestion algo** ✓: Implemented in Milestone 3.7. Research-calibrated analytics engine drawing from Massey/Thaler (Weibull market value, 52% accuracy baseline), Baldwin (surplus curves, OFV tables), Unexpected Points (positional surplus tiers), OTC (Positional Value Index), PFF (Pro-Adjusted WAA), and Keefer (sunk-cost fallacy). Powers CPU positional weighting, suggested pick highlighting, and full post-draft grading.

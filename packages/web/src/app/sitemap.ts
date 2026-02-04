@@ -15,6 +15,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/boards`, changeFrequency: 'daily', priority: 0.7 },
     { url: `${baseUrl}/community`, changeFrequency: 'daily', priority: 0.7 },
     { url: `${baseUrl}/scouts`, changeFrequency: 'weekly', priority: 0.6 },
+    { url: `${baseUrl}/draft-order`, changeFrequency: 'weekly', priority: 0.8 },
   ];
 
   // Dynamic pages — fetch in parallel

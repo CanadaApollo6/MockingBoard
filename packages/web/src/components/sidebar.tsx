@@ -14,6 +14,7 @@ import {
   Globe,
   Eye,
   Bot,
+  ListOrdered,
   Settings,
   LogOut,
   LogIn,
@@ -52,7 +53,10 @@ const NAV_GROUPS = [
   },
   {
     label: 'Tools',
-    items: [{ href: '/invite', label: 'Add Bot', icon: Bot }],
+    items: [
+      { href: '/draft-order', label: 'Draft Order', icon: ListOrdered },
+      { href: '/invite', label: 'Add Bot', icon: Bot },
+    ],
   },
 ] as const;
 
