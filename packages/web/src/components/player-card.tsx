@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import type { Player } from '@mockingboard/shared';
+import type { Player, Position } from '@mockingboard/shared';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { getPositionColor } from '@/lib/position-colors';

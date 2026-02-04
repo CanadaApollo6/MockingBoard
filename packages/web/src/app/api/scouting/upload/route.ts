@@ -221,7 +221,10 @@ export async function POST(request: Request) {
     const batch = adminDb.batch();
     const chunk = updateOps.slice(i, i + BATCH_SIZE);
     for (const { docId, data } of chunk) {
-      batch.update(adminDb.collection('players').doc(docId), data);
+      batch.update(
+        adminDb.collection('players').doc(docId),
+        data as FirebaseFirestore.UpdateData<FirebaseFirestore.DocumentData>,
+      );
     }
     await batch.commit();
     updated += chunk.length;
