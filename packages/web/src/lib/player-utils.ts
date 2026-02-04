@@ -14,8 +14,9 @@ export const YEAR_LABELS: Record<string, string> = {
 };
 
 export function formatHeight(inches: number): string {
-  const feet = Math.floor(inches / 12);
-  const remaining = inches % 12;
+  const rounded = Math.round(inches);
+  const feet = Math.floor(rounded / 12);
+  const remaining = rounded % 12;
   return `${feet}'${remaining}"`;
 }
 
