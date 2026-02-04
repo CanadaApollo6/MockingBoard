@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { getBigBoardBySlug, getPlayerMap } from '@/lib/data';
 import { PublicBoardView } from '@/components/public-board-view';
+import { DraftGuideButton } from '@/components/draft-guide/draft-guide-button';
 import type { Player } from '@mockingboard/shared';
 
 interface Props {
@@ -41,6 +42,14 @@ export default async function PublicBoardPage({ params }: Props) {
         {board.description && (
           <p className="mt-3 text-muted-foreground">{board.description}</p>
         )}
+        <div className="mt-4">
+          <DraftGuideButton
+            boardName={board.name}
+            authorName={board.authorName}
+            year={board.year}
+            players={rankedPlayers}
+          />
+        </div>
       </div>
       <PublicBoardView rankedPlayers={rankedPlayers} />
     </main>

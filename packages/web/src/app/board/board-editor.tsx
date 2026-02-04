@@ -25,6 +25,7 @@ import type {
 import { useBigBoard } from '@/hooks/use-big-board';
 import { BoardPlayerRow } from '@/components/board-player-row';
 import { BoardToolbar } from '@/components/board-toolbar';
+import { DraftGuideButton } from '@/components/draft-guide/draft-guide-button';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { getPositionColor } from '@/lib/position-colors';
@@ -209,6 +210,11 @@ function BoardEditorInner({
     return map;
   }, [customPlayers]);
 
+  const rankedPlayersList = useMemo(
+    () => rankings.map((id) => players[id]).filter(Boolean),
+    [rankings, players],
+  );
+
   // Filtered ranked list (for display only — DnD uses full rankings)
   const filteredRankings = useMemo(() => {
     if (!search && !posFilter) return rankings;
@@ -320,6 +326,12 @@ function BoardEditorInner({
               }),
             });
           }}
+        />
+
+        <DraftGuideButton
+          boardName={board.name}
+          year={board.year}
+          players={rankedPlayersList}
         />
 
         {snapshots.length > 0 && (
