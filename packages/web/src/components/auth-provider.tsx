@@ -14,6 +14,7 @@ import {
 } from 'firebase/auth';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { getClientAuth, getClientDb } from '@/lib/firebase';
+import type { TeamAbbreviation } from '@mockingboard/shared';
 
 export interface UserProfile {
   displayName: string;
@@ -32,6 +33,7 @@ export interface UserProfile {
     website?: string;
   };
   isPublic?: boolean;
+  favoriteTeam?: TeamAbbreviation;
 }
 
 interface AuthContextValue {
@@ -88,6 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           avatar: data.avatar,
           links: data.links,
           isPublic: data.isPublic,
+          favoriteTeam: data.favoriteTeam || undefined,
         });
       }
     });

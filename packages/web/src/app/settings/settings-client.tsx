@@ -2,12 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { teams } from '@mockingboard/shared';
 import { useAuth } from '@/components/auth-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ProfileEditor } from '@/components/profile-editor';
+import { TEAM_COLORS, hexToHsl } from '@/lib/team-colors';
+import { cn } from '@/lib/utils';
 
 const inputClass =
   'w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:shadow-[var(--shadow-glow)]';
@@ -76,9 +79,108 @@ export function SettingsClient() {
         </CardContent>
       </Card>
 
+      <TeamThemeSection />
       <AccountLinkingSection profile={profile} />
       <WebhookSection />
     </div>
+  );
+}
+
+const AFC_TEAMS = teams.filter((t) => t.conference === 'AFC');
+const NFC_TEAMS = teams.filter((t) => t.conference === 'NFC');
+
+function teamForeground(hex: string): string {
+  const [, , l] = hexToHsl(hex);
+  return l > 55 ? '#0a0a0b' : '#ffffff';
+}
+
+function TeamThemeSection() {
+  const { profile } = useAuth();
+  const [saving, setSaving] = useState(false);
+  const [selected, setSelected] = useState<string | null>(
+    profile?.favoriteTeam ?? null,
+  );
+
+  useEffect(() => {
+    setSelected(profile?.favoriteTeam ?? null);
+  }, [profile?.favoriteTeam]);
+
+  async function handleSelect(team: string | null) {
+    setSelected(team);
+    setSaving(true);
+    try {
+      await fetch('/api/settings/favorite-team', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ team }),
+      });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">Team Theme</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-sm text-muted-foreground">
+          Choose your favorite NFL team to customize accent colors across the
+          app.
+        </p>
+
+        {(['AFC', 'NFC'] as const).map((conf) => {
+          const confTeams = conf === 'AFC' ? AFC_TEAMS : NFC_TEAMS;
+          return (
+            <div key={conf}>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                {conf}
+              </p>
+              <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-8">
+                {confTeams.map((t) => {
+                  const colors = TEAM_COLORS[t.id];
+                  const isSelected = selected === t.id;
+                  return (
+                    <button
+                      key={t.id}
+                      onClick={() => handleSelect(t.id)}
+                      disabled={saving}
+                      title={t.name}
+                      className={cn(
+                        'flex h-9 items-center justify-center rounded-md text-xs font-bold transition-all',
+                        isSelected
+                          ? 'ring-2 ring-ring ring-offset-2 ring-offset-background'
+                          : 'opacity-80 hover:opacity-100',
+                      )}
+                      style={{
+                        backgroundColor: colors.primary,
+                        color: teamForeground(colors.primary),
+                      }}
+                    >
+                      {t.id}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+
+        <button
+          onClick={() => handleSelect(null)}
+          disabled={saving}
+          className={cn(
+            'w-full rounded-md border px-3 py-2 text-sm transition-colors',
+            selected === null
+              ? 'border-primary bg-primary/10 text-primary'
+              : 'border-border text-muted-foreground hover:border-primary/50',
+          )}
+        >
+          None (MockingBoard Green)
+        </button>
+      </CardContent>
+    </Card>
   );
 }
 

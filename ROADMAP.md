@@ -611,7 +611,21 @@ Server-side and client-side enforcement of Free/Pro boundaries across the platfo
 - [x] Touch-friendly interactions (drag-and-drop, modals, dropdowns)
 - [x] Mobile-optimized draft picking interface
 
-### Milestone 7.5.3: Configurable Theming
+### Milestone 7.5.3: Auth & Dashboard Polish ✓
+
+- [x] Authenticated dashboard at `/` with widgets (Prospect of the Day, Mock Draft of the Week, Leaderboard Top 5, Quick Actions, User Stats)
+- [x] Landing page single-viewport layout with animated sign-in transition
+- [x] OAuth sign-in buttons with provider logos (Discord, Google)
+- [x] Green glow background on auth pages matching landing page
+- [x] Sign-out redirect to landing page (full server re-render)
+
+### Milestone 7.5.4: Player Page Polish ✓
+
+- [x] Community reports overhaul: tier-based grade buttons replacing slider
+- [x] Word cloud visualization for community strengths/weaknesses
+- [x] Full-width player page layout
+
+### Milestone 7.5.5: Configurable Theming
 
 - [ ] Team-based theming (select your favorite NFL team, app adopts their colors)
 - [ ] Theme persistence in user profile

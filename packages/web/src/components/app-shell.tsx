@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 import { Menu } from 'lucide-react';
 import { Sidebar } from '@/components/sidebar';
 import { useAuth } from '@/components/auth-provider';
+import { useTeamTheme } from '@/hooks/use-team-theme';
 
 function isBare(pathname: string, isAuthenticated: boolean): boolean {
   if (pathname === '/') return !isAuthenticated;
@@ -17,6 +18,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, loading } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+  useTeamTheme();
 
   if (isBare(pathname, !loading && !!user)) return <>{children}</>;
 

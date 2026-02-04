@@ -136,6 +136,7 @@ export interface User {
     website?: string;
   };
   isPublic?: boolean;
+  favoriteTeam?: TeamAbbreviation;
 }
 
 export interface Draft {
