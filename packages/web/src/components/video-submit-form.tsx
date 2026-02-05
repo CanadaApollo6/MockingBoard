@@ -38,7 +38,7 @@ export function VideoSubmitForm({
     try {
       const body: Record<string, unknown> = {
         playerId,
-        youtubeUrl: url.trim(),
+        url: url.trim(),
         title: title.trim(),
       };
 
@@ -77,12 +77,12 @@ export function VideoSubmitForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
       <div>
-        <label className="mb-1 block text-xs font-medium">YouTube URL *</label>
+        <label className="mb-1 block text-xs font-medium">Video URL *</label>
         <input
           type="url"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
-          placeholder="https://www.youtube.com/watch?v=..."
+          placeholder="YouTube, Instagram, Twitter/X, or TikTok URL"
           className={inputClass}
           required
         />

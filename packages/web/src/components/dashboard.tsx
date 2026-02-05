@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { Player, Draft, User } from '@mockingboard/shared';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { schoolColorStyle } from '@/lib/school-colors';
 
 interface DashboardProps {
   displayName: string;
@@ -52,8 +53,17 @@ export function Dashboard({
       {/* Widget Grid */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {/* Prospect of the Day */}
-        <Card>
-          <CardContent className="p-5">
+        <Card style={prospect ? schoolColorStyle(prospect.school) : undefined}>
+          {prospect && (
+            <div
+              className="h-1 rounded-t-xl"
+              style={{
+                background:
+                  'linear-gradient(to right, var(--school-primary), var(--school-secondary))',
+              }}
+            />
+          )}
+          <CardContent className="pl-5 pt-0">
             <p className="mb-3 text-xs font-medium uppercase tracking-widest text-muted-foreground">
               Prospect of the Day
             </p>

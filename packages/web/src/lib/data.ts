@@ -495,8 +495,15 @@ export async function getPlayerVideos(
     .get();
 
   return sanitize(
-    snapshot.docs.map(
-      (doc) => ({ id: doc.id, ...doc.data() }) as VideoBreakdown,
-    ),
+    snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        platform: data.platform ?? 'youtube',
+        url: data.url ?? data.youtubeUrl ?? '',
+        embedId: data.embedId ?? data.youtubeVideoId ?? '',
+      } as VideoBreakdown;
+    }),
   );
 }
