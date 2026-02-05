@@ -243,12 +243,30 @@ function parseDraftOrderTxt(filePath: string): DraftSlot[] {
       i++;
       pickInRound++;
 
-      // Skip optional traded-from annotation (indented line like "  ATL")
+      // Parse traded-from annotation: indented line = original team
+      let originalTeam: TeamAbbreviation | undefined;
       if (i < lines.length && lines[i] && /^\s{2,}\S/.test(lines[i])) {
+        const origName = lines[i].trim();
+        originalTeam = CITY_TO_TEAM[origName];
+        if (!originalTeam) {
+          console.warn(
+            `Unknown original team: "${origName}" at pick ${overall}`,
+          );
+        }
         i++;
       }
 
-      slots.push({ overall, round: currentRound, pick: pickInRound, team });
+      if (originalTeam) {
+        slots.push({
+          overall,
+          round: currentRound,
+          pick: pickInRound,
+          team: originalTeam,
+          teamOverride: team,
+        });
+      } else {
+        slots.push({ overall, round: currentRound, pick: pickInRound, team });
+      }
       continue;
     }
 
@@ -375,24 +393,14 @@ async function clearExistingPlayers(year: number) {
 
 async function seed() {
   const year = parseInt(process.argv[2], 10);
+  const orderOnly = process.argv.includes('--order-only');
+
   if (!year || ![2025, 2026].includes(year)) {
-    console.error('Usage: tsx src/seed.ts <year>  (2025 or 2026)');
+    console.error(
+      'Usage: tsx src/seed.ts <year> [--order-only]  (2025 or 2026)',
+    );
     process.exit(1);
   }
-
-  // Parse players
-  const csvConfigs: Record<
-    number,
-    { file: string; parser: typeof parsePfrCsv }
-  > = {
-    2025: { file: '2025_draft.csv', parser: parsePfrCsv },
-    2026: { file: 'pff-my-big-board-2026-01-30.csv', parser: parsePffCsv },
-  };
-
-  const { file, parser } = csvConfigs[year];
-  const csvPath = resolve(import.meta.dirname, '../../../drafts', file);
-  const players = parser(csvPath, year);
-  console.log(`Parsed ${players.length} players for ${year} from ${file}`);
 
   // Parse draft order
   const draftOrderConfigs: Record<
@@ -411,6 +419,29 @@ async function seed() {
   );
   const draftSlots = orderConfig.parser(orderPath);
   console.log(`Parsed ${draftSlots.length} draft slots for ${year}`);
+
+  // Write draft order to draftOrders/{year}
+  await db.collection('draftOrders').doc(`${year}`).set({
+    slots: draftSlots,
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+  console.log(`Seeded draft order for ${year} (${draftSlots.length} slots)`);
+
+  if (orderOnly) return;
+
+  // Parse players
+  const csvConfigs: Record<
+    number,
+    { file: string; parser: typeof parsePfrCsv }
+  > = {
+    2025: { file: '2025_draft.csv', parser: parsePfrCsv },
+    2026: { file: 'pff-my-big-board-2026-01-30.csv', parser: parsePffCsv },
+  };
+
+  const { file, parser } = csvConfigs[year];
+  const csvPath = resolve(import.meta.dirname, '../../../drafts', file);
+  const players = parser(csvPath, year);
+  console.log(`Parsed ${players.length} players for ${year} from ${file}`);
 
   // Parse future draft assets (optional)
   let futureAssets: Partial<Record<TeamAbbreviation, FuturePickSeed[]>> | null =
@@ -431,13 +462,6 @@ async function seed() {
 
   // Clear existing players
   await clearExistingPlayers(year);
-
-  // Write draft order to draftOrders/{year}
-  await db.collection('draftOrders').doc(`${year}`).set({
-    slots: draftSlots,
-    updatedAt: FieldValue.serverTimestamp(),
-  });
-  console.log(`Seeded draft order for ${year} (${draftSlots.length} slots)`);
 
   // Batch write players and teams
   const batch = db.batch();

@@ -190,7 +190,7 @@ export function TeamBreakdown({
                 Current Roster
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6 p-0 pb-4">
+            <CardContent className="space-y-6 pb-4">
               {(
                 [
                   ['Offense', roster.offense],
@@ -200,7 +200,7 @@ export function TeamBreakdown({
               ).map(([groupLabel, players]) =>
                 players.length > 0 ? (
                   <div key={groupLabel}>
-                    <h3 className="px-4 pb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    <h3 className="pb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                       {groupLabel}
                     </h3>
                     <div className="overflow-x-auto">
@@ -273,15 +273,15 @@ export function TeamBreakdown({
             Picks Owned ({ownedPicks.length})
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent>
           <div className="overflow-x-auto">
-            <Table>
+            <Table className="table-fixed">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-20">Pick</TableHead>
-                  <TableHead className="w-20">Overall</TableHead>
-                  <TableHead className="w-24 text-right">Value</TableHead>
-                  <TableHead>Source</TableHead>
+                  <TableHead className="w-1/4">Pick</TableHead>
+                  <TableHead className="w-1/4">Overall</TableHead>
+                  <TableHead className="w-1/4">Value</TableHead>
+                  <TableHead className="w-1/4">Source</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -291,7 +291,7 @@ export function TeamBreakdown({
                       {p.round}.{String(p.pick).padStart(2, '0')}
                     </TableCell>
                     <TableCell className="font-mono">{p.overall}</TableCell>
-                    <TableCell className="text-right font-mono tabular-nums">
+                    <TableCell className="font-mono tabular-nums">
                       {p.value.toFixed(1)}
                     </TableCell>
                     <TableCell>
@@ -316,7 +316,7 @@ export function TeamBreakdown({
                 {/* Subtotal */}
                 <TableRow className="border-t-2 font-medium">
                   <TableCell colSpan={2}>Total</TableCell>
-                  <TableCell className="text-right font-mono tabular-nums">
+                  <TableCell className="font-mono tabular-nums">
                     {totalValue.toFixed(1)}
                   </TableCell>
                   <TableCell />
@@ -335,15 +335,15 @@ export function TeamBreakdown({
               Picks Traded Away ({tradedAway.length})
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-0">
+          <CardContent>
             <div className="overflow-x-auto">
-              <Table>
+              <Table className="table-fixed">
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-20">Pick</TableHead>
-                    <TableHead className="w-20">Overall</TableHead>
-                    <TableHead className="w-24 text-right">Value</TableHead>
-                    <TableHead>Traded To</TableHead>
+                    <TableHead className="w-1/4">Pick</TableHead>
+                    <TableHead className="w-1/4">Overall</TableHead>
+                    <TableHead className="w-1/4">Value</TableHead>
+                    <TableHead className="w-1/4">Traded To</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -356,7 +356,7 @@ export function TeamBreakdown({
                         {p.round}.{String(p.pick).padStart(2, '0')}
                       </TableCell>
                       <TableCell className="font-mono">{p.overall}</TableCell>
-                      <TableCell className="text-right font-mono tabular-nums">
+                      <TableCell className="font-mono tabular-nums">
                         {p.value.toFixed(1)}
                       </TableCell>
                       <TableCell className="no-underline">
@@ -430,14 +430,14 @@ export function TeamBreakdown({
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium">Future Picks</CardTitle>
           </CardHeader>
-          <CardContent className="p-0">
+          <CardContent>
             <div className="overflow-x-auto">
-              <Table>
+              <Table className="table-fixed">
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-20">Year</TableHead>
-                    <TableHead className="w-20">Round</TableHead>
-                    <TableHead>Original Team</TableHead>
+                    <TableHead className="w-1/3">Year</TableHead>
+                    <TableHead className="w-1/3">Round</TableHead>
+                    <TableHead className="w-1/3 pl-6">Original Team</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -451,7 +451,7 @@ export function TeamBreakdown({
                         <TableCell className="font-mono">
                           Rd {fp.round}
                         </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
+                        <TableCell className="pl-6 text-sm text-muted-foreground">
                           {fp.originalTeam === team.id
                             ? 'Own pick'
                             : `via ${getTeamName(fp.originalTeam)}`}

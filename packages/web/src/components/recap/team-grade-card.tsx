@@ -1,5 +1,5 @@
 import type { TeamDraftGrade, Player } from '@mockingboard/shared';
-import { gradeColor } from '@/components/grade-slider';
+import { gradeColor } from '@/lib/grade-color';
 import { getTeamColor } from '@/lib/team-colors';
 import { getTeamName } from '@/lib/teams';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

@@ -15,7 +15,7 @@ import {
   Eye,
   Bot,
   ListOrdered,
-  Shield,
+  GalleryHorizontalEnd,
   ArrowLeftRight,
   Settings,
   LogOut,
@@ -57,7 +57,7 @@ const NAV_GROUPS = [
     label: 'Tools',
     items: [
       { href: '/draft-order', label: 'Draft Order', icon: ListOrdered },
-      { href: '/teams', label: 'Teams', icon: Shield },
+      { href: '/teams', label: 'Teams', icon: GalleryHorizontalEnd },
       {
         href: '/trade-calculator',
         label: 'Trade Calculator',
