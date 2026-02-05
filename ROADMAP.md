@@ -710,3 +710,5 @@ Server-side and client-side enforcement of Free/Pro boundaries across the platfo
 - **Mobile native app**: Only if popularity demands it — responsive web (Phase 7.5.2) is the priority path
 - **Draft suggestion algo** ✓: Implemented in Milestone 3.7. Research-calibrated analytics engine drawing from Massey/Thaler (Weibull market value, 52% accuracy baseline), Baldwin (surplus curves, OFV tables), Unexpected Points (positional surplus tiers), OTC (Positional Value Index), PFF (Pro-Adjusted WAA), and Keefer (sunk-cost fallacy). Powers CPU positional weighting, suggested pick highlighting, and full post-draft grading.
 - **Add my other packages**: Incorporate my espn-api and nflverse-ts packages into this site to drive further reference ability and tooling powers (need to get these to 1.0 versions first)
+- **NFL player pages**: Pages akin to ESPN featuring player stats, snap count, etc
+- **Broader video sharing**: Add support for short form videos from Instagram, TikTok, Twitter, and YouTube

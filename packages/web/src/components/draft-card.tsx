@@ -48,10 +48,10 @@ export function DraftCard({
   discordId,
   onRemove,
 }: DraftCardProps) {
-  const participantCount = Object.keys(draft.participants).length;
-  const totalPicks = draft.pickOrder.length;
+  const participantCount = Object.keys(draft.participants ?? {}).length;
+  const totalPicks = draft.pickOrder?.length ?? 0;
   const picksMade = draft.pickedPlayerIds?.length ?? 0;
-  const teams = Object.keys(draft.teamAssignments) as TeamAbbreviation[];
+  const teams = Object.keys(draft.teamAssignments ?? {}) as TeamAbbreviation[];
   const href =
     draft.status === 'active'
       ? `/drafts/${draft.id}/live`

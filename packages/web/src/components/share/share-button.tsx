@@ -45,7 +45,7 @@ export function ShareButton({
 
   const draftName = getDraftDisplayName(draft);
   const draftDate = formatDraftDate(draft.createdAt);
-  const participantCount = Object.keys(draft.participants).length;
+  const participantCount = Object.keys(draft.participants ?? {}).length;
 
   // Close menu on outside click
   useEffect(() => {
