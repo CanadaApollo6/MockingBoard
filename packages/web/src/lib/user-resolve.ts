@@ -48,8 +48,9 @@ export function isUserInDraft(
   sessionUid: string,
   discordId?: string,
 ): boolean {
-  const keys = Object.keys(draft.participants);
-  const values = Object.values(draft.participants);
+  const participants = draft.participants ?? {};
+  const keys = Object.keys(participants);
+  const values = Object.values(participants);
 
   if (keys.includes(sessionUid) || values.includes(sessionUid)) return true;
   if (discordId && (keys.includes(discordId) || values.includes(discordId)))

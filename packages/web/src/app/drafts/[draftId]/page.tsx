@@ -39,14 +39,16 @@ export default async function DraftDetailPage({
     getSessionUser(),
   ]);
 
-  const participantCount = Object.keys(draft.participants).length;
+  const participants = draft.participants ?? {};
+  const participantCount = Object.keys(participants).length;
   const user = session ? await resolveUser(session.uid) : null;
   const isParticipant =
     session && isUserInDraft(draft, session.uid, user?.discordId);
 
   // Determine which teams the user controls (for "My Team" share option)
   const userIds = [session?.uid, user?.discordId].filter(Boolean) as string[];
-  const userTeams = Object.entries(draft.teamAssignments)
+  const teamAssignments = draft.teamAssignments ?? {};
+  const userTeams = Object.entries(teamAssignments)
     .filter(([, userId]) => userId !== null && userIds.includes(userId))
     .map(([team]) => team as TeamAbbreviation);
 

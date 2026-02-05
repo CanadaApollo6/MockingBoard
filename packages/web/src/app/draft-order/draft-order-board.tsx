@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import Link from 'next/link';
 import type {
   DraftSlot,
   TeamAbbreviation,
@@ -112,12 +113,21 @@ export function DraftOrderBoard({ slots }: DraftOrderBoardProps) {
                         {round}.{String(slot.pick).padStart(2, '0')}
                       </TableCell>
                       <TableCell>
-                        <span className="font-medium">
+                        <Link
+                          href={`/teams/${displayTeam}`}
+                          className="font-medium hover:underline"
+                        >
                           {getTeamName(displayTeam)}
-                        </span>
+                        </Link>
                         {isTraded && (
                           <span className="ml-1.5 text-xs text-muted-foreground">
-                            via {getTeamName(slot.team as TeamAbbreviation)}
+                            via{' '}
+                            <Link
+                              href={`/teams/${slot.team}`}
+                              className="hover:underline"
+                            >
+                              {getTeamName(slot.team as TeamAbbreviation)}
+                            </Link>
                           </span>
                         )}
                       </TableCell>
