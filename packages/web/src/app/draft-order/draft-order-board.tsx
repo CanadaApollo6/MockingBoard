@@ -85,7 +85,7 @@ export function DraftOrderBoard({ slots }: DraftOrderBoardProps) {
                 <tr className="border-b">
                   <TableHead className="w-14">#</TableHead>
                   <TableHead>Team</TableHead>
-                  <TableHead className="w-20 text-right">Value</TableHead>
+                  <TableHead className="w-24 text-right">Value</TableHead>
                   <TableHead className="hidden sm:table-cell">Needs</TableHead>
                 </tr>
               </TableHeader>
@@ -121,7 +121,7 @@ export function DraftOrderBoard({ slots }: DraftOrderBoardProps) {
                           </span>
                         )}
                       </TableCell>
-                      <TableCell className="text-right font-mono">
+                      <TableCell className="text-right font-mono tabular-nums">
                         {value.toFixed(1)}
                       </TableCell>
                       <TableCell className="hidden sm:table-cell">

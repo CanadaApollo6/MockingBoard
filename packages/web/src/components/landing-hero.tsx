@@ -111,27 +111,32 @@ export function LandingHero({ error }: LandingHeroProps) {
 
               <motion.div
                 variants={fadeUp}
-                className="mt-8 flex justify-center gap-3"
+                className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center"
               >
                 {!loading && user ? (
                   <>
-                    <Link href="/drafts/new">
-                      <Button size="lg">New Draft</Button>
+                    <Link href="/drafts/new" className="w-full sm:w-auto">
+                      <Button size="lg" className="w-full">
+                        New Draft
+                      </Button>
                     </Link>
-                    <Link href="/drafts?tab=mine">
-                      <Button variant="outline" size="lg">
+                    <Link href="/drafts?tab=mine" className="w-full sm:w-auto">
+                      <Button variant="outline" size="lg" className="w-full">
                         My Drafts
                       </Button>
                     </Link>
                   </>
                 ) : (
                   <>
-                    <Link href="/drafts/new">
-                      <Button size="lg">Mock Draft Now</Button>
+                    <Link href="/drafts/new" className="w-full sm:w-auto">
+                      <Button size="lg" className="w-full">
+                        Mock Draft Now
+                      </Button>
                     </Link>
                     <Button
                       variant="outline"
                       size="lg"
+                      className="w-full sm:w-auto"
                       onClick={() => setView('signin')}
                     >
                       Sign In
@@ -139,6 +144,7 @@ export function LandingHero({ error }: LandingHeroProps) {
                     <Button
                       variant="outline"
                       size="lg"
+                      className="w-full sm:w-auto"
                       onClick={() => setView('signup')}
                     >
                       Create Account

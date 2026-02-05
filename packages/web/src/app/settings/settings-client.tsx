@@ -62,9 +62,14 @@ export function SettingsClient() {
       )}
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        {/* Left column: identity & profile */}
+        {/* Left column: identity */}
         <div className="space-y-6">
           <AccountInfoSection profile={profile} />
+          <AccountLinkingSection profile={profile} />
+        </div>
+
+        {/* Right column: profile & integrations */}
+        <div className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Profile</CardTitle>
@@ -81,15 +86,12 @@ export function SettingsClient() {
               />
             </CardContent>
           </Card>
-        </div>
-
-        {/* Right column: preferences & integrations */}
-        <div className="space-y-6">
-          <TeamThemeSection />
-          <AccountLinkingSection profile={profile} />
           <WebhookSection />
         </div>
       </div>
+
+      {/* Full-width: color theme */}
+      <TeamThemeSection />
     </div>
   );
 }
