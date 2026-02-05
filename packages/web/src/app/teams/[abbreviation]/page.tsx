@@ -2,7 +2,11 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import type { TeamAbbreviation, FuturePickSeed } from '@mockingboard/shared';
 import { teams, getPickValue } from '@mockingboard/shared';
-import { getCachedDraftOrderSlots, getCachedTeamDocs } from '@/lib/cache';
+import {
+  getCachedDraftOrderSlots,
+  getCachedTeamDocs,
+  getCachedRoster,
+} from '@/lib/cache';
 import {
   TeamBreakdown,
   type OwnedPick,
@@ -44,9 +48,10 @@ export default async function TeamPage({
   const team = teamMap.get(abbr);
   if (!team) notFound();
 
-  const [slots, teamDocs] = await Promise.all([
+  const [slots, teamDocs, roster] = await Promise.all([
     getCachedDraftOrderSlots(CURRENT_YEAR),
     getCachedTeamDocs(),
+    getCachedRoster(abbr),
   ]);
 
   // Picks this team currently owns
@@ -109,6 +114,7 @@ export default async function TeamPage({
         rank={rank}
         capitalRanking={capitalRanking}
         year={CURRENT_YEAR}
+        roster={roster}
       />
     </main>
   );
