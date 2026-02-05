@@ -1,5 +1,5 @@
 import type { DraftRecap, Player } from '@mockingboard/shared';
-import { gradeColor } from '@/components/grade-slider';
+import { gradeColor } from '@/lib/grade-color';
 import { getTeamColor } from '@/lib/team-colors';
 import { getTeamName } from '@/lib/teams';
 import { Badge } from '@/components/ui/badge';
@@ -44,10 +44,12 @@ export function PickBreakdown({
   recap,
   players,
   hasBoardDelta,
+  cpuTeams,
 }: {
   recap: DraftRecap;
   players: Record<string, Player>;
   hasBoardDelta: boolean;
+  cpuTeams: Set<string>;
 }) {
   // Flatten all picks from all teams, sorted by overall
   const allPicks = recap.teamGrades
@@ -74,8 +76,12 @@ export function PickBreakdown({
           {allPicks.map((pick) => {
             const player = players[pick.playerId];
             const teamColors = getTeamColor(pick.team);
+            const isCpu = cpuTeams.has(pick.team);
             return (
-              <TableRow key={pick.overall}>
+              <TableRow
+                key={pick.overall}
+                className={isCpu ? 'opacity-60' : undefined}
+              >
                 <TableCell
                   className="font-medium"
                   style={{
@@ -87,7 +93,14 @@ export function PickBreakdown({
                 <TableCell className="text-xs">
                   {getTeamName(pick.team)}
                 </TableCell>
-                <TableCell>{player?.name ?? pick.playerId}</TableCell>
+                <TableCell>
+                  {player?.name ?? pick.playerId}
+                  {isCpu && (
+                    <Badge variant="outline" className="ml-2 text-[10px]">
+                      CPU
+                    </Badge>
+                  )}
+                </TableCell>
                 <TableCell className="text-xs text-muted-foreground">
                   {pick.position}
                 </TableCell>

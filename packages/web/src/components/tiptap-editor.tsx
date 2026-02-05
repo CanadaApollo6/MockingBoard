@@ -19,6 +19,7 @@ export function TipTapEditor({
   const editor = useEditor({
     extensions: [StarterKit, Placeholder.configure({ placeholder })],
     content: content ?? '',
+    immediatelyRender: false,
     onUpdate: ({ editor: e }) => {
       onChange(e.getJSON() as Record<string, unknown>, e.getText());
     },

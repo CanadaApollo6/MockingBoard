@@ -12,7 +12,6 @@ import {
 import { getSessionUser } from '@/lib/auth-session';
 import { resolveUser, isUserInDraft } from '@/lib/user-resolve';
 import { formatDraftDate, getDraftDisplayName } from '@/lib/format';
-import { DraftBoard } from '@/components/draft-board';
 import { TradeSummary } from '@/components/trade-summary';
 import { DraftRecapSummary } from '@/components/recap/draft-recap-summary';
 import { TeamGradeCard } from '@/components/recap/team-grade-card';
@@ -51,6 +50,12 @@ export default async function DraftDetailPage({
   const userTeams = Object.entries(teamAssignments)
     .filter(([, userId]) => userId !== null && userIds.includes(userId))
     .map(([team]) => team as TeamAbbreviation);
+
+  const cpuTeams = new Set(
+    Object.entries(teamAssignments)
+      .filter(([, userId]) => userId === null)
+      .map(([team]) => team),
+  );
 
   const playersObj = Object.fromEntries(playerMap);
 
@@ -161,6 +166,7 @@ export default async function DraftDetailPage({
             recap={recap}
             players={playersObj}
             hasBoardDelta={hasBoardDelta}
+            cpuTeams={cpuTeams}
           />
 
           {recap.tradeAnalysis.length > 0 && (
@@ -175,13 +181,8 @@ export default async function DraftDetailPage({
               </div>
             </>
           )}
-
-          <Separator className="my-6" />
         </>
       )}
-
-      {/* Draft Board */}
-      <DraftBoard picks={picks} playerMap={playerMap} />
 
       {/* Trades */}
       {trades.length > 0 && (

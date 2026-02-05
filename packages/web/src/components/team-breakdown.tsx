@@ -7,6 +7,7 @@ import type {
   FuturePickSeed,
 } from '@mockingboard/shared';
 import type { TeamSeed } from '@mockingboard/shared';
+import type { TeamRoster, RosterPlayer } from '@/lib/cache';
 import { TEAM_COLORS } from '@/lib/team-colors';
 import { getTeamName } from '@/lib/teams';
 import { getPositionColor } from '@/lib/position-colors';
@@ -53,6 +54,7 @@ interface TeamBreakdownProps {
   rank: number;
   capitalRanking: TeamCapitalRank[];
   year: number;
+  roster: TeamRoster | null;
 }
 
 export function TeamBreakdown({
@@ -64,6 +66,7 @@ export function TeamBreakdown({
   rank,
   capitalRanking,
   year,
+  roster,
 }: TeamBreakdownProps) {
   const colors = TEAM_COLORS[team.id];
   const maxValue = capitalRanking[0]?.totalValue ?? 1;
@@ -176,6 +179,93 @@ export function TeamBreakdown({
         </Card>
       </div>
 
+      {/* Current Roster */}
+      {roster &&
+        (roster.offense.length > 0 ||
+          roster.defense.length > 0 ||
+          roster.specialTeams.length > 0) && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium">
+                Current Roster
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6 pb-4">
+              {(
+                [
+                  ['Offense', roster.offense],
+                  ['Defense', roster.defense],
+                  ['Special Teams', roster.specialTeams],
+                ] as const
+              ).map(([groupLabel, players]) =>
+                players.length > 0 ? (
+                  <div key={groupLabel}>
+                    <h3 className="pb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      {groupLabel}
+                    </h3>
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-12">#</TableHead>
+                            <TableHead>Name</TableHead>
+                            <TableHead className="w-16">Pos</TableHead>
+                            <TableHead className="w-16">Ht</TableHead>
+                            <TableHead className="w-16">Wt</TableHead>
+                            <TableHead className="w-12">Age</TableHead>
+                            <TableHead className="w-12">Exp</TableHead>
+                            <TableHead>College</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {players.map((p: RosterPlayer) => (
+                            <TableRow key={p.id}>
+                              <TableCell className="font-mono text-muted-foreground">
+                                {p.jersey}
+                              </TableCell>
+                              <TableCell className="font-medium">
+                                {p.name}
+                              </TableCell>
+                              <TableCell>
+                                <Badge
+                                  style={{
+                                    backgroundColor: getPositionColor(
+                                      p.position,
+                                    ),
+                                    color: '#0A0A0B',
+                                  }}
+                                  className="px-1.5 py-0 text-xs"
+                                >
+                                  {p.position}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-sm text-muted-foreground">
+                                {p.height}
+                              </TableCell>
+                              <TableCell className="text-sm text-muted-foreground">
+                                {p.weight}
+                              </TableCell>
+                              <TableCell className="font-mono text-sm">
+                                {p.age}
+                              </TableCell>
+                              <TableCell className="font-mono text-sm">
+                                {p.experience === 0 ? 'R' : p.experience}
+                              </TableCell>
+                              <TableCell className="text-sm text-muted-foreground">
+                                {p.college}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                ) : null,
+              )}
+            </CardContent>
+          </Card>
+        )}
+
       {/* Owned Picks table */}
       <Card>
         <CardHeader className="pb-3">
@@ -183,15 +273,15 @@ export function TeamBreakdown({
             Picks Owned ({ownedPicks.length})
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent>
           <div className="overflow-x-auto">
-            <Table>
+            <Table className="table-fixed">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-20">Pick</TableHead>
-                  <TableHead className="w-20">Overall</TableHead>
-                  <TableHead className="w-24 text-right">Value</TableHead>
-                  <TableHead>Source</TableHead>
+                  <TableHead className="w-1/4">Pick</TableHead>
+                  <TableHead className="w-1/4">Overall</TableHead>
+                  <TableHead className="w-1/4">Value</TableHead>
+                  <TableHead className="w-1/4">Source</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -201,7 +291,7 @@ export function TeamBreakdown({
                       {p.round}.{String(p.pick).padStart(2, '0')}
                     </TableCell>
                     <TableCell className="font-mono">{p.overall}</TableCell>
-                    <TableCell className="text-right font-mono tabular-nums">
+                    <TableCell className="font-mono tabular-nums">
                       {p.value.toFixed(1)}
                     </TableCell>
                     <TableCell>
@@ -226,7 +316,7 @@ export function TeamBreakdown({
                 {/* Subtotal */}
                 <TableRow className="border-t-2 font-medium">
                   <TableCell colSpan={2}>Total</TableCell>
-                  <TableCell className="text-right font-mono tabular-nums">
+                  <TableCell className="font-mono tabular-nums">
                     {totalValue.toFixed(1)}
                   </TableCell>
                   <TableCell />
@@ -245,15 +335,15 @@ export function TeamBreakdown({
               Picks Traded Away ({tradedAway.length})
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-0">
+          <CardContent>
             <div className="overflow-x-auto">
-              <Table>
+              <Table className="table-fixed">
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-20">Pick</TableHead>
-                    <TableHead className="w-20">Overall</TableHead>
-                    <TableHead className="w-24 text-right">Value</TableHead>
-                    <TableHead>Traded To</TableHead>
+                    <TableHead className="w-1/4">Pick</TableHead>
+                    <TableHead className="w-1/4">Overall</TableHead>
+                    <TableHead className="w-1/4">Value</TableHead>
+                    <TableHead className="w-1/4">Traded To</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -266,7 +356,7 @@ export function TeamBreakdown({
                         {p.round}.{String(p.pick).padStart(2, '0')}
                       </TableCell>
                       <TableCell className="font-mono">{p.overall}</TableCell>
-                      <TableCell className="text-right font-mono tabular-nums">
+                      <TableCell className="font-mono tabular-nums">
                         {p.value.toFixed(1)}
                       </TableCell>
                       <TableCell className="no-underline">
@@ -340,14 +430,14 @@ export function TeamBreakdown({
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium">Future Picks</CardTitle>
           </CardHeader>
-          <CardContent className="p-0">
+          <CardContent>
             <div className="overflow-x-auto">
-              <Table>
+              <Table className="table-fixed">
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-20">Year</TableHead>
-                    <TableHead className="w-20">Round</TableHead>
-                    <TableHead>Original Team</TableHead>
+                    <TableHead className="w-1/3">Year</TableHead>
+                    <TableHead className="w-1/3">Round</TableHead>
+                    <TableHead className="w-1/3 pl-6">Original Team</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -361,7 +451,7 @@ export function TeamBreakdown({
                         <TableCell className="font-mono">
                           Rd {fp.round}
                         </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
+                        <TableCell className="pl-6 text-sm text-muted-foreground">
                           {fp.originalTeam === team.id
                             ? 'Own pick'
                             : `via ${getTeamName(fp.originalTeam)}`}

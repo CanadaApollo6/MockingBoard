@@ -7,10 +7,13 @@ import {
   baseSurplusValue,
 } from '@mockingboard/shared';
 import { getTeamName } from '@/lib/teams';
+import { TEAM_COLORS } from '@/lib/team-colors';
 import type { TeamAbbreviation } from '@mockingboard/shared';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { TeamSelect } from '@/components/team-select';
+import { PickSelect } from '@/components/pick-select';
 import { X } from 'lucide-react';
 
 type ValueModel = 'trade' | 'surplus';
@@ -71,11 +74,11 @@ function uid(): string {
   return `pick-${++nextId}`;
 }
 
-const selectClass =
-  'h-9 rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2';
+const FUTURE_ROUNDS = [1, 2, 3, 4, 5, 6, 7];
 
 function TradeSide({
-  label,
+  team,
+  onTeamChange,
   picks: selectedPicks,
   allSlots,
   model,
@@ -83,7 +86,8 @@ function TradeSide({
   onAdd,
   onRemove,
 }: {
-  label: string;
+  team: TeamAbbreviation | null;
+  onTeamChange: (team: TeamAbbreviation) => void;
   picks: SelectedPick[];
   allSlots: SlotInfo[];
   model: ValueModel;
@@ -92,58 +96,59 @@ function TradeSide({
   onRemove: (id: string) => void;
 }) {
   const [pickType, setPickType] = useState<'current' | 'future'>('current');
-  const [currentOverall, setCurrentOverall] = useState<string>('');
-  const [futureRound, setFutureRound] = useState<string>('1');
-  const [futureYear, setFutureYear] = useState<string>(String(year + 1));
+  const [futureYear, setFutureYear] = useState(year + 1);
 
   const total = selectedPicks.reduce((sum, p) => sum + getValue(p, model), 0);
+  const colors = team ? TEAM_COLORS[team] : null;
 
-  const handleAdd = () => {
-    if (pickType === 'current' && currentOverall) {
-      const overall = parseInt(currentOverall, 10);
-      const slot = allSlots.find((s) => s.overall === overall);
-      if (!slot) return;
-      onAdd({
-        id: uid(),
-        type: 'current',
-        overall: slot.overall,
-        round: slot.round,
-        pick: slot.pick,
-        label: `${slot.round}.${String(slot.pick).padStart(2, '0')} (#${slot.overall})`,
-      });
-      setCurrentOverall('');
-    } else if (pickType === 'future') {
-      const round = parseInt(futureRound, 10);
-      const fy = parseInt(futureYear, 10);
-      const yearsOut = fy - year;
-      onAdd({
-        id: uid(),
-        type: 'future',
-        round,
-        year: fy,
-        yearsOut,
-        label: `${fy} Rd ${round}`,
-      });
-    }
+  // Filter picks to the selected team's owned picks
+  const filteredSlots = useMemo(() => {
+    if (!team) return allSlots;
+    return allSlots.filter((s) => s.team === team);
+  }, [allSlots, team]);
+
+  const handleCurrentPickSelect = (overallStr: string) => {
+    const overall = parseInt(overallStr, 10);
+    const slot = allSlots.find((s) => s.overall === overall);
+    if (!slot) return;
+    onAdd({
+      id: uid(),
+      type: 'current',
+      overall: slot.overall,
+      round: slot.round,
+      pick: slot.pick,
+      label: `${slot.round}.${String(slot.pick).padStart(2, '0')} (#${slot.overall})`,
+    });
   };
 
-  // Group current-year picks by round for the selector
-  const picksByRound = useMemo(() => {
-    const map = new Map<number, SlotInfo[]>();
-    for (const s of allSlots) {
-      const items = map.get(s.round) ?? [];
-      items.push(s);
-      map.set(s.round, items);
-    }
-    return map;
-  }, [allSlots]);
+  const handleFutureRoundSelect = (round: number) => {
+    const yearsOut = futureYear - year;
+    onAdd({
+      id: uid(),
+      type: 'future',
+      round,
+      year: futureYear,
+      yearsOut,
+      label: `${futureYear} Rd ${round}`,
+    });
+  };
 
   return (
     <Card className="flex-1">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-sm font-medium">{label}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
+      {/* Team color accent bar */}
+      {colors && (
+        <div
+          className="h-1.5 rounded-t-xl"
+          style={{
+            background: `linear-gradient(to right, ${colors.primary}, ${colors.secondary})`,
+          }}
+        />
+      )}
+
+      <CardContent className={colors ? 'space-y-4 pt-4' : 'space-y-4 pt-6'}>
+        {/* Team selector */}
+        <TeamSelect value={team} onSelect={onTeamChange} />
+
         {/* Pick type toggle */}
         <div className="flex gap-2">
           <Button
@@ -163,55 +168,44 @@ function TradeSide({
         </div>
 
         {/* Pick selector */}
-        <div className="flex gap-2">
-          {pickType === 'current' ? (
-            <select
-              value={currentOverall}
-              onChange={(e) => setCurrentOverall(e.target.value)}
-              className={`${selectClass} flex-1`}
-            >
-              <option value="">Select pick...</option>
-              {Array.from(picksByRound.entries()).map(([round, roundPicks]) => (
-                <optgroup key={round} label={`Round ${round}`}>
-                  {roundPicks.map((s) => (
-                    <option key={s.overall} value={String(s.overall)}>
-                      {round}.{String(s.pick).padStart(2, '0')} —{' '}
-                      {getTeamName(s.team as TeamAbbreviation)} (#{s.overall})
-                    </option>
-                  ))}
-                </optgroup>
+        {pickType === 'current' ? (
+          <PickSelect
+            slots={filteredSlots}
+            value=""
+            onSelect={handleCurrentPickSelect}
+          />
+        ) : (
+          <div className="flex flex-col gap-2">
+            {/* Year buttons */}
+            <div className="flex gap-1">
+              {[year + 1, year + 2, year + 3].map((y) => (
+                <Button
+                  key={y}
+                  variant={futureYear === y ? 'default' : 'outline'}
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => setFutureYear(y)}
+                >
+                  {y}
+                </Button>
               ))}
-            </select>
-          ) : (
-            <>
-              <select
-                value={futureYear}
-                onChange={(e) => setFutureYear(e.target.value)}
-                className={`${selectClass} w-24`}
-              >
-                {[year + 1, year + 2, year + 3].map((y) => (
-                  <option key={y} value={String(y)}>
-                    {y}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={futureRound}
-                onChange={(e) => setFutureRound(e.target.value)}
-                className={`${selectClass} w-24`}
-              >
-                {[1, 2, 3, 4, 5, 6, 7].map((r) => (
-                  <option key={r} value={String(r)}>
-                    Rd {r}
-                  </option>
-                ))}
-              </select>
-            </>
-          )}
-          <Button size="sm" onClick={handleAdd}>
-            Add
-          </Button>
-        </div>
+            </div>
+            {/* Round buttons — clicking adds the pick */}
+            <div className="flex flex-wrap gap-1">
+              {FUTURE_ROUNDS.map((r) => (
+                <Button
+                  key={r}
+                  variant="outline"
+                  size="sm"
+                  className="min-w-0 flex-1 px-2"
+                  onClick={() => handleFutureRoundSelect(r)}
+                >
+                  Rd {r}
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Selected picks */}
         <div className="space-y-1.5">
@@ -220,25 +214,42 @@ function TradeSide({
               No picks added
             </p>
           )}
-          {selectedPicks.map((p) => (
-            <div
-              key={p.id}
-              className="flex items-center justify-between rounded-md border px-3 py-1.5"
-            >
-              <span className="text-sm">{p.label}</span>
-              <div className="flex items-center gap-3">
-                <span className="font-mono text-sm tabular-nums">
-                  {getValue(p, model).toFixed(1)}
-                </span>
-                <button
-                  onClick={() => onRemove(p.id)}
-                  className="text-muted-foreground hover:text-destructive"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
+          {selectedPicks.map((p) => {
+            const pickColors =
+              p.type === 'current' && p.overall
+                ? TEAM_COLORS[
+                    allSlots.find((s) => s.overall === p.overall)
+                      ?.team as TeamAbbreviation
+                  ]
+                : null;
+            return (
+              <div
+                key={p.id}
+                className="flex items-center justify-between rounded-md border px-3 py-1.5"
+                style={
+                  pickColors
+                    ? {
+                        borderLeftWidth: '3px',
+                        borderLeftColor: pickColors.primary,
+                      }
+                    : undefined
+                }
+              >
+                <span className="text-sm">{p.label}</span>
+                <div className="flex items-center gap-3">
+                  <span className="font-mono text-sm tabular-nums">
+                    {getValue(p, model).toFixed(1)}
+                  </span>
+                  <button
+                    onClick={() => onRemove(p.id)}
+                    className="text-muted-foreground hover:text-destructive"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Total */}
@@ -256,8 +267,20 @@ function TradeSide({
 
 export function TradeCalculator({ picks, year }: TradeCalculatorProps) {
   const [model, setModel] = useState<ValueModel>('trade');
+  const [teamA, setTeamA] = useState<TeamAbbreviation | null>(null);
+  const [teamB, setTeamB] = useState<TeamAbbreviation | null>(null);
   const [sideA, setSideA] = useState<SelectedPick[]>([]);
   const [sideB, setSideB] = useState<SelectedPick[]>([]);
+
+  const handleTeamAChange = useCallback((team: TeamAbbreviation) => {
+    setTeamA(team);
+    setSideA((prev) => prev.filter((p) => p.type === 'future'));
+  }, []);
+
+  const handleTeamBChange = useCallback((team: TeamAbbreviation) => {
+    setTeamB(team);
+    setSideB((prev) => prev.filter((p) => p.type === 'future'));
+  }, []);
 
   const addA = useCallback(
     (p: SelectedPick) => setSideA((prev) => [...prev, p]),
@@ -285,19 +308,26 @@ export function TradeCalculator({ picks, year }: TradeCalculatorProps) {
     [sideB, model],
   );
 
-  const net = totalA - totalB;
+  const sideAName = teamA ? getTeamName(teamA) : 'Side A';
+  const sideBName = teamB ? getTeamName(teamB) : 'Side B';
+  const colorsA = teamA ? TEAM_COLORS[teamA] : null;
+  const colorsB = teamB ? TEAM_COLORS[teamB] : null;
+
+  const net = totalB - totalA;
   const hasPicks = sideA.length > 0 || sideB.length > 0;
 
   const verdictText = useMemo(() => {
     if (!hasPicks || (sideA.length === 0 && sideB.length === 0)) return null;
     const abs = Math.abs(net);
     if (abs < 10) return 'Even trade';
-    if (abs < 50) return `Slight edge to ${net > 0 ? 'Side A' : 'Side B'}`;
-    if (abs < 150) return `Clear advantage ${net > 0 ? 'Side A' : 'Side B'}`;
-    return `Significant advantage ${net > 0 ? 'Side A' : 'Side B'}`;
-  }, [net, hasPicks, sideA.length, sideB.length]);
+    if (abs < 50) return `Slight edge to ${net > 0 ? sideAName : sideBName}`;
+    if (abs < 150) return `Clear advantage ${net > 0 ? sideAName : sideBName}`;
+    return `Significant advantage ${net > 0 ? sideAName : sideBName}`;
+  }, [net, hasPicks, sideA.length, sideB.length, sideAName, sideBName]);
 
   const handleReset = () => {
+    setTeamA(null);
+    setTeamB(null);
     setSideA([]);
     setSideB([]);
   };
@@ -337,7 +367,8 @@ export function TradeCalculator({ picks, year }: TradeCalculatorProps) {
       {/* Two sides */}
       <div className="grid gap-6 md:grid-cols-2">
         <TradeSide
-          label="Side A"
+          team={teamA}
+          onTeamChange={handleTeamAChange}
           picks={sideA}
           allSlots={picks}
           model={model}
@@ -346,7 +377,8 @@ export function TradeCalculator({ picks, year }: TradeCalculatorProps) {
           onRemove={removeA}
         />
         <TradeSide
-          label="Side B"
+          team={teamB}
+          onTeamChange={handleTeamBChange}
           picks={sideB}
           allSlots={picks}
           model={model}
@@ -370,9 +402,10 @@ export function TradeCalculator({ picks, year }: TradeCalculatorProps) {
                   {totalA + totalB > 0 && (
                     <>
                       <div
-                        className="absolute inset-y-0 left-0 rounded-l-full bg-primary transition-all duration-300"
+                        className="absolute inset-y-0 left-0 rounded-l-full transition-all duration-300"
                         style={{
                           width: `${(totalA / (totalA + totalB)) * 100}%`,
+                          backgroundColor: colorsA?.primary ?? 'var(--primary)',
                         }}
                       />
                       <div
@@ -380,6 +413,7 @@ export function TradeCalculator({ picks, year }: TradeCalculatorProps) {
                         style={{
                           width: `${(totalB / (totalA + totalB)) * 100}%`,
                           backgroundColor:
+                            colorsB?.primary ??
                             'var(--mb-secondary, var(--muted-foreground))',
                         }}
                       />
@@ -398,7 +432,7 @@ export function TradeCalculator({ picks, year }: TradeCalculatorProps) {
                   {net.toFixed(1)}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Net difference (Side A perspective)
+                  Net difference ({sideAName} perspective)
                 </p>
                 {verdictText && (
                   <p className="mt-2 text-sm font-medium">{verdictText}</p>

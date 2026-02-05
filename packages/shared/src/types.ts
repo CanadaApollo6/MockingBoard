@@ -407,17 +407,24 @@ export interface Follow {
 
 // ---- Video Breakdown Types ----
 
+export type VideoPlatform = 'youtube' | 'instagram' | 'twitter' | 'tiktok';
+
 export interface VideoBreakdown {
   id: string;
   playerId: string;
   authorId: string;
   authorName: string;
-  youtubeUrl: string;
-  youtubeVideoId: string;
+  platform: VideoPlatform;
+  url: string;
+  embedId: string;
   title: string;
   timestamp?: number;
   tags?: string[];
   createdAt: FirestoreTimestamp;
+  /** @deprecated Legacy field — use `url` instead */
+  youtubeUrl?: string;
+  /** @deprecated Legacy field — use `embedId` instead */
+  youtubeVideoId?: string;
 }
 
 // ---- Draft Analytics Types ----

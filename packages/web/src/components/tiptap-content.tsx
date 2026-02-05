@@ -12,6 +12,7 @@ export function TipTapContent({ content }: TipTapContentProps) {
     extensions: [StarterKit],
     content,
     editable: false,
+    immediatelyRender: false,
     editorProps: {
       attributes: {
         class: 'prose prose-sm prose-invert max-w-none',

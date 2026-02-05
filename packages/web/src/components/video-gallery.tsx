@@ -79,7 +79,8 @@ export function VideoGallery({
           {videos.map((video) => (
             <div key={video.id} className="space-y-2">
               <VideoEmbed
-                videoId={video.youtubeVideoId}
+                platform={video.platform}
+                embedId={video.embedId}
                 title={video.title}
                 timestamp={video.timestamp}
               />

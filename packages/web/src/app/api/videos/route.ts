@@ -3,22 +3,53 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { getSessionUser } from '@/lib/auth-session';
 import { adminDb } from '@/lib/firebase-admin';
 import { sanitize } from '@/lib/sanitize';
-import type { VideoBreakdown } from '@mockingboard/shared';
+import type { VideoBreakdown, VideoPlatform } from '@mockingboard/shared';
 
-function extractYouTubeVideoId(url: string): string | null {
-  const patterns = [
+interface ParsedVideo {
+  platform: VideoPlatform;
+  embedId: string;
+}
+
+function parseVideoUrl(url: string): ParsedVideo | null {
+  // YouTube
+  const ytPatterns = [
     /(?:youtube\.com\/watch\?.*v=)([a-zA-Z0-9_-]{11})/,
     /(?:youtu\.be\/)([a-zA-Z0-9_-]{11})/,
     /(?:youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
     /(?:youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
   ];
-
-  for (const pattern of patterns) {
+  for (const pattern of ytPatterns) {
     const match = url.match(pattern);
-    if (match) return match[1];
+    if (match) return { platform: 'youtube', embedId: match[1] };
   }
 
+  // Instagram (posts and reels)
+  const igMatch = url.match(/instagram\.com\/(?:p|reel)\/([a-zA-Z0-9_-]+)/);
+  if (igMatch) return { platform: 'instagram', embedId: igMatch[1] };
+
+  // Twitter / X
+  const twMatch = url.match(/(?:twitter\.com|x\.com)\/\w+\/status\/(\d+)/);
+  if (twMatch) return { platform: 'twitter', embedId: twMatch[1] };
+
+  // TikTok
+  const tkMatch = url.match(/tiktok\.com\/@[^/]+\/video\/(\d+)/);
+  if (tkMatch) return { platform: 'tiktok', embedId: tkMatch[1] };
+
   return null;
+}
+
+/** Normalize legacy Firestore docs that only have youtubeUrl/youtubeVideoId */
+function normalizeVideo(
+  doc: FirebaseFirestore.DocumentSnapshot,
+): VideoBreakdown {
+  const data = doc.data() as Record<string, unknown>;
+  return {
+    id: doc.id,
+    ...data,
+    platform: (data.platform as VideoPlatform) ?? 'youtube',
+    url: (data.url as string) ?? (data.youtubeUrl as string) ?? '',
+    embedId: (data.embedId as string) ?? (data.youtubeVideoId as string) ?? '',
+  } as VideoBreakdown;
 }
 
 export async function GET(request: Request) {
@@ -40,11 +71,7 @@ export async function GET(request: Request) {
       .limit(30)
       .get();
 
-    const videos: VideoBreakdown[] = snap.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as VideoBreakdown[];
-
+    const videos: VideoBreakdown[] = snap.docs.map(normalizeVideo);
     return NextResponse.json({ videos: sanitize(videos) });
   } catch (err) {
     console.error('Failed to fetch videos:', err);
@@ -63,7 +90,7 @@ export async function POST(request: Request) {
 
   let body: {
     playerId: string;
-    youtubeUrl: string;
+    url: string;
     title: string;
     timestamp?: number;
     tags?: string[];
@@ -78,19 +105,25 @@ export async function POST(request: Request) {
     );
   }
 
-  const { playerId, youtubeUrl, title } = body;
+  const { playerId, url, title } = body;
 
-  if (!playerId || !youtubeUrl || !title) {
+  if (!playerId || !url || !title) {
     return NextResponse.json(
       { error: 'Missing required fields' },
       { status: 400 },
     );
   }
 
-  const youtubeVideoId = extractYouTubeVideoId(youtubeUrl);
+  const parsed = parseVideoUrl(url);
 
-  if (!youtubeVideoId) {
-    return NextResponse.json({ error: 'Invalid YouTube URL' }, { status: 400 });
+  if (!parsed) {
+    return NextResponse.json(
+      {
+        error:
+          'Unsupported URL. Supported platforms: YouTube, Instagram, Twitter/X, TikTok.',
+      },
+      { status: 400 },
+    );
   }
 
   try {
@@ -103,8 +136,9 @@ export async function POST(request: Request) {
       playerId,
       authorId: session.uid,
       authorName,
-      youtubeUrl,
-      youtubeVideoId,
+      platform: parsed.platform,
+      url,
+      embedId: parsed.embedId,
       title,
       timestamp: body.timestamp ?? null,
       tags: body.tags ?? [],

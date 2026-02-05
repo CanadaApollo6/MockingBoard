@@ -29,8 +29,8 @@ describe('team-colors', () => {
         secondary: '#000000',
       });
       expect(getTeamColor('DAL')).toEqual({
-        primary: '#003594',
-        secondary: '#041E42',
+        primary: '#041E42',
+        secondary: '#FFFFFF',
       });
       expect(getTeamColor('GB')).toEqual({
         primary: '#203731',
