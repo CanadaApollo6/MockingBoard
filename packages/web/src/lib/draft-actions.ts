@@ -241,26 +241,51 @@ export async function getAvailablePlayers(
  * Run all consecutive CPU picks until the next human pick or draft completion.
  * Returns all CPU picks made.
  *
- * Players are loaded once and filtered in-memory to avoid repeated Firestore reads.
+ * The draft document is read once at the start; pick state (currentPick,
+ * pickedPlayerIds) is tracked in memory to avoid repeated Firestore reads.
+ * Draft status is re-checked every STATUS_CHECK_INTERVAL picks to catch pauses.
  */
 export async function runCpuCascade(
   draftId: string,
 ): Promise<{ picks: Pick[]; isComplete: boolean }> {
   const cpuPicks: Pick[] = [];
-  let allPlayers: Player[] | null = null;
-  let playerMap: Map<string, Player> | null = null;
+
+  // Read draft once at the start
+  const draftDoc = await adminDb.collection('drafts').doc(draftId).get();
+  if (!draftDoc.exists) return { picks: cpuPicks, isComplete: false };
+  const draft = { id: draftDoc.id, ...draftDoc.data() } as Draft;
+
+  if (draft.status !== 'active') {
+    return { picks: cpuPicks, isComplete: draft.status === 'complete' };
+  }
+
+  // Load players and board once
+  const allPlayers = await getCachedPlayers(draft.config.year);
+  const playerMap = new Map(allPlayers.map((p) => [p.id, p]));
   let boardRankings: string[] | undefined;
+  if (draft.config.boardId) {
+    const board = await getBigBoard(draft.config.boardId);
+    boardRankings = board?.rankings;
+  }
+
+  // Track mutable pick state in memory
+  let currentPick = draft.currentPick;
+  const pickedIds = [...(draft.pickedPlayerIds ?? [])];
+  const pickedSet = new Set(pickedIds);
+  const STATUS_CHECK_INTERVAL = 8;
 
   while (true) {
-    const draftDoc = await adminDb.collection('drafts').doc(draftId).get();
-    if (!draftDoc.exists) break;
-    const draft = { id: draftDoc.id, ...draftDoc.data() } as Draft;
-
-    if (draft.status !== 'active') {
-      return { picks: cpuPicks, isComplete: draft.status === 'complete' };
+    // Periodically re-check draft status to catch pauses/cancellations
+    if (cpuPicks.length > 0 && cpuPicks.length % STATUS_CHECK_INTERVAL === 0) {
+      const statusDoc = await adminDb.collection('drafts').doc(draftId).get();
+      if (!statusDoc.exists) break;
+      const freshStatus = statusDoc.data()?.status;
+      if (freshStatus !== 'active') {
+        return { picks: cpuPicks, isComplete: freshStatus === 'complete' };
+      }
     }
 
-    const currentSlot = draft.pickOrder[draft.currentPick - 1];
+    const currentSlot = draft.pickOrder[currentPick - 1];
     if (!currentSlot) {
       return { picks: cpuPicks, isComplete: true };
     }
@@ -271,25 +296,15 @@ export async function runCpuCascade(
       return { picks: cpuPicks, isComplete: false };
     }
 
-    // Lazy-load players and board once, then filter in memory
-    if (!allPlayers) {
-      allPlayers = await getCachedPlayers(draft.config.year);
-      playerMap = new Map(allPlayers.map((p) => [p.id, p]));
-      if (draft.config.boardId) {
-        const board = await getBigBoard(draft.config.boardId);
-        boardRankings = board?.rankings;
-      }
-    }
-    const pickedSet = new Set(draft.pickedPlayerIds ?? []);
     const available = allPlayers.filter((p) => !pickedSet.has(p.id));
     if (available.length === 0) break;
 
     const teamSeed = teamSeeds.get(currentSlot.team);
     const draftedPositions = getTeamDraftedPositions(
       draft.pickOrder,
-      draft.pickedPlayerIds ?? [],
+      pickedIds,
       currentSlot.team,
-      playerMap!,
+      playerMap,
     );
     const effectiveNeeds = getEffectiveNeeds(
       teamSeed?.needs ?? [],
@@ -304,6 +319,11 @@ export async function runCpuCascade(
 
     const { pick, isComplete } = await recordPick(draftId, player.id, null);
     cpuPicks.push(pick);
+
+    // Update in-memory state
+    pickedIds.push(player.id);
+    pickedSet.add(player.id);
+    currentPick++;
 
     if (isComplete) {
       return { picks: cpuPicks, isComplete: true };

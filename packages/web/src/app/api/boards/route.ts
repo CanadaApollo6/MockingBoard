@@ -48,19 +48,22 @@ export async function POST(request: Request) {
 
   try {
     const ref = adminDb.collection('bigBoards').doc();
-    const board = {
+    const boardData = {
       userId: session.uid,
       name: name || generateDraftName(),
       year,
       basedOn,
       rankings: rankings ?? [],
-      createdAt: FieldValue.serverTimestamp(),
-      updatedAt: FieldValue.serverTimestamp(),
+      customPlayers: [] as unknown[],
     };
 
-    await ref.set(board);
+    await ref.set({
+      ...boardData,
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
 
-    return NextResponse.json({ boardId: ref.id });
+    return NextResponse.json({ id: ref.id, ...boardData });
   } catch (err) {
     console.error('Failed to create board:', err);
     return NextResponse.json(

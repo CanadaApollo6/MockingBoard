@@ -199,6 +199,23 @@ export function DraftRoom({
   const isPaused = draft?.status === 'paused';
   const isComplete = draft?.status === 'complete';
 
+  // Stop stagger animation on pause so it doesn't look like CPU is still picking
+  useEffect(() => {
+    if (isPaused && revealIntervalRef.current) {
+      clearInterval(revealIntervalRef.current);
+      revealIntervalRef.current = null;
+      revealedRef.current = picksLengthRef.current;
+      setRevealedCount(picksLengthRef.current);
+    }
+  }, [isPaused]);
+
+  // Redirect to recap page when draft completes and animation finishes
+  useEffect(() => {
+    if (isComplete && !animating) {
+      router.push(`/drafts/${draftId}`);
+    }
+  }, [isComplete, animating, draftId, router]);
+
   const userTeamCount = useMemo(() => {
     if (!draft) return 0;
     return Object.values(draft.teamAssignments).filter((uid) => uid === userId)

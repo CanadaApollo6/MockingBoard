@@ -56,20 +56,25 @@ export default async function DraftDetailPage({
   const recap =
     draft.status === 'complete' && picks.length > 0
       ? await (async () => {
-          const teamNeeds = new Map<TeamAbbreviation, Position[]>(
-            teams.map((t) => [t.id, t.needs]),
-          );
-          const boardRankings = draft.config.boardId
-            ? (await getBigBoard(draft.config.boardId))?.rankings
-            : undefined;
-          return generateDraftRecap(
-            draft,
-            picks,
-            playersObj,
-            teamNeeds,
-            trades,
-            boardRankings,
-          );
+          try {
+            const teamNeeds = new Map<TeamAbbreviation, Position[]>(
+              teams.map((t) => [t.id, t.needs]),
+            );
+            const boardRankings = draft.config.boardId
+              ? (await getBigBoard(draft.config.boardId))?.rankings
+              : undefined;
+            return generateDraftRecap(
+              draft,
+              picks,
+              playersObj,
+              teamNeeds,
+              trades,
+              boardRankings,
+            );
+          } catch (err) {
+            console.error('Failed to generate draft recap:', err);
+            return null;
+          }
         })()
       : null;
 
