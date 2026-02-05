@@ -103,15 +103,24 @@ export async function GET(request: Request) {
       }
 
       // Link Discord to current user
-      await adminDb
-        .collection('users')
-        .doc(session.uid)
-        .update({
-          discordId: discordUser.id,
-          discordUsername: discordUser.username,
-          ...(discordUser.avatar && { discordAvatar: discordUser.avatar }),
-          updatedAt: new Date(),
-        });
+      try {
+        await adminDb
+          .collection('users')
+          .doc(session.uid)
+          .update({
+            discordId: discordUser.id,
+            discordUsername: discordUser.username,
+            ...(discordUser.avatar && { discordAvatar: discordUser.avatar }),
+            updatedAt: new Date(),
+          });
+      } catch (err) {
+        console.error('Discord link DB update failed:', err);
+        const response = NextResponse.redirect(
+          new URL('/settings?error=discord_link_failed', origin),
+        );
+        response.cookies.delete('discord_oauth_state');
+        return response;
+      }
 
       const response = NextResponse.redirect(
         new URL('/settings?linked=discord', origin),

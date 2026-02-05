@@ -37,6 +37,11 @@ export function SettingsClient() {
         type: 'error',
         message: 'That Discord account is already linked to another user.',
       });
+    } else if (error === 'discord_link_failed') {
+      setBanner({
+        type: 'error',
+        message: 'Failed to link Discord account. Please try again.',
+      });
     } else if (error === 'not_authenticated') {
       setBanner({
         type: 'error',
@@ -252,6 +257,7 @@ function TeamThemeSection() {
               </span>
               <button
                 onClick={() => {
+                  setSelectedSchool(null);
                   setSchoolSearch('');
                   setShowDropdown(true);
                 }}

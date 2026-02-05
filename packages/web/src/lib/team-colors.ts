@@ -225,7 +225,7 @@ export function deriveThemeOverrides(
   const [, , al] = hexToHsl(accent);
   const foreground = al > 55 ? '#0a0a0b' : '#ffffff';
 
-  return {
+  const overrides: Record<string, string> = {
     '--primary': accent,
     '--primary-foreground': foreground,
     '--ring': accent,
@@ -238,4 +238,15 @@ export function deriveThemeOverrides(
     '--chart-1': accent,
     '--shadow-glow': `0 0 20px ${accentMuted}`,
   };
+
+  // Derive secondary accent from whichever color was NOT chosen as the source
+  const otherHex = sourceHex === primary ? secondary : primary;
+  const [, otherSat] = hexToHsl(otherHex);
+  if (otherSat >= ACHROMATIC_THRESHOLD) {
+    const { accent: otherAccent } = deriveAccentPalette(otherHex, mode);
+    overrides['--mb-secondary'] = otherAccent;
+    overrides['--chart-2'] = otherAccent;
+  }
+
+  return overrides;
 }

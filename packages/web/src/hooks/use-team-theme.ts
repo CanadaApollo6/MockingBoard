@@ -15,10 +15,12 @@ const THEME_VARS = [
   '--mb-accent',
   '--mb-accent-hover',
   '--mb-accent-muted',
+  '--mb-secondary',
   '--sidebar-primary',
   '--sidebar-primary-foreground',
   '--sidebar-ring',
   '--chart-1',
+  '--chart-2',
   '--shadow-glow',
 ] as const;
 
