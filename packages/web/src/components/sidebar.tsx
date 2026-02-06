@@ -21,6 +21,7 @@ import {
   Settings,
   LogOut,
   LogIn,
+  Shirt,
 } from 'lucide-react';
 import { useAuth } from '@/components/auth-provider';
 import { isAdmin } from '@/lib/admin';
@@ -43,7 +44,7 @@ const NAV_GROUPS = [
   {
     label: 'Scouting',
     items: [
-      { href: '/players', label: 'Players', icon: Search },
+      { href: '/players', label: 'Players', icon: Shirt },
       { href: '/board', label: 'My Board', icon: LayoutList },
       { href: '/boards', label: 'Boards', icon: Library },
     ],
