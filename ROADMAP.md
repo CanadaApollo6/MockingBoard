@@ -454,22 +454,22 @@ Auth-gated admin dashboard (`/admin`) with 12 feature sections, eliminating depl
 
 ### Milestone 5.5.1: Spectator Mode
 
-- [ ] Read-only live draft view optimized for stream embedding
-- [ ] Minimal/clean UI mode that hides navigation and controls
-- [ ] Configurable overlay themes (dark, light, transparent)
+- [x] Read-only live draft view optimized for stream embedding
+- [x] Minimal/clean UI mode that hides navigation and controls
+- [x] Configurable overlay themes (dark, light, transparent)
 
 ### Milestone 5.5.2: Stream Overlays
 
-- [ ] OBS-compatible browser source overlays for live drafts
-- [ ] Current pick overlay (team, pick number, countdown)
-- [ ] Recent picks ticker overlay
-- [ ] Draft board overlay (full or condensed)
+- [x] OBS-compatible browser source overlays for live drafts
+- [x] Current pick overlay (team, pick number, countdown)
+- [x] Recent picks ticker overlay
+- [x] Draft board overlay (full or condensed)
 
 ### Milestone 5.5.3: Embeddable Widgets
 
-- [ ] Embeddable big board widget for external sites/blogs
-- [ ] Embeddable player card widget
-- [ ] Configurable widget theming and sizing
+- [x] Embeddable big board widget for external sites/blogs
+- [x] Embeddable player card widget
+- [x] Configurable widget theming and sizing
 
 **Phase 5.5 Complete**: Content creators can stream drafts with professional overlays and embed MockingBoard content on their own platforms.
 
