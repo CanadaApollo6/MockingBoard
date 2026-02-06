@@ -5,6 +5,8 @@ import type {
   TeamAbbreviation,
   Position,
   FuturePickSeed,
+  Coach,
+  FrontOfficeStaff,
 } from '@mockingboard/shared';
 import type { TeamSeed } from '@mockingboard/shared';
 import type { TeamRoster, RosterPlayer } from '@/lib/cache';
@@ -14,6 +16,7 @@ import { getPositionColor } from '@/lib/position-colors';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
   Table,
   TableBody,
@@ -22,6 +25,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  KeyPlayerCard,
+  type KeyPlayerCardProps,
+} from '@/components/key-player-card';
+import { CoachingStaff } from '@/components/coaching-staff';
 
 export interface OwnedPick {
   overall: number;
@@ -55,6 +63,9 @@ interface TeamBreakdownProps {
   capitalRanking: TeamCapitalRank[];
   year: number;
   roster: TeamRoster | null;
+  keyPlayers: KeyPlayerCardProps[];
+  coachingStaff: Coach[];
+  frontOffice?: FrontOfficeStaff[];
 }
 
 export function TeamBreakdown({
@@ -67,6 +78,9 @@ export function TeamBreakdown({
   capitalRanking,
   year,
   roster,
+  keyPlayers,
+  coachingStaff,
+  frontOffice,
 }: TeamBreakdownProps) {
   const colors = TEAM_COLORS[team.id];
   const maxValue = capitalRanking[0]?.totalValue ?? 1;
@@ -116,7 +130,7 @@ export function TeamBreakdown({
 
       <Separator />
 
-      {/* Needs + Summary row */}
+      {/* Needs + Summary row — always visible */}
       <div className="grid gap-6 sm:grid-cols-2">
         {/* Positional Needs */}
         <Card>
@@ -179,291 +193,353 @@ export function TeamBreakdown({
         </Card>
       </div>
 
-      {/* Current Roster */}
-      {roster &&
-        (roster.offense.length > 0 ||
-          roster.defense.length > 0 ||
-          roster.specialTeams.length > 0) && (
+      {/* Tabbed content */}
+      <Tabs defaultValue="draft">
+        <TabsList>
+          <TabsTrigger value="draft">Draft</TabsTrigger>
+          <TabsTrigger value="roster">Roster</TabsTrigger>
+          <TabsTrigger value="staff">Staff</TabsTrigger>
+        </TabsList>
+
+        {/* ---- Draft Tab ---- */}
+        <TabsContent value="draft" className="space-y-6">
+          {/* Owned Picks table */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium">
-                Current Roster
+                Picks Owned ({ownedPicks.length})
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6 pb-4">
-              {(
-                [
-                  ['Offense', roster.offense],
-                  ['Defense', roster.defense],
-                  ['Special Teams', roster.specialTeams],
-                ] as const
-              ).map(([groupLabel, players]) =>
-                players.length > 0 ? (
-                  <div key={groupLabel}>
-                    <h3 className="pb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      {groupLabel}
-                    </h3>
-                    <div className="overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="w-12">#</TableHead>
-                            <TableHead>Name</TableHead>
-                            <TableHead className="w-16">Pos</TableHead>
-                            <TableHead className="w-16">Ht</TableHead>
-                            <TableHead className="w-16">Wt</TableHead>
-                            <TableHead className="w-12">Age</TableHead>
-                            <TableHead className="w-12">Exp</TableHead>
-                            <TableHead>College</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {players.map((p: RosterPlayer) => (
-                            <TableRow key={p.id}>
-                              <TableCell className="font-mono text-muted-foreground">
-                                {p.jersey}
-                              </TableCell>
-                              <TableCell className="font-medium">
-                                {p.name}
-                              </TableCell>
-                              <TableCell>
-                                <Badge
-                                  style={{
-                                    backgroundColor: getPositionColor(
-                                      p.position,
-                                    ),
-                                    color: '#0A0A0B',
-                                  }}
-                                  className="px-1.5 py-0 text-xs"
-                                >
-                                  {p.position}
-                                </Badge>
-                              </TableCell>
-                              <TableCell className="text-sm text-muted-foreground">
-                                {p.height}
-                              </TableCell>
-                              <TableCell className="text-sm text-muted-foreground">
-                                {p.weight}
-                              </TableCell>
-                              <TableCell className="font-mono text-sm">
-                                {p.age}
-                              </TableCell>
-                              <TableCell className="font-mono text-sm">
-                                {p.experience === 0 ? 'R' : p.experience}
-                              </TableCell>
-                              <TableCell className="text-sm text-muted-foreground">
-                                {p.college}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </div>
-                ) : null,
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-      {/* Owned Picks table */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium">
-            Picks Owned ({ownedPicks.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <Table className="table-fixed">
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-1/4">Pick</TableHead>
-                  <TableHead className="w-1/4">Overall</TableHead>
-                  <TableHead className="w-1/4">Value</TableHead>
-                  <TableHead className="w-1/4">Source</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {ownedPicks.map((p) => (
-                  <TableRow key={p.overall}>
-                    <TableCell className="font-mono text-muted-foreground">
-                      {p.round}.{String(p.pick).padStart(2, '0')}
-                    </TableCell>
-                    <TableCell className="font-mono">{p.overall}</TableCell>
-                    <TableCell className="font-mono tabular-nums">
-                      {p.value.toFixed(1)}
-                    </TableCell>
-                    <TableCell>
-                      {p.isAcquired ? (
-                        <span className="text-sm text-muted-foreground">
-                          via{' '}
-                          <Link
-                            href={`/teams/${p.originalTeam}`}
-                            className="hover:text-foreground hover:underline"
-                          >
-                            {getTeamName(p.originalTeam)}
-                          </Link>
-                        </span>
-                      ) : (
-                        <span className="text-sm text-muted-foreground">
-                          Own pick
-                        </span>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {/* Subtotal */}
-                <TableRow className="border-t-2 font-medium">
-                  <TableCell colSpan={2}>Total</TableCell>
-                  <TableCell className="font-mono tabular-nums">
-                    {totalValue.toFixed(1)}
-                  </TableCell>
-                  <TableCell />
-                </TableRow>
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Traded Away picks */}
-      {tradedAway.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">
-              Picks Traded Away ({tradedAway.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <Table className="table-fixed">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-1/4">Pick</TableHead>
-                    <TableHead className="w-1/4">Overall</TableHead>
-                    <TableHead className="w-1/4">Value</TableHead>
-                    <TableHead className="w-1/4">Traded To</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {tradedAway.map((p) => (
-                    <TableRow
-                      key={p.overall}
-                      className="text-muted-foreground line-through"
-                    >
-                      <TableCell className="font-mono">
-                        {p.round}.{String(p.pick).padStart(2, '0')}
-                      </TableCell>
-                      <TableCell className="font-mono">{p.overall}</TableCell>
-                      <TableCell className="font-mono tabular-nums">
-                        {p.value.toFixed(1)}
-                      </TableCell>
-                      <TableCell className="no-underline">
-                        <Link
-                          href={`/teams/${p.tradedTo}`}
-                          className="text-sm text-foreground no-underline hover:underline"
-                        >
-                          {getTeamName(p.tradedTo)}
-                        </Link>
-                      </TableCell>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table className="table-fixed">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-1/4">Pick</TableHead>
+                      <TableHead className="w-1/4">Overall</TableHead>
+                      <TableHead className="w-1/4">Value</TableHead>
+                      <TableHead className="w-1/4">Source</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Capital Ranking */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium">
-            Draft Capital Ranking
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-1.5">
-            {capitalRanking.map((entry, i) => {
-              const isCurrentTeam = entry.team === team.id;
-              const entryColors = TEAM_COLORS[entry.team];
-              const barWidth = (entry.totalValue / maxValue) * 100;
-
-              return (
-                <Link
-                  key={entry.team}
-                  href={`/teams/${entry.team}`}
-                  className="group flex items-center gap-2 text-sm"
-                >
-                  <span className="w-6 shrink-0 text-right font-mono text-xs text-muted-foreground">
-                    {i + 1}
-                  </span>
-                  <span
-                    className={`w-24 shrink-0 truncate text-xs ${isCurrentTeam ? 'font-bold text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}
-                  >
-                    {entry.team}
-                  </span>
-                  <div className="relative h-4 flex-1 overflow-hidden rounded-sm bg-muted">
-                    <div
-                      className="absolute inset-y-0 left-0 rounded-sm transition-all duration-300"
-                      style={{
-                        width: `${barWidth}%`,
-                        backgroundColor: entryColors.primary,
-                        opacity: isCurrentTeam ? 1 : 0.5,
-                      }}
-                    />
-                  </div>
-                  <span className="w-14 shrink-0 text-right font-mono text-xs tabular-nums text-muted-foreground">
-                    {entry.totalValue.toFixed(0)}
-                  </span>
-                </Link>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Future Picks */}
-      {futurePicks.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Future Picks</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <Table className="table-fixed">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-1/3">Year</TableHead>
-                    <TableHead className="w-1/3">Round</TableHead>
-                    <TableHead className="w-1/3 pl-6">Original Team</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {futurePicks
-                    .sort((a, b) => a.year - b.year || a.round - b.round)
-                    .map((fp, i) => (
-                      <TableRow
-                        key={`${fp.year}-${fp.round}-${fp.originalTeam}-${i}`}
-                      >
-                        <TableCell className="font-mono">{fp.year}</TableCell>
-                        <TableCell className="font-mono">
-                          Rd {fp.round}
+                  </TableHeader>
+                  <TableBody>
+                    {ownedPicks.map((p) => (
+                      <TableRow key={p.overall}>
+                        <TableCell className="font-mono text-muted-foreground">
+                          {p.round}.{String(p.pick).padStart(2, '0')}
                         </TableCell>
-                        <TableCell className="pl-6 text-sm text-muted-foreground">
-                          {fp.originalTeam === team.id
-                            ? 'Own pick'
-                            : `via ${getTeamName(fp.originalTeam)}`}
+                        <TableCell className="font-mono">{p.overall}</TableCell>
+                        <TableCell className="font-mono tabular-nums">
+                          {p.value.toFixed(1)}
+                        </TableCell>
+                        <TableCell>
+                          {p.isAcquired ? (
+                            <span className="text-sm text-muted-foreground">
+                              via{' '}
+                              <Link
+                                href={`/teams/${p.originalTeam}`}
+                                className="hover:text-foreground hover:underline"
+                              >
+                                {getTeamName(p.originalTeam)}
+                              </Link>
+                            </span>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">
+                              Own pick
+                            </span>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}
-                </TableBody>
-              </Table>
+                    {/* Subtotal */}
+                    <TableRow className="border-t-2 font-medium">
+                      <TableCell colSpan={2}>Total</TableCell>
+                      <TableCell className="font-mono tabular-nums">
+                        {totalValue.toFixed(1)}
+                      </TableCell>
+                      <TableCell />
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Traded Away picks */}
+          {tradedAway.length > 0 && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium">
+                  Picks Traded Away ({tradedAway.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table className="table-fixed">
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-1/4">Pick</TableHead>
+                        <TableHead className="w-1/4">Overall</TableHead>
+                        <TableHead className="w-1/4">Value</TableHead>
+                        <TableHead className="w-1/4">Traded To</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {tradedAway.map((p) => (
+                        <TableRow
+                          key={p.overall}
+                          className="text-muted-foreground line-through"
+                        >
+                          <TableCell className="font-mono">
+                            {p.round}.{String(p.pick).padStart(2, '0')}
+                          </TableCell>
+                          <TableCell className="font-mono">
+                            {p.overall}
+                          </TableCell>
+                          <TableCell className="font-mono tabular-nums">
+                            {p.value.toFixed(1)}
+                          </TableCell>
+                          <TableCell className="no-underline">
+                            <Link
+                              href={`/teams/${p.tradedTo}`}
+                              className="text-sm text-foreground no-underline hover:underline"
+                            >
+                              {getTeamName(p.tradedTo)}
+                            </Link>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Capital Ranking */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium">
+                Draft Capital Ranking
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-1.5">
+                {capitalRanking.map((entry, i) => {
+                  const isCurrentTeam = entry.team === team.id;
+                  const entryColors = TEAM_COLORS[entry.team];
+                  const barWidth = (entry.totalValue / maxValue) * 100;
+
+                  return (
+                    <Link
+                      key={entry.team}
+                      href={`/teams/${entry.team}`}
+                      className="group flex items-center gap-2 text-sm"
+                    >
+                      <span className="w-6 shrink-0 text-right font-mono text-xs text-muted-foreground">
+                        {i + 1}
+                      </span>
+                      <span
+                        className={`w-24 shrink-0 truncate text-xs ${isCurrentTeam ? 'font-bold text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}
+                      >
+                        {entry.team}
+                      </span>
+                      <div className="relative h-4 flex-1 overflow-hidden rounded-sm bg-muted">
+                        <div
+                          className="absolute inset-y-0 left-0 rounded-sm transition-all duration-300"
+                          style={{
+                            width: `${barWidth}%`,
+                            backgroundColor: entryColors.primary,
+                            opacity: isCurrentTeam ? 1 : 0.5,
+                          }}
+                        />
+                      </div>
+                      <span className="w-14 shrink-0 text-right font-mono text-xs tabular-nums text-muted-foreground">
+                        {entry.totalValue.toFixed(0)}
+                      </span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Future Picks */}
+          {futurePicks.length > 0 && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium">
+                  Future Picks
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table className="table-fixed">
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-1/3">Year</TableHead>
+                        <TableHead className="w-1/3">Round</TableHead>
+                        <TableHead className="w-1/3 pl-6">
+                          Original Team
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {futurePicks
+                        .sort((a, b) => a.year - b.year || a.round - b.round)
+                        .map((fp, i) => (
+                          <TableRow
+                            key={`${fp.year}-${fp.round}-${fp.originalTeam}-${i}`}
+                          >
+                            <TableCell className="font-mono">
+                              {fp.year}
+                            </TableCell>
+                            <TableCell className="font-mono">
+                              Rd {fp.round}
+                            </TableCell>
+                            <TableCell className="pl-6 text-sm text-muted-foreground">
+                              {fp.originalTeam === team.id
+                                ? 'Own pick'
+                                : `via ${getTeamName(fp.originalTeam)}`}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* ---- Roster Tab ---- */}
+        <TabsContent value="roster" className="space-y-6">
+          {/* Key Players */}
+          {keyPlayers.length > 0 && (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {keyPlayers.map((player) => (
+                <KeyPlayerCard key={player.name} {...player} />
+              ))}
             </div>
-          </CardContent>
-        </Card>
-      )}
+          )}
+
+          {/* Full Roster */}
+          {roster &&
+            (roster.offense.length > 0 ||
+              roster.defense.length > 0 ||
+              roster.specialTeams.length > 0) && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium">
+                    Full Roster
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6 pb-4">
+                  {(
+                    [
+                      ['Offense', roster.offense],
+                      ['Defense', roster.defense],
+                      ['Special Teams', roster.specialTeams],
+                    ] as const
+                  ).map(([groupLabel, players]) =>
+                    players.length > 0 ? (
+                      <div key={groupLabel}>
+                        <h3 className="pb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          {groupLabel}
+                        </h3>
+                        <div className="overflow-x-auto">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead className="w-12">#</TableHead>
+                                <TableHead>Name</TableHead>
+                                <TableHead className="w-16">Pos</TableHead>
+                                <TableHead className="w-16">Ht</TableHead>
+                                <TableHead className="w-16">Wt</TableHead>
+                                <TableHead className="w-12">Age</TableHead>
+                                <TableHead className="w-12">Exp</TableHead>
+                                <TableHead>College</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {players.map((p: RosterPlayer) => (
+                                <TableRow key={p.id}>
+                                  <TableCell className="font-mono text-muted-foreground">
+                                    {p.jersey}
+                                  </TableCell>
+                                  <TableCell className="font-medium">
+                                    {p.name}
+                                  </TableCell>
+                                  <TableCell>
+                                    <Badge
+                                      style={{
+                                        backgroundColor: getPositionColor(
+                                          p.position,
+                                        ),
+                                        color: '#0A0A0B',
+                                      }}
+                                      className="px-1.5 py-0 text-xs"
+                                    >
+                                      {p.position}
+                                    </Badge>
+                                  </TableCell>
+                                  <TableCell className="text-sm text-muted-foreground">
+                                    {p.height}
+                                  </TableCell>
+                                  <TableCell className="text-sm text-muted-foreground">
+                                    {p.weight}
+                                  </TableCell>
+                                  <TableCell className="font-mono text-sm">
+                                    {p.age}
+                                  </TableCell>
+                                  <TableCell className="font-mono text-sm">
+                                    {p.experience === 0 ? 'R' : p.experience}
+                                  </TableCell>
+                                  <TableCell className="text-sm text-muted-foreground">
+                                    {p.college}
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </div>
+                    ) : null,
+                  )}
+                </CardContent>
+              </Card>
+            )}
+        </TabsContent>
+
+        {/* ---- Staff Tab ---- */}
+        <TabsContent value="staff" className="space-y-6">
+          <CoachingStaff coaches={coachingStaff} teamColors={colors} />
+
+          {frontOffice && frontOffice.length > 0 && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium">
+                  Front Office
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-1">
+                  {frontOffice.map((fo) => (
+                    <div
+                      key={fo.name}
+                      className="flex items-center justify-between rounded-md px-3 py-2.5"
+                    >
+                      <p className="text-sm font-medium">{fo.name}</p>
+                      <span className="text-xs text-muted-foreground">
+                        {fo.title}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

@@ -4,23 +4,41 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { Sidebar } from '@/components/sidebar';
 import { useAuth } from '@/components/auth-provider';
 import { useTeamTheme } from '@/hooks/use-team-theme';
+import type { Announcement } from '@/lib/cache';
 
 function isBare(pathname: string, isAuthenticated: boolean): boolean {
   if (pathname === '/') return !isAuthenticated;
   return pathname.startsWith('/auth');
 }
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+const VARIANT_STYLES: Record<string, string> = {
+  info: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
+  warning:
+    'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
+  success:
+    'bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20',
+};
+
+interface AppShellProps {
+  children: React.ReactNode;
+  announcement?: Announcement | null;
+}
+
+export function AppShell({ children, announcement }: AppShellProps) {
   const pathname = usePathname();
   const { user, loading } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
   useTeamTheme();
 
   if (isBare(pathname, !loading && !!user)) return <>{children}</>;
+
+  const showBanner =
+    announcement?.active && announcement.text && !bannerDismissed;
 
   return (
     <div className="flex min-h-screen">
@@ -51,6 +69,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             MockingBoard
           </Link>
         </div>
+
+        {/* Announcement banner */}
+        {showBanner && (
+          <div
+            className={`flex items-center justify-between border-b px-4 py-2 text-sm ${VARIANT_STYLES[announcement.variant] ?? VARIANT_STYLES.info}`}
+          >
+            <span>{announcement.text}</span>
+            <button
+              onClick={() => setBannerDismissed(true)}
+              className="ml-4 shrink-0 opacity-60 hover:opacity-100"
+            >
+              <X className="h-4 w-4" />
+              <span className="sr-only">Dismiss</span>
+            </button>
+          </div>
+        )}
 
         {/* Page content */}
         {children}

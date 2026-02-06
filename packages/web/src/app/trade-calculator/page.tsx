@@ -1,8 +1,6 @@
 import type { Metadata } from 'next';
-import { getCachedDraftOrderSlots } from '@/lib/cache';
+import { getCachedDraftOrderSlots, getCachedSeasonConfig } from '@/lib/cache';
 import { TradeCalculator } from '@/components/trade-calculator';
-
-const CURRENT_YEAR = 2026;
 
 export const revalidate = 3600;
 
@@ -13,7 +11,8 @@ export const metadata: Metadata = {
 };
 
 export default async function TradeCalculatorPage() {
-  const slots = await getCachedDraftOrderSlots(CURRENT_YEAR);
+  const { draftYear } = await getCachedSeasonConfig();
+  const slots = await getCachedDraftOrderSlots(draftYear);
 
   // Serialize slots to minimal shape for client
   const picks = slots.map((s) => ({
@@ -34,7 +33,7 @@ export default async function TradeCalculatorPage() {
           surplus model.
         </p>
       </div>
-      <TradeCalculator picks={picks} year={CURRENT_YEAR} />
+      <TradeCalculator picks={picks} year={draftYear} />
     </main>
   );
 }

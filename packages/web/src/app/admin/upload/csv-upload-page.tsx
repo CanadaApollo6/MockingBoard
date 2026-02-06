@@ -4,6 +4,8 @@ import { useState, useRef } from 'react';
 import type { Position } from '@mockingboard/shared';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
 
 interface ScoutOption {
   id: string;
@@ -337,43 +339,43 @@ export function CsvUploadPage({
       <div className="grid gap-4 sm:grid-cols-3">
         <div>
           <label className="mb-1 block text-sm font-medium">Position</label>
-          <select
+          <Select
             value={position}
             onChange={(e) => setPosition(e.target.value as Position)}
-            className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+            className="w-full"
           >
             {POSITIONS.map((pos) => (
               <option key={pos} value={pos}>
                 {pos}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
 
         <div>
           <label className="mb-1 block text-sm font-medium">
             Scout Profile
           </label>
-          <select
+          <Select
             value={scoutProfileId}
             onChange={(e) => setScoutProfileId(e.target.value)}
-            className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+            className="w-full"
           >
             {scoutProfiles.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
 
         <div>
           <label className="mb-1 block text-sm font-medium">Year</label>
-          <input
+          <Input
             type="number"
             value={year}
             onChange={(e) => setYear(parseInt(e.target.value, 10) || 2026)}
-            className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+            className="w-full"
           />
         </div>
       </div>

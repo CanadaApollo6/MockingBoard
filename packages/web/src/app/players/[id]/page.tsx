@@ -8,8 +8,7 @@ import { CommunityGradeSummary } from '@/components/community-grade-summary';
 import { CommunityReports } from '@/components/community-reports';
 import { WordCloud } from '@/components/word-cloud';
 import { VideoGallery } from '@/components/video-gallery';
-
-const CURRENT_YEAR = 2026;
+import { getCachedSeasonConfig } from '@/lib/cache';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -17,7 +16,8 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
-  const playerMap = await getPlayerMap(CURRENT_YEAR);
+  const { draftYear } = await getCachedSeasonConfig();
+  const playerMap = await getPlayerMap(draftYear);
   const player = playerMap.get(id);
 
   if (!player) return {};
@@ -36,7 +36,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function PlayerPage({ params }: Props) {
   const { id } = await params;
-  const playerMap = await getPlayerMap(CURRENT_YEAR);
+  const { draftYear } = await getCachedSeasonConfig();
+  const playerMap = await getPlayerMap(draftYear);
   const player = playerMap.get(id);
 
   if (!player) notFound();
@@ -64,7 +65,7 @@ export default async function PlayerPage({ params }: Props) {
           <CommunityReports
             playerId={id}
             playerName={player.name}
-            year={CURRENT_YEAR}
+            year={draftYear}
             initialReports={reports}
           />
         </section>

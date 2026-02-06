@@ -1,8 +1,6 @@
 import type { Metadata } from 'next';
-import { getCachedPlayers } from '@/lib/cache';
+import { getCachedPlayers, getCachedSeasonConfig } from '@/lib/cache';
 import { ProspectBigBoard } from './prospect-big-board';
-
-const CURRENT_YEAR = 2026;
 
 export const metadata: Metadata = {
   title: '2026 Big Board',
@@ -11,7 +9,8 @@ export const metadata: Metadata = {
 };
 
 export default async function PlayersPage() {
-  const players = await getCachedPlayers(CURRENT_YEAR);
+  const { draftYear } = await getCachedSeasonConfig();
+  const players = await getCachedPlayers(draftYear);
 
   return (
     <main className="mx-auto max-w-screen-xl px-4 py-8">

@@ -1,9 +1,21 @@
 import type { Player } from '@mockingboard/shared';
 
-/** Deterministic daily rotation from top 100 ranked prospects. */
+interface ProspectOverride {
+  playerId: string;
+  overrideUntil: number;
+}
+
+/** Deterministic daily rotation from top 100 ranked prospects.
+ *  If an admin override is active (not expired), returns that player instead. */
 export function getProspectOfTheDay(
   players: Map<string, Player>,
+  override?: ProspectOverride | null,
 ): Player | null {
+  if (override && override.overrideUntil > Date.now()) {
+    const overridden = players.get(override.playerId);
+    if (overridden) return overridden;
+  }
+
   const ranked = [...players.values()]
     .filter((p) => p.consensusRank > 0)
     .sort((a, b) => a.consensusRank - b.consensusRank)

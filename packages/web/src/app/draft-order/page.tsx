@@ -1,8 +1,6 @@
 import type { Metadata } from 'next';
-import { getCachedDraftOrderSlots } from '@/lib/cache';
+import { getCachedDraftOrderSlots, getCachedSeasonConfig } from '@/lib/cache';
 import { DraftOrderBoard } from './draft-order-board';
-
-const CURRENT_YEAR = 2026;
 
 export const revalidate = 3600; // 1-hour ISR
 
@@ -13,7 +11,8 @@ export const metadata: Metadata = {
 };
 
 export default async function DraftOrderPage() {
-  const slots = await getCachedDraftOrderSlots(CURRENT_YEAR);
+  const { draftYear } = await getCachedSeasonConfig();
+  const slots = await getCachedDraftOrderSlots(draftYear);
 
   return (
     <main className="mx-auto max-w-screen-xl px-4 py-8">
