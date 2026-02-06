@@ -16,3 +16,5 @@ env:
     secret: discord-client-secret
   - variable: APP_URL
     value: https://mockingboard.app
+  - variable: NEXT_PUBLIC_ADMIN_UIDS
+    secret: admin-uids

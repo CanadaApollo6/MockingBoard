@@ -27,7 +27,7 @@ for (const team of teams) {
   teamsByGroup[key].push(team);
 }
 
-export function DraftCreator() {
+export function DraftCreator({ defaultYear = 2026 }: { defaultYear?: number }) {
   const router = useRouter();
   const { user, profile } = useAuth();
   const isGuest = !user;
@@ -35,7 +35,7 @@ export function DraftCreator() {
   const [visibility, setVisibility] = useState<DraftVisibility>('public');
   const [teamAssignmentMode, setTeamAssignmentMode] =
     useState<TeamAssignmentMode>('choice');
-  const [year, setYear] = useState(2026);
+  const [year, setYear] = useState(defaultYear);
   const [rounds, setRounds] = useState(3);
   const [format, setFormat] = useState<DraftFormat>('single-team');
   const [selectedTeams, setSelectedTeams] = useState<Set<TeamAbbreviation>>(
@@ -191,7 +191,7 @@ export function DraftCreator() {
         </CardHeader>
         <CardContent className="space-y-6">
           <OptionGroup label="Draft Year">
-            {[2025, 2026].map((y) => (
+            {[defaultYear - 1, defaultYear].map((y) => (
               <Button
                 key={y}
                 variant={year === y ? 'default' : 'outline'}

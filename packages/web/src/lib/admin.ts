@@ -1,4 +1,8 @@
+const adminUids = (process.env.NEXT_PUBLIC_ADMIN_UIDS ?? '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+
 export function isAdmin(uid: string): boolean {
-  const uids = process.env.ADMIN_UIDS?.split(',').map((s) => s.trim()) ?? [];
-  return uids.includes(uid);
+  return adminUids.includes(uid);
 }

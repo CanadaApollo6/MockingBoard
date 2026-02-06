@@ -1,10 +1,8 @@
 import type { Metadata } from 'next';
 import type { TeamAbbreviation, DraftSlot } from '@mockingboard/shared';
 import { teams, getPickValue } from '@mockingboard/shared';
-import { getCachedDraftOrderSlots } from '@/lib/cache';
+import { getCachedDraftOrderSlots, getCachedSeasonConfig } from '@/lib/cache';
 import { TeamDirectory } from '@/components/team-directory';
-
-const CURRENT_YEAR = 2026;
 
 export const revalidate = 3600; // 1-hour ISR
 
@@ -37,7 +35,8 @@ function computeTeamCapital(
 }
 
 export default async function TeamsPage() {
-  const slots = await getCachedDraftOrderSlots(CURRENT_YEAR);
+  const { draftYear } = await getCachedSeasonConfig();
+  const slots = await getCachedDraftOrderSlots(draftYear);
   const capitalMap = computeTeamCapital(slots);
 
   // Serialize to plain object for client component

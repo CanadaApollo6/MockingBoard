@@ -1,10 +1,13 @@
+import { getCachedSeasonConfig } from '@/lib/cache';
 import { DraftCreator } from '@/components/draft-creator';
 
-export default function NewDraftPage() {
+export default async function NewDraftPage() {
+  const { draftYear } = await getCachedSeasonConfig();
+
   return (
     <main className="mx-auto max-w-4xl px-4 py-8">
       <h1 className="mb-6 text-2xl font-bold">New Mock Draft</h1>
-      <DraftCreator />
+      <DraftCreator defaultYear={draftYear} />
     </main>
   );
 }

@@ -9,6 +9,7 @@ import {
   getDraftTrades,
   getBigBoard,
 } from '@/lib/data';
+import { getCachedTeamDocs } from '@/lib/cache';
 import { getSessionUser } from '@/lib/auth-session';
 import { resolveUser, isUserInDraft } from '@/lib/user-resolve';
 import { formatDraftDate, getDraftDisplayName } from '@/lib/format';
@@ -64,8 +65,10 @@ export default async function DraftDetailPage({
     draft.status === 'complete' && picks.length > 0
       ? await (async () => {
           try {
+            const teamDocs = await getCachedTeamDocs();
+            const docsMap = new Map(teamDocs.map((d) => [d.id, d]));
             const teamNeeds = new Map<TeamAbbreviation, Position[]>(
-              teams.map((t) => [t.id, t.needs]),
+              teams.map((t) => [t.id, docsMap.get(t.id)?.needs ?? t.needs]),
             );
             const boardRankings = draft.config.boardId
               ? (await getBigBoard(draft.config.boardId))?.rankings

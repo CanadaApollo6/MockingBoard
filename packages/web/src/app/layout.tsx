@@ -3,6 +3,7 @@ import { Inter, Barlow_Condensed, JetBrains_Mono } from 'next/font/google';
 import { ThemeProvider } from '@/components/theme-provider';
 import { AuthProvider } from '@/components/auth-provider';
 import { AppShell } from '@/components/app-shell';
+import { getCachedAnnouncement } from '@/lib/cache';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
@@ -31,11 +32,13 @@ export const metadata: Metadata = {
   twitter: { card: 'summary' },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const announcement = await getCachedAnnouncement();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body
@@ -43,7 +46,7 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <AuthProvider>
-            <AppShell>{children}</AppShell>
+            <AppShell announcement={announcement}>{children}</AppShell>
           </AuthProvider>
         </ThemeProvider>
       </body>

@@ -405,6 +405,68 @@ export interface Follow {
   createdAt: FirestoreTimestamp;
 }
 
+// ---- Coaching Staff Types ----
+
+export interface Coach {
+  name: string;
+  role: string;
+  since: number;
+}
+
+// ---- Key Player Types ----
+
+export interface KeyPlayerOverride {
+  gsisId: string;
+  name: string;
+  position: string;
+  jersey: string;
+  college: string;
+  statOverrides?: Record<string, number | string | null>;
+}
+
+// ---- Front Office Types ----
+
+export interface FrontOfficeStaff {
+  name: string;
+  title: string;
+}
+
+// ---- Team Season Types ----
+
+export interface TeamSeason {
+  team: TeamAbbreviation;
+  year: number;
+  record?: {
+    wins: number;
+    losses: number;
+    ties: number;
+  };
+  playoffResult?: string;
+  coachingStaff?: Coach[];
+  frontOffice?: FrontOfficeStaff[];
+  keyPlayers?: KeyPlayerOverride[];
+  updatedAt?: FirestoreTimestamp;
+}
+
+// ---- Draft Result Types ----
+
+export interface DraftDayTrade {
+  tradedTo: TeamAbbreviation;
+  tradedFrom: TeamAbbreviation;
+  details: string;
+}
+
+export interface DraftResultPick {
+  overall: number;
+  round: number;
+  pick: number;
+  team: TeamAbbreviation;
+  playerName: string;
+  position: string;
+  school: string;
+  trade?: DraftDayTrade;
+}
+
 // ---- Video Breakdown Types ----
 
 export type VideoPlatform = 'youtube' | 'instagram' | 'twitter' | 'tiktok';

@@ -1,12 +1,16 @@
 import type { MetadataRoute } from 'next';
 import { adminDb } from '@/lib/firebase-admin';
-import { getCachedPlayers, getCachedScoutProfiles } from '@/lib/cache';
-
-const CURRENT_YEAR = 2026;
+import {
+  getCachedPlayers,
+  getCachedScoutProfiles,
+  getCachedSeasonConfig,
+} from '@/lib/cache';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl =
     process.env.APP_URL?.replace(/\/$/, '') || 'http://localhost:3000';
+
+  const { draftYear } = await getCachedSeasonConfig();
 
   // Static pages
   const staticPages: MetadataRoute.Sitemap = [
@@ -21,7 +25,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Dynamic pages — fetch in parallel
   const [players, publicBoards, publicUsers, scoutProfiles] = await Promise.all(
     [
-      getCachedPlayers(CURRENT_YEAR),
+      getCachedPlayers(draftYear),
       adminDb
         .collection('bigBoards')
         .where('visibility', '==', 'public')

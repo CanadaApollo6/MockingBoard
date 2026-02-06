@@ -11,8 +11,7 @@ import {
 import { FollowButton } from '@/components/follow-button';
 import { BoardCard } from '@/components/board-card';
 import { ReportCard } from '@/components/report-card';
-
-const CURRENT_YEAR = 2026;
+import { getCachedSeasonConfig } from '@/lib/cache';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -48,8 +47,8 @@ export default async function ProfilePage({ params }: Props) {
   ]);
 
   // Resolve player names for reports
-  const playerMap =
-    reports.length > 0 ? await getPlayerMap(CURRENT_YEAR) : null;
+  const { draftYear } = await getCachedSeasonConfig();
+  const playerMap = reports.length > 0 ? await getPlayerMap(draftYear) : null;
 
   return (
     <main className="mx-auto max-w-screen-xl px-4 py-8">

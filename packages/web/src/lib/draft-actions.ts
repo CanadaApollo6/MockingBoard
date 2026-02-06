@@ -6,6 +6,7 @@ import {
   getCachedDraftOrderSlots,
   getCachedTeamDocs,
   getCachedPlayers,
+  getCachedDraftNames,
 } from './cache';
 import { getBigBoard } from './data';
 import type {
@@ -37,13 +38,28 @@ import {
   evaluateCpuTrade,
   validateTradePicksAvailable,
   validateUserOwnsPicks,
-  generateDraftName,
+  generateDraftName as _generateDraftName,
   POSITIONAL_VALUE,
   type CpuTradeEvaluation,
 } from '@mockingboard/shared';
 
 // Pre-built team lookup map (same pattern as bot)
 const teamSeeds = new Map(teams.map((t) => [t.id, t]));
+
+/** Generate a draft name using Firestore overrides if available, else shared defaults. */
+async function generateDraftNameFromCache(): Promise<string> {
+  const override = await getCachedDraftNames();
+  if (override) {
+    const adj =
+      override.adjectives[
+        Math.floor(Math.random() * override.adjectives.length)
+      ];
+    const noun =
+      override.nouns[Math.floor(Math.random() * override.nouns.length)];
+    return `${adj} ${noun}`;
+  }
+  return _generateDraftName();
+}
 
 // ---- Draft Setup ----
 
@@ -120,7 +136,7 @@ export async function createWebDraft(
   const isMultiplayer = !!input.multiplayer;
 
   const draftData: Record<string, unknown> = {
-    name: input.name || generateDraftName(),
+    name: input.name || (await generateDraftNameFromCache()),
     createdBy: input.userId,
     config: {
       ...input.config,
