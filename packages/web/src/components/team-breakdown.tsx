@@ -413,15 +413,15 @@ export function TeamBreakdown({
 
         {/* ---- Roster Tab ---- */}
         <TabsContent value="roster" className="space-y-6">
+          <text className="font-medium ml-2">Key Players</text>
           {/* Key Players */}
           {keyPlayers.length > 0 && (
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-3 sm:grid-cols-2 mt-2">
               {keyPlayers.map((player) => (
                 <KeyPlayerCard key={player.name} {...player} />
               ))}
             </div>
           )}
-
           {/* Full Roster */}
           {roster &&
             (roster.offense.length > 0 ||

@@ -84,9 +84,14 @@ function isNavActive(href: string, pathname: string): boolean {
 interface SidebarProps {
   mobileOpen: boolean;
   onMobileClose: () => void;
+  onSearchOpen: () => void;
 }
 
-export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
+export function Sidebar({
+  mobileOpen,
+  onMobileClose,
+  onSearchOpen,
+}: SidebarProps) {
   const pathname = usePathname();
   const { user, profile, loading, signOut } = useAuth();
   const showAdmin = !!user && isAdmin(user.uid);
@@ -113,6 +118,20 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
             MockingBoard
           </span>
         </Link>
+      </div>
+
+      {/* Search trigger */}
+      <div className="px-2 pt-2">
+        <button
+          onClick={onSearchOpen}
+          className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+        >
+          <Search className="h-4 w-4 shrink-0" />
+          <span className="flex-1 text-left">Search</span>
+          <kbd className="hidden rounded border border-sidebar-border bg-sidebar-accent px-1.5 py-0.5 font-mono text-[10px] text-sidebar-foreground/50 md:inline-block">
+            ⌘K
+          </kbd>
+        </button>
       </div>
 
       {/* Navigation */}

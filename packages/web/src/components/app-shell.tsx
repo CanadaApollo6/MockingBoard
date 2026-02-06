@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X } from 'lucide-react';
+import { Menu, Search, X } from 'lucide-react';
 import { Sidebar } from '@/components/sidebar';
+import { SearchDialog } from '@/components/search-dialog';
 import { useAuth } from '@/components/auth-provider';
 import { useTeamTheme } from '@/hooks/use-team-theme';
 import type { Announcement } from '@/lib/cache';
@@ -33,7 +34,22 @@ export function AppShell({ children, announcement }: AppShellProps) {
   const { user, loading } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   useTeamTheme();
+
+  const openSearch = useCallback(() => setSearchOpen(true), []);
+
+  // Global Cmd+K / Ctrl+K shortcut
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setSearchOpen((prev) => !prev);
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   if (isBare(pathname, !loading && !!user)) return <>{children}</>;
 
@@ -45,7 +61,9 @@ export function AppShell({ children, announcement }: AppShellProps) {
       <Sidebar
         mobileOpen={mobileOpen}
         onMobileClose={() => setMobileOpen(false)}
+        onSearchOpen={openSearch}
       />
+      <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
 
       <div className="flex flex-1 flex-col">
         {/* Mobile top bar */}
@@ -57,7 +75,10 @@ export function AppShell({ children, announcement }: AppShellProps) {
             <Menu className="h-5 w-5" />
             <span className="sr-only">Open menu</span>
           </button>
-          <Link href="/" className="flex items-center gap-2 text-sm font-bold">
+          <Link
+            href="/"
+            className="flex flex-1 items-center gap-2 text-sm font-bold"
+          >
             <Image
               src="/logo.png"
               alt=""
@@ -68,6 +89,13 @@ export function AppShell({ children, announcement }: AppShellProps) {
             />
             MockingBoard
           </Link>
+          <button
+            onClick={openSearch}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <Search className="h-5 w-5" />
+            <span className="sr-only">Search</span>
+          </button>
         </div>
 
         {/* Announcement banner */}

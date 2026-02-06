@@ -16,6 +16,8 @@ import type {
   KeyPlayerOverride,
   FrontOfficeStaff,
   Position,
+  User,
+  BigBoard,
 } from '@mockingboard/shared';
 
 // ---- TTLs ----
@@ -26,6 +28,7 @@ const TEAMS_TTL = 24 * 60 * 60 * 1000; // 24 hours
 const SCOUT_PROFILES_TTL = 24 * 60 * 60 * 1000; // 24 hours
 const ROSTER_TTL = 6 * 60 * 60 * 1000; // 6 hours
 const NFLVERSE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+const SEARCH_TTL = 5 * 60 * 1000; // 5 minutes
 const SEASON_CONFIG_TTL = 5 * 60 * 1000; // 5 minutes
 
 // ---- Internal cache structure ----
@@ -421,6 +424,8 @@ export function resetAllCaches() {
   draftNamesCache = null;
   tradeValuesCache = null;
   cpuConfigCache = null;
+  publicUsersCache = null;
+  publicBoardsCache = null;
   // Maps
   playerCache.clear();
   draftOrderCache.clear();
@@ -428,6 +433,52 @@ export function resetAllCaches() {
   playerStatsCache.clear();
   nflRosterCache.clear();
   depthChartCache.clear();
+}
+
+// ---- Public users cache (for search) ----
+
+let publicUsersCache: CacheEntry<User[]> | null = null;
+
+/** Returns all public users. Cached for 5 minutes. */
+export async function getCachedPublicUsers(): Promise<User[]> {
+  if (!isExpired(publicUsersCache)) return publicUsersCache!.data;
+
+  const snapshot = await adminDb
+    .collection('users')
+    .where('isPublic', '==', true)
+    .orderBy('updatedAt', 'desc')
+    .limit(1000)
+    .get();
+
+  const users = sanitize(
+    snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as User),
+  );
+
+  publicUsersCache = { data: users, expiresAt: Date.now() + SEARCH_TTL };
+  return users;
+}
+
+// ---- Public boards cache (for search) ----
+
+let publicBoardsCache: CacheEntry<BigBoard[]> | null = null;
+
+/** Returns all public boards. Cached for 5 minutes. */
+export async function getCachedPublicBoards(): Promise<BigBoard[]> {
+  if (!isExpired(publicBoardsCache)) return publicBoardsCache!.data;
+
+  const snapshot = await adminDb
+    .collection('bigBoards')
+    .where('visibility', '==', 'public')
+    .orderBy('updatedAt', 'desc')
+    .limit(1000)
+    .get();
+
+  const boards = sanitize(
+    snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as BigBoard),
+  );
+
+  publicBoardsCache = { data: boards, expiresAt: Date.now() + SEARCH_TTL };
+  return boards;
 }
 
 // ---- Draft names cache (singleton) ----

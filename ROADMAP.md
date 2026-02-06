@@ -409,9 +409,9 @@ Auth-gated admin dashboard (`/admin`) with 12 feature sections, eliminating depl
 
 ### Milestone 4.75.4: Unified Search
 
-- [ ] Global search bar in navigation (search players, boards, reports, users from one input)
-- [ ] Search results grouped by type with quick-jump
-- [ ] Firestore full-text search strategy (Algolia, Typesense, or Firestore-native with `contentText` fields)
+- [x] Global search bar in navigation (search players, boards, reports, users from one input)
+- [x] Search results grouped by type with quick-jump
+- [x] Firestore full-text search strategy (Algolia, Typesense, or Firestore-native with `contentText` fields)
 
 **Phase 4.75 Status**: Admin dashboard and SEO are complete. Notification system and unified search remain. Admin tooling eliminates deploy-to-change for all configurable data — teams, prospects, draft order, trade values, CPU behavior, featured content, and moderation are all manageable through the web UI.
 
