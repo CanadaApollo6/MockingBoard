@@ -31,6 +31,12 @@ export type {
   BoardVisibility,
   ScoutingReport,
   Follow,
+  Coach,
+  KeyPlayerOverride,
+  FrontOfficeStaff,
+  TeamSeason,
+  DraftResultPick,
+  DraftDayTrade,
   VideoPlatform,
   VideoBreakdown,
   PickLabel,
@@ -47,6 +53,7 @@ export { POSITION_GROUPS } from './types';
 
 // Seed data
 export { teams, type TeamSeed } from './data/index';
+export { coachingStaffs } from './data/coaching-staffs';
 
 // Trade values
 export {
