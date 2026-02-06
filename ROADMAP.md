@@ -371,13 +371,33 @@ Extract platform-agnostic business logic from bot services to `packages/shared`.
 - [ ] Email digest option (daily/weekly summary of activity)
 - [ ] Notification preferences per user (toggle categories on/off)
 
-### Milestone 4.75.2: Moderation & Admin Tools
+### Milestone 4.75.2: Admin Dashboard & Content Management ✓
 
-- [ ] Report/flag system for user-generated content (reports, videos, profiles)
-- [ ] Admin review queue with approve/remove actions
-- [ ] Admin dashboard: platform health metrics, user management, content stats
+Auth-gated admin dashboard (`/admin`) with 12 feature sections, eliminating deploy-to-change workflows for all configurable data.
+
+- [x] Admin dashboard with card grid linking to all feature sections
+- [x] Auth-gated access (Firebase UID allowlist)
+- [x] Reusable admin UI components (Input, Select, Textarea) for consistent UX
+- [x] Team management: key players, coaching staff, front office, team needs, future picks per team
+- [x] Team history: year-by-year season records, playoff results, coaching staff, front office, key players
+- [x] Player search input with team-filtered autocomplete
+- [x] Draft order editor: 256-slot table with trade marking, seed from team list
+- [x] Draft results: enter actual NFL draft picks per year (round, pick, team, player, trades)
+- [x] Draft scoring engine: score mock drafts against real results (team/player/position/round accuracy)
+- [x] Prospect browser: search, filter by position, paginated table, inline edit, delete
+- [x] CSV upload for prospect and scouting data (existing, carried from Phase 4.2)
+- [x] Featured content: override Prospect of the Day and Mock Draft of the Week with date-bounded selections
+- [x] Content moderation queue: review scouting reports, videos, boards, profiles (approve/remove)
+- [x] Season config: draft year, stats year
+- [x] Announcement banner: text, variant (info/warning/success), active toggle — rendered in app shell
+- [x] Cache flush: reset all server-side caches (teams, players, rosters, draft orders, etc.)
+- [x] Draft name generator: override adjective/noun word lists
+- [x] Trade value chart: edit all 256 pick values + round 1 premium
+- [x] CPU tuning: need multipliers, wild thresholds, max need multipliers, pick weights
+- [ ] Report/flag system for user-generated content (user-facing)
 - [ ] Content removal with author notification
 - [ ] Rate limiting on content creation (prevent spam)
+- [ ] Platform health metrics and user management views
 
 ### Milestone 4.75.3: SEO & Social Sharing
 
@@ -393,7 +413,7 @@ Extract platform-agnostic business logic from bot services to `packages/shared`.
 - [ ] Search results grouped by type with quick-jump
 - [ ] Firestore full-text search strategy (Algolia, Typesense, or Firestore-native with `contentText` fields)
 
-**Phase 4.75 Complete**: Platform has the operational backbone to support community growth — users stay engaged through notifications, content stays clean through moderation, and public pages are discoverable through search engines.
+**Phase 4.75 Status**: Admin dashboard and SEO are complete. Notification system and unified search remain. Admin tooling eliminates deploy-to-change for all configurable data — teams, prospects, draft order, trade values, CPU behavior, featured content, and moderation are all manageable through the web UI.
 
 ---
 
@@ -465,11 +485,11 @@ Extract platform-agnostic business logic from bot services to `packages/shared`.
 - [ ] Timestamp and freeze locked predictions
 - [ ] Support multiple locked predictions per user (track best, average, etc.)
 
-### Milestone 6.2: Real Draft Integration
+### Milestone 6.2: Real Draft Integration ✓
 
-- [ ] Ingest actual NFL draft results (manual entry initially, API later)
-- [ ] Score predictions against real results
-- [ ] Scoring algorithm in `shared/src/scoring.ts`: exact pick, correct round, correct team, etc.
+- [x] Ingest actual NFL draft results via admin draft results editor (manual entry per round/pick/team/player)
+- [x] Score predictions against real results (admin scoring engine, per-pick and aggregate)
+- [x] Scoring algorithm in `web/src/lib/scoring.ts`: team match (+30), player match (+40), position match (+15), round accuracy (+15 scaled)
 
 ### Milestone 6.3: Leaderboards
 
@@ -505,19 +525,19 @@ Extract platform-agnostic business logic from bot services to `packages/shared`.
 
 **Goal**: Standalone reference pages and tools that enrich the platform and drive organic search traffic.
 
-### Milestone 6.5.1: Team Breakdown Pages
+### Milestone 6.5.1: Team Breakdown Pages ✓
 
-- [ ] Individual team analysis pages: current roster, positional needs, draft capital
-- [ ] Visual draft pick inventory per team
-- [ ] Team needs auto-derived from roster composition (or manually curated)
+- [x] Individual team analysis pages: current roster, positional needs, draft capital, coaching staff
+- [x] Visual draft pick inventory per team
+- [x] Team needs admin-curated with positional priority rankings
 
 ### Milestone 6.5.2: Draft Order & Trade Value
 
 - [x] Tankathon-style draft order page with pick ownership and trade value chart
-- [ ] Standalone trade value calculator (outside of active drafts)
+- [x] Standalone trade value calculator (outside of active drafts)
 - [ ] Support for salary cap implications in trade evaluation (precursor to Phase 9)
 
-**Phase 6.5 Complete**: Reference tools drive organic traffic and provide standalone utility beyond drafting.
+**Phase 6.5 Status**: Team breakdown pages and draft order/trade value tools are complete. Salary cap integration remains as a future Phase 9 precursor.
 
 ---
 
@@ -711,4 +731,4 @@ Server-side and client-side enforcement of Free/Pro boundaries across the platfo
 - **Draft suggestion algo** ✓: Implemented in Milestone 3.7. Research-calibrated analytics engine drawing from Massey/Thaler (Weibull market value, 52% accuracy baseline), Baldwin (surplus curves, OFV tables), Unexpected Points (positional surplus tiers), OTC (Positional Value Index), PFF (Pro-Adjusted WAA), and Keefer (sunk-cost fallacy). Powers CPU positional weighting, suggested pick highlighting, and full post-draft grading.
 - **Add my other packages**: Incorporate my espn-api and nflverse-ts packages into this site to drive further reference ability and tooling powers (need to get these to 1.0 versions first)
 - **NFL player pages**: Pages akin to ESPN featuring player stats, snap count, etc
-- **Broader video sharing**: Add support for short form videos from Instagram, TikTok, Twitter, and YouTube
+- **Broader video sharing** ✓: Add support for short form videos from Instagram, TikTok, Twitter, and YouTube
