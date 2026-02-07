@@ -186,13 +186,32 @@ export function Sidebar({
         </div>
         <Separator className="my-2" />
         {loading ? null : user ? (
-          <Link
-            href="/settings"
-            className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-          >
-            <Settings className="h-4 w-4 shrink-0" />
-            {profile?.displayName ?? 'User'}
-          </Link>
+          <>
+            <Link
+              href="/settings/profile"
+              className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+            >
+              {profile?.avatar ? (
+                <img
+                  src={profile.avatar}
+                  alt=""
+                  className="h-5 w-5 rounded-full object-cover"
+                />
+              ) : (
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[10px] font-bold text-muted-foreground">
+                  {(profile?.displayName ?? 'U').charAt(0).toUpperCase()}
+                </span>
+              )}
+              {profile?.displayName ?? 'User'}
+            </Link>
+            <Link
+              href="/settings"
+              className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+            >
+              <Settings className="h-4 w-4 shrink-0" />
+              Settings
+            </Link>
+          </>
         ) : (
           <Link
             href="/auth"

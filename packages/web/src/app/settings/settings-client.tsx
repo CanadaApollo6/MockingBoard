@@ -2,13 +2,14 @@
 
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+import { ChevronRight } from 'lucide-react';
 import { teams } from '@mockingboard/shared';
 import { useAuth } from '@/components/auth-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { ProfileEditor } from '@/components/profile-editor';
 import { TEAM_COLORS, hexToHsl } from '@/lib/team-colors';
 import { SCHOOL_COLORS } from '@/lib/school-colors';
 import { cn } from '@/lib/utils';
@@ -73,24 +74,34 @@ export function SettingsClient() {
           <AccountLinkingSection profile={profile} />
         </div>
 
-        {/* Right column: profile & integrations */}
+        {/* Right column: profile link & integrations */}
         <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Profile</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ProfileEditor
-                initial={{
-                  slug: profile.slug,
-                  bio: profile.bio,
-                  avatar: profile.avatar,
-                  links: profile.links,
-                  isPublic: profile.isPublic,
-                }}
-              />
-            </CardContent>
-          </Card>
+          <Link href="/settings/profile">
+            <Card className="transition-colors hover:border-primary/50">
+              <CardContent className="flex items-center gap-4 py-5">
+                {profile.avatar ? (
+                  <img
+                    src={profile.avatar}
+                    alt=""
+                    className="h-12 w-12 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-lg font-bold text-muted-foreground">
+                    {profile.displayName.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div className="flex-1">
+                  <p className="font-medium">{profile.displayName}</p>
+                  {profile.slug && (
+                    <p className="text-xs text-muted-foreground">
+                      mockingboard.com/profile/{profile.slug}
+                    </p>
+                  )}
+                </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground" />
+              </CardContent>
+            </Card>
+          </Link>
           <WebhookSection />
         </div>
       </div>

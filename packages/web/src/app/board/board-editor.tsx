@@ -30,6 +30,9 @@ import { DraftGuideButton } from '@/components/draft-guide/draft-guide-button';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { getPositionColor } from '@/lib/position-colors';
+import { BoardGeneratorDialog } from '@/components/board-generator-dialog';
+import { Sparkles } from 'lucide-react';
+
 interface BoardEditorProps {
   players: Record<string, Player>;
   initialBoard: BigBoard | null;
@@ -40,6 +43,7 @@ export function BoardEditor({ players, initialBoard, year }: BoardEditorProps) {
   const [board, setBoard] = useState<BigBoard | null>(initialBoard);
   const [isCreating, setIsCreating] = useState(false);
   const [restoreKey, setRestoreKey] = useState(0);
+  const [generatorOpen, setGeneratorOpen] = useState(false);
 
   async function handleRestore(snapshotRankings: string[]) {
     if (!board) return;
@@ -85,6 +89,30 @@ export function BoardEditor({ players, initialBoard, year }: BoardEditorProps) {
     }
   }
 
+  async function handleCreateFromWeights(rankings: string[]) {
+    setIsCreating(true);
+    try {
+      const res = await fetch('/api/boards', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: `My ${year} Board`,
+          year,
+          basedOn: 'consensus',
+          rankings,
+        }),
+      });
+
+      if (!res.ok) throw new Error('Failed to create board');
+      const created: BigBoard = await res.json();
+      setBoard(created);
+    } catch (err) {
+      console.error('Failed to create board:', err);
+    } finally {
+      setIsCreating(false);
+    }
+  }
+
   if (!board) {
     return (
       <div className="flex flex-col items-center justify-center py-16">
@@ -92,12 +120,20 @@ export function BoardEditor({ players, initialBoard, year }: BoardEditorProps) {
         <p className="mb-8 text-sm text-muted-foreground">
           Rank {sortedPlayers.length} prospects your way.
         </p>
-        <div className="flex gap-4">
+        <div className="flex flex-wrap justify-center gap-4">
           <Button
             onClick={() => handleCreate('consensus')}
             disabled={isCreating}
           >
             Start from Consensus
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setGeneratorOpen(true)}
+            disabled={isCreating}
+          >
+            <Sparkles className="mr-1.5 h-4 w-4" />
+            Generate from Weights
           </Button>
           <Button
             variant="outline"
@@ -112,6 +148,12 @@ export function BoardEditor({ players, initialBoard, year }: BoardEditorProps) {
             Creating board...
           </p>
         )}
+        <BoardGeneratorDialog
+          open={generatorOpen}
+          onOpenChange={setGeneratorOpen}
+          players={players}
+          onGenerate={handleCreateFromWeights}
+        />
       </div>
     );
   }

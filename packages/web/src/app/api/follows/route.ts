@@ -3,6 +3,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { getSessionUser } from '@/lib/auth-session';
 import { adminDb } from '@/lib/firebase-admin';
 import { sanitize } from '@/lib/sanitize';
+import { notifyNewFollower } from '@/lib/notifications';
 
 export async function POST(request: Request) {
   const session = await getSessionUser();
@@ -50,6 +51,18 @@ export async function POST(request: Request) {
       followeeId,
       createdAt: FieldValue.serverTimestamp(),
     });
+
+    // Fire-and-forget: notify the followee
+    const followerDoc = await adminDb
+      .collection('users')
+      .doc(session.uid)
+      .get();
+    const followerData = followerDoc.data();
+    notifyNewFollower(
+      followeeId,
+      followerData?.displayName ?? 'Someone',
+      followerData?.slug,
+    ).catch((err) => console.error('Follow notification failed:', err));
 
     return NextResponse.json({ ok: true });
   } catch (err) {

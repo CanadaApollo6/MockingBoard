@@ -10,6 +10,7 @@ import {
 } from '@/lib/discord-webhook';
 import { getPickController } from '@mockingboard/shared';
 import type { Draft, Pick } from '@mockingboard/shared';
+import { notifyYourTurn } from '@/lib/notifications';
 
 export async function POST(
   request: Request,
@@ -78,6 +79,24 @@ export async function POST(
       const cascade = await runCpuCascade(draftId);
       allNewPicks = [pick, ...cascade.picks];
       draftCompleted = cascade.isComplete;
+    }
+
+    // Fire-and-forget: notify next human picker
+    if (!draftCompleted) {
+      adminDb
+        .collection('drafts')
+        .doc(draftId)
+        .get()
+        .then((snap) => {
+          const d = { id: snap.id, ...snap.data() } as Draft;
+          const nextSlot = d.pickOrder[d.currentPick - 1];
+          if (!nextSlot) return;
+          const next = getPickController(d, nextSlot);
+          if (next && next !== session.uid) {
+            return notifyYourTurn(next, draftId, draft.name ?? 'Draft');
+          }
+        })
+        .catch((err) => console.error('Your-turn notification failed:', err));
     }
 
     // Fire-and-forget: webhook notifications

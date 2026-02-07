@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 import { Menu, Search, X } from 'lucide-react';
 import { Sidebar } from '@/components/sidebar';
 import { SearchDialog } from '@/components/search-dialog';
+import { NotificationBell } from '@/components/notification-bell';
 import { useAuth } from '@/components/auth-provider';
 import { useTeamTheme } from '@/hooks/use-team-theme';
 import { isBare } from '@/lib/overlay-theme';
@@ -85,6 +86,7 @@ export function AppShell({ children, announcement }: AppShellProps) {
             />
             MockingBoard
           </Link>
+          {!loading && user && <NotificationBell />}
           <button
             onClick={openSearch}
             className="text-muted-foreground hover:text-foreground"

@@ -46,6 +46,9 @@ export type {
   TradeAnalysis,
   OptimalPick,
   SuggestedPick,
+  BoardGenerationConfig,
+  NotificationType,
+  AppNotification,
 } from './types';
 
 // Constants
@@ -112,6 +115,9 @@ export {
   analyzeAllTrades,
   suggestPick,
 } from './draft-analytics';
+
+// Board generation
+export { generateBoardRankings, getHeadlineStats } from './board-generator';
 
 // Prospect import
 export {

@@ -138,6 +138,10 @@ export interface User {
   isPublic?: boolean;
   favoriteTeam?: TeamAbbreviation;
   favoriteSchool?: string;
+  notificationPreferences?: {
+    inApp: boolean;
+    discord: boolean;
+  };
 }
 
 export interface Draft {
@@ -567,4 +571,38 @@ export interface SuggestedPick {
   playerId: string;
   score: number;
   reason: string;
+}
+
+// ---- Board Generation Types ----
+
+export interface BoardGenerationConfig {
+  position: Position | 'ALL';
+  weights: {
+    production: number; // 0-100
+    athleticism: number; // 0-100
+    conference: number; // 0-100
+    consensus: number; // 0-100
+  };
+  statOverrides?: Partial<Record<string, number>>; // stat key → weight 0-100
+}
+
+// ---- Notification Types ----
+
+export type NotificationType =
+  | 'new-follower'
+  | 'your-turn'
+  | 'trade-accepted'
+  | 'new-board';
+
+export interface AppNotification {
+  id: string;
+  userId: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+  link?: string;
+  read: boolean;
+  createdAt: FirestoreTimestamp;
+  actorId?: string;
+  actorName?: string;
 }
