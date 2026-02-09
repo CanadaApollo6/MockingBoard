@@ -106,71 +106,12 @@ export function DraftRoom({
     }
   }, [liveTrades, tradeResult]);
 
-  // Animation: stagger reveal of CPU picks
-  const [revealedCount, setRevealedCount] = useState(initialPicks.length);
-  const revealedRef = useRef(initialPicks.length);
+  // CPU advancement state
+  const [advancingCpu, setAdvancingCpu] = useState(false);
   const cpuSpeed = draft?.config.cpuSpeed ?? 'instant';
   const tradesEnabled = draft?.config.tradesEnabled ?? false;
-  const animating = revealedCount < picks.length;
-
-  // Ref for latest picks count so the stagger interval avoids stale closures
-  const picksLengthRef = useRef(picks.length);
-  picksLengthRef.current = picks.length;
-
-  // Persistent interval ref — survives effect re-runs so the stagger keeps its pace
-  const revealIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  // Step loop for single-pick CPU advancement when trades are enabled
-  const stepLoopRef = useRef(false);
-  const stepTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [stepTick, setStepTick] = useState(0);
-
-  useEffect(() => {
-    const target = picks.length;
-    const current = revealedRef.current;
-    if (target <= current) return;
-
-    // Instant speed: always reveal all immediately
-    if (cpuSpeed === 'instant') {
-      revealedRef.current = target;
-      setRevealedCount(target);
-      return;
-    }
-
-    // Single new pick while not in a CPU cascade: reveal immediately (user pick)
-    if (target - current === 1 && !advancingRef.current) {
-      revealedRef.current = target;
-      setRevealedCount(target);
-      return;
-    }
-
-    // CPU cascade with non-instant speed: stagger reveal
-    // If interval already running, let it continue — it reads picksLengthRef
-    if (revealIntervalRef.current) return;
-
-    const delay = SPEED_DELAY[cpuSpeed];
-    revealIntervalRef.current = setInterval(() => {
-      if (revealedRef.current >= picksLengthRef.current) {
-        clearInterval(revealIntervalRef.current!);
-        revealIntervalRef.current = null;
-        return;
-      }
-      revealedRef.current++;
-      setRevealedCount(revealedRef.current);
-    }, delay);
-  }, [picks.length, cpuSpeed]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (revealIntervalRef.current) clearInterval(revealIntervalRef.current);
-      if (stepTimeoutRef.current) clearTimeout(stepTimeoutRef.current);
-    };
-  }, []);
 
   const playerMap = useMemo(() => new Map(Object.entries(players)), [players]);
-
-  const visiblePicks = animating ? picks.slice(0, revealedCount) : picks;
 
   const availablePlayers = useMemo(() => {
     if (!draft) return [];
@@ -199,22 +140,12 @@ export function DraftRoom({
   const isPaused = draft?.status === 'paused';
   const isComplete = draft?.status === 'complete';
 
-  // Stop stagger animation on pause so it doesn't look like CPU is still picking
+  // Redirect to recap page when draft completes
   useEffect(() => {
-    if (isPaused && revealIntervalRef.current) {
-      clearInterval(revealIntervalRef.current);
-      revealIntervalRef.current = null;
-      revealedRef.current = picksLengthRef.current;
-      setRevealedCount(picksLengthRef.current);
-    }
-  }, [isPaused]);
-
-  // Redirect to recap page when draft completes and animation finishes
-  useEffect(() => {
-    if (isComplete && !animating) {
+    if (isComplete && !advancingCpu) {
       router.push(`/drafts/${draftId}`);
     }
-  }, [isComplete, animating, draftId, router]);
+  }, [isComplete, advancingCpu, draftId, router]);
 
   const userTeamCount = useMemo(() => {
     if (!draft) return 0;
@@ -225,7 +156,7 @@ export function DraftRoom({
 
   // Suggested pick for the user
   const suggestion = useMemo(() => {
-    if (!isUserTurn || !isActive || animating || !currentSlot) return null;
+    if (!isUserTurn || !isActive || advancingCpu || !currentSlot) return null;
     const teamSeed = teamSeeds.get(currentSlot.team);
     const draftedPositions = getTeamDraftedPositions(
       draft!.pickOrder,
@@ -246,7 +177,7 @@ export function DraftRoom({
   }, [
     isUserTurn,
     isActive,
-    animating,
+    advancingCpu,
     currentSlot,
     draft,
     availablePlayers,
@@ -254,61 +185,61 @@ export function DraftRoom({
     bigBoardRankings,
   ]);
 
-  // Auto-trigger CPU advancement when current pick is CPU-controlled
-  const needsCpuAdvance =
-    isActive &&
-    !animating &&
-    controller === null &&
-    !submitting &&
-    (!tradesEnabled || (!showTrade && !tradeResult));
-  const advancingRef = useRef(false);
-
+  // Unified CPU advancement: drives picks at the configured speed
   useEffect(() => {
-    if (!needsCpuAdvance) return;
+    const isCpuTurn =
+      isActive &&
+      controller === null &&
+      !submitting &&
+      (!tradesEnabled || (!showTrade && !tradeResult));
+    if (!isCpuTurn) {
+      setAdvancingCpu(false);
+      return;
+    }
 
-    if (tradesEnabled) {
-      // Single-pick mode: advance one CPU pick at a time with speed delay
-      if (stepLoopRef.current) return;
-      stepLoopRef.current = true;
+    setAdvancingCpu(true);
+    let cancelled = false;
 
-      fetch(`/api/drafts/${draftId}/advance?mode=single`, { method: 'POST' })
-        .then((res) => res.json())
-        .then(() => {
-          if (!stepLoopRef.current) return;
-          const delay = SPEED_DELAY[cpuSpeed];
-          stepTimeoutRef.current = setTimeout(() => {
-            stepTimeoutRef.current = null;
-            stepLoopRef.current = false;
-            setStepTick((n) => n + 1);
-          }, delay);
-        })
-        .catch((err: Error) => {
-          setError(err.message);
-          stepLoopRef.current = false;
-        });
-    } else {
-      // Full cascade mode
-      if (advancingRef.current) return;
-      advancingRef.current = true;
-
+    if (cpuSpeed === 'instant') {
+      // Full cascade — server writes all CPU picks, Firestore delivers them at once
       fetch(`/api/drafts/${draftId}/advance`, { method: 'POST' })
         .catch((err: Error) => setError(err.message))
         .finally(() => {
-          advancingRef.current = false;
+          if (!cancelled) setAdvancingCpu(false);
         });
+    } else {
+      // Paced loop — advance one pick at a time with a delay between each
+      (async () => {
+        while (!cancelled) {
+          try {
+            const res = await fetch(
+              `/api/drafts/${draftId}/advance?mode=single`,
+              { method: 'POST' },
+            );
+            const data = await res.json();
+            if (!data.pick || data.isComplete || cancelled) break;
+            await new Promise((r) => setTimeout(r, SPEED_DELAY[cpuSpeed]));
+          } catch {
+            break;
+          }
+        }
+        if (!cancelled) setAdvancingCpu(false);
+      })();
     }
-  }, [needsCpuAdvance, draftId, tradesEnabled, cpuSpeed, stepTick]);
 
-  // Reset step loop when CPU advancement stops (pause, trade UI open, etc.)
-  useEffect(() => {
-    if (!needsCpuAdvance) {
-      if (stepTimeoutRef.current) {
-        clearTimeout(stepTimeoutRef.current);
-        stepTimeoutRef.current = null;
-      }
-      stepLoopRef.current = false;
-    }
-  }, [needsCpuAdvance]);
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    isActive,
+    controller,
+    submitting,
+    tradesEnabled,
+    showTrade,
+    tradeResult,
+    cpuSpeed,
+    draftId,
+  ]);
 
   // Trade eligibility: any team not owned by the current user is a valid target
   const hasTradeTargets = useMemo(
@@ -324,43 +255,21 @@ export function DraftRoom({
     hasTradeTargets &&
     !showTrade &&
     !tradeResult &&
-    !animating;
+    !advancingCpu;
 
-  // During animation: show the next pick being "made" on the clock
-  const animatingPick = animating ? picks[revealedCount] : null;
-  const clockTeam = animating
-    ? animatingPick?.team
-    : (currentSlot?.teamOverride ?? currentSlot?.team);
-  const clockRound = animating ? animatingPick?.round : currentSlot?.round;
-  const clockPickNum = animating ? animatingPick?.pick : currentSlot?.pick;
-  const clockOverall = animating
-    ? animatingPick?.overall
-    : currentSlot?.overall;
-
-  // During stagger, OTC indicator tracks the reveal position, not the real Firestore value
-  const visualCurrentPick = animating
-    ? (draft?.pickOrder[revealedCount]?.overall ?? draft?.currentPick)
-    : draft?.currentPick;
+  const clockTeam = currentSlot?.teamOverride ?? currentSlot?.team;
+  const clockRound = currentSlot?.round;
+  const clockPickNum = currentSlot?.pick;
+  const clockOverall = currentSlot?.overall;
 
   const totalPicks = draft?.pickOrder.length ?? 0;
-  const displayedCount = visiblePicks.length;
+  const displayedCount = picks.length;
   const progress = totalPicks > 0 ? (displayedCount / totalPicks) * 100 : 0;
 
   const handlePick = useCallback(
     async (playerId: string) => {
       setSubmitting(true);
       setError(null);
-
-      // Fast-forward stagger so the next cascade can start immediately
-      if (revealIntervalRef.current) {
-        clearInterval(revealIntervalRef.current);
-        revealIntervalRef.current = null;
-      }
-      const latest = picksLengthRef.current;
-      if (revealedRef.current < latest) {
-        revealedRef.current = latest;
-        setRevealedCount(latest);
-      }
 
       try {
         const res = await fetch(`/api/drafts/${draftId}/pick`, {
@@ -478,7 +387,7 @@ export function DraftRoom({
   );
 
   // Pick timer
-  const timerActive = isActive && isUserTurn && !animating && !submitting;
+  const timerActive = isActive && isUserTurn && !advancingCpu && !submitting;
 
   const handleTimerExpire = useCallback(() => {
     if (!draft || submitting) return;
@@ -595,7 +504,7 @@ export function DraftRoom({
 
   const clockNode = (
     <>
-      {(isActive || isPaused || animating) &&
+      {(isActive || isPaused || advancingCpu) &&
         clockTeam &&
         clockRound &&
         clockPickNum &&
@@ -608,9 +517,9 @@ export function DraftRoom({
               team={clockTeam as TeamAbbreviation}
               round={clockRound}
               pick={clockPickNum}
-              isUserTurn={!animating && isUserTurn}
+              isUserTurn={!advancingCpu && isUserTurn}
               remaining={
-                isActive && isUserTurn && !animating ? remaining : null
+                isActive && isUserTurn && !advancingCpu ? remaining : null
               }
               secondsPerPick={draft?.config.secondsPerPick}
             />
@@ -652,7 +561,7 @@ export function DraftRoom({
           )}
         </div>
       )}
-      {isComplete && !animating && (
+      {isComplete && !advancingCpu && (
         <div className="rounded-lg border bg-muted/50 p-4">
           <Badge variant="secondary">Complete</Badge>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -666,12 +575,12 @@ export function DraftRoom({
   const boardNode = (
     <>
       <DraftBoard
-        picks={visiblePicks}
+        picks={picks}
         playerMap={playerMap}
         pickOrder={draft?.pickOrder}
-        currentPick={visualCurrentPick}
+        currentPick={draft?.currentPick}
         clockUrgency={clockUrgency}
-        isBatch={animating}
+        isBatch={advancingCpu}
       />
       <div>
         <div className="mb-1 flex justify-between text-xs text-muted-foreground">
@@ -747,7 +656,7 @@ export function DraftRoom({
 
       {(isActive || isPaused) && !showTrade && !tradeResult && (
         <>
-          {animating && (
+          {advancingCpu && (
             <div className="py-4 text-center text-sm text-muted-foreground">
               CPU picks rolling in...
             </div>
@@ -757,7 +666,7 @@ export function DraftRoom({
               Picking for {currentSlot.teamOverride ?? currentSlot.team}
             </p>
           )}
-          {!animating && !isUserTurn && currentSlot && (
+          {!advancingCpu && !isUserTurn && currentSlot && (
             <p className="text-sm text-muted-foreground">
               {controller && draft?.participantNames?.[controller]
                 ? `Waiting for ${draft.participantNames[controller]}'s pick...`
@@ -798,7 +707,7 @@ export function DraftRoom({
   );
 
   const mobileLabel =
-    isUserTurn && !animating ? 'Make Your Pick' : 'Draft Room';
+    isUserTurn && !advancingCpu ? 'Make Your Pick' : 'Draft Room';
 
   return (
     <>

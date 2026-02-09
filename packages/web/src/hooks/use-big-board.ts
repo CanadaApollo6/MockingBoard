@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-import type { CustomPlayer } from '@mockingboard/shared';
+import type { CustomPlayer, GradeSystem } from '@mockingboard/shared';
 
 const SAVE_DELAY = 2000;
 
@@ -9,11 +9,15 @@ interface UseBigBoardOptions {
   boardId: string | null;
   initialRankings: string[];
   initialCustomPlayers?: CustomPlayer[];
+  initialGrades?: Record<string, number>;
+  initialPreferredGradeSystem?: GradeSystem;
 }
 
 interface UseBigBoardReturn {
   rankings: string[];
   customPlayers: CustomPlayer[];
+  grades: Record<string, number>;
+  preferredGradeSystem: GradeSystem;
   isSaving: boolean;
   isDirty: boolean;
   movePlayer: (fromIndex: number, toIndex: number) => void;
@@ -21,20 +25,36 @@ interface UseBigBoardReturn {
   removePlayer: (playerId: string) => void;
   addCustomPlayer: (player: CustomPlayer) => void;
   removeCustomPlayer: (customId: string) => void;
+  setRankingsFromGenerator: (newRankings: string[]) => void;
+  setGrade: (playerId: string, grade: number | undefined) => void;
+  setPreferredGradeSystem: (system: GradeSystem) => void;
 }
 
 export function useBigBoard({
   boardId,
   initialRankings,
   initialCustomPlayers,
+  initialGrades,
+  initialPreferredGradeSystem,
 }: UseBigBoardOptions): UseBigBoardReturn {
   const [rankings, setRankings] = useState(initialRankings);
   const [customPlayers, setCustomPlayers] = useState<CustomPlayer[]>(
     initialCustomPlayers ?? [],
   );
+  const [grades, setGrades] = useState<Record<string, number>>(
+    initialGrades ?? {},
+  );
+  const [preferredGradeSystem, setPreferredGradeSystemState] =
+    useState<GradeSystem>(initialPreferredGradeSystem ?? 'tier');
   const [isSaving, setIsSaving] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Use refs to always have latest grades/system in save closure
+  const gradesRef = useRef(grades);
+  gradesRef.current = grades;
+  const gradeSystemRef = useRef(preferredGradeSystem);
+  gradeSystemRef.current = preferredGradeSystem;
 
   // Debounced save
   const scheduleSave = useCallback(
@@ -53,6 +73,8 @@ export function useBigBoard({
             body: JSON.stringify({
               rankings: newRankings,
               customPlayers: newCustomPlayers,
+              grades: gradesRef.current,
+              preferredGradeSystem: gradeSystemRef.current,
             }),
           });
           setIsDirty(false);
@@ -139,9 +161,45 @@ export function useBigBoard({
     [scheduleSave],
   );
 
+  const setRankingsFromGenerator = useCallback(
+    (newRankings: string[]) => {
+      setRankings(newRankings);
+      scheduleSave(newRankings, customPlayers);
+    },
+    [scheduleSave, customPlayers],
+  );
+
+  const setGrade = useCallback(
+    (playerId: string, grade: number | undefined) => {
+      setGrades((prev) => {
+        const next = { ...prev };
+        if (grade === undefined) {
+          delete next[playerId];
+        } else {
+          next[playerId] = grade;
+        }
+        gradesRef.current = next;
+        scheduleSave(rankings, customPlayers);
+        return next;
+      });
+    },
+    [scheduleSave, rankings, customPlayers],
+  );
+
+  const setPreferredGradeSystem = useCallback(
+    (system: GradeSystem) => {
+      setPreferredGradeSystemState(system);
+      gradeSystemRef.current = system;
+      scheduleSave(rankings, customPlayers);
+    },
+    [scheduleSave, rankings, customPlayers],
+  );
+
   return {
     rankings,
     customPlayers,
+    grades,
+    preferredGradeSystem,
     isSaving,
     isDirty,
     movePlayer,
@@ -149,5 +207,8 @@ export function useBigBoard({
     removePlayer,
     addCustomPlayer,
     removeCustomPlayer,
+    setRankingsFromGenerator,
+    setGrade,
+    setPreferredGradeSystem,
   };
 }

@@ -58,6 +58,9 @@ export async function PUT(
     visibility?: 'private' | 'public';
     slug?: string;
     description?: string;
+    grades?: Record<string, number>;
+    preferredGradeSystem?: string;
+    positionRankings?: Record<string, string[]>;
   };
 
   try {
@@ -97,6 +100,11 @@ export async function PUT(
     if (body.visibility !== undefined) updates.visibility = body.visibility;
     if (body.slug !== undefined) updates.slug = body.slug;
     if (body.description !== undefined) updates.description = body.description;
+    if (body.grades !== undefined) updates.grades = body.grades;
+    if (body.preferredGradeSystem !== undefined)
+      updates.preferredGradeSystem = body.preferredGradeSystem;
+    if (body.positionRankings !== undefined)
+      updates.positionRankings = body.positionRankings;
 
     await adminDb.collection('bigBoards').doc(boardId).update(updates);
 

@@ -74,8 +74,12 @@ export async function POST(
     let allNewPicks: Pick[] = [pick];
     let draftCompleted = pickComplete;
 
-    // Run CPU cascade for remaining CPU picks (skip when trades enabled — client drives single-pick mode)
-    if (!pickComplete && !draft.config.tradesEnabled) {
+    // Run CPU cascade only for instant speed (non-instant speeds are paced by the client)
+    if (
+      !pickComplete &&
+      !draft.config.tradesEnabled &&
+      (draft.config.cpuSpeed ?? 'normal') === 'instant'
+    ) {
       const cascade = await runCpuCascade(draftId);
       allNewPicks = [pick, ...cascade.picks];
       draftCompleted = cascade.isComplete;

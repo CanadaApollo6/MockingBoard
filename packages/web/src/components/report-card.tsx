@@ -1,7 +1,7 @@
 import type { ScoutingReport } from '@mockingboard/shared';
 import { Badge } from '@/components/ui/badge';
 import { TipTapContent } from '@/components/tiptap-content';
-import { gradeColor } from '@/lib/grade-color';
+import { GradeBadge } from '@/components/grade-badge';
 
 interface ReportCardProps {
   report: ScoutingReport;
@@ -28,11 +28,10 @@ export function ReportCard({ report }: ReportCardProps) {
       {(report.grade != null || report.comparison) && (
         <div className="flex items-center gap-3">
           {report.grade != null && (
-            <span
-              className={`font-mono text-lg font-bold ${gradeColor(report.grade)}`}
-            >
-              {report.grade}
-            </span>
+            <GradeBadge
+              grade={report.grade}
+              system={report.gradeSystem ?? 'tier'}
+            />
           )}
           {report.comparison && (
             <span className="text-sm text-muted-foreground">

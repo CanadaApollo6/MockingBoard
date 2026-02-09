@@ -22,7 +22,9 @@ import type {
   BigBoard,
   BoardSnapshot,
   CustomPlayer,
+  GradeSystem,
 } from '@mockingboard/shared';
+import { GRADE_SYSTEMS } from '@mockingboard/shared';
 import { useBigBoard } from '@/hooks/use-big-board';
 import { BoardPlayerRow } from '@/components/board-player-row';
 import { BoardToolbar } from '@/components/board-toolbar';
@@ -191,6 +193,7 @@ function BoardEditorInner({
   const [snapshots, setSnapshots] = useState<BoardSnapshot[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [restoringId, setRestoringId] = useState<string | null>(null);
+  const [generatorOpen, setGeneratorOpen] = useState(false);
 
   const fetchSnapshots = useCallback(async () => {
     try {
@@ -234,6 +237,8 @@ function BoardEditorInner({
   const {
     rankings,
     customPlayers,
+    grades,
+    preferredGradeSystem,
     isSaving,
     isDirty,
     movePlayer,
@@ -241,10 +246,15 @@ function BoardEditorInner({
     removePlayer,
     addCustomPlayer,
     removeCustomPlayer,
+    setRankingsFromGenerator,
+    setGrade,
+    setPreferredGradeSystem,
   } = useBigBoard({
     boardId: board.id,
     initialRankings: board.rankings,
     initialCustomPlayers: board.customPlayers,
+    initialGrades: board.grades,
+    initialPreferredGradeSystem: board.preferredGradeSystem,
   });
 
   const customPlayerMap = useMemo(() => {
@@ -374,6 +384,38 @@ function BoardEditorInner({
           }}
         />
 
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="xs"
+            onClick={() => setGeneratorOpen(true)}
+          >
+            <Sparkles className="mr-1 h-3.5 w-3.5" />
+            Regenerate
+          </Button>
+
+          <select
+            value={preferredGradeSystem}
+            onChange={(e) =>
+              setPreferredGradeSystem(e.target.value as GradeSystem)
+            }
+            className="rounded-md border bg-background px-2 py-1 text-xs"
+          >
+            {GRADE_SYSTEMS.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.label} Grades
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <BoardGeneratorDialog
+          open={generatorOpen}
+          onOpenChange={setGeneratorOpen}
+          players={players}
+          onGenerate={setRankingsFromGenerator}
+        />
+
         <DraftGuideButton
           boardName={board.name}
           year={board.year}
@@ -464,6 +506,9 @@ function BoardEditorInner({
                       player={player}
                       customName={custom?.name}
                       consensusRank={player?.consensusRank}
+                      grade={grades[id]}
+                      gradeSystem={preferredGradeSystem}
+                      onGradeChange={(g) => setGrade(id, g)}
                       onRemove={() =>
                         custom ? removeCustomPlayer(id) : removePlayer(id)
                       }

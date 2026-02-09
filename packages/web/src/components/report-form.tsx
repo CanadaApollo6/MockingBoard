@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import type { GradeSystem } from '@mockingboard/shared';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { GradeSlider } from '@/components/grade-slider';
+import { GradePicker } from '@/components/grade-picker';
 import { TipTapEditor } from '@/components/tiptap-editor';
 
 interface ReportFormProps {
@@ -12,6 +13,7 @@ interface ReportFormProps {
   year: number;
   initial?: {
     grade?: number;
+    gradeSystem?: GradeSystem;
     comparison?: string;
     strengths?: string[];
     weaknesses?: string[];
@@ -30,6 +32,9 @@ export function ReportForm({
   onCancel,
 }: ReportFormProps) {
   const [grade, setGrade] = useState<number | undefined>(initial?.grade);
+  const [gradeSystem, setGradeSystem] = useState<GradeSystem>(
+    initial?.gradeSystem ?? 'tier',
+  );
   const [comparison, setComparison] = useState(initial?.comparison ?? '');
   const [strengthInput, setStrengthInput] = useState('');
   const [strengths, setStrengths] = useState<string[]>(
@@ -72,7 +77,10 @@ export function ReportForm({
 
     try {
       const body: Record<string, unknown> = { playerId, year };
-      if (grade != null) body.grade = grade;
+      if (grade != null) {
+        body.grade = grade;
+        body.gradeSystem = gradeSystem;
+      }
       if (comparison.trim()) body.comparison = comparison.trim();
       if (strengths.length > 0) body.strengths = strengths;
       if (weaknesses.length > 0) body.weaknesses = weaknesses;
@@ -107,7 +115,17 @@ export function ReportForm({
         </Button>
       </div>
 
-      <GradeSlider value={grade} onChange={setGrade} />
+      <div>
+        <label className="mb-1 block text-xs font-medium text-muted-foreground">
+          Grade <span className="font-normal">(optional)</span>
+        </label>
+        <GradePicker
+          value={grade}
+          system={gradeSystem}
+          onChangeValue={setGrade}
+          onChangeSystem={setGradeSystem}
+        />
+      </div>
 
       <div>
         <label className="mb-1 block text-xs font-medium text-muted-foreground">

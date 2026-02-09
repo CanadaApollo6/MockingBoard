@@ -29,6 +29,7 @@ export type {
   CustomPlayer,
   BoardSnapshot,
   BoardVisibility,
+  GradeSystem,
   ScoutingReport,
   Follow,
   Coach,
@@ -118,6 +119,16 @@ export {
 
 // Board generation
 export { generateBoardRankings, getHeadlineStats } from './board-generator';
+
+// Grades
+export {
+  GRADE_SYSTEMS,
+  getGradeDisplay,
+  getGradeOptions,
+  nflGradeToInternal,
+  internalToNflGrade,
+  type GradeDisplay,
+} from './grades';
 
 // Prospect import
 export {

@@ -22,6 +22,7 @@ import {
   LogOut,
   LogIn,
   Shirt,
+  BarChart3,
 } from 'lucide-react';
 import { useAuth } from '@/components/auth-provider';
 import { isAdmin } from '@/lib/admin';
@@ -46,6 +47,7 @@ const NAV_GROUPS = [
     items: [
       { href: '/players', label: 'Players', icon: Shirt },
       { href: '/board', label: 'My Board', icon: LayoutList },
+      { href: '/rankings', label: 'Rankings', icon: BarChart3 },
       { href: '/boards', label: 'Boards', icon: Library },
     ],
   },

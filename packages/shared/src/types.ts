@@ -353,6 +353,8 @@ export interface ScoutProfile {
 
 export type BoardVisibility = 'private' | 'public';
 
+export type GradeSystem = 'tier' | 'nfl' | 'letter' | 'projection';
+
 export interface BigBoard {
   id: string;
   userId: string;
@@ -365,6 +367,9 @@ export interface BigBoard {
   slug?: string;
   description?: string;
   authorName?: string;
+  grades?: Record<string, number>;
+  preferredGradeSystem?: GradeSystem;
+  positionRankings?: Partial<Record<Position, string[]>>;
   createdAt: FirestoreTimestamp;
   updatedAt: FirestoreTimestamp;
 }
@@ -393,6 +398,7 @@ export interface ScoutingReport {
   authorName: string;
   year: number;
   grade?: number;
+  gradeSystem?: GradeSystem;
   comparison?: string;
   strengths?: string[];
   weaknesses?: string[];

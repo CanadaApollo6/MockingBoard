@@ -6,6 +6,7 @@ import { PlayerJsonLd } from './json-ld';
 import { ProspectDetails } from '@/components/prospect-details';
 import { CommunityGradeSummary } from '@/components/community-grade-summary';
 import { CommunityReports } from '@/components/community-reports';
+import { QuickGrade } from '@/components/quick-grade';
 import { WordCloud } from '@/components/word-cloud';
 import { VideoGallery } from '@/components/video-gallery';
 import { getCachedSeasonConfig } from '@/lib/cache';
@@ -60,6 +61,7 @@ export default async function PlayerPage({ params }: Props) {
 
         <section className="space-y-6">
           {reports.length > 0 && <CommunityGradeSummary reports={reports} />}
+          <QuickGrade playerId={id} year={draftYear} initialReports={reports} />
           {reports.length > 0 && <WordCloud reports={reports} />}
 
           <CommunityReports

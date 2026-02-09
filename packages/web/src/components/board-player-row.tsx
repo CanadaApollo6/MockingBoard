@@ -1,11 +1,19 @@
 'use client';
 
+import { useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import type { Player } from '@mockingboard/shared';
+import type { Player, GradeSystem } from '@mockingboard/shared';
 import { Badge } from '@/components/ui/badge';
 import { getPositionColor } from '@/lib/position-colors';
 import { cn } from '@/lib/utils';
+import { GradeBadge } from '@/components/grade-badge';
+import { GradePicker } from '@/components/grade-picker';
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from '@/components/ui/popover';
 
 interface BoardPlayerRowProps {
   id: string;
@@ -13,6 +21,9 @@ interface BoardPlayerRowProps {
   player: Player | null;
   customName?: string;
   consensusRank?: number;
+  grade?: number;
+  gradeSystem?: GradeSystem;
+  onGradeChange?: (grade: number | undefined) => void;
   onRemove: () => void;
 }
 
@@ -22,8 +33,14 @@ export function BoardPlayerRow({
   player,
   customName,
   consensusRank,
+  grade,
+  gradeSystem,
+  onGradeChange,
   onRemove,
 }: BoardPlayerRowProps) {
+  const [pickerSystem, setPickerSystem] = useState<GradeSystem>(
+    gradeSystem ?? 'tier',
+  );
   const {
     attributes,
     listeners,
@@ -104,6 +121,35 @@ export function BoardPlayerRow({
         <span className="hidden w-32 truncate text-muted-foreground sm:block">
           {school}
         </span>
+      )}
+
+      {/* Grade */}
+      {onGradeChange && gradeSystem && (
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className="shrink-0"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {grade != null ? (
+                <GradeBadge grade={grade} system={gradeSystem} />
+              ) : (
+                <span className="inline-flex items-center rounded-full border border-dashed border-muted-foreground/30 px-2 py-0.5 text-xs text-muted-foreground">
+                  Grade
+                </span>
+              )}
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-80" align="end">
+            <GradePicker
+              value={grade}
+              system={pickerSystem}
+              onChangeValue={onGradeChange}
+              onChangeSystem={setPickerSystem}
+            />
+          </PopoverContent>
+        </Popover>
       )}
 
       {/* Consensus delta */}
