@@ -565,6 +565,8 @@ export interface PickGrade {
   /** Position's index in team needs, or -1 if not a need */
   needIndex: number;
   hadBetterAlternative: boolean;
+  /** Consensus rank of the best player available at this pick slot */
+  bestAvailableRank: number;
   surplusValue: number;
   positionalMultiplier: number;
   /** Board rank - overall, if board provided */
@@ -578,7 +580,6 @@ export interface TeamDraftGrade {
   tier: string;
   picks: PickGrade[];
   scores: {
-    value: number;
     positionalValue: number;
     surplusValue: number;
     needs: number;

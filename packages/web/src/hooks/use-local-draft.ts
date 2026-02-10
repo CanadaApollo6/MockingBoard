@@ -408,15 +408,14 @@ export function useLocalDraft(
     await syncToFirestore(cancelled, picks, 'cancel');
   }, [draft, picks, syncToFirestore]);
 
-  // Trigger CPU cascade on mount if first pick is CPU
-  const initialCascadeRef = useRef(false);
+  // Trigger CPU cascade on mount if first pick is CPU.
+  // No ref guard — React Strict Mode unmounts and clears our timeouts,
+  // so the remount must re-schedule the cascade.
   useEffect(() => {
-    if (initialCascadeRef.current) return;
     const slot = draft.pickOrder[(draft.currentPick ?? 1) - 1];
     if (!slot) return;
     const ctrl = getPickController(draft, slot);
     if (ctrl === null && draft.status === 'active') {
-      initialCascadeRef.current = true;
       setIsProcessing(true);
       const t = setTimeout(() => runCpuCascade(draft, picks), 50);
       timeoutRef.current.push(t);

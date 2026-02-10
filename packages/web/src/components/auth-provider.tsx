@@ -63,9 +63,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const auth = getClientAuth();
-    return onAuthStateChanged(auth, (firebaseUser) => {
+    return onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
       setLoading(false);
+
+      // Proactively refresh the server-side session cookie so it stays in sync
+      // with the client-side Firebase Auth state. This runs on page load and on
+      // token refresh (~hourly), preventing 401s from stale/expired cookies.
+      if (firebaseUser) {
+        try {
+          const idToken = await firebaseUser.getIdToken();
+          await fetch('/api/auth/session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idToken }),
+          });
+        } catch {
+          // Ignore — will retry on next auth state change
+        }
+      }
     });
   }, []);
 

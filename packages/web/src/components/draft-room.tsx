@@ -58,9 +58,7 @@ export function DraftRoom({
   const [cancelling, setCancelling] = useState(false);
 
   // Big Board sort mode
-  const [sortMode, setSortMode] = useState<'consensus' | 'board'>(
-    bigBoardRankings ? 'board' : 'consensus',
-  );
+  const [sortMode, setSortMode] = useState<'consensus' | 'board'>('consensus');
   const boardRankMap = useMemo(() => {
     if (!bigBoardRankings) return null;
     return new Map(bigBoardRankings.map((id, i) => [id, i + 1]));

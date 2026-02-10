@@ -15,6 +15,7 @@ import type {
 import { useAuth } from '@/components/auth-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
 import { getErrorMessage } from '@/lib/validate';
 
@@ -587,13 +588,12 @@ function SliderGroup({
           </span>
         )}
       </label>
-      <input
-        type="range"
+      <Slider
         min={0}
         max={100}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-muted accent-primary"
+        step={1}
+        value={[value]}
+        onValueChange={([v]) => onChange(v)}
       />
       <div className="mt-1 flex justify-between text-xs text-muted-foreground">
         <span>{leftLabel}</span>

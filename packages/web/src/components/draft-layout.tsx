@@ -33,7 +33,9 @@ export function DraftLayout({
       <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
         {/* Left column — clock + board */}
         <div className="space-y-4">
-          <div className="lg:sticky lg:top-4 lg:z-10">{clock}</div>
+          <div className="lg:sticky lg:top-4 lg:z-10 rounded-lg bg-card p-3">
+            {clock}
+          </div>
           {board}
         </div>
 

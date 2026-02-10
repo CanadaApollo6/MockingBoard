@@ -153,7 +153,7 @@ export function PlayerPicker({
                   <td className="p-2 font-mono text-muted-foreground">
                     {rankOverride
                       ? rankOverride.has(player.id)
-                        ? `BB ${rankOverride.get(player.id)}`
+                        ? rankOverride.get(player.id)
                         : '—'
                       : player.consensusRank >= 9999
                         ? 'NR'
