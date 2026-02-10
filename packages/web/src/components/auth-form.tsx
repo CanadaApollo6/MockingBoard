@@ -8,6 +8,7 @@ import {
   GoogleAuthProvider,
 } from 'firebase/auth';
 import { getClientAuth } from '@/lib/firebase';
+import { getErrorMessage } from '@/lib/validate';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -126,7 +127,7 @@ export function AuthForm({ initialMode = 'signin' }: AuthFormProps) {
       await createSession(idToken);
       router.replace('/drafts');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Signup failed');
+      setError(getErrorMessage(err, 'Signup failed'));
     } finally {
       setLoading(false);
     }

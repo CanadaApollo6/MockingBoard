@@ -20,6 +20,7 @@ import {
   PlayerSearchInput,
   type PlayerSearchResult,
 } from '@/components/player-search-input';
+import { getErrorMessage } from '@/lib/validate';
 
 const ALL_POSITIONS: Position[] = [
   'QB',
@@ -523,7 +524,7 @@ export function TeamEditor({
     } catch (err) {
       setMessage({
         type: 'error',
-        text: err instanceof Error ? err.message : 'Save failed',
+        text: getErrorMessage(err, 'Save failed'),
       });
     } finally {
       setSaving(false);

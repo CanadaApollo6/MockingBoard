@@ -18,6 +18,7 @@ import {
   PlayerSearchInput,
   type PlayerSearchResult,
 } from '@/components/player-search-input';
+import { getErrorMessage } from '@/lib/validate';
 
 const PLAYOFF_OPTIONS = [
   '',
@@ -82,7 +83,7 @@ export function SeasonEditor({
     } catch (err) {
       setMessage({
         type: 'error',
-        text: err instanceof Error ? err.message : 'Save failed',
+        text: getErrorMessage(err, 'Save failed'),
       });
     } finally {
       setSaving(false);

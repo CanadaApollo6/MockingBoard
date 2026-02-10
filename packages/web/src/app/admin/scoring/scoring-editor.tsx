@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Select } from '@/components/ui/select';
+import { getErrorMessage } from '@/lib/validate';
 
 interface ScoringStatus {
   year: number;
@@ -81,7 +82,7 @@ export function ScoringEditor({
     } catch (err) {
       setMessage({
         type: 'error',
-        text: err instanceof Error ? err.message : 'Scoring failed',
+        text: getErrorMessage(err, 'Scoring failed'),
       });
     } finally {
       setRunning(false);

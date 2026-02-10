@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
+import { getErrorMessage } from '@/lib/validate';
 
 interface ScoutOption {
   id: string;
@@ -113,7 +114,7 @@ export function CsvUploadPage({
       setPreview(data);
       setExcludeKeys(new Set());
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Preview failed');
+      setError(getErrorMessage(err, 'Preview failed'));
       setState('idle');
     }
   }
@@ -143,7 +144,7 @@ export function CsvUploadPage({
       setCommitResult(data);
       setState('done');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Commit failed');
+      setError(getErrorMessage(err, 'Commit failed'));
       setState('previewing');
     }
   }

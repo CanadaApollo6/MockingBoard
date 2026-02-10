@@ -29,6 +29,7 @@ import { DraftClock } from '@/components/draft-clock';
 import { DraftLayout } from '@/components/draft-layout';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { ErrorBoundary } from '@/components/error-boundary';
 
 const GUEST_ID = '__guest__';
 
@@ -290,14 +291,16 @@ export function GuestDraftRoom({ initialDraft, players }: GuestDraftRoomProps) {
 
   const boardNode = (
     <>
-      <DraftBoard
-        picks={picks}
-        playerMap={playerMap}
-        pickOrder={draft.pickOrder}
-        currentPick={draft.currentPick}
-        clockUrgency={clockUrgency}
-        isBatch={skipAnimation}
-      />
+      <ErrorBoundary>
+        <DraftBoard
+          picks={picks}
+          playerMap={playerMap}
+          pickOrder={draft.pickOrder}
+          currentPick={draft.currentPick}
+          clockUrgency={clockUrgency}
+          isBatch={skipAnimation}
+        />
+      </ErrorBoundary>
       <div>
         <div className="mb-1 flex justify-between text-xs text-muted-foreground">
           <span>
@@ -357,13 +360,15 @@ export function GuestDraftRoom({ initialDraft, players }: GuestDraftRoomProps) {
         !paused &&
         !showTrade &&
         !tradeResult && (
-          <PlayerPicker
-            players={availablePlayers}
-            onPick={handlePick}
-            disabled={false}
-            suggestedPlayerId={suggestion?.playerId}
-            suggestionReason={suggestion?.reason}
-          />
+          <ErrorBoundary>
+            <PlayerPicker
+              players={availablePlayers}
+              onPick={handlePick}
+              disabled={false}
+              suggestedPlayerId={suggestion?.playerId}
+              suggestionReason={suggestion?.reason}
+            />
+          </ErrorBoundary>
         )}
 
       {isActive && isProcessing && !showTrade && !tradeResult && (

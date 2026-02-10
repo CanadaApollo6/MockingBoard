@@ -52,6 +52,7 @@ interface RankingsClientProps {
 
 export function RankingsClient({ board, players }: RankingsClientProps) {
   const [activePos, setActivePos] = useState<Position>('QB');
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [generatorOpen, setGeneratorOpen] = useState(false);
 
   // Per-position rankings state, initialized from board
@@ -90,8 +91,10 @@ export function RankingsClient({ board, players }: RankingsClientProps) {
             positionRankings: posRankingsRef.current,
           }),
         });
+        setSaveError(null);
       } catch (err) {
         console.error('Failed to save positional rankings:', err);
+        setSaveError(err instanceof Error ? err.message : 'Failed to save');
       }
     }, SAVE_DELAY);
   }, [board.id]);
@@ -145,6 +148,9 @@ export function RankingsClient({ board, players }: RankingsClientProps) {
 
   return (
     <div>
+      {saveError && (
+        <p className="mb-2 text-sm text-destructive">{saveError}</p>
+      )}
       <Tabs
         value={activePos}
         onValueChange={(v) => setActivePos(v as Position)}

@@ -13,6 +13,7 @@ import { Separator } from '@/components/ui/separator';
 import { TEAM_COLORS, hexToHsl } from '@/lib/team-colors';
 import { SCHOOL_COLORS } from '@/lib/school-colors';
 import { cn } from '@/lib/utils';
+import { getErrorMessage } from '@/lib/validate';
 
 const inputClass =
   'w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:shadow-[var(--shadow-glow)]';
@@ -401,7 +402,7 @@ function AccountLinkingSection({
       setEmail('');
       setPassword('');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to link email');
+      setError(getErrorMessage(err, 'Failed to link email'));
     } finally {
       setLoading(false);
     }
@@ -513,7 +514,7 @@ function WebhookSection() {
 
       setSaved(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save');
+      setError(getErrorMessage(err, 'Failed to save'));
     } finally {
       setLoading(null);
     }
@@ -538,7 +539,7 @@ function WebhookSection() {
 
       setTestSuccess(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Test failed');
+      setError(getErrorMessage(err, 'Test failed'));
     } finally {
       setLoading(null);
     }
@@ -564,7 +565,7 @@ function WebhookSection() {
       setUrl('');
       setSaved(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to remove');
+      setError(getErrorMessage(err, 'Failed to remove'));
     } finally {
       setLoading(null);
     }

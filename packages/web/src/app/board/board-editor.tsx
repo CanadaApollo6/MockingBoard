@@ -44,6 +44,7 @@ interface BoardEditorProps {
 export function BoardEditor({ players, initialBoard, year }: BoardEditorProps) {
   const [board, setBoard] = useState<BigBoard | null>(initialBoard);
   const [isCreating, setIsCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
   const [restoreKey, setRestoreKey] = useState(0);
   const [generatorOpen, setGeneratorOpen] = useState(false);
 
@@ -66,6 +67,7 @@ export function BoardEditor({ players, initialBoard, year }: BoardEditorProps) {
 
   async function handleCreate(basedOn: 'consensus' | 'blank') {
     setIsCreating(true);
+    setCreateError(null);
     try {
       const initialRankings =
         basedOn === 'consensus' ? sortedPlayers.map((p) => p.id) : [];
@@ -86,6 +88,9 @@ export function BoardEditor({ players, initialBoard, year }: BoardEditorProps) {
       setBoard(created);
     } catch (err) {
       console.error('Failed to create board:', err);
+      setCreateError(
+        err instanceof Error ? err.message : 'Failed to create board',
+      );
     } finally {
       setIsCreating(false);
     }
@@ -93,6 +98,7 @@ export function BoardEditor({ players, initialBoard, year }: BoardEditorProps) {
 
   async function handleCreateFromWeights(rankings: string[]) {
     setIsCreating(true);
+    setCreateError(null);
     try {
       const res = await fetch('/api/boards', {
         method: 'POST',
@@ -110,6 +116,9 @@ export function BoardEditor({ players, initialBoard, year }: BoardEditorProps) {
       setBoard(created);
     } catch (err) {
       console.error('Failed to create board:', err);
+      setCreateError(
+        err instanceof Error ? err.message : 'Failed to create board',
+      );
     } finally {
       setIsCreating(false);
     }
@@ -149,6 +158,9 @@ export function BoardEditor({ players, initialBoard, year }: BoardEditorProps) {
           <p className="mt-4 text-sm text-muted-foreground">
             Creating board...
           </p>
+        )}
+        {createError && (
+          <p className="mt-4 text-sm text-destructive">{createError}</p>
         )}
         <BoardGeneratorDialog
           open={generatorOpen}

@@ -11,6 +11,7 @@ import {
   type DraftSlot,
   type TeamAbbreviation,
 } from '@mockingboard/shared';
+import { getErrorMessage } from '@/lib/validate';
 
 const ALL_TEAMS = teams.map((t) => t.id).sort();
 const ROUNDS = 7;
@@ -104,7 +105,7 @@ export function DraftOrderEditor({
     } catch (err) {
       setMessage({
         type: 'error',
-        text: err instanceof Error ? err.message : 'Save failed',
+        text: getErrorMessage(err, 'Save failed'),
       });
     } finally {
       setSaving(false);

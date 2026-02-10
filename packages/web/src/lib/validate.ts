@@ -51,3 +51,11 @@ export function safeError(err: unknown, fallback: string): string {
   const msg = err instanceof Error ? err.message : '';
   return SAFE_MESSAGES.has(msg) ? msg : fallback;
 }
+
+/** Extract the error message, falling back to a default if not an Error. */
+export function getErrorMessage(
+  err: unknown,
+  fallback = 'Something went wrong',
+): string {
+  return err instanceof Error ? err.message : fallback;
+}

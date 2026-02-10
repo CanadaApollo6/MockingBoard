@@ -20,6 +20,7 @@ interface UseBigBoardReturn {
   preferredGradeSystem: GradeSystem;
   isSaving: boolean;
   isDirty: boolean;
+  saveError: string | null;
   movePlayer: (fromIndex: number, toIndex: number) => void;
   addPlayer: (playerId: string) => void;
   removePlayer: (playerId: string) => void;
@@ -48,9 +49,14 @@ export function useBigBoard({
     useState<GradeSystem>(initialPreferredGradeSystem ?? 'tier');
   const [isSaving, setIsSaving] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Use refs to always have latest grades/system in save closure
+  // Use refs to always have latest values in save closure
+  const rankingsRef = useRef(rankings);
+  rankingsRef.current = rankings;
+  const customPlayersRef = useRef(customPlayers);
+  customPlayersRef.current = customPlayers;
   const gradesRef = useRef(grades);
   gradesRef.current = grades;
   const gradeSystemRef = useRef(preferredGradeSystem);
@@ -78,8 +84,10 @@ export function useBigBoard({
             }),
           });
           setIsDirty(false);
+          setSaveError(null);
         } catch (err) {
           console.error('Failed to save board:', err);
+          setSaveError(err instanceof Error ? err.message : 'Failed to save');
         } finally {
           setIsSaving(false);
         }
@@ -101,11 +109,11 @@ export function useBigBoard({
         const next = [...prev];
         const [moved] = next.splice(fromIndex, 1);
         next.splice(toIndex, 0, moved);
-        scheduleSave(next, customPlayers);
+        scheduleSave(next, customPlayersRef.current);
         return next;
       });
     },
-    [scheduleSave, customPlayers],
+    [scheduleSave],
   );
 
   const addPlayer = useCallback(
@@ -113,22 +121,22 @@ export function useBigBoard({
       setRankings((prev) => {
         if (prev.includes(playerId)) return prev;
         const next = [...prev, playerId];
-        scheduleSave(next, customPlayers);
+        scheduleSave(next, customPlayersRef.current);
         return next;
       });
     },
-    [scheduleSave, customPlayers],
+    [scheduleSave],
   );
 
   const removePlayer = useCallback(
     (playerId: string) => {
       setRankings((prev) => {
         const next = prev.filter((id) => id !== playerId);
-        scheduleSave(next, customPlayers);
+        scheduleSave(next, customPlayersRef.current);
         return next;
       });
     },
-    [scheduleSave, customPlayers],
+    [scheduleSave],
   );
 
   const addCustomPlayer = useCallback(
@@ -164,9 +172,9 @@ export function useBigBoard({
   const setRankingsFromGenerator = useCallback(
     (newRankings: string[]) => {
       setRankings(newRankings);
-      scheduleSave(newRankings, customPlayers);
+      scheduleSave(newRankings, customPlayersRef.current);
     },
-    [scheduleSave, customPlayers],
+    [scheduleSave],
   );
 
   const setGrade = useCallback(
@@ -179,20 +187,20 @@ export function useBigBoard({
           next[playerId] = grade;
         }
         gradesRef.current = next;
-        scheduleSave(rankings, customPlayers);
+        scheduleSave(rankingsRef.current, customPlayersRef.current);
         return next;
       });
     },
-    [scheduleSave, rankings, customPlayers],
+    [scheduleSave],
   );
 
   const setPreferredGradeSystem = useCallback(
     (system: GradeSystem) => {
       setPreferredGradeSystemState(system);
       gradeSystemRef.current = system;
-      scheduleSave(rankings, customPlayers);
+      scheduleSave(rankingsRef.current, customPlayersRef.current);
     },
-    [scheduleSave, rankings, customPlayers],
+    [scheduleSave],
   );
 
   return {
@@ -202,6 +210,7 @@ export function useBigBoard({
     preferredGradeSystem,
     isSaving,
     isDirty,
+    saveError,
     movePlayer,
     addPlayer,
     removePlayer,

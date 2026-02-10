@@ -8,6 +8,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { CsvImport } from './csv-import';
+import { getErrorMessage } from '@/lib/validate';
 
 const teamOptions = teams.map((t) => t.id).sort();
 
@@ -117,7 +118,7 @@ export function DraftResultsEditor({
     } catch (err) {
       setMessage({
         type: 'error',
-        text: err instanceof Error ? err.message : 'Save failed',
+        text: getErrorMessage(err, 'Save failed'),
       });
     } finally {
       setSaving(false);

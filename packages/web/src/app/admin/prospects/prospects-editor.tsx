@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import type { Player, Position } from '@mockingboard/shared';
+import { getErrorMessage } from '@/lib/validate';
 
 const ALL_POSITIONS: Position[] = [
   'QB',
@@ -106,7 +107,7 @@ export function ProspectsEditor({ initialYear }: ProspectsEditorProps) {
     } catch (err) {
       setMessage({
         type: 'error',
-        text: err instanceof Error ? err.message : 'Save failed',
+        text: getErrorMessage(err, 'Save failed'),
       });
     }
   };
@@ -124,7 +125,7 @@ export function ProspectsEditor({ initialYear }: ProspectsEditorProps) {
     } catch (err) {
       setMessage({
         type: 'error',
-        text: err instanceof Error ? err.message : 'Delete failed',
+        text: getErrorMessage(err, 'Delete failed'),
       });
     }
   };

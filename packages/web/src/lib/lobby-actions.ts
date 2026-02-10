@@ -3,6 +3,7 @@ import 'server-only';
 import { FieldValue } from 'firebase-admin/firestore';
 import { adminDb } from './firebase-admin';
 import { runCpuCascade } from './draft-actions';
+import { AppError } from './validate';
 import { getPickController } from '@mockingboard/shared';
 import type {
   Draft,
@@ -37,22 +38,22 @@ export async function joinLobby(
   input: JoinLobbyInput,
 ): Promise<JoinLobbyResult> {
   const draftDoc = await adminDb.collection('drafts').doc(input.draftId).get();
-  if (!draftDoc.exists) throw new Error('Draft not found');
+  if (!draftDoc.exists) throw new AppError('Draft not found', 404);
   const draft = { id: draftDoc.id, ...draftDoc.data() } as Draft;
 
   if (draft.status !== 'lobby') {
-    throw new Error('Draft is not in lobby state');
+    throw new AppError('Draft is not in lobby state');
   }
 
   // Check not already a participant
   if (draft.participants[input.userId]) {
-    throw new Error('Already in this draft');
+    throw new AppError('Already in this draft', 409);
   }
 
   // Validate invite code for private drafts
   if (draft.visibility === 'private') {
     if (!input.inviteCode || input.inviteCode !== draft.inviteCode) {
-      throw new Error('Invalid invite code');
+      throw new AppError('Invalid invite code', 403);
     }
   }
 
@@ -93,15 +94,15 @@ function resolveTeamAssignment(
     .map(([team]) => team as TeamAbbreviation);
 
   if (availableTeams.length === 0) {
-    throw new Error('No teams available');
+    throw new AppError('No teams available');
   }
 
   if (mode === 'choice') {
     if (!requestedTeam) {
-      throw new Error('Team selection required');
+      throw new AppError('Team selection required');
     }
     if (!availableTeams.includes(requestedTeam)) {
-      throw new Error('Team not available');
+      throw new AppError('Team not available', 409);
     }
     return requestedTeam;
   }
@@ -118,20 +119,20 @@ export async function startDraft(
   userId: string,
 ): Promise<{ started: boolean }> {
   const draftDoc = await adminDb.collection('drafts').doc(draftId).get();
-  if (!draftDoc.exists) throw new Error('Draft not found');
+  if (!draftDoc.exists) throw new AppError('Draft not found', 404);
   const draft = { id: draftDoc.id, ...draftDoc.data() } as Draft;
 
   if (draft.createdBy !== userId) {
-    throw new Error('Only the creator can start the draft');
+    throw new AppError('Only the creator can start the draft', 403);
   }
 
   if (draft.status !== 'lobby') {
-    throw new Error('Draft is not in lobby state');
+    throw new AppError('Draft is not in lobby state');
   }
 
   const participantCount = Object.keys(draft.participants).length;
   if (participantCount < 1) {
-    throw new Error('At least one participant required');
+    throw new AppError('At least one participant required');
   }
 
   await adminDb.collection('drafts').doc(draftId).update({
@@ -158,19 +159,19 @@ export async function leaveLobby(
   userId: string,
 ): Promise<void> {
   const draftDoc = await adminDb.collection('drafts').doc(draftId).get();
-  if (!draftDoc.exists) throw new Error('Draft not found');
+  if (!draftDoc.exists) throw new AppError('Draft not found', 404);
   const draft = { id: draftDoc.id, ...draftDoc.data() } as Draft;
 
   if (draft.status !== 'lobby') {
-    throw new Error('Draft is not in lobby state');
+    throw new AppError('Draft is not in lobby state');
   }
 
   if (draft.createdBy === userId) {
-    throw new Error('Creator cannot leave the draft');
+    throw new AppError('Creator cannot leave the draft');
   }
 
   if (!draft.participants[userId]) {
-    throw new Error('Not a participant');
+    throw new AppError('Not a participant', 403);
   }
 
   // Find and unassign their team

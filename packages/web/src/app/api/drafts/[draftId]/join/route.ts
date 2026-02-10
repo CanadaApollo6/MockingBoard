@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getSessionUser } from '@/lib/auth-session';
 import { resolveUser } from '@/lib/user-resolve';
 import { joinLobby } from '@/lib/lobby-actions';
-import { safeError } from '@/lib/validate';
+import { safeError, AppError } from '@/lib/validate';
 import type { TeamAbbreviation } from '@mockingboard/shared';
 
 export async function POST(
@@ -42,11 +42,7 @@ export async function POST(
     return NextResponse.json(result);
   } catch (err) {
     const message = safeError(err, 'Failed to join draft');
-    const status = message.includes('not found')
-      ? 404
-      : message.includes('Invalid invite')
-        ? 403
-        : 400;
+    const status = err instanceof AppError ? err.status : 400;
     return NextResponse.json({ error: message }, { status });
   }
 }

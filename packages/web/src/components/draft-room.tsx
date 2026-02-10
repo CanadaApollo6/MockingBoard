@@ -34,6 +34,8 @@ import { DraftLayout } from '@/components/draft-layout';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { getErrorMessage } from '@/lib/validate';
+import { ErrorBoundary } from '@/components/error-boundary';
 
 interface DraftRoomProps {
   draftId: string;
@@ -275,7 +277,7 @@ export function DraftRoom({
           throw new Error(data.error || 'Failed to record pick');
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Something went wrong');
+        setError(getErrorMessage(err));
       } finally {
         setSubmitting(false);
       }
@@ -314,7 +316,7 @@ export function DraftRoom({
         setTradeResult(data);
         setShowTrade(false);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Trade failed');
+        setError(getErrorMessage(err, 'Trade failed'));
       } finally {
         setTradeProcessing(false);
       }
@@ -345,7 +347,7 @@ export function DraftRoom({
 
         setTradeResult(null);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Trade action failed');
+        setError(getErrorMessage(err, 'Trade action failed'));
       } finally {
         setTradeProcessing(false);
       }
@@ -370,7 +372,7 @@ export function DraftRoom({
           throw new Error(data.error || 'Failed to process trade');
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Trade action failed');
+        setError(getErrorMessage(err, 'Trade action failed'));
       } finally {
         setTradeProcessing(false);
       }
@@ -448,7 +450,7 @@ export function DraftRoom({
         throw new Error(data.error || 'Failed to pause');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to pause');
+      setError(getErrorMessage(err, 'Failed to pause'));
     }
   }, [draftId]);
 
@@ -464,7 +466,7 @@ export function DraftRoom({
       }
       router.push('/drafts');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to cancel');
+      setError(getErrorMessage(err, 'Failed to cancel'));
       setCancelling(false);
       setShowCancelConfirm(false);
     }
@@ -480,7 +482,7 @@ export function DraftRoom({
         throw new Error(data.error || 'Failed to resume');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to resume');
+      setError(getErrorMessage(err, 'Failed to resume'));
     }
   }, [draftId]);
 
@@ -562,14 +564,16 @@ export function DraftRoom({
 
   const boardNode = (
     <>
-      <DraftBoard
-        picks={picks}
-        playerMap={playerMap}
-        pickOrder={draft?.pickOrder}
-        currentPick={draft?.currentPick}
-        clockUrgency={clockUrgency}
-        isBatch={advancingCpu}
-      />
+      <ErrorBoundary>
+        <DraftBoard
+          picks={picks}
+          playerMap={playerMap}
+          pickOrder={draft?.pickOrder}
+          currentPick={draft?.currentPick}
+          clockUrgency={clockUrgency}
+          isBatch={advancingCpu}
+        />
+      </ErrorBoundary>
       <div>
         <div className="mb-1 flex justify-between text-xs text-muted-foreground">
           <span>
@@ -679,16 +683,18 @@ export function DraftRoom({
               </Button>
             </div>
           )}
-          <PlayerPicker
-            players={availablePlayers}
-            onPick={handlePick}
-            disabled={submitting || !isUserTurn}
-            rankOverride={
-              sortMode === 'board' && boardRankMap ? boardRankMap : undefined
-            }
-            suggestedPlayerId={suggestion?.playerId}
-            suggestionReason={suggestion?.reason}
-          />
+          <ErrorBoundary>
+            <PlayerPicker
+              players={availablePlayers}
+              onPick={handlePick}
+              disabled={submitting || !isUserTurn}
+              rankOverride={
+                sortMode === 'board' && boardRankMap ? boardRankMap : undefined
+              }
+              suggestedPlayerId={suggestion?.playerId}
+              suggestionReason={suggestion?.reason}
+            />
+          </ErrorBoundary>
         </>
       )}
     </>

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
 import { useAuth } from '@/components/auth-provider';
 import { Button } from '@/components/ui/button';
+import { getErrorMessage } from '@/lib/validate';
 
 function sanitizeSlug(value: string): string {
   return value
@@ -80,7 +81,7 @@ export function ProfilePageClient() {
 
       setMessage('Profile saved.');
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : 'Something went wrong');
+      setMessage(getErrorMessage(err));
     } finally {
       setSaving(false);
     }

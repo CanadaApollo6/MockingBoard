@@ -16,6 +16,7 @@ import { useAuth } from '@/components/auth-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { getErrorMessage } from '@/lib/validate';
 
 const CONFERENCES = ['AFC', 'NFC'] as const;
 const DIVISIONS = ['East', 'North', 'South', 'West'] as const;
@@ -178,7 +179,7 @@ export function DraftCreator({ defaultYear = 2026 }: { defaultYear?: number }) {
       const { draftId } = await res.json();
       router.push(`/drafts/${draftId}/live`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+      setError(getErrorMessage(err));
       setSubmitting(false);
     }
   }

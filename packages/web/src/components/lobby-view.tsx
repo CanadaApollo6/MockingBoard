@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { getDraftDisplayName } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { getErrorMessage } from '@/lib/validate';
 
 const CONFERENCES = ['AFC', 'NFC'] as const;
 const DIVISIONS = ['East', 'North', 'South', 'West'] as const;
@@ -97,7 +98,7 @@ export function LobbyView({
           throw new Error(data.error || 'Failed to join');
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to join');
+        setError(getErrorMessage(err, 'Failed to join'));
       } finally {
         setJoining(false);
       }
@@ -117,7 +118,7 @@ export function LobbyView({
         throw new Error(data.error || 'Failed to start');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to start');
+      setError(getErrorMessage(err, 'Failed to start'));
       setStarting(false);
     }
   }, [draftId]);
@@ -135,7 +136,7 @@ export function LobbyView({
       }
       router.push('/drafts');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to cancel');
+      setError(getErrorMessage(err, 'Failed to cancel'));
       setCancelling(false);
       setShowCancelConfirm(false);
     }
@@ -153,7 +154,7 @@ export function LobbyView({
         throw new Error(data.error || 'Failed to leave');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to leave');
+      setError(getErrorMessage(err, 'Failed to leave'));
     } finally {
       setLeaving(false);
     }

@@ -22,10 +22,12 @@ export function DraftGuideButton({
 }: DraftGuideButtonProps) {
   const [showOptions, setShowOptions] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleGenerate = useCallback(
     async (depth: PdfDepth, playerCount: number) => {
       setGenerating(true);
+      setError(null);
       try {
         const subset = players.slice(0, playerCount);
         const blob = await pdf(
@@ -54,6 +56,7 @@ export function DraftGuideButton({
         setShowOptions(false);
       } catch (err) {
         console.error('PDF generation failed:', err);
+        setError(err instanceof Error ? err.message : 'PDF generation failed');
       } finally {
         setGenerating(false);
       }
@@ -105,6 +108,7 @@ export function DraftGuideButton({
               onCancel={() => setShowOptions(false)}
             />
           )}
+          {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
         </div>
       )}
     </div>

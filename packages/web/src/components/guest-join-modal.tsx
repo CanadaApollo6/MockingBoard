@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { signInAnonymously } from 'firebase/auth';
 import { getClientAuth } from '@/lib/firebase';
+import { getErrorMessage } from '@/lib/validate';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -61,7 +62,7 @@ export function GuestJoinModal({
 
       onComplete();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+      setError(getErrorMessage(err));
       setSubmitting(false);
     }
   }

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { GradePicker } from '@/components/grade-picker';
 import { TipTapEditor } from '@/components/tiptap-editor';
+import { getErrorMessage } from '@/lib/validate';
 
 interface ReportFormProps {
   playerId: string;
@@ -100,7 +101,7 @@ export function ReportForm({
 
       onSubmit();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+      setError(getErrorMessage(err));
     } finally {
       setSubmitting(false);
     }

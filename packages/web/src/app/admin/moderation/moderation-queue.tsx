@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select } from '@/components/ui/select';
+import { getErrorMessage } from '@/lib/validate';
 
 interface ModerationItem {
   id: string;
@@ -72,7 +73,7 @@ export function ModerationQueue() {
     } catch (err) {
       setMessage({
         type: 'error',
-        text: err instanceof Error ? err.message : 'Action failed',
+        text: getErrorMessage(err, 'Action failed'),
       });
     }
   };

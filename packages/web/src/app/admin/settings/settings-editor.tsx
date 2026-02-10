@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import type { Announcement } from '@/lib/cache';
+import { getErrorMessage } from '@/lib/validate';
 
 interface SettingsEditorProps {
   initialDraftYear: number;
@@ -60,7 +61,7 @@ export function SettingsEditor({
     } catch (err) {
       setMessage({
         type: 'error',
-        text: err instanceof Error ? err.message : 'Save failed',
+        text: getErrorMessage(err, 'Save failed'),
       });
     } finally {
       setSaving(false);
@@ -84,7 +85,7 @@ export function SettingsEditor({
     } catch (err) {
       setMessage({
         type: 'error',
-        text: err instanceof Error ? err.message : 'Save failed',
+        text: getErrorMessage(err, 'Save failed'),
       });
     } finally {
       setSavingAnnouncement(false);
@@ -115,7 +116,7 @@ export function SettingsEditor({
     } catch (err) {
       setMessage({
         type: 'error',
-        text: err instanceof Error ? err.message : 'Save failed',
+        text: getErrorMessage(err, 'Save failed'),
       });
     } finally {
       setSavingNames(false);
@@ -132,7 +133,7 @@ export function SettingsEditor({
     } catch (err) {
       setMessage({
         type: 'error',
-        text: err instanceof Error ? err.message : 'Flush failed',
+        text: getErrorMessage(err, 'Flush failed'),
       });
     } finally {
       setFlushing(false);

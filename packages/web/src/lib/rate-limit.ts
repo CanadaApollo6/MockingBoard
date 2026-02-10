@@ -14,6 +14,14 @@ export function rateLimit(
   if (timestamps.length >= limit) return false;
   timestamps.push(now);
   windows.set(key, timestamps);
+
+  // Sweep stale entries when the map grows too large
+  if (windows.size > 10_000) {
+    for (const [k, ts] of windows) {
+      if (ts.every((t) => t <= now - windowMs)) windows.delete(k);
+    }
+  }
+
   return true;
 }
 

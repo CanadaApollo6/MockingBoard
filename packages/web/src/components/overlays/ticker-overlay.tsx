@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import type {
   Draft,
   Pick,
@@ -31,7 +32,7 @@ export function TickerOverlay({
   const { draft, picks } = useLiveDraft(draftId, initialDraft, initialPicks);
   const searchParams = useSearchParams();
   const count = parseInt(searchParams.get('count') ?? '5', 10);
-  const playerMap = new Map(Object.entries(players));
+  const playerMap = useMemo(() => new Map(Object.entries(players)), [players]);
 
   if (!draft) return null;
 

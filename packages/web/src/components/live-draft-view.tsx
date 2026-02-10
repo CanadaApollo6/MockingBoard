@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import type {
   Draft,
   Pick,
@@ -26,7 +27,7 @@ export function LiveDraftView({
   players,
 }: LiveDraftViewProps) {
   const { draft, picks } = useLiveDraft(draftId, initialDraft, initialPicks);
-  const playerMap = new Map(Object.entries(players));
+  const playerMap = useMemo(() => new Map(Object.entries(players)), [players]);
 
   if (!draft) {
     return (
