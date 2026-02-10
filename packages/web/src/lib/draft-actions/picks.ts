@@ -8,6 +8,7 @@ import { hydrateDoc } from '../sanitize';
 import type { Draft, DraftSlot, Pick, Player } from '@mockingboard/shared';
 import {
   prepareCpuPick,
+  preparePickRecord,
   getPickController,
   POSITIONAL_VALUE,
 } from '@mockingboard/shared';
@@ -26,55 +27,21 @@ export async function recordPick(
     if (!draftDoc.exists) throw new Error('Draft not found');
     const draft = hydrateDoc<Draft>(draftDoc);
 
-    if (draft.status !== 'active') {
-      throw new Error('Draft is not active');
-    }
-
-    const currentSlot = draft.pickOrder[draft.currentPick - 1];
-    if (!currentSlot) throw new Error('No more picks in draft');
-
-    const pickedPlayerIds = draft.pickedPlayerIds ?? [];
-    if (pickedPlayerIds.includes(playerId)) {
-      throw new Error('Player already drafted');
-    }
-
     const pickRef = draftRef.collection('picks').doc();
+    const prepared = preparePickRecord(draft, playerId, userId, pickRef.id);
+
     transaction.set(pickRef, {
-      draftId,
-      overall: currentSlot.overall,
-      round: currentSlot.round,
-      pick: currentSlot.pick,
-      team: currentSlot.teamOverride ?? currentSlot.team,
-      userId,
-      playerId,
+      ...prepared.pickData,
       createdAt: FieldValue.serverTimestamp(),
     });
 
-    const nextPick = draft.currentPick + 1;
-    const isComplete = nextPick > draft.pickOrder.length;
-    const nextSlot = isComplete ? null : draft.pickOrder[nextPick - 1];
-
     transaction.update(draftRef, {
-      currentPick: nextPick,
-      currentRound: nextSlot?.round ?? currentSlot.round,
+      ...prepared.draftUpdates,
       pickedPlayerIds: FieldValue.arrayUnion(playerId),
-      status: isComplete ? 'complete' : 'active',
       updatedAt: FieldValue.serverTimestamp(),
     });
 
-    const pick: Pick = {
-      id: pickRef.id,
-      draftId,
-      overall: currentSlot.overall,
-      round: currentSlot.round,
-      pick: currentSlot.pick,
-      team: currentSlot.teamOverride ?? currentSlot.team,
-      userId,
-      playerId,
-      createdAt: { seconds: 0, nanoseconds: 0 },
-    };
-
-    return { pick, isComplete };
+    return { pick: prepared.pick, isComplete: prepared.isComplete };
   });
 }
 
