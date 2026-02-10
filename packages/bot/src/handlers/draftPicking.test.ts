@@ -56,8 +56,8 @@ import {
   handlePickButton,
   handlePick,
   handlePositionFilter,
-  advanceDraft,
 } from './draftPicking.js';
+import { advanceDraft } from './draftAdvance.js';
 
 // Import mocked modules to get references to the mock functions
 import * as draftService from '../services/draft.service.js';

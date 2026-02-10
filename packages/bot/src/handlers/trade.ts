@@ -15,7 +15,7 @@ import {
   buildTradeCancelledEmbed,
 } from '../components/tradeEmbed.js';
 import { teamSeeds, getSendableChannel, buildTeamInfoMap } from './shared.js';
-import { advanceDraft } from './draftPicking.js';
+import { advanceDraft } from './draftAdvance.js';
 
 async function advanceDraftAfterTrade(
   interaction: ButtonInteraction,

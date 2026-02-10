@@ -15,7 +15,7 @@ vi.mock('../services/user.service.js', () => ({
   getOrCreateUser: vi.fn(),
 }));
 
-vi.mock('./draftPicking.js', () => ({
+vi.mock('./draftAdvance.js', () => ({
   advanceDraft: vi.fn(),
 }));
 
@@ -40,12 +40,12 @@ import {
 // Import mocked modules
 import * as draftService from '../services/draft.service.js';
 import * as userService from '../services/user.service.js';
-import * as draftPicking from './draftPicking.js';
+import * as draftAdvanceModule from './draftAdvance.js';
 
 const mockGetDraft = draftService.getDraft as Mock;
 const mockUpdateDraft = draftService.updateDraft as Mock;
 const mockGetOrCreateUser = userService.getOrCreateUser as Mock;
-const mockAdvanceDraft = draftPicking.advanceDraft as Mock;
+const mockAdvanceDraft = draftAdvanceModule.advanceDraft as Mock;
 
 function makeDraft(overrides: Partial<Draft> = {}): Draft {
   return {

@@ -17,7 +17,7 @@ import {
   assertDraftCreator,
   describeDraftStatus,
 } from './shared.js';
-import { advanceDraft } from './draftPicking.js';
+import { advanceDraft } from './draftAdvance.js';
 
 /**
  * Handle "Join Draft" button click
