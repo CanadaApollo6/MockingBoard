@@ -4,6 +4,7 @@ import { getSessionUser } from '@/lib/auth-session';
 import { isAdmin } from '@/lib/admin';
 import { adminDb } from '@/lib/firebase-admin';
 import { resetPlayerCache } from '@/lib/cache';
+import { hydrateDocs } from '@/lib/sanitize';
 import type { Player, Position } from '@mockingboard/shared';
 
 export async function GET(request: Request) {
@@ -37,9 +38,7 @@ export async function GET(request: Request) {
   }
 
   const snapshot = await query.get();
-  let players = snapshot.docs.map(
-    (doc) => ({ id: doc.id, ...doc.data() }) as Player,
-  );
+  let players = hydrateDocs<Player>(snapshot);
 
   if (search) {
     players = players.filter(

@@ -10,6 +10,7 @@ import {
   sendDraftComplete,
 } from '@/lib/discord-webhook';
 import { getPickController } from '@mockingboard/shared';
+import { hydrateDoc } from '@/lib/sanitize';
 import type { Draft, Pick } from '@mockingboard/shared';
 import { notifyYourTurn } from '@/lib/notifications';
 import { rateLimit } from '@/lib/rate-limit';
@@ -95,7 +96,7 @@ export async function POST(
         .doc(draftId)
         .get()
         .then((snap) => {
-          const d = { id: snap.id, ...snap.data() } as Draft;
+          const d = hydrateDoc<Draft>(snap);
           const nextSlot = d.pickOrder[d.currentPick - 1];
           if (!nextSlot) return;
           const next = getPickController(d, nextSlot);

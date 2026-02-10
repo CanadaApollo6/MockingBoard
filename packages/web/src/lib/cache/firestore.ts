@@ -16,6 +16,7 @@ import {
   getOrExpire,
   adminDb,
   sanitize,
+  hydrateDocs,
   PLAYER_TTL,
   DRAFT_ORDER_TTL,
   TEAMS_TTL,
@@ -39,9 +40,7 @@ export async function getCachedPlayers(year: number): Promise<Player[]> {
     .orderBy('consensusRank')
     .get();
 
-  const players = sanitize(
-    snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Player),
-  );
+  const players = sanitize(hydrateDocs<Player>(snapshot));
 
   playerCache.set(year, { data: players, expiresAt: Date.now() + PLAYER_TTL });
   return players;
@@ -130,9 +129,7 @@ export async function getCachedScoutProfiles(): Promise<ScoutProfile[]> {
   if (!isExpired(scoutProfilesCache)) return scoutProfilesCache!.data;
 
   const snapshot = await adminDb.collection('scoutProfiles').get();
-  const profiles = sanitize(
-    snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as ScoutProfile),
-  );
+  const profiles = sanitize(hydrateDocs<ScoutProfile>(snapshot));
 
   scoutProfilesCache = {
     data: profiles,
@@ -209,9 +206,7 @@ export async function getCachedPublicUsers(): Promise<User[]> {
     .limit(1000)
     .get();
 
-  const users = sanitize(
-    snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as User),
-  );
+  const users = sanitize(hydrateDocs<User>(snapshot));
 
   publicUsersCache = { data: users, expiresAt: Date.now() + SEARCH_TTL };
   return users;
@@ -232,9 +227,7 @@ export async function getCachedPublicBoards(): Promise<BigBoard[]> {
     .limit(1000)
     .get();
 
-  const boards = sanitize(
-    snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as BigBoard),
-  );
+  const boards = sanitize(hydrateDocs<BigBoard>(snapshot));
 
   publicBoardsCache = { data: boards, expiresAt: Date.now() + SEARCH_TTL };
   return boards;

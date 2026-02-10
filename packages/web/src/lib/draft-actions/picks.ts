@@ -4,7 +4,8 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { adminDb } from '../firebase-admin';
 import { getCachedPlayers } from '../cache';
 import { getBigBoard } from '../data';
-import type { Draft, Pick, Player } from '@mockingboard/shared';
+import { hydrateDoc } from '../sanitize';
+import type { Draft, DraftSlot, Pick, Player } from '@mockingboard/shared';
 import {
   prepareCpuPick,
   getPickController,
@@ -23,7 +24,7 @@ export async function recordPick(
     const draftDoc = await transaction.get(draftRef);
 
     if (!draftDoc.exists) throw new Error('Draft not found');
-    const draft = { id: draftDoc.id, ...draftDoc.data() } as Draft;
+    const draft = hydrateDoc<Draft>(draftDoc);
 
     if (draft.status !== 'active') {
       throw new Error('Draft is not active');
@@ -77,6 +78,59 @@ export async function recordPick(
   });
 }
 
+/** Write a CPU pick using a batch (no transaction read). Caller provides
+ *  pre-validated slot data from its in-memory state. */
+async function writeCpuPick(
+  draftId: string,
+  slot: DraftSlot,
+  playerId: string,
+  pickOrder: DraftSlot[],
+  nextPick: number,
+): Promise<{ pick: Pick; isComplete: boolean }> {
+  const isComplete = nextPick > pickOrder.length;
+  const nextSlot = isComplete ? null : pickOrder[nextPick - 1];
+
+  const draftRef = adminDb.collection('drafts').doc(draftId);
+  const pickRef = draftRef.collection('picks').doc();
+  const batch = adminDb.batch();
+
+  batch.set(pickRef, {
+    draftId,
+    overall: slot.overall,
+    round: slot.round,
+    pick: slot.pick,
+    team: slot.teamOverride ?? slot.team,
+    userId: null,
+    playerId,
+    createdAt: FieldValue.serverTimestamp(),
+  });
+
+  batch.update(draftRef, {
+    currentPick: nextPick,
+    currentRound: nextSlot?.round ?? slot.round,
+    pickedPlayerIds: FieldValue.arrayUnion(playerId),
+    status: isComplete ? 'complete' : 'active',
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+
+  await batch.commit();
+
+  return {
+    pick: {
+      id: pickRef.id,
+      draftId,
+      overall: slot.overall,
+      round: slot.round,
+      pick: slot.pick,
+      team: slot.teamOverride ?? slot.team,
+      userId: null,
+      playerId,
+      createdAt: { seconds: 0, nanoseconds: 0 },
+    },
+    isComplete,
+  };
+}
+
 // ---- CPU Advancement ----
 
 export async function getAvailablePlayers(
@@ -94,7 +148,7 @@ export async function getAvailablePlayers(
  *
  * The draft document is read once at the start; pick state (currentPick,
  * pickedPlayerIds) is tracked in memory to avoid repeated Firestore reads.
- * Draft status is re-checked every STATUS_CHECK_INTERVAL picks to catch pauses.
+ * Draft status is re-checked before every pick for immediate pause/cancel response.
  */
 export async function runCpuCascade(
   draftId: string,
@@ -104,7 +158,7 @@ export async function runCpuCascade(
   // Read draft once at the start
   const draftDoc = await adminDb.collection('drafts').doc(draftId).get();
   if (!draftDoc.exists) return { picks: cpuPicks, isComplete: false };
-  const draft = { id: draftDoc.id, ...draftDoc.data() } as Draft;
+  const draft = hydrateDoc<Draft>(draftDoc);
 
   if (draft.status !== 'active') {
     return { picks: cpuPicks, isComplete: draft.status === 'complete' };
@@ -123,11 +177,10 @@ export async function runCpuCascade(
   let currentPick = draft.currentPick;
   const pickedIds = [...(draft.pickedPlayerIds ?? [])];
   const pickedSet = new Set(pickedIds);
-  const STATUS_CHECK_INTERVAL = 8;
 
   while (true) {
-    // Periodically re-check draft status to catch pauses/cancellations
-    if (cpuPicks.length > 0 && cpuPicks.length % STATUS_CHECK_INTERVAL === 0) {
+    // Re-check draft status before every pick — immediate pause/cancel response
+    if (cpuPicks.length > 0) {
       const statusDoc = await adminDb.collection('drafts').doc(draftId).get();
       if (!statusDoc.exists) break;
       const freshStatus = statusDoc.data()?.status;
@@ -164,7 +217,13 @@ export async function runCpuCascade(
       },
     });
 
-    const { pick, isComplete } = await recordPick(draftId, player.id, null);
+    const { pick, isComplete } = await writeCpuPick(
+      draftId,
+      currentSlot,
+      player.id,
+      draft.pickOrder,
+      currentPick + 1,
+    );
     cpuPicks.push(pick);
 
     // Update in-memory state
@@ -188,7 +247,7 @@ export async function advanceSingleCpuPick(
 ): Promise<{ pick: Pick | null; isComplete: boolean }> {
   const draftDoc = await adminDb.collection('drafts').doc(draftId).get();
   if (!draftDoc.exists) throw new Error('Draft not found');
-  const draft = { id: draftDoc.id, ...draftDoc.data() } as Draft;
+  const draft = hydrateDoc<Draft>(draftDoc);
 
   if (draft.status !== 'active') {
     return { pick: null, isComplete: draft.status === 'complete' };
@@ -233,6 +292,12 @@ export async function advanceSingleCpuPick(
     },
   });
 
-  const { pick, isComplete } = await recordPick(draftId, player.id, null);
+  const { pick, isComplete } = await writeCpuPick(
+    draftId,
+    currentSlot,
+    player.id,
+    draft.pickOrder,
+    draft.currentPick + 1,
+  );
   return { pick, isComplete };
 }

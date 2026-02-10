@@ -5,6 +5,7 @@ import { adminDb } from './firebase-admin';
 import { runCpuCascade } from './draft-actions';
 import { AppError } from './validate';
 import { getPickController } from '@mockingboard/shared';
+import { hydrateDoc } from './sanitize';
 import type {
   Draft,
   TeamAbbreviation,
@@ -39,7 +40,7 @@ export async function joinLobby(
 ): Promise<JoinLobbyResult> {
   const draftDoc = await adminDb.collection('drafts').doc(input.draftId).get();
   if (!draftDoc.exists) throw new AppError('Draft not found', 404);
-  const draft = { id: draftDoc.id, ...draftDoc.data() } as Draft;
+  const draft = hydrateDoc<Draft>(draftDoc);
 
   if (draft.status !== 'lobby') {
     throw new AppError('Draft is not in lobby state');
@@ -120,7 +121,7 @@ export async function startDraft(
 ): Promise<{ started: boolean }> {
   const draftDoc = await adminDb.collection('drafts').doc(draftId).get();
   if (!draftDoc.exists) throw new AppError('Draft not found', 404);
-  const draft = { id: draftDoc.id, ...draftDoc.data() } as Draft;
+  const draft = hydrateDoc<Draft>(draftDoc);
 
   if (draft.createdBy !== userId) {
     throw new AppError('Only the creator can start the draft', 403);
@@ -160,7 +161,7 @@ export async function leaveLobby(
 ): Promise<void> {
   const draftDoc = await adminDb.collection('drafts').doc(draftId).get();
   if (!draftDoc.exists) throw new AppError('Draft not found', 404);
-  const draft = { id: draftDoc.id, ...draftDoc.data() } as Draft;
+  const draft = hydrateDoc<Draft>(draftDoc);
 
   if (draft.status !== 'lobby') {
     throw new AppError('Draft is not in lobby state');

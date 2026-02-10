@@ -8,6 +8,7 @@ import {
 } from '@/lib/draft-actions';
 import { adminDb } from '@/lib/firebase-admin';
 import { notifyTradeAccepted } from '@/lib/notifications';
+import { hydrateDoc } from '@/lib/sanitize';
 import { safeError } from '@/lib/validate';
 import type { Trade } from '@mockingboard/shared';
 
@@ -66,7 +67,7 @@ export async function POST(
     if (!tradeDoc.exists) {
       return NextResponse.json({ error: 'Trade not found' }, { status: 404 });
     }
-    const trade = { id: tradeDoc.id, ...tradeDoc.data() } as Trade;
+    const trade = hydrateDoc<Trade>(tradeDoc);
 
     if (trade.status !== 'pending') {
       return NextResponse.json(

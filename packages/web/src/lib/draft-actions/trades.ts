@@ -2,6 +2,7 @@ import 'server-only';
 
 import { FieldValue } from 'firebase-admin/firestore';
 import { adminDb } from '../firebase-admin';
+import { hydrateDoc } from '../sanitize';
 import type {
   Draft,
   Trade,
@@ -38,7 +39,7 @@ export async function createWebTrade(
   // Fetch draft for validation
   const draftDoc = await adminDb.collection('drafts').doc(input.draftId).get();
   if (!draftDoc.exists) throw new Error('Draft not found');
-  const draft = { id: draftDoc.id, ...draftDoc.data() } as Draft;
+  const draft = hydrateDoc<Draft>(draftDoc);
 
   // Validate
   const picksAvailable = validateTradePicksAvailable(
@@ -80,7 +81,7 @@ export async function createWebTrade(
 
   const docRef = await adminDb.collection('trades').add(tradeData);
   const created = await docRef.get();
-  const trade = { id: created.id, ...created.data() } as Trade;
+  const trade = hydrateDoc<Trade>(created);
 
   // Only evaluate CPU trades
   const evaluation = isUserTrade ? null : evaluateCpuTrade(trade, draft);
@@ -104,8 +105,8 @@ export async function executeWebTrade(
     if (!tradeSnap.exists) throw new Error('Trade not found');
     if (!draftSnap.exists) throw new Error('Draft not found');
 
-    const trade = { id: tradeSnap.id, ...tradeSnap.data() } as Trade;
-    const draft = { id: draftSnap.id, ...draftSnap.data() } as Draft;
+    const trade = hydrateDoc<Trade>(tradeSnap);
+    const draft = hydrateDoc<Draft>(draftSnap);
 
     if (trade.status !== 'pending') throw new Error('Trade is not pending');
 

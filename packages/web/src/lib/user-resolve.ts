@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { adminDb } from './firebase-admin';
+import { hydrateDoc } from './sanitize';
 import { AppError } from './validate';
 import type { Draft, User } from '@mockingboard/shared';
 
@@ -19,7 +20,7 @@ export async function resolveUser(firebaseUid: string): Promise<User | null> {
 
   if (!byFirebase.empty) {
     const doc = byFirebase.docs[0];
-    return { id: doc.id, ...doc.data() } as User;
+    return hydrateDoc<User>(doc);
   }
 
   // Fallback: look up by discordId (legacy web sessions)
@@ -31,7 +32,7 @@ export async function resolveUser(firebaseUid: string): Promise<User | null> {
 
   if (!byDiscord.empty) {
     const doc = byDiscord.docs[0];
-    return { id: doc.id, ...doc.data() } as User;
+    return hydrateDoc<User>(doc);
   }
 
   return null;

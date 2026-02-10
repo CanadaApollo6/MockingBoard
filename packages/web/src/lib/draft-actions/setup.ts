@@ -7,6 +7,7 @@ import {
   getCachedTeamDocs,
   getCachedDraftNames,
 } from '../cache';
+import { hydrateDoc } from '../sanitize';
 import type {
   Draft,
   DraftFormat,
@@ -153,5 +154,5 @@ export async function createWebDraft(
 
   const docRef = await adminDb.collection('drafts').add(draftData);
   const created = await docRef.get();
-  return { id: created.id, ...created.data() } as Draft;
+  return hydrateDoc<Draft>(created);
 }
