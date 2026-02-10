@@ -9,9 +9,6 @@ export const COLORS = {
   YELLOW: 0xfee75c,
 } as const;
 
-// CPU pick delays (ms)
-export const CPU_DELAY = { fast: 300, normal: 1500 } as const;
-
 // Discord limits
 export const DISCORD_SELECT_MAX = 25;
 export const QUICK_PICK_COUNT = 5;

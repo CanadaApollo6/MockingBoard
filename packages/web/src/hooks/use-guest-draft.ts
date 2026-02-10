@@ -8,13 +8,10 @@ import type {
   TeamAbbreviation,
   TradePiece,
   Trade,
-  CpuSpeed,
 } from '@mockingboard/shared';
 import {
-  teams,
-  selectCpuPick,
-  getEffectiveNeeds,
-  getTeamDraftedPositions,
+  CPU_SPEED_DELAY,
+  prepareCpuPick,
   getPickController,
   evaluateCpuTrade,
   computeTradeExecution,
@@ -25,14 +22,6 @@ import {
 } from '@mockingboard/shared';
 
 const GUEST_ID = '__guest__';
-
-const SPEED_DELAY: Record<CpuSpeed, number> = {
-  instant: 0,
-  fast: 300,
-  normal: 1500,
-};
-
-const teamSeeds = new Map(teams.map((t) => [t.id, t]));
 
 export interface UseGuestDraftReturn {
   draft: Draft;
@@ -122,7 +111,7 @@ export function useGuestDraft(
 
   const runCpuCascade = useCallback(
     (startDraft: Draft, startPicks: Pick[]) => {
-      const delay = SPEED_DELAY[startDraft.config.cpuSpeed];
+      const delay = CPU_SPEED_DELAY[startDraft.config.cpuSpeed];
 
       function step(currentDraft: Draft, currentPicks: Pick[]) {
         if (currentDraft.status !== 'active') {
@@ -154,21 +143,17 @@ export function useGuestDraft(
           return;
         }
 
-        const teamSeed = teamSeeds.get(slot.team);
-        const draftedPositions = getTeamDraftedPositions(
-          currentDraft.pickOrder,
-          currentDraft.pickedPlayerIds ?? [],
-          slot.team,
+        const player = prepareCpuPick({
+          team: slot.team,
+          pickOrder: currentDraft.pickOrder,
+          pickedPlayerIds: currentDraft.pickedPlayerIds ?? [],
           playerMap,
-        );
-        const effectiveNeeds = getEffectiveNeeds(
-          teamSeed?.needs ?? [],
-          draftedPositions,
-        );
-        const player = selectCpuPick(available, effectiveNeeds, {
-          randomness: (currentDraft.config.cpuRandomness ?? 50) / 100,
-          needsWeight: (currentDraft.config.cpuNeedsWeight ?? 50) / 100,
-          positionalWeights: POSITIONAL_VALUE,
+          available,
+          options: {
+            randomness: (currentDraft.config.cpuRandomness ?? 50) / 100,
+            needsWeight: (currentDraft.config.cpuNeedsWeight ?? 50) / 100,
+            positionalWeights: POSITIONAL_VALUE,
+          },
         });
 
         const result = makePick(currentDraft, currentPicks, player.id, null);
@@ -205,21 +190,17 @@ export function useGuestDraft(
           const available = getAvailable(d.pickedPlayerIds);
           if (available.length === 0) break;
 
-          const teamSeed = teamSeeds.get(slot.team);
-          const draftedPositions = getTeamDraftedPositions(
-            d.pickOrder,
-            d.pickedPlayerIds ?? [],
-            slot.team,
+          const player = prepareCpuPick({
+            team: slot.team,
+            pickOrder: d.pickOrder,
+            pickedPlayerIds: d.pickedPlayerIds ?? [],
             playerMap,
-          );
-          const effectiveNeeds = getEffectiveNeeds(
-            teamSeed?.needs ?? [],
-            draftedPositions,
-          );
-          const player = selectCpuPick(available, effectiveNeeds, {
-            randomness: (d.config.cpuRandomness ?? 50) / 100,
-            needsWeight: (d.config.cpuNeedsWeight ?? 50) / 100,
-            positionalWeights: POSITIONAL_VALUE,
+            available,
+            options: {
+              randomness: (d.config.cpuRandomness ?? 50) / 100,
+              needsWeight: (d.config.cpuNeedsWeight ?? 50) / 100,
+              positionalWeights: POSITIONAL_VALUE,
+            },
           });
           const result = makePick(d, p, player.id, null);
           d = result.draft;

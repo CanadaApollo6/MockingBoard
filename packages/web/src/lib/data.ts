@@ -4,6 +4,7 @@ import { Timestamp } from 'firebase-admin/firestore';
 import { adminDb } from './firebase-admin';
 import { getCachedPlayerMap, getCachedScoutProfiles } from './cache';
 import { sanitize } from './sanitize';
+import { AppError } from './validate';
 import type {
   Draft,
   Pick,
@@ -38,6 +39,12 @@ export async function getDraft(draftId: string): Promise<Draft | null> {
   const doc = await adminDb.collection('drafts').doc(draftId).get();
   if (!doc.exists) return null;
   return sanitize({ id: doc.id, ...doc.data() } as Draft);
+}
+
+export async function getDraftOrFail(draftId: string): Promise<Draft> {
+  const draft = await getDraft(draftId);
+  if (!draft) throw new AppError('Draft not found', 404);
+  return draft;
 }
 
 export async function getDraftPicks(draftId: string): Promise<Pick[]> {
@@ -166,45 +173,6 @@ export async function getUserDraftsPaginated(
   const sanitized = sanitize(drafts);
   const hasMore = sanitized.length > limit;
   return { drafts: sanitized.slice(0, limit), hasMore };
-}
-
-export async function getUserDrafts(
-  userId: string,
-  discordId?: string,
-): Promise<Draft[]> {
-  const ids = [userId, ...(discordId ? [discordId] : [])];
-
-  const [byParticipant, byCreator] = await Promise.all([
-    adminDb
-      .collection('drafts')
-      .where('participantIds', 'array-contains-any', ids)
-      .orderBy('createdAt', 'desc')
-      .limit(50)
-      .get(),
-    adminDb
-      .collection('drafts')
-      .where('createdBy', '==', userId)
-      .orderBy('createdAt', 'desc')
-      .limit(50)
-      .get(),
-  ]);
-
-  const seen = new Set<string>();
-  const drafts: Draft[] = [];
-
-  for (const doc of [...byParticipant.docs, ...byCreator.docs]) {
-    if (seen.has(doc.id)) continue;
-    seen.add(doc.id);
-    drafts.push({ id: doc.id, ...doc.data() } as Draft);
-  }
-
-  drafts.sort((a, b) => {
-    const aTime = a.createdAt?.seconds ?? 0;
-    const bTime = b.createdAt?.seconds ?? 0;
-    return bTime - aTime;
-  });
-
-  return sanitize(drafts.slice(0, 50));
 }
 
 // ---- Scout Profiles ----

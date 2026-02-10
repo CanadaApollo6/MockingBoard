@@ -50,7 +50,7 @@ export async function POST(request: Request) {
       updatedAt: new Date(),
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ ok: true });
   } catch (err) {
     console.error('Email link failed:', err);
 

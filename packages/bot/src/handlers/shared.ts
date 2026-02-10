@@ -7,11 +7,10 @@ import type {
   MessageCreateOptions,
 } from 'discord.js';
 import type { Draft, TeamAbbreviation, User } from '@mockingboard/shared';
-import { teams } from '@mockingboard/shared';
+import { teams, teamSeeds } from '@mockingboard/shared';
 import { getOrCreateUser } from '../services/user.service.js';
 
-// Pre-built team lookup map
-export const teamSeeds = new Map(teams.map((t) => [t.id, t]));
+export { teamSeeds };
 
 // Type for interactions that can advance the draft
 export type DraftInteraction =

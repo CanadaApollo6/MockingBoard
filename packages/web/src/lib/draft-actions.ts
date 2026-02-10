@@ -30,9 +30,7 @@ import {
   teams,
   filterAndSortPickOrder,
   buildFuturePicksFromSeeds,
-  selectCpuPick,
-  getEffectiveNeeds,
-  getTeamDraftedPositions,
+  prepareCpuPick,
   getPickController,
   computeTradeExecution,
   evaluateCpuTrade,
@@ -42,9 +40,6 @@ import {
   POSITIONAL_VALUE,
   type CpuTradeEvaluation,
 } from '@mockingboard/shared';
-
-// Pre-built team lookup map (same pattern as bot)
-const teamSeeds = new Map(teams.map((t) => [t.id, t]));
 
 /** Generate a draft name using Firestore overrides if available, else shared defaults. */
 async function generateDraftNameFromCache(): Promise<string> {
@@ -315,22 +310,18 @@ export async function runCpuCascade(
     const available = allPlayers.filter((p) => !pickedSet.has(p.id));
     if (available.length === 0) break;
 
-    const teamSeed = teamSeeds.get(currentSlot.team);
-    const draftedPositions = getTeamDraftedPositions(
-      draft.pickOrder,
-      pickedIds,
-      currentSlot.team,
+    const player = prepareCpuPick({
+      team: currentSlot.team,
+      pickOrder: draft.pickOrder,
+      pickedPlayerIds: pickedIds,
       playerMap,
-    );
-    const effectiveNeeds = getEffectiveNeeds(
-      teamSeed?.needs ?? [],
-      draftedPositions,
-    );
-    const player = selectCpuPick(available, effectiveNeeds, {
-      randomness: (draft.config.cpuRandomness ?? 50) / 100,
-      needsWeight: (draft.config.cpuNeedsWeight ?? 50) / 100,
-      boardRankings,
-      positionalWeights: POSITIONAL_VALUE,
+      available,
+      options: {
+        randomness: (draft.config.cpuRandomness ?? 50) / 100,
+        needsWeight: (draft.config.cpuNeedsWeight ?? 50) / 100,
+        boardRankings,
+        positionalWeights: POSITIONAL_VALUE,
+      },
     });
 
     const { pick, isComplete } = await recordPick(draftId, player.id, null);
@@ -387,23 +378,19 @@ export async function advanceSingleCpuPick(
     boardRankings = board?.rankings;
   }
 
-  const teamSeed = teamSeeds.get(currentSlot.team);
   const playerMap = new Map(allPlayers.map((p) => [p.id, p]));
-  const draftedPositions = getTeamDraftedPositions(
-    draft.pickOrder,
-    draft.pickedPlayerIds ?? [],
-    currentSlot.team,
+  const player = prepareCpuPick({
+    team: currentSlot.team,
+    pickOrder: draft.pickOrder,
+    pickedPlayerIds: draft.pickedPlayerIds ?? [],
     playerMap,
-  );
-  const effectiveNeeds = getEffectiveNeeds(
-    teamSeed?.needs ?? [],
-    draftedPositions,
-  );
-  const player = selectCpuPick(available, effectiveNeeds, {
-    randomness: (draft.config.cpuRandomness ?? 50) / 100,
-    needsWeight: (draft.config.cpuNeedsWeight ?? 50) / 100,
-    boardRankings,
-    positionalWeights: POSITIONAL_VALUE,
+    available,
+    options: {
+      randomness: (draft.config.cpuRandomness ?? 50) / 100,
+      needsWeight: (draft.config.cpuNeedsWeight ?? 50) / 100,
+      boardRankings,
+      positionalWeights: POSITIONAL_VALUE,
+    },
   });
 
   const { pick, isComplete } = await recordPick(draftId, player.id, null);

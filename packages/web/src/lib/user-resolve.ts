@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { adminDb } from './firebase-admin';
+import { AppError } from './validate';
 import type { Draft, User } from '@mockingboard/shared';
 
 /**
@@ -57,4 +58,18 @@ export function isUserInDraft(
     return true;
 
   return false;
+}
+
+/**
+ * Throw 403 if the session user is not the draft creator.
+ */
+export async function assertDraftCreator(
+  sessionUid: string,
+  draft: Draft,
+): Promise<void> {
+  const user = await resolveUser(sessionUid);
+  const isCreator =
+    draft.createdBy === sessionUid ||
+    (user?.discordId != null && draft.createdBy === user.discordId);
+  if (!isCreator) throw new AppError('Only the draft creator can do this', 403);
 }

@@ -9,11 +9,7 @@ import type {
   TeamAbbreviation,
   PositionFilterGroup,
 } from '@mockingboard/shared';
-import {
-  teams,
-  getEffectiveNeeds,
-  getTeamDraftedPositions,
-} from '@mockingboard/shared';
+import { teams, prepareCpuPick, CPU_SPEED_DELAY } from '@mockingboard/shared';
 import { getOrCreateUser } from '../services/user.service.js';
 import {
   getDraft,
@@ -23,8 +19,6 @@ import {
   clearPickTimer,
   getPickController,
 } from '../services/draft.service.js';
-import { selectCpuPick } from '../services/cpu.service.js';
-import { CPU_DELAY } from '../constants.js';
 import { getCachedPlayers } from '../commands/draft.js';
 import {
   buildOnTheClockEmbed,
@@ -343,7 +337,7 @@ export async function advanceDraft(
       await doCpuPicksBatch(interaction, draft, allPlayers);
     } else {
       // Individual CPU picks with delay
-      const delay = cpuSpeed === 'fast' ? CPU_DELAY.fast : CPU_DELAY.normal;
+      const delay = CPU_SPEED_DELAY[cpuSpeed] ?? CPU_SPEED_DELAY.normal;
       await new Promise((resolve) => setTimeout(resolve, delay));
       await doCpuPick(interaction, draft, currentSlot, available);
     }
@@ -384,19 +378,15 @@ async function doCpuPicksBatch(
     const available = allPlayers.filter((p) => !pickedIds.has(p.id));
     if (available.length === 0) break;
 
-    const teamSeed = teamSeeds.get(slotTeam(currentSlot));
-    const draftedPositions = getTeamDraftedPositions(
-      currentDraft.pickOrder,
-      currentDraft.pickedPlayerIds ?? [],
-      slotTeam(currentSlot),
+    const player = prepareCpuPick({
+      team: slotTeam(currentSlot),
+      pickOrder: currentDraft.pickOrder,
+      pickedPlayerIds: currentDraft.pickedPlayerIds ?? [],
       playerMap,
-    );
-    const effectiveNeeds = getEffectiveNeeds(
-      teamSeed?.needs ?? [],
-      draftedPositions,
-    );
-    const player = selectCpuPick(available, effectiveNeeds);
-    const teamName = teamSeed?.name ?? slotTeam(currentSlot);
+      available,
+    });
+    const teamName =
+      teamSeeds.get(slotTeam(currentSlot))?.name ?? slotTeam(currentSlot);
 
     const { isComplete } = await recordPickAndAdvance(
       currentDraft.id,
@@ -443,21 +433,16 @@ async function doCpuPick(
   slot: (typeof draft.pickOrder)[0],
   available: Player[],
 ): Promise<void> {
-  const teamSeed = teamSeeds.get(slotTeam(slot));
   const allPlayers = await getCachedPlayers(draft.config.year);
   const playerMap = new Map(allPlayers.map((p) => [p.id, p]));
-  const draftedPositions = getTeamDraftedPositions(
-    draft.pickOrder,
-    draft.pickedPlayerIds ?? [],
-    slotTeam(slot),
+  const player = prepareCpuPick({
+    team: slotTeam(slot),
+    pickOrder: draft.pickOrder,
+    pickedPlayerIds: draft.pickedPlayerIds ?? [],
     playerMap,
-  );
-  const effectiveNeeds = getEffectiveNeeds(
-    teamSeed?.needs ?? [],
-    draftedPositions,
-  );
-  const player = selectCpuPick(available, effectiveNeeds);
-  const teamName = teamSeed?.name ?? slotTeam(slot);
+    available,
+  });
+  const teamName = teamSeeds.get(slotTeam(slot))?.name ?? slotTeam(slot);
 
   const { isComplete } = await recordPickAndAdvance(draft.id, player.id, null);
 
@@ -532,20 +517,15 @@ async function postOnTheClock(
           return;
         }
 
-        const teamSeed = teamSeeds.get(slotTeam(slot));
         const playerMap = new Map(allPlayers.map((p) => [p.id, p]));
-        const draftedPositions = getTeamDraftedPositions(
-          freshDraft.pickOrder,
-          freshDraft.pickedPlayerIds ?? [],
-          slotTeam(slot),
+        const player = prepareCpuPick({
+          team: slotTeam(slot),
+          pickOrder: freshDraft.pickOrder,
+          pickedPlayerIds: freshDraft.pickedPlayerIds ?? [],
           playerMap,
-        );
-        const effectiveNeeds = getEffectiveNeeds(
-          teamSeed?.needs ?? [],
-          draftedPositions,
-        );
-        const player = selectCpuPick(avail, effectiveNeeds);
-        const tName = teamSeed?.name ?? slotTeam(slot);
+          available: avail,
+        });
+        const tName = teamSeeds.get(slotTeam(slot))?.name ?? slotTeam(slot);
 
         const { isComplete } = await recordPickAndAdvance(
           freshDraft.id,

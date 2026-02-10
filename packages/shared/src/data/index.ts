@@ -1,1 +1,1 @@
-export { teams, type TeamSeed } from './teams';
+export { teams, teamSeeds, type TeamSeed } from './teams';

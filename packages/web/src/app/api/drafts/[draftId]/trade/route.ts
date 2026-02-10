@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getSessionUser } from '@/lib/auth-session';
 import { createWebTrade } from '@/lib/draft-actions';
-import { adminDb } from '@/lib/firebase-admin';
-import { safeError } from '@/lib/validate';
-import type { Draft, TeamAbbreviation, TradePiece } from '@mockingboard/shared';
+import { getDraftOrFail } from '@/lib/data';
+import { AppError, safeError } from '@/lib/validate';
+import type { TeamAbbreviation, TradePiece } from '@mockingboard/shared';
 
 export async function POST(
   request: Request,
@@ -32,11 +32,7 @@ export async function POST(
   }
 
   try {
-    const draftDoc = await adminDb.collection('drafts').doc(draftId).get();
-    if (!draftDoc.exists) {
-      return NextResponse.json({ error: 'Draft not found' }, { status: 404 });
-    }
-    const draft = { id: draftDoc.id, ...draftDoc.data() } as Draft;
+    const draft = await getDraftOrFail(draftId);
 
     const { proposerTeam } = body;
     if (!proposerTeam || draft.teamAssignments[proposerTeam] !== session.uid) {
@@ -61,6 +57,9 @@ export async function POST(
 
     return NextResponse.json({ trade, evaluation });
   } catch (err) {
+    if (err instanceof AppError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     console.error('Failed to create trade:', err);
     return NextResponse.json(
       {

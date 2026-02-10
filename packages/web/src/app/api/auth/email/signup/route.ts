@@ -56,7 +56,7 @@ export async function POST(request: Request) {
     // Store the firebaseUid reference
     await docRef.update({ firebaseUid: docRef.id });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ ok: true });
   } catch (err) {
     console.error('Email signup failed:', err);
 

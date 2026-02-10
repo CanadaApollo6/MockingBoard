@@ -14,7 +14,7 @@ export async function POST(request: Request) {
 
     const sessionCookie = await createSessionCookie(idToken);
 
-    const response = NextResponse.json({ status: 'ok' });
+    const response = NextResponse.json({ ok: true });
     response.cookies.set(SESSION_COOKIE_NAME, sessionCookie, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -34,7 +34,7 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE() {
-  const response = NextResponse.json({ status: 'ok' });
+  const response = NextResponse.json({ ok: true });
   response.cookies.delete(SESSION_COOKIE_NAME);
   return response;
 }

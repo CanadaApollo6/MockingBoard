@@ -43,7 +43,7 @@ export async function PUT(request: Request) {
     }
 
     await adminDb.collection('users').doc(session.uid).update(update);
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ ok: true });
   } catch (err) {
     console.error('Failed to save webhook:', err);
     return NextResponse.json(
@@ -103,7 +103,7 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ ok: true });
   } catch (err) {
     console.error('Webhook test error:', err);
     return NextResponse.json(

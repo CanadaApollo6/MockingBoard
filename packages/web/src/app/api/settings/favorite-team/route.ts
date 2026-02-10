@@ -95,7 +95,7 @@ export async function PUT(request: Request) {
     }
 
     await adminDb.collection('users').doc(session.uid).update(update);
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ ok: true });
   } catch (err) {
     console.error('Failed to save theme preference:', err);
     return NextResponse.json({ error: 'Failed to save' }, { status: 500 });

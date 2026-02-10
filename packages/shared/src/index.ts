@@ -56,7 +56,7 @@ export type {
 export { POSITION_GROUPS } from './types';
 
 // Seed data
-export { teams, type TeamSeed } from './data/index';
+export { teams, teamSeeds, type TeamSeed } from './data/index';
 export { coachingStaffs } from './data/coaching-staffs';
 
 // Trade values
@@ -71,15 +71,18 @@ export {
 // CPU logic
 export {
   selectCpuPick,
+  prepareCpuPick,
   CPU_PICK_WEIGHTS,
   NEED_MULTIPLIERS,
   getEffectiveNeeds,
   getTeamDraftedPositions,
   type CpuPickOptions,
+  type CpuPickContext,
 } from './cpu';
 
 // Draft logic
 export {
+  CPU_SPEED_DELAY,
   getPickController,
   filterAndSortPickOrder,
   buildFuturePicksFromSeeds,

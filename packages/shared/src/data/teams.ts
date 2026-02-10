@@ -308,3 +308,8 @@ export const teams: TeamSeed[] = [
     needs: ['WR', 'OG', 'EDGE', 'S'],
   },
 ];
+
+/** Pre-built lookup map: TeamAbbreviation → TeamSeed */
+export const teamSeeds = new Map<TeamAbbreviation, TeamSeed>(
+  teams.map((t) => [t.id, t]),
+);

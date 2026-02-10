@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getSessionUser } from '@/lib/auth-session';
 import { recordPick, runCpuCascade } from '@/lib/draft-actions';
 import { getCachedPlayerMap } from '@/lib/cache';
+import { getDraftOrFail } from '@/lib/data';
 import { adminDb } from '@/lib/firebase-admin';
 import {
   resolveWebhookConfig,
@@ -12,7 +13,7 @@ import { getPickController } from '@mockingboard/shared';
 import type { Draft, Pick } from '@mockingboard/shared';
 import { notifyYourTurn } from '@/lib/notifications';
 import { rateLimit } from '@/lib/rate-limit';
-import { safeError } from '@/lib/validate';
+import { AppError, safeError } from '@/lib/validate';
 
 export async function POST(
   request: Request,
@@ -46,11 +47,7 @@ export async function POST(
 
   try {
     // Authorization: verify user controls current pick
-    const draftDoc = await adminDb.collection('drafts').doc(draftId).get();
-    if (!draftDoc.exists) {
-      return NextResponse.json({ error: 'Draft not found' }, { status: 404 });
-    }
-    const draft = { id: draftDoc.id, ...draftDoc.data() } as Draft;
+    const draft = await getDraftOrFail(draftId);
 
     if (draft.status !== 'active') {
       return NextResponse.json(
@@ -154,6 +151,9 @@ export async function POST(
       isComplete: draftCompleted,
     });
   } catch (err) {
+    if (err instanceof AppError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     console.error('Failed to record pick:', err);
     return NextResponse.json(
       { error: safeError(err, 'Failed to record pick') },

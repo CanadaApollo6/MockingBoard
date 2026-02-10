@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import type {
   TeamAbbreviation,
+  Position,
   KeyPlayerOverride,
   Coach,
   FrontOfficeStaff,
@@ -127,7 +128,7 @@ export function SeasonEditor({
       {
         gsisId: result.gsisId,
         name: result.name,
-        position: result.position,
+        position: result.position as Position,
         jersey: result.jersey,
         college: result.college,
       },

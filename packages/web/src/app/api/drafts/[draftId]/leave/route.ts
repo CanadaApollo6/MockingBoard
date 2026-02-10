@@ -16,7 +16,7 @@ export async function POST(
 
   try {
     await leaveLobby(draftId, session.uid);
-    return NextResponse.json({ status: 'ok' });
+    return NextResponse.json({ ok: true });
   } catch (err) {
     return NextResponse.json(
       { error: safeError(err, 'Failed to leave draft') },

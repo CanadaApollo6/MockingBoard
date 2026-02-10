@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import { FieldValue } from 'firebase-admin/firestore';
 import { getSessionUser } from '@/lib/auth-session';
+import { getDraftOrFail } from '@/lib/data';
 import { adminDb } from '@/lib/firebase-admin';
-import { resolveUser } from '@/lib/user-resolve';
-import type { Draft } from '@mockingboard/shared';
+import { assertDraftCreator } from '@/lib/user-resolve';
+import { AppError } from '@/lib/validate';
 
 export async function POST(
   _request: Request,
@@ -17,22 +18,8 @@ export async function POST(
   const { draftId } = await params;
 
   try {
-    const draftDoc = await adminDb.collection('drafts').doc(draftId).get();
-    if (!draftDoc.exists) {
-      return NextResponse.json({ error: 'Draft not found' }, { status: 404 });
-    }
-    const draft = { id: draftDoc.id, ...draftDoc.data() } as Draft;
-
-    const user = await resolveUser(session.uid);
-    const isCreator =
-      draft.createdBy === session.uid ||
-      (user?.discordId != null && draft.createdBy === user.discordId);
-    if (!isCreator) {
-      return NextResponse.json(
-        { error: 'Only the draft creator can resume' },
-        { status: 403 },
-      );
-    }
+    const draft = await getDraftOrFail(draftId);
+    await assertDraftCreator(session.uid, draft);
 
     if (draft.status !== 'paused') {
       return NextResponse.json(
@@ -46,8 +33,11 @@ export async function POST(
       updatedAt: FieldValue.serverTimestamp(),
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ ok: true });
   } catch (err) {
+    if (err instanceof AppError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     console.error('Failed to resume draft:', err);
     return NextResponse.json(
       { error: 'Failed to resume draft' },

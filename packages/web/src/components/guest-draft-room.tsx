@@ -11,10 +11,10 @@ import type {
 } from '@mockingboard/shared';
 import {
   getPickController,
-  selectCpuPick,
+  prepareCpuPick,
   getEffectiveNeeds,
   getTeamDraftedPositions,
-  teams,
+  teamSeeds,
   suggestPick,
   POSITIONAL_VALUE,
   type CpuTradeEvaluation,
@@ -31,8 +31,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
 const GUEST_ID = '__guest__';
-
-const teamSeeds = new Map(teams.map((t) => [t.id, t]));
 
 interface GuestDraftRoomProps {
   initialDraft: Draft;
@@ -184,21 +182,17 @@ export function GuestDraftRoom({ initialDraft, players }: GuestDraftRoomProps) {
 
   const handleTimerExpire = useCallback(() => {
     if (!currentSlot) return;
-    const teamSeed = teamSeeds.get(currentSlot.team);
-    const draftedPositions = getTeamDraftedPositions(
-      draft.pickOrder,
-      draft.pickedPlayerIds ?? [],
-      currentSlot.team,
+    const player = prepareCpuPick({
+      team: currentSlot.team,
+      pickOrder: draft.pickOrder,
+      pickedPlayerIds: draft.pickedPlayerIds ?? [],
       playerMap,
-    );
-    const effectiveNeeds = getEffectiveNeeds(
-      teamSeed?.needs ?? [],
-      draftedPositions,
-    );
-    const player = selectCpuPick(availablePlayers, effectiveNeeds, {
-      randomness: (draft.config.cpuRandomness ?? 50) / 100,
-      needsWeight: (draft.config.cpuNeedsWeight ?? 50) / 100,
-      positionalWeights: POSITIONAL_VALUE,
+      available: availablePlayers,
+      options: {
+        randomness: (draft.config.cpuRandomness ?? 50) / 100,
+        needsWeight: (draft.config.cpuNeedsWeight ?? 50) / 100,
+        positionalWeights: POSITIONAL_VALUE,
+      },
     });
     if (!player) return;
     handlePick(player.id);

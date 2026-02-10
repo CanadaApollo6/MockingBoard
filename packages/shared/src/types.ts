@@ -428,7 +428,7 @@ export interface Coach {
 export interface KeyPlayerOverride {
   gsisId: string;
   name: string;
-  position: string;
+  position: Position;
   jersey: string;
   college: string;
   statOverrides?: Record<string, number | string | null>;

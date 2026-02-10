@@ -68,7 +68,7 @@ function KeyPlayersEditor({
       {
         gsisId: result.gsisId,
         name: result.name,
-        position: result.position,
+        position: result.position as Position,
         jersey: result.jersey,
         college: result.college,
       },

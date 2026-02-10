@@ -1,10 +1,18 @@
 import type {
+  CpuSpeed,
   Draft,
   DraftSlot,
   FutureDraftPick,
   FuturePickSeed,
   TeamAbbreviation,
 } from './types';
+
+/** Delay in milliseconds before each CPU pick, keyed by speed setting. */
+export const CPU_SPEED_DELAY: Record<CpuSpeed, number> = {
+  instant: 0,
+  fast: 300,
+  normal: 1500,
+};
 
 /**
  * Get the user ID that controls a pick, considering trades.

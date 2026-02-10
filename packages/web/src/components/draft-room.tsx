@@ -9,14 +9,14 @@ import type {
   TeamAbbreviation,
   TradePiece,
   Trade,
-  CpuSpeed,
 } from '@mockingboard/shared';
 import {
   getPickController,
-  selectCpuPick,
+  prepareCpuPick,
   getEffectiveNeeds,
   getTeamDraftedPositions,
-  teams,
+  teamSeeds,
+  CPU_SPEED_DELAY,
   suggestPick,
   POSITIONAL_VALUE,
   type CpuTradeEvaluation,
@@ -34,14 +34,6 @@ import { DraftLayout } from '@/components/draft-layout';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-
-const SPEED_DELAY: Record<CpuSpeed, number> = {
-  instant: 0,
-  fast: 300,
-  normal: 1500,
-};
-
-const teamSeeds = new Map(teams.map((t) => [t.id, t]));
 
 interface DraftRoomProps {
   draftId: string;
@@ -218,7 +210,7 @@ export function DraftRoom({
             );
             const data = await res.json();
             if (!data.pick || data.isComplete || cancelled) break;
-            await new Promise((r) => setTimeout(r, SPEED_DELAY[cpuSpeed]));
+            await new Promise((r) => setTimeout(r, CPU_SPEED_DELAY[cpuSpeed]));
           } catch {
             break;
           }
@@ -393,22 +385,18 @@ export function DraftRoom({
     if (!draft || submitting) return;
     const slot = draft.pickOrder[(draft.currentPick ?? 1) - 1];
     if (!slot) return;
-    const teamSeed = teamSeeds.get(slot.team);
-    const draftedPositions = getTeamDraftedPositions(
-      draft.pickOrder,
-      draft.pickedPlayerIds ?? [],
-      slot.team,
+    const player = prepareCpuPick({
+      team: slot.team,
+      pickOrder: draft.pickOrder,
+      pickedPlayerIds: draft.pickedPlayerIds ?? [],
       playerMap,
-    );
-    const effectiveNeeds = getEffectiveNeeds(
-      teamSeed?.needs ?? [],
-      draftedPositions,
-    );
-    const player = selectCpuPick(availablePlayers, effectiveNeeds, {
-      randomness: (draft.config.cpuRandomness ?? 50) / 100,
-      needsWeight: (draft.config.cpuNeedsWeight ?? 50) / 100,
-      boardRankings: bigBoardRankings,
-      positionalWeights: POSITIONAL_VALUE,
+      available: availablePlayers,
+      options: {
+        randomness: (draft.config.cpuRandomness ?? 50) / 100,
+        needsWeight: (draft.config.cpuNeedsWeight ?? 50) / 100,
+        boardRankings: bigBoardRankings,
+        positionalWeights: POSITIONAL_VALUE,
+      },
     });
     if (!player) return;
     handlePick(player.id);
