@@ -21,7 +21,7 @@ export default async function TeamSeasonPage({
 }) {
   const session = await getSessionUser();
   if (!session) redirect('/login');
-  if (!isAdmin(session.uid)) redirect('/admin');
+  if (!(await isAdmin(session.uid))) redirect('/admin');
 
   const { abbreviation, year: yearStr } = await params;
   const abbr = abbreviation.toUpperCase();
