@@ -23,10 +23,18 @@ import {
 
 const GUEST_ID = '__guest__';
 
-export interface UseGuestDraftReturn {
+export interface UseLocalDraftOptions {
+  /** Real Firebase UID, or omit for guest mode (defaults to GUEST_ID). */
+  userId?: string;
+  /** Firestore draft ID. If present, enables periodic sync. */
+  draftId?: string;
+}
+
+export interface UseLocalDraftReturn {
   draft: Draft;
   picks: Pick[];
   isProcessing: boolean;
+  isSyncing: boolean;
   recordPick: (playerId: string) => void;
   proposeTrade: (
     proposerTeam: TeamAbbreviation,
@@ -35,16 +43,26 @@ export interface UseGuestDraftReturn {
     receiving: TradePiece[],
   ) => { trade: Trade; evaluation: CpuTradeEvaluation } | { error: string };
   executeTrade: (trade: Trade, force: boolean) => void;
+  pause: () => void;
+  resume: () => void;
+  cancel: () => Promise<void>;
 }
 
-export function useGuestDraft(
+export function useLocalDraft(
   initialDraft: Draft,
   players: Record<string, Player>,
-): UseGuestDraftReturn {
+  options: UseLocalDraftOptions = {},
+  initialPicks: Pick[] = [],
+): UseLocalDraftReturn {
+  const effectiveUserId = options.userId ?? GUEST_ID;
+  const effectiveDraftId = options.draftId ?? 'guest';
+
   const [draft, setDraft] = useState<Draft>(initialDraft);
-  const [picks, setPicks] = useState<Pick[]>([]);
+  const [picks, setPicks] = useState<Pick[]>(initialPicks);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const lastSyncedPickIndex = useRef(initialPicks.length);
   const playerMap = useMemo(
     () => new Map(Object.values(players).map((p) => [p.id, p])),
     [players],
@@ -56,6 +74,38 @@ export function useGuestDraft(
       for (const t of timeoutRef.current) clearTimeout(t);
     };
   }, []);
+
+  // ---- Sync ----
+
+  const syncToFirestore = useCallback(
+    async (currentDraft: Draft, currentPicks: Pick[], reason: string) => {
+      if (!options.draftId) return;
+      const newPicks = currentPicks.slice(lastSyncedPickIndex.current);
+      setIsSyncing(true);
+      try {
+        await fetch(`/api/drafts/${options.draftId}/sync`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            status: currentDraft.status,
+            currentPick: currentDraft.currentPick,
+            currentRound: currentDraft.currentRound,
+            pickedPlayerIds: currentDraft.pickedPlayerIds,
+            pickOrder: currentDraft.pickOrder,
+            futurePicks: currentDraft.futurePicks,
+            picks: newPicks,
+            reason,
+          }),
+        });
+        lastSyncedPickIndex.current = currentPicks.length;
+      } finally {
+        setIsSyncing(false);
+      }
+    },
+    [options.draftId],
+  );
+
+  // ---- Core helpers ----
 
   const getAvailable = useCallback(
     (pickedIds: string[]) => {
@@ -77,7 +127,7 @@ export function useGuestDraft(
       const slot = currentDraft.pickOrder[currentDraft.currentPick - 1];
       const pick: Pick = {
         id: `pick-${currentDraft.currentPick}`,
-        draftId: 'guest',
+        draftId: effectiveDraftId,
         overall: slot.overall,
         round: slot.round,
         pick: slot.pick,
@@ -106,8 +156,10 @@ export function useGuestDraft(
         isComplete,
       };
     },
-    [],
+    [effectiveDraftId],
   );
+
+  // ---- CPU cascade ----
 
   const runCpuCascade = useCallback(
     (startDraft: Draft, startPicks: Pick[]) => {
@@ -156,6 +208,7 @@ export function useGuestDraft(
           },
         });
 
+        const prevRound = currentDraft.currentRound;
         const result = makePick(currentDraft, currentPicks, player.id, null);
 
         if (delay === 0) {
@@ -166,8 +219,14 @@ export function useGuestDraft(
           setDraft(result.draft);
           setPicks(result.picks);
 
+          // Sync at round boundary
+          if (result.draft.currentRound !== prevRound) {
+            syncToFirestore(result.draft, result.picks, 'round-boundary');
+          }
+
           if (result.isComplete) {
             setIsProcessing(false);
+            syncToFirestore(result.draft, result.picks, 'complete');
             return;
           }
 
@@ -180,6 +239,7 @@ export function useGuestDraft(
       if (delay === 0) {
         let d = startDraft;
         let p = startPicks;
+        let prevRound = d.currentRound;
 
         while (d.status === 'active') {
           const slot = d.pickOrder[d.currentPick - 1];
@@ -203,6 +263,13 @@ export function useGuestDraft(
             },
           });
           const result = makePick(d, p, player.id, null);
+
+          // Sync at round boundary (even in instant mode)
+          if (result.draft.currentRound !== prevRound) {
+            syncToFirestore(result.draft, result.picks, 'round-boundary');
+            prevRound = result.draft.currentRound;
+          }
+
           d = result.draft;
           p = result.picks;
         }
@@ -210,36 +277,46 @@ export function useGuestDraft(
         setDraft(d);
         setPicks(p);
         setIsProcessing(false);
+
+        // Sync on complete
+        if (d.status === 'complete') {
+          syncToFirestore(d, p, 'complete');
+        }
       } else {
         step(startDraft, startPicks);
       }
     },
-    [getAvailable, makePick],
+    [getAvailable, makePick, syncToFirestore],
   );
+
+  // ---- Public actions ----
 
   const recordPick = useCallback(
     (playerId: string) => {
-      const result = makePick(draft, picks, playerId, GUEST_ID);
+      const result = makePick(draft, picks, playerId, effectiveUserId);
       setDraft(result.draft);
       setPicks(result.picks);
 
-      if (!result.isComplete) {
-        const nextSlot = result.draft.pickOrder[result.draft.currentPick - 1];
-        if (nextSlot) {
-          const controller = getPickController(result.draft, nextSlot);
-          if (controller === null) {
-            setIsProcessing(true);
-            // Small delay before CPU cascade starts so the user's pick renders
-            const t = setTimeout(
-              () => runCpuCascade(result.draft, result.picks),
-              50,
-            );
-            timeoutRef.current.push(t);
-          }
+      if (result.isComplete) {
+        syncToFirestore(result.draft, result.picks, 'complete');
+        return;
+      }
+
+      const nextSlot = result.draft.pickOrder[result.draft.currentPick - 1];
+      if (nextSlot) {
+        const controller = getPickController(result.draft, nextSlot);
+        if (controller === null) {
+          setIsProcessing(true);
+          // Small delay before CPU cascade starts so the user's pick renders
+          const t = setTimeout(
+            () => runCpuCascade(result.draft, result.picks),
+            50,
+          );
+          timeoutRef.current.push(t);
         }
       }
     },
-    [draft, picks, makePick, runCpuCascade],
+    [draft, picks, effectiveUserId, makePick, runCpuCascade, syncToFirestore],
   );
 
   const proposeTrade = useCallback(
@@ -249,15 +326,15 @@ export function useGuestDraft(
       giving: TradePiece[],
       receiving: TradePiece[],
     ) => {
-      if (draft.teamAssignments[proposerTeam] !== GUEST_ID) {
+      if (draft.teamAssignments[proposerTeam] !== effectiveUserId) {
         return { error: 'You do not control that team' };
       }
 
       const trade: Trade = {
         id: `trade-${Date.now()}`,
-        draftId: 'guest',
+        draftId: effectiveDraftId,
         status: 'pending',
-        proposerId: GUEST_ID,
+        proposerId: effectiveUserId,
         proposerTeam,
         recipientId: null,
         recipientTeam,
@@ -270,13 +347,13 @@ export function useGuestDraft(
       const picksAvail = validateTradePicksAvailable(trade, draft);
       if (!picksAvail.valid) return { error: picksAvail.error! };
 
-      const ownsGiving = validateUserOwnsPicks(GUEST_ID, giving, draft);
+      const ownsGiving = validateUserOwnsPicks(effectiveUserId, giving, draft);
       if (!ownsGiving.valid) return { error: ownsGiving.error! };
 
       const evaluation = evaluateCpuTrade(trade, draft);
       return { trade, evaluation };
     },
-    [draft],
+    [draft, effectiveUserId, effectiveDraftId],
   );
 
   const executeTrade = useCallback(
@@ -286,14 +363,50 @@ export function useGuestDraft(
         tradeToExecute,
         draft,
       );
-      setDraft((prev) => ({
-        ...prev,
-        pickOrder,
-        futurePicks,
-      }));
+      const updated = { ...draft, pickOrder, futurePicks };
+      setDraft(updated);
+      syncToFirestore(updated, picks, 'trade');
     },
-    [draft],
+    [draft, picks, syncToFirestore],
   );
+
+  const pause = useCallback(() => {
+    // Cancel any pending CPU timeouts
+    for (const t of timeoutRef.current) clearTimeout(t);
+    timeoutRef.current = [];
+    setIsProcessing(false);
+
+    const paused = { ...draft, status: 'paused' as const };
+    setDraft(paused);
+    syncToFirestore(paused, picks, 'pause');
+  }, [draft, picks, syncToFirestore]);
+
+  const resume = useCallback(() => {
+    const active: Draft = { ...draft, status: 'active' as const };
+    setDraft(active);
+
+    // If current pick is CPU, start cascade
+    const slot = active.pickOrder[active.currentPick - 1];
+    if (slot) {
+      const controller = getPickController(active, slot);
+      if (controller === null) {
+        setIsProcessing(true);
+        const t = setTimeout(() => runCpuCascade(active, picks), 50);
+        timeoutRef.current.push(t);
+      }
+    }
+  }, [draft, picks, runCpuCascade]);
+
+  const cancel = useCallback(async () => {
+    // Cancel any pending CPU timeouts
+    for (const t of timeoutRef.current) clearTimeout(t);
+    timeoutRef.current = [];
+    setIsProcessing(false);
+
+    const cancelled = { ...draft, status: 'cancelled' as const };
+    setDraft(cancelled);
+    await syncToFirestore(cancelled, picks, 'cancel');
+  }, [draft, picks, syncToFirestore]);
 
   // Trigger CPU cascade on mount if first pick is CPU
   const initialCascadeRef = useRef(false);
@@ -314,8 +427,12 @@ export function useGuestDraft(
     draft,
     picks,
     isProcessing,
+    isSyncing,
     recordPick,
     proposeTrade,
     executeTrade,
+    pause,
+    resume,
+    cancel,
   };
 }
