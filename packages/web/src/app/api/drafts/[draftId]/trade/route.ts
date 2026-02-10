@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getSessionUser } from '@/lib/auth-session';
 import { createWebTrade } from '@/lib/draft-actions';
 import { adminDb } from '@/lib/firebase-admin';
+import { safeError } from '@/lib/validate';
 import type { Draft, TeamAbbreviation, TradePiece } from '@mockingboard/shared';
 
 export async function POST(
@@ -63,7 +64,7 @@ export async function POST(
     console.error('Failed to create trade:', err);
     return NextResponse.json(
       {
-        error: err instanceof Error ? err.message : 'Failed to create trade',
+        error: safeError(err, 'Failed to create trade'),
       },
       { status: 500 },
     );

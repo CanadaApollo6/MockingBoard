@@ -5,6 +5,7 @@ import {
   buildFuturePicks,
   createWebDraft,
 } from '@/lib/draft-actions';
+import { rateLimit } from '@/lib/rate-limit';
 import { resolveUser } from '@/lib/user-resolve';
 import { adminDb } from '@/lib/firebase-admin';
 import { sendDraftStarted } from '@/lib/discord-webhook';
@@ -22,6 +23,10 @@ export async function POST(request: Request) {
   const session = await getSessionUser();
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  if (!rateLimit(`create-draft:${session.uid}`, 10, 60_000)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
   }
 
   let body: {

@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { getSessionUser } from '@/lib/auth-session';
-
-const WEBHOOK_URL_RE =
-  /^https:\/\/(discord\.com|discordapp\.com)\/api\/webhooks\/\d+\/.+$/;
+import { DISCORD_WEBHOOK_RE } from '@/lib/discord-webhook';
 
 export async function PUT(request: Request) {
   const session = await getSessionUser();
@@ -24,7 +22,7 @@ export async function PUT(request: Request) {
   const { url } = body;
 
   // Allow null to clear the webhook
-  if (url !== null && !WEBHOOK_URL_RE.test(url)) {
+  if (url !== null && !DISCORD_WEBHOOK_RE.test(url)) {
     return NextResponse.json(
       { error: 'Invalid Discord webhook URL' },
       { status: 400 },
@@ -73,7 +71,7 @@ export async function POST(request: Request) {
 
   const { url } = body;
 
-  if (!WEBHOOK_URL_RE.test(url)) {
+  if (!DISCORD_WEBHOOK_RE.test(url)) {
     return NextResponse.json(
       { error: 'Invalid Discord webhook URL' },
       { status: 400 },

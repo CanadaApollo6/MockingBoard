@@ -8,6 +8,7 @@ import {
 } from '@/lib/draft-actions';
 import { adminDb } from '@/lib/firebase-admin';
 import { notifyTradeAccepted } from '@/lib/notifications';
+import { safeError } from '@/lib/validate';
 import type { Trade } from '@mockingboard/shared';
 
 type TradeAction = 'confirm' | 'force' | 'cancel' | 'accept' | 'reject';
@@ -141,7 +142,7 @@ export async function POST(
     console.error('Failed to process trade:', err);
     return NextResponse.json(
       {
-        error: err instanceof Error ? err.message : 'Failed to process trade',
+        error: safeError(err, 'Failed to process trade'),
       },
       { status: 500 },
     );

@@ -72,6 +72,22 @@ export async function PUT(
     );
   }
 
+  const VALID_VISIBILITY = new Set(['private', 'public']);
+  const VALID_GRADE_SYSTEM = new Set(['tier', 'nfl', 'letter', 'projection']);
+
+  if (body.visibility && !VALID_VISIBILITY.has(body.visibility)) {
+    return NextResponse.json({ error: 'Invalid visibility' }, { status: 400 });
+  }
+  if (
+    body.preferredGradeSystem &&
+    !VALID_GRADE_SYSTEM.has(body.preferredGradeSystem)
+  ) {
+    return NextResponse.json(
+      { error: 'Invalid grade system' },
+      { status: 400 },
+    );
+  }
+
   if (body.slug !== undefined) {
     const existing = await adminDb
       .collection('bigBoards')

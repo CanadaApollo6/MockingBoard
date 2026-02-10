@@ -18,6 +18,13 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const ALLOWED_LINK_KEYS = new Set([
+    'youtube',
+    'twitter',
+    'bluesky',
+    'website',
+  ]);
+
   let body: {
     slug?: string;
     bio?: string;
@@ -32,6 +39,13 @@ export async function PUT(request: Request) {
     return NextResponse.json(
       { error: 'Invalid request body' },
       { status: 400 },
+    );
+  }
+
+  // Strip unknown link keys
+  if (body.links && typeof body.links === 'object') {
+    body.links = Object.fromEntries(
+      Object.entries(body.links).filter(([k]) => ALLOWED_LINK_KEYS.has(k)),
     );
   }
 

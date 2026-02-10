@@ -25,7 +25,6 @@ import {
   BarChart3,
 } from 'lucide-react';
 import { useAuth } from '@/components/auth-provider';
-import { isAdmin } from '@/lib/admin';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
@@ -97,7 +96,7 @@ export function Sidebar({
 }: SidebarProps) {
   const pathname = usePathname();
   const { user, profile, loading, signOut } = useAuth();
-  const showAdmin = !!user && isAdmin(user.uid);
+  const showAdmin = !!profile?.isAdmin;
 
   // Close mobile sidebar on navigation
   useEffect(() => {

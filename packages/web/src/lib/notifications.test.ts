@@ -61,7 +61,9 @@ describe('createNotification', () => {
 
   it('sends Discord webhook when user has webhookUrl', async () => {
     mockGet.mockResolvedValue({
-      data: () => ({ discordWebhookUrl: 'https://discord.com/hook/123' }),
+      data: () => ({
+        discordWebhookUrl: 'https://discord.com/api/webhooks/123/abc-token',
+      }),
     });
 
     await createNotification({
@@ -72,7 +74,7 @@ describe('createNotification', () => {
     });
 
     expect(mockFetch).toHaveBeenCalledWith(
-      'https://discord.com/hook/123?wait=true',
+      'https://discord.com/api/webhooks/123/abc-token?wait=true',
       expect.objectContaining({ method: 'POST' }),
     );
   });
@@ -80,7 +82,7 @@ describe('createNotification', () => {
   it('skips Discord when user opted out', async () => {
     mockGet.mockResolvedValue({
       data: () => ({
-        discordWebhookUrl: 'https://discord.com/hook/123',
+        discordWebhookUrl: 'https://discord.com/api/webhooks/123/abc-token',
         notificationPreferences: { discord: false },
       }),
     });
@@ -110,7 +112,9 @@ describe('createNotification', () => {
 
   it('includes link in Discord embed when provided', async () => {
     mockGet.mockResolvedValue({
-      data: () => ({ discordWebhookUrl: 'https://discord.com/hook/123' }),
+      data: () => ({
+        discordWebhookUrl: 'https://discord.com/api/webhooks/123/abc-token',
+      }),
     });
 
     await createNotification({

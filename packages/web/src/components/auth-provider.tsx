@@ -33,6 +33,7 @@ export interface UserProfile {
     website?: string;
   };
   isPublic?: boolean;
+  isAdmin?: boolean;
   favoriteTeam?: TeamAbbreviation;
   favoriteSchool?: string;
 }
@@ -91,6 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           avatar: data.avatar,
           links: data.links,
           isPublic: data.isPublic,
+          isAdmin: !!data.isAdmin,
           favoriteTeam: data.favoriteTeam || undefined,
           favoriteSchool: data.favoriteSchool || undefined,
         });

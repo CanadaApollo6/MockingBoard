@@ -63,10 +63,15 @@ export async function PATCH(request: Request) {
       }
       await batch.commit();
     } else if (body.ids && body.ids.length > 0) {
+      const refs = body.ids
+        .slice(0, 50)
+        .map((id) => adminDb.collection('notifications').doc(id));
+      const docs = await adminDb.getAll(...refs);
       const batch = adminDb.batch();
-      for (const id of body.ids.slice(0, 50)) {
-        const ref = adminDb.collection('notifications').doc(id);
-        batch.update(ref, { read: true });
+      for (const d of docs) {
+        if (d.exists && d.data()?.userId === session.uid) {
+          batch.update(d.ref, { read: true });
+        }
       }
       await batch.commit();
     }

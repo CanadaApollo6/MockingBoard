@@ -1,7 +1,13 @@
 import { NextResponse } from 'next/server';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
+import { rateLimit, getClientIp } from '@/lib/rate-limit';
+import { safeError } from '@/lib/validate';
 
 export async function POST(request: Request) {
+  if (!rateLimit(`signup:${getClientIp(request)}`, 5, 60_000)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+  }
+
   let body: { email: string; password: string; displayName: string };
   try {
     body = await request.json();
@@ -54,8 +60,6 @@ export async function POST(request: Request) {
   } catch (err) {
     console.error('Email signup failed:', err);
 
-    const message = err instanceof Error ? err.message : 'Signup failed';
-
     // Firebase Auth errors have a `code` property
     const code = (err as { code?: string }).code;
     if (code === 'auth/email-already-exists') {
@@ -65,6 +69,9 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json({ error: message }, { status: 400 });
+    return NextResponse.json(
+      { error: safeError(err, 'Signup failed') },
+      { status: 400 },
+    );
   }
 }

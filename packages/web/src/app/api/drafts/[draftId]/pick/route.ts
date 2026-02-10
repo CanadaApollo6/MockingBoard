@@ -11,6 +11,8 @@ import {
 import { getPickController } from '@mockingboard/shared';
 import type { Draft, Pick } from '@mockingboard/shared';
 import { notifyYourTurn } from '@/lib/notifications';
+import { rateLimit } from '@/lib/rate-limit';
+import { safeError } from '@/lib/validate';
 
 export async function POST(
   request: Request,
@@ -19,6 +21,10 @@ export async function POST(
   const session = await getSessionUser();
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  if (!rateLimit(`pick:${session.uid}`, 30, 60_000)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
   }
 
   const { draftId } = await params;
@@ -150,7 +156,7 @@ export async function POST(
   } catch (err) {
     console.error('Failed to record pick:', err);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Failed to record pick' },
+      { error: safeError(err, 'Failed to record pick') },
       { status: 500 },
     );
   }

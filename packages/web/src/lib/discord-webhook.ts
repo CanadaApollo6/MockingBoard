@@ -13,6 +13,10 @@ import { getTeamColor } from './team-colors';
 
 const MB_BLUE = 0x3b82f6;
 
+/** Only allow Discord webhook URLs — prevents SSRF via stored webhook values. */
+export const DISCORD_WEBHOOK_RE =
+  /^https:\/\/(discord\.com|discordapp\.com)\/api\/webhooks\/\d+\/[\w-]+$/;
+
 interface WebhookConfig {
   webhookUrl: string;
   notificationLevel: NotificationLevel;
@@ -184,6 +188,11 @@ async function postWebhook(
   payload: WebhookPayload,
   options?: { threadId?: string; threadName?: string },
 ): Promise<{ channel_id?: string } | null> {
+  if (!DISCORD_WEBHOOK_RE.test(webhookUrl)) {
+    console.error('Invalid webhook URL blocked:', webhookUrl);
+    return null;
+  }
+
   const params = new URLSearchParams({ wait: 'true' });
   if (options?.threadId) params.set('thread_id', options.threadId);
 

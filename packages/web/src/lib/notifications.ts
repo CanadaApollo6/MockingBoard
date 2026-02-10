@@ -2,6 +2,7 @@ import 'server-only';
 
 import { FieldValue } from 'firebase-admin/firestore';
 import { adminDb } from './firebase-admin';
+import { DISCORD_WEBHOOK_RE } from './discord-webhook';
 import type { NotificationType } from '@mockingboard/shared';
 
 const MB_BLUE = 0x3b82f6;
@@ -43,6 +44,7 @@ export async function createNotification(
     const userDoc = await adminDb.collection('users').doc(userId).get();
     const userData = userDoc.data();
     if (!userData?.discordWebhookUrl) return;
+    if (!DISCORD_WEBHOOK_RE.test(userData.discordWebhookUrl)) return;
     if (userData.notificationPreferences?.discord === false) return;
 
     const embed: Record<string, unknown> = {

@@ -1,4 +1,4 @@
-const adminUids = (process.env.NEXT_PUBLIC_ADMIN_UIDS ?? '')
+const adminUids = (process.env.ADMIN_UIDS ?? '')
   .split(',')
   .map((s) => s.trim())
   .filter(Boolean);
