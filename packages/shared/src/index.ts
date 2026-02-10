@@ -52,8 +52,8 @@ export type {
   AppNotification,
 } from './types';
 
-// Constants
-export { POSITION_GROUPS } from './types';
+// Constants & Guards
+export { POSITION_GROUPS, isTeamAbbreviation } from './types';
 
 // Seed data
 export { teams, teamSeeds, type TeamSeed } from './data/index';

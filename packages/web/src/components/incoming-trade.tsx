@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { getTeamName } from '@/lib/teams';
+import { extractTimestampMs } from '@/lib/format';
 
 interface IncomingTradeProps {
   trade: Trade;
@@ -27,10 +28,7 @@ export function IncomingTrade({
 
   const [remaining, setRemaining] = useState(() => {
     if (!trade.expiresAt) return Infinity;
-    const ms =
-      'seconds' in trade.expiresAt
-        ? trade.expiresAt.seconds * 1000
-        : new Date(trade.expiresAt as unknown as string).getTime();
+    const ms = extractTimestampMs(trade.expiresAt);
     return Math.max(0, Math.ceil((ms - Date.now()) / 1000));
   });
 

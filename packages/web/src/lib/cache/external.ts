@@ -2,6 +2,9 @@ import {
   loadPlayerStats,
   loadRosters,
   loadDepthCharts,
+  type PlayerStatsRecord,
+  type RosterRecord,
+  type DepthChartRecord,
 } from '@nflverse/nflreadts';
 import {
   type CacheEntry,
@@ -144,16 +147,14 @@ export async function getCachedRoster(
 
 // ---- nflverse data (keyed by season) ----
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const playerStatsCache = new Map<number, CacheEntry<any[]>>();
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const nflRosterCache = new Map<number, CacheEntry<any[]>>();
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const depthChartCache = new Map<number, CacheEntry<any[]>>();
+const playerStatsCache = new Map<number, CacheEntry<PlayerStatsRecord[]>>();
+const nflRosterCache = new Map<number, CacheEntry<RosterRecord[]>>();
+const depthChartCache = new Map<number, CacheEntry<DepthChartRecord[]>>();
 
 /** Season-aggregated player stats from nflverse. Cached for 24 hours. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function getCachedSeasonStats(season: number): Promise<any[]> {
+export async function getCachedSeasonStats(
+  season: number,
+): Promise<PlayerStatsRecord[]> {
   const cached = getOrExpire(playerStatsCache, season);
   if (cached) return cached;
 
@@ -173,14 +174,14 @@ export async function getCachedSeasonStats(season: number): Promise<any[]> {
 }
 
 /** Roster/depth chart entries from nflverse. Cached for 24 hours. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function getCachedNflRoster(season: number): Promise<any[]> {
+export async function getCachedNflRoster(
+  season: number,
+): Promise<RosterRecord[]> {
   const cached = getOrExpire(nflRosterCache, season);
   if (cached) return cached;
 
   try {
-    const roster = await loadRosters(season);
-    const data = Array.isArray(roster) ? roster : [];
+    const data = await loadRosters(season);
     nflRosterCache.set(season, {
       data,
       expiresAt: Date.now() + NFLVERSE_TTL,
@@ -193,14 +194,14 @@ export async function getCachedNflRoster(season: number): Promise<any[]> {
 }
 
 /** Depth chart entries from nflverse. Cached for 24 hours. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function getCachedDepthCharts(season: number): Promise<any[]> {
+export async function getCachedDepthCharts(
+  season: number,
+): Promise<DepthChartRecord[]> {
   const cached = getOrExpire(depthChartCache, season);
   if (cached) return cached;
 
   try {
-    const charts = await loadDepthCharts(season);
-    const data = Array.isArray(charts) ? charts : [];
+    const data = await loadDepthCharts(season);
     depthChartCache.set(season, {
       data,
       expiresAt: Date.now() + NFLVERSE_TTL,

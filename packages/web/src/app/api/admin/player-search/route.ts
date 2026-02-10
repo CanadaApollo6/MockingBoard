@@ -20,20 +20,19 @@ export async function GET(request: Request) {
   const roster = await getCachedNflRoster(statsYear);
 
   const results = roster
-    .filter((r: Record<string, unknown>) => {
+    .filter((r) => {
       if (team && r.team !== team) return false;
-      const name = String(r.full_name ?? '').toLowerCase();
-      return name.includes(query);
+      return (r.full_name ?? '').toLowerCase().includes(query);
     })
     .slice(0, 15)
-    .map((r: Record<string, unknown>) => ({
-      gsisId: String(r.gsis_id ?? ''),
-      name: String(r.full_name ?? ''),
-      position: String(r.position ?? ''),
+    .map((r) => ({
+      gsisId: r.gsis_id ?? '',
+      name: r.full_name ?? '',
+      position: r.position ?? '',
       jersey: String(r.jersey_number ?? ''),
-      college: String(r.college ?? ''),
-      team: String(r.team ?? ''),
-      yearsExp: typeof r.years_exp === 'number' ? r.years_exp : 0,
+      college: r.college ?? '',
+      team: r.team ?? '',
+      yearsExp: r.years_exp ?? 0,
     }));
 
   return NextResponse.json({ results });

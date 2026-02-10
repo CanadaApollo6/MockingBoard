@@ -3,7 +3,7 @@ import type {
   StringSelectMenuInteraction,
 } from 'discord.js';
 import type { TeamAbbreviation } from '@mockingboard/shared';
-import { teams } from '@mockingboard/shared';
+import { teams, isTeamAbbreviation } from '@mockingboard/shared';
 import { getOrCreateUser } from '../services/user.service.js';
 import { getDraft, getPickController } from '../services/draft.service.js';
 import type { Trade } from '@mockingboard/shared';
@@ -183,7 +183,15 @@ export async function handleTradeTargetSelect(
     interaction.user.username,
   );
 
-  const targetTeam = interaction.values[0] as TeamAbbreviation;
+  const targetValue = interaction.values[0];
+  if (!isTeamAbbreviation(targetValue)) {
+    await interaction.followUp({
+      content: 'Invalid team selection.',
+      ephemeral: true,
+    });
+    return;
+  }
+  const targetTeam = targetValue;
   const targetUserId = draft.teamAssignments[targetTeam];
   const teamInfo = teamSeeds.get(targetTeam);
   const targetName = teamInfo?.name ?? targetTeam;

@@ -1,8 +1,12 @@
 // Plain object representation of Firestore Timestamp.
 // Keeps shared package free of firebase-admin dependency.
+// Includes optional Admin SDK internal fields (_seconds, _nanoseconds)
+// which appear in some serialization paths.
 export interface FirestoreTimestamp {
   seconds: number;
   nanoseconds: number;
+  _seconds?: number;
+  _nanoseconds?: number;
 }
 
 // ---- Enums & Unions ----
@@ -70,6 +74,45 @@ export type TeamAbbreviation =
   | 'TB'
   | 'TEN'
   | 'WAS';
+
+const TEAM_ABBREVIATIONS: ReadonlySet<string> = new Set<string>([
+  'ARI',
+  'ATL',
+  'BAL',
+  'BUF',
+  'CAR',
+  'CHI',
+  'CIN',
+  'CLE',
+  'DAL',
+  'DEN',
+  'DET',
+  'GB',
+  'HOU',
+  'IND',
+  'JAX',
+  'KC',
+  'LAC',
+  'LAR',
+  'LV',
+  'MIA',
+  'MIN',
+  'NE',
+  'NO',
+  'NYG',
+  'NYJ',
+  'PHI',
+  'PIT',
+  'SEA',
+  'SF',
+  'TB',
+  'TEN',
+  'WAS',
+]);
+
+export function isTeamAbbreviation(value: string): value is TeamAbbreviation {
+  return TEAM_ABBREVIATIONS.has(value);
+}
 
 export type DraftStatus =
   | 'lobby'

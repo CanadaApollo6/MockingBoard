@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { extractTimestampMs } from '@/lib/format';
 
 interface CpuTradeResultProps {
   evaluation: CpuTradeEvaluation;
@@ -32,10 +33,7 @@ type TradeResultProps = CpuTradeResultProps | UserTradeResultProps;
 function TradeCountdown({ expiresAt }: { expiresAt: Trade['expiresAt'] }) {
   const [remaining, setRemaining] = useState(() => {
     if (!expiresAt) return 0;
-    const ms =
-      'seconds' in expiresAt
-        ? expiresAt.seconds * 1000
-        : new Date(expiresAt as unknown as string).getTime();
+    const ms = extractTimestampMs(expiresAt);
     return Math.max(0, Math.ceil((ms - Date.now()) / 1000));
   });
 

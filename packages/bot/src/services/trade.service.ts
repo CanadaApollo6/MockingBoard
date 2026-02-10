@@ -58,9 +58,16 @@ export async function getTrade(tradeId: string): Promise<Trade | null> {
   return { id: doc.id, ...doc.data() } as Trade;
 }
 
+/** Allow FieldValue sentinels (e.g. serverTimestamp) alongside normal types. */
+type FirestoreUpdate<T> = {
+  [K in keyof T]?: T[K] | FieldValue;
+};
+
 export async function updateTrade(
   tradeId: string,
-  updates: Partial<Omit<Trade, 'id' | 'draftId' | 'proposerId' | 'proposedAt'>>,
+  updates: FirestoreUpdate<
+    Omit<Trade, 'id' | 'draftId' | 'proposerId' | 'proposedAt'>
+  >,
 ): Promise<void> {
   await db.collection('trades').doc(tradeId).update(updates);
 }
@@ -127,7 +134,7 @@ export async function acceptTrade(
 
   await updateTrade(tradeId, {
     status: 'accepted',
-    resolvedAt: FieldValue.serverTimestamp() as unknown as Trade['resolvedAt'],
+    resolvedAt: FieldValue.serverTimestamp(),
   });
 
   return { ...trade, status: 'accepted' };
@@ -146,7 +153,7 @@ export async function rejectTrade(
 
   await updateTrade(tradeId, {
     status: 'rejected',
-    resolvedAt: FieldValue.serverTimestamp() as unknown as Trade['resolvedAt'],
+    resolvedAt: FieldValue.serverTimestamp(),
   });
 
   return { ...trade, status: 'rejected' };
@@ -165,7 +172,7 @@ export async function cancelTrade(
 
   await updateTrade(tradeId, {
     status: 'cancelled',
-    resolvedAt: FieldValue.serverTimestamp() as unknown as Trade['resolvedAt'],
+    resolvedAt: FieldValue.serverTimestamp(),
   });
 
   return { ...trade, status: 'cancelled' };
@@ -178,7 +185,7 @@ export async function expireTrade(tradeId: string): Promise<Trade> {
 
   await updateTrade(tradeId, {
     status: 'expired',
-    resolvedAt: FieldValue.serverTimestamp() as unknown as Trade['resolvedAt'],
+    resolvedAt: FieldValue.serverTimestamp(),
   });
 
   return { ...trade, status: 'expired' };

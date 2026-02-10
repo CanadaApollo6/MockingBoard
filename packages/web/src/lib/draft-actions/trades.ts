@@ -3,6 +3,7 @@ import 'server-only';
 import { FieldValue } from 'firebase-admin/firestore';
 import { adminDb } from '../firebase-admin';
 import { hydrateDoc } from '../sanitize';
+import { extractTimestampMs } from '../format';
 import type {
   Draft,
   Trade,
@@ -161,9 +162,5 @@ export async function cancelWebTrade(
 
 export function isTradeExpired(trade: Trade): boolean {
   if (!trade.expiresAt) return false;
-  const expiresMs =
-    'seconds' in trade.expiresAt
-      ? trade.expiresAt.seconds * 1000
-      : new Date(trade.expiresAt as unknown as string).getTime();
-  return Date.now() > expiresMs;
+  return Date.now() > extractTimestampMs(trade.expiresAt);
 }

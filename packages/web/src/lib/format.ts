@@ -3,15 +3,16 @@ import type { FirestoreTimestamp } from '@mockingboard/shared';
 /** Extract seconds from a timestamp that may use `_seconds` (Firestore Admin SDK
  *  internal format) or `seconds` (our canonical serialized format). */
 function extractSeconds(ts: FirestoreTimestamp): number {
-  return ts.seconds ?? (ts as unknown as { _seconds: number })._seconds ?? 0;
+  return ts.seconds ?? ts._seconds ?? 0;
 }
 
 function extractNanoseconds(ts: FirestoreTimestamp): number {
-  return (
-    ts.nanoseconds ??
-    (ts as unknown as { _nanoseconds: number })._nanoseconds ??
-    0
-  );
+  return ts.nanoseconds ?? ts._nanoseconds ?? 0;
+}
+
+/** Convert a FirestoreTimestamp to milliseconds since epoch. */
+export function extractTimestampMs(ts: FirestoreTimestamp): number {
+  return extractSeconds(ts) * 1000 + extractNanoseconds(ts) / 1_000_000;
 }
 
 export function timestampToDate(ts: FirestoreTimestamp): Date {
