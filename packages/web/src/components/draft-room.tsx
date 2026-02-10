@@ -11,19 +11,15 @@ import type {
   Trade,
 } from '@mockingboard/shared';
 import {
-  getPickController,
   prepareCpuPick,
-  getEffectiveNeeds,
-  getTeamDraftedPositions,
-  teamSeeds,
-  CPU_SPEED_DELAY,
-  suggestPick,
   POSITIONAL_VALUE,
   type CpuTradeEvaluation,
 } from '@mockingboard/shared';
 import { useLiveDraft } from '@/hooks/use-live-draft';
 import { useLiveTrades } from '@/hooks/use-live-trades';
-import { usePickTimer } from '@/hooks/use-pick-timer';
+import { useDraftCore } from '@/hooks/use-draft-core';
+import { useDraftTimer } from '@/hooks/use-draft-timer';
+import { useCpuAdvancement } from '@/hooks/use-cpu-advancement';
 import { PlayerPicker } from '@/components/player-picker';
 import { DraftBoard } from '@/components/draft-board';
 import { TradeModal } from '@/components/trade-modal';
@@ -100,39 +96,43 @@ export function DraftRoom({
     }
   }, [liveTrades, tradeResult]);
 
-  // CPU advancement state
-  const [advancingCpu, setAdvancingCpu] = useState(false);
-  const cpuSpeed = draft?.config.cpuSpeed ?? 'instant';
-  const tradesEnabled = draft?.config.tradesEnabled ?? false;
+  // Shared derived state
+  const {
+    playerMap,
+    availablePlayers,
+    currentSlot,
+    controller,
+    isUserTurn,
+    isActive,
+    isPaused,
+    isComplete,
+    isMultiTeam,
+    suggestion,
+    clockTeam,
+    clockRound,
+    clockPickNum,
+    clockOverall,
+    totalPicks,
+    displayedCount,
+    progress,
+  } = useDraftCore(draft, picks, players, userId, {
+    bigBoardRankings,
+    sortByBoard: sortMode === 'board',
+    boardRankMap,
+  });
 
-  const playerMap = useMemo(() => new Map(Object.entries(players)), [players]);
-
-  const availablePlayers = useMemo(() => {
-    if (!draft) return [];
-    const pickedSet = new Set(picks.map((p) => p.playerId));
-    const available = Object.values(players).filter(
-      (p) => !pickedSet.has(p.id),
-    );
-
-    if (sortMode === 'board' && boardRankMap) {
-      const onBoard = available.filter((p) => boardRankMap.has(p.id));
-      const offBoard = available.filter((p) => !boardRankMap.has(p.id));
-      onBoard.sort((a, b) => boardRankMap.get(a.id)! - boardRankMap.get(b.id)!);
-      offBoard.sort((a, b) => a.consensusRank - b.consensusRank);
-      return [...onBoard, ...offBoard];
-    }
-
-    return available.sort((a, b) => a.consensusRank - b.consensusRank);
-  }, [draft, picks, players, sortMode, boardRankMap]);
-
-  // Real draft state
-  const currentSlot = draft?.pickOrder[(draft?.currentPick ?? 1) - 1] ?? null;
-  const controller =
-    draft && currentSlot ? getPickController(draft, currentSlot) : null;
-  const isUserTurn = controller === userId;
-  const isActive = draft?.status === 'active';
-  const isPaused = draft?.status === 'paused';
-  const isComplete = draft?.status === 'complete';
+  // CPU advancement
+  const { advancingCpu } = useCpuAdvancement({
+    draftId,
+    isActive,
+    controller,
+    submitting,
+    cpuSpeed: draft?.config.cpuSpeed ?? 'instant',
+    tradesEnabled: draft?.config.tradesEnabled ?? false,
+    showTrade,
+    tradeResult,
+    onError: setError,
+  });
 
   // Redirect to recap page when draft completes
   useEffect(() => {
@@ -140,100 +140,6 @@ export function DraftRoom({
       router.push(`/drafts/${draftId}`);
     }
   }, [isComplete, advancingCpu, draftId, router]);
-
-  const userTeamCount = useMemo(() => {
-    if (!draft) return 0;
-    return Object.values(draft.teamAssignments).filter((uid) => uid === userId)
-      .length;
-  }, [draft, userId]);
-  const isMultiTeam = userTeamCount > 1 && userTeamCount < 32;
-
-  // Suggested pick for the user
-  const suggestion = useMemo(() => {
-    if (!isUserTurn || !isActive || advancingCpu || !currentSlot) return null;
-    const teamSeed = teamSeeds.get(currentSlot.team);
-    const draftedPositions = getTeamDraftedPositions(
-      draft!.pickOrder,
-      draft!.pickedPlayerIds ?? [],
-      currentSlot.team,
-      playerMap,
-    );
-    const effectiveNeeds = getEffectiveNeeds(
-      teamSeed?.needs ?? [],
-      draftedPositions,
-    );
-    return suggestPick(
-      availablePlayers,
-      effectiveNeeds,
-      currentSlot.overall,
-      bigBoardRankings,
-    );
-  }, [
-    isUserTurn,
-    isActive,
-    advancingCpu,
-    currentSlot,
-    draft,
-    availablePlayers,
-    playerMap,
-    bigBoardRankings,
-  ]);
-
-  // Unified CPU advancement: drives picks at the configured speed
-  useEffect(() => {
-    const isCpuTurn =
-      isActive &&
-      controller === null &&
-      !submitting &&
-      (!tradesEnabled || (!showTrade && !tradeResult));
-    if (!isCpuTurn) {
-      setAdvancingCpu(false);
-      return;
-    }
-
-    setAdvancingCpu(true);
-    let cancelled = false;
-
-    if (cpuSpeed === 'instant') {
-      // Full cascade — server writes all CPU picks, Firestore delivers them at once
-      fetch(`/api/drafts/${draftId}/advance`, { method: 'POST' })
-        .catch((err: Error) => setError(err.message))
-        .finally(() => {
-          if (!cancelled) setAdvancingCpu(false);
-        });
-    } else {
-      // Paced loop — advance one pick at a time with a delay between each
-      (async () => {
-        while (!cancelled) {
-          try {
-            const res = await fetch(
-              `/api/drafts/${draftId}/advance?mode=single`,
-              { method: 'POST' },
-            );
-            const data = await res.json();
-            if (!data.pick || data.isComplete || cancelled) break;
-            await new Promise((r) => setTimeout(r, CPU_SPEED_DELAY[cpuSpeed]));
-          } catch {
-            break;
-          }
-        }
-        if (!cancelled) setAdvancingCpu(false);
-      })();
-    }
-
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    isActive,
-    controller,
-    submitting,
-    tradesEnabled,
-    showTrade,
-    tradeResult,
-    cpuSpeed,
-    draftId,
-  ]);
 
   // Trade eligibility: any team not owned by the current user is a valid target
   const hasTradeTargets = useMemo(
@@ -250,15 +156,6 @@ export function DraftRoom({
     !showTrade &&
     !tradeResult &&
     !advancingCpu;
-
-  const clockTeam = currentSlot?.teamOverride ?? currentSlot?.team;
-  const clockRound = currentSlot?.round;
-  const clockPickNum = currentSlot?.pick;
-  const clockOverall = currentSlot?.overall;
-
-  const totalPicks = draft?.pickOrder.length ?? 0;
-  const displayedCount = picks.length;
-  const progress = totalPicks > 0 ? (displayedCount / totalPicks) * 100 : 0;
 
   const handlePick = useCallback(
     async (playerId: string) => {
@@ -411,33 +308,13 @@ export function DraftRoom({
     bigBoardRankings,
   ]);
 
-  const {
-    remaining,
-    isWarning,
-    isCritical,
-    reset: resetTimer,
-  } = usePickTimer({
+  const { remaining, clockUrgency } = useDraftTimer({
     secondsPerPick: draft?.config.secondsPerPick ?? 0,
     isActive: timerActive,
     onExpire: handleTimerExpire,
+    currentPick: draft?.currentPick,
+    status: draft?.status,
   });
-  const clockUrgency = isCritical
-    ? ('critical' as const)
-    : isWarning
-      ? ('warning' as const)
-      : ('normal' as const);
-
-  // Reset timer when pick changes or draft resumes from pause
-  const prevPickRef = useRef(draft?.currentPick);
-  const prevStatusRef = useRef(draft?.status);
-  useEffect(() => {
-    const pickChanged = draft?.currentPick !== prevPickRef.current;
-    const resumed =
-      prevStatusRef.current === 'paused' && draft?.status === 'active';
-    prevPickRef.current = draft?.currentPick;
-    prevStatusRef.current = draft?.status;
-    if (pickChanged || resumed) resetTimer();
-  }, [draft?.currentPick, draft?.status, resetTimer]);
 
   // Pause / resume
   const handlePause = useCallback(async () => {

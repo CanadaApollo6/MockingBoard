@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import type {
   Draft,
@@ -10,17 +10,13 @@ import type {
   Trade,
 } from '@mockingboard/shared';
 import {
-  getPickController,
   prepareCpuPick,
-  getEffectiveNeeds,
-  getTeamDraftedPositions,
-  teamSeeds,
-  suggestPick,
   POSITIONAL_VALUE,
   type CpuTradeEvaluation,
 } from '@mockingboard/shared';
 import { useGuestDraft } from '@/hooks/use-guest-draft';
-import { usePickTimer } from '@/hooks/use-pick-timer';
+import { useDraftCore } from '@/hooks/use-draft-core';
+import { useDraftTimer } from '@/hooks/use-draft-timer';
 import { PlayerPicker } from '@/components/player-picker';
 import { DraftBoard } from '@/components/draft-board';
 import { TradeModal } from '@/components/trade-modal';
@@ -52,8 +48,6 @@ export function GuestDraftRoom({ initialDraft, players }: GuestDraftRoomProps) {
     evaluation: CpuTradeEvaluation;
   } | null>(null);
 
-  const playerMap = useMemo(() => new Map(Object.entries(players)), [players]);
-
   // Skip entry animation during CPU cascade or when many picks land at once
   const prevPickCountRef = useRef(picks.length);
   const isLargeBatch = picks.length - prevPickCountRef.current > 1;
@@ -62,56 +56,28 @@ export function GuestDraftRoom({ initialDraft, players }: GuestDraftRoomProps) {
   });
   const skipAnimation = isProcessing || isLargeBatch;
 
-  const availablePlayers = useMemo(() => {
-    const pickedSet = new Set(picks.map((p) => p.playerId));
-    return Object.values(players)
-      .filter((p) => !pickedSet.has(p.id))
-      .sort((a, b) => a.consensusRank - b.consensusRank);
-  }, [picks, players]);
-
-  const currentSlot = draft.pickOrder[(draft.currentPick ?? 1) - 1] ?? null;
-  const controller = currentSlot ? getPickController(draft, currentSlot) : null;
-  const isUserTurn = controller === GUEST_ID;
-  const isActive = draft.status === 'active';
-  const isComplete = draft.status === 'complete';
-
-  const userTeamCount = useMemo(
-    () =>
-      Object.values(draft.teamAssignments).filter((uid) => uid === GUEST_ID)
-        .length,
-    [draft],
-  );
-  const isMultiTeam = userTeamCount > 1 && userTeamCount < 32;
-
-  // Suggested pick for the user
-  const suggestion = useMemo(() => {
-    if (!isUserTurn || !isActive || isProcessing || !currentSlot) return null;
-    const teamSeed = teamSeeds.get(currentSlot.team);
-    const draftedPositions = getTeamDraftedPositions(
-      draft.pickOrder,
-      draft.pickedPlayerIds ?? [],
-      currentSlot.team,
-      playerMap,
-    );
-    const effectiveNeeds = getEffectiveNeeds(
-      teamSeed?.needs ?? [],
-      draftedPositions,
-    );
-    return suggestPick(availablePlayers, effectiveNeeds, currentSlot.overall);
-  }, [
+  // Shared derived state
+  const {
+    playerMap,
+    availablePlayers,
+    currentSlot,
     isUserTurn,
     isActive,
-    isProcessing,
-    currentSlot,
-    draft,
-    availablePlayers,
-    playerMap,
-  ]);
+    isComplete,
+    isMultiTeam,
+    suggestion,
+    clockTeam,
+    clockRound,
+    clockPickNum,
+    clockOverall,
+    totalPicks,
+    displayedCount,
+    progress,
+  } = useDraftCore(draft, picks, players, GUEST_ID);
 
   // Trade eligibility
-  const hasCpuTeams = useMemo(
-    () => Object.values(draft.teamAssignments).some((uid) => uid === null),
-    [draft],
+  const hasCpuTeams = Object.values(draft.teamAssignments).some(
+    (uid) => uid === null,
   );
   const canTrade =
     isActive &&
@@ -120,14 +86,6 @@ export function GuestDraftRoom({ initialDraft, players }: GuestDraftRoomProps) {
     !showTrade &&
     !tradeResult &&
     !isProcessing;
-
-  const clockTeam = currentSlot?.team;
-  const clockRound = currentSlot?.round;
-  const clockPickNum = currentSlot?.pick;
-  const clockOverall = currentSlot?.overall;
-
-  const totalPicks = draft.pickOrder.length;
-  const progress = totalPicks > 0 ? (picks.length / totalPicks) * 100 : 0;
 
   const handlePick = useCallback(
     (playerId: string) => {
@@ -199,32 +157,13 @@ export function GuestDraftRoom({ initialDraft, players }: GuestDraftRoomProps) {
     handlePick(player.id);
   }, [currentSlot, draft, availablePlayers, playerMap, handlePick]);
 
-  const {
-    remaining,
-    isWarning,
-    isCritical,
-    reset: resetTimer,
-  } = usePickTimer({
+  const { remaining, clockUrgency } = useDraftTimer({
     secondsPerPick: draft.config.secondsPerPick ?? 0,
     isActive: timerActive,
     onExpire: handleTimerExpire,
+    currentPick: draft.currentPick,
+    status: paused ? 'paused' : draft.status,
   });
-  const clockUrgency = isCritical
-    ? ('critical' as const)
-    : isWarning
-      ? ('warning' as const)
-      : ('normal' as const);
-
-  // Reset timer when pick changes or draft unpauses
-  const prevPickRef = useRef(draft.currentPick);
-  const prevPausedRef = useRef(paused);
-  useEffect(() => {
-    const pickChanged = draft.currentPick !== prevPickRef.current;
-    const resumed = prevPausedRef.current && !paused;
-    prevPickRef.current = draft.currentPick;
-    prevPausedRef.current = paused;
-    if (pickChanged || resumed) resetTimer();
-  }, [draft.currentPick, paused, resetTimer]);
 
   const bannerNode = (
     <div className="rounded-lg border border-mb-accent/20 bg-mb-accent-muted px-4 py-3 text-sm text-muted-foreground">
@@ -246,7 +185,7 @@ export function GuestDraftRoom({ initialDraft, players }: GuestDraftRoomProps) {
           <>
             <DraftClock
               overall={clockOverall}
-              picksMade={picks.length}
+              picksMade={displayedCount}
               total={totalPicks}
               team={clockTeam as TeamAbbreviation}
               round={clockRound}
@@ -304,7 +243,7 @@ export function GuestDraftRoom({ initialDraft, players }: GuestDraftRoomProps) {
       <div>
         <div className="mb-1 flex justify-between text-xs text-muted-foreground">
           <span>
-            {picks.length} of {totalPicks} picks
+            {displayedCount} of {totalPicks} picks
           </span>
           <span>{Math.round(progress)}%</span>
         </div>
