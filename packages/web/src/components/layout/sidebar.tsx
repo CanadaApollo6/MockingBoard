@@ -49,7 +49,7 @@ const NAV_GROUPS = [
   {
     label: 'Scouting',
     items: [
-      { href: '/players', label: 'Players', icon: Shirt },
+      { href: '/prospects', label: 'Prospects', icon: Shirt },
       { href: '/board', label: 'My Board', icon: LayoutList },
       { href: '/rankings', label: 'Rankings', icon: BarChart3 },
       { href: '/boards', label: 'Boards', icon: Library },
