@@ -47,7 +47,7 @@ export async function POST(request: Request) {
       { merge: true },
     );
 
-    return NextResponse.json({ status: 'ok' });
+    return NextResponse.json({ ok: true });
   } catch (err) {
     console.error('Failed to create guest user:', err);
     return NextResponse.json(

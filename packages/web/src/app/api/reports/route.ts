@@ -55,6 +55,7 @@ export async function POST(request: Request) {
     playerId: string;
     year: number;
     grade?: number;
+    gradeSystem?: string;
     comparison?: string;
     strengths?: string[];
     weaknesses?: string[];
@@ -97,6 +98,8 @@ export async function POST(request: Request) {
       };
 
       if (body.grade !== undefined) updates.grade = body.grade;
+      if (body.gradeSystem !== undefined)
+        updates.gradeSystem = body.gradeSystem;
       if (body.comparison !== undefined) updates.comparison = body.comparison;
       if (body.strengths !== undefined) updates.strengths = body.strengths;
       if (body.weaknesses !== undefined) updates.weaknesses = body.weaknesses;
@@ -120,6 +123,7 @@ export async function POST(request: Request) {
       authorName,
       year,
       grade: body.grade ?? null,
+      gradeSystem: body.gradeSystem ?? null,
       comparison: body.comparison ?? null,
       strengths: body.strengths ?? [],
       weaknesses: body.weaknesses ?? [],

@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     const docRef = adminDb.collection('users').doc(uid);
     const doc = await docRef.get();
     if (doc.exists) {
-      return NextResponse.json({ status: 'ok' });
+      return NextResponse.json({ ok: true });
     }
 
     // Get the full Auth user record for display name and email
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
       updatedAt: now,
     });
 
-    return NextResponse.json({ status: 'ok' });
+    return NextResponse.json({ ok: true });
   } catch (err) {
     console.error('Google setup failed:', err);
     return NextResponse.json({ error: 'Setup failed' }, { status: 401 });

@@ -8,9 +8,11 @@ import {
   getUserReports,
   getPlayerMap,
 } from '@/lib/data';
-import { FollowButton } from '@/components/follow-button';
-import { BoardCard } from '@/components/board-card';
-import { ReportCard } from '@/components/report-card';
+import { getSessionUser } from '@/lib/auth-session';
+import { FollowButton } from '@/components/profile/follow-button';
+import { ProfileShareButton } from '@/components/share/profile-share-button';
+import { BoardCard } from '@/components/board/board-card';
+import { ReportCard } from '@/components/community/report-card';
 import { getCachedSeasonConfig } from '@/lib/cache';
 
 interface Props {
@@ -40,11 +42,14 @@ export default async function ProfilePage({ params }: Props) {
 
   if (!user) notFound();
 
-  const [counts, boards, reports] = await Promise.all([
+  const [session, counts, boards, reports] = await Promise.all([
+    getSessionUser(),
     getFollowCounts(user.id),
     getUserPublicBoards(user.id),
     getUserReports(user.id),
   ]);
+
+  const isOwnProfile = session?.uid === user.id;
 
   // Resolve player names for reports
   const { draftYear } = await getCachedSeasonConfig();
@@ -72,6 +77,13 @@ export default async function ProfilePage({ params }: Props) {
               {user.displayName}
             </h1>
             <FollowButton followeeId={user.id} />
+            {isOwnProfile && (
+              <ProfileShareButton
+                user={user}
+                boardCount={boards.length}
+                reportCount={reports.length}
+              />
+            )}
           </div>
 
           {user.bio && (

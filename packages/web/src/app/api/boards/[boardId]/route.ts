@@ -58,6 +58,9 @@ export async function PUT(
     visibility?: 'private' | 'public';
     slug?: string;
     description?: string;
+    grades?: Record<string, number>;
+    preferredGradeSystem?: string;
+    positionRankings?: Record<string, string[]>;
   };
 
   try {
@@ -65,6 +68,22 @@ export async function PUT(
   } catch {
     return NextResponse.json(
       { error: 'Invalid request body' },
+      { status: 400 },
+    );
+  }
+
+  const VALID_VISIBILITY = new Set(['private', 'public']);
+  const VALID_GRADE_SYSTEM = new Set(['tier', 'nfl', 'letter', 'projection']);
+
+  if (body.visibility && !VALID_VISIBILITY.has(body.visibility)) {
+    return NextResponse.json({ error: 'Invalid visibility' }, { status: 400 });
+  }
+  if (
+    body.preferredGradeSystem &&
+    !VALID_GRADE_SYSTEM.has(body.preferredGradeSystem)
+  ) {
+    return NextResponse.json(
+      { error: 'Invalid grade system' },
       { status: 400 },
     );
   }
@@ -97,6 +116,11 @@ export async function PUT(
     if (body.visibility !== undefined) updates.visibility = body.visibility;
     if (body.slug !== undefined) updates.slug = body.slug;
     if (body.description !== undefined) updates.description = body.description;
+    if (body.grades !== undefined) updates.grades = body.grades;
+    if (body.preferredGradeSystem !== undefined)
+      updates.preferredGradeSystem = body.preferredGradeSystem;
+    if (body.positionRankings !== undefined)
+      updates.positionRankings = body.positionRankings;
 
     await adminDb.collection('bigBoards').doc(boardId).update(updates);
 

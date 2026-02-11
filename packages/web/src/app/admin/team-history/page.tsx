@@ -9,7 +9,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 export default async function TeamHistoryPage() {
   const session = await getSessionUser();
   if (!session) redirect('/login');
-  if (!isAdmin(session.uid)) redirect('/admin');
+  if (!(await isAdmin(session.uid))) redirect('/admin');
 
   const { statsYear } = await getCachedSeasonConfig();
   const sorted = [...teams].sort((a, b) => a.name.localeCompare(b.name));

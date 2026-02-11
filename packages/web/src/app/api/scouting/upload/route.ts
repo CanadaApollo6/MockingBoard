@@ -49,7 +49,7 @@ export async function POST(request: Request) {
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  if (!isAdmin(session.uid)) {
+  if (!(await isAdmin(session.uid))) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 

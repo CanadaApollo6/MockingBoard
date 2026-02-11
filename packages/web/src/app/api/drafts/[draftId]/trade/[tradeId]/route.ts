@@ -7,9 +7,38 @@ import {
   isTradeExpired,
 } from '@/lib/draft-actions';
 import { adminDb } from '@/lib/firebase-admin';
+import { notifyTradeAccepted } from '@/lib/notifications';
+import { hydrateDoc } from '@/lib/sanitize';
+import { safeError } from '@/lib/validate';
 import type { Trade } from '@mockingboard/shared';
 
 type TradeAction = 'confirm' | 'force' | 'cancel' | 'accept' | 'reject';
+
+function sendTradeNotifications(trade: Trade, draftId: string) {
+  if (!trade.recipientId) return; // CPU trades don't need notifications
+
+  const recipientId = trade.recipientId;
+  Promise.all([
+    adminDb.collection('drafts').doc(draftId).get(),
+    adminDb.collection('users').doc(trade.proposerId).get(),
+    adminDb.collection('users').doc(recipientId).get(),
+  ])
+    .then(([draftSnap, proposerSnap, recipientSnap]) => {
+      const draftName = draftSnap.data()?.name ?? 'Draft';
+      const proposerName = proposerSnap.data()?.displayName ?? 'A manager';
+      const recipientName = recipientSnap.data()?.displayName ?? 'A manager';
+      return Promise.all([
+        notifyTradeAccepted(
+          trade.proposerId,
+          draftId,
+          draftName,
+          recipientName,
+        ),
+        notifyTradeAccepted(recipientId, draftId, draftName, proposerName),
+      ]);
+    })
+    .catch((err) => console.error('Trade notification failed:', err));
+}
 
 export async function POST(
   request: Request,
@@ -38,7 +67,7 @@ export async function POST(
     if (!tradeDoc.exists) {
       return NextResponse.json({ error: 'Trade not found' }, { status: 404 });
     }
-    const trade = { id: tradeDoc.id, ...tradeDoc.data() } as Trade;
+    const trade = hydrateDoc<Trade>(tradeDoc);
 
     if (trade.status !== 'pending') {
       return NextResponse.json(
@@ -74,6 +103,10 @@ export async function POST(
         }
         const force = body.action === 'force';
         const draft = await executeWebTrade(tradeId, draftId, force);
+
+        // Fire-and-forget: notify both parties
+        sendTradeNotifications(trade, draftId);
+
         return NextResponse.json({ status: 'executed', draft });
       }
 
@@ -85,6 +118,10 @@ export async function POST(
           );
         }
         const draft = await executeWebTrade(tradeId, draftId, false);
+
+        // Fire-and-forget: notify both parties
+        sendTradeNotifications(trade, draftId);
+
         return NextResponse.json({ status: 'executed', draft });
       }
 
@@ -106,7 +143,7 @@ export async function POST(
     console.error('Failed to process trade:', err);
     return NextResponse.json(
       {
-        error: err instanceof Error ? err.message : 'Failed to process trade',
+        error: safeError(err, 'Failed to process trade'),
       },
       { status: 500 },
     );

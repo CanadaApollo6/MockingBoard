@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import type {
   Draft,
   Pick,
@@ -7,7 +8,7 @@ import type {
   TeamAbbreviation,
 } from '@mockingboard/shared';
 import { useLiveDraft } from '@/hooks/use-live-draft';
-import { BareLayout } from '@/components/bare-layout';
+import { BareLayout } from '@/components/layout/bare-layout';
 import { getTeamName } from '@/lib/teams';
 import { getTeamColor, ensureVisible } from '@/lib/team-colors';
 import { getPositionColor } from '@/lib/position-colors';
@@ -31,7 +32,7 @@ export function TickerOverlay({
   const { draft, picks } = useLiveDraft(draftId, initialDraft, initialPicks);
   const searchParams = useSearchParams();
   const count = parseInt(searchParams.get('count') ?? '5', 10);
-  const playerMap = new Map(Object.entries(players));
+  const playerMap = useMemo(() => new Map(Object.entries(players)), [players]);
 
   if (!draft) return null;
 

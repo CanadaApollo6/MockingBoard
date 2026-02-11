@@ -8,7 +8,7 @@ import { ProspectsEditor } from './prospects-editor';
 export default async function AdminProspectsPage() {
   const session = await getSessionUser();
   if (!session) redirect('/login');
-  if (!isAdmin(session.uid)) {
+  if (!(await isAdmin(session.uid))) {
     return (
       <main className="mx-auto max-w-5xl px-4 py-8">
         <h1 className="text-2xl font-bold">Access Denied</h1>

@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getSessionUser } from '@/lib/auth-session';
 import { runCpuCascade, advanceSingleCpuPick } from '@/lib/draft-actions';
-import { adminDb } from '@/lib/firebase-admin';
-import type { Draft } from '@mockingboard/shared';
+import { getDraftOrFail } from '@/lib/data';
+import { AppError } from '@/lib/validate';
 
 export async function POST(
   request: Request,
@@ -15,18 +15,13 @@ export async function POST(
 
   const { draftId } = await params;
 
-  // Verify user is a participant
-  const draftDoc = await adminDb.collection('drafts').doc(draftId).get();
-  if (!draftDoc.exists) {
-    return NextResponse.json({ error: 'Draft not found' }, { status: 404 });
-  }
-  const draft = { id: draftDoc.id, ...draftDoc.data() } as Draft;
-
-  if (!draft.participants[session.uid]) {
-    return NextResponse.json({ error: 'Not a participant' }, { status: 403 });
-  }
-
   try {
+    const draft = await getDraftOrFail(draftId);
+
+    if (!draft.participants[session.uid]) {
+      return NextResponse.json({ error: 'Not a participant' }, { status: 403 });
+    }
+
     const url = new URL(request.url);
     const mode = url.searchParams.get('mode');
 
@@ -38,6 +33,9 @@ export async function POST(
     const { picks, isComplete } = await runCpuCascade(draftId);
     return NextResponse.json({ picks, isComplete });
   } catch (err) {
+    if (err instanceof AppError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     console.error('Failed to advance CPU pick:', err);
     return NextResponse.json(
       { error: 'Failed to advance pick' },

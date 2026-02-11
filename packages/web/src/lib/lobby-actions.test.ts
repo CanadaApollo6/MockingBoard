@@ -292,6 +292,7 @@ describe('startDraft', () => {
 
   it('does not run CPU cascade when first pick is human', async () => {
     // First slot team (DAL) is assigned to creator-1, so getPickController returns a user
+    mockGetPickController.mockReturnValue('creator-1');
     mockDraftDoc(
       makeDraft({
         pickOrder: [

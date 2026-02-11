@@ -4,8 +4,8 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAuth } from '@/components/auth-provider';
-import { AuthForm } from '@/components/auth-form';
+import { useAuth } from '@/components/auth/auth-provider';
+import { AuthForm } from '@/components/auth/auth-form';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 

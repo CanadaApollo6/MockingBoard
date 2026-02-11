@@ -5,11 +5,18 @@ import {
   getRecentCompletedDraft,
   getDraft,
   getTopDrafters,
+  getUserStats,
 } from '@/lib/data';
+import { teams } from '@mockingboard/shared';
 import { LandingHero } from '@/components/landing-hero';
 import { Dashboard } from '@/components/dashboard';
 import { getProspectOfTheDay } from '@/lib/prospect';
-import { getCachedSeasonConfig } from '@/lib/cache';
+import {
+  getCachedSeasonConfig,
+  getCachedTeamDocs,
+  getCachedSchedule,
+} from '@/lib/cache';
+import { TEAM_COLORS } from '@/lib/team-colors';
 import { adminDb } from '@/lib/firebase-admin';
 
 export default async function Home({
@@ -32,12 +39,38 @@ export default async function Home({
       getTopDrafters(5).catch(() => [] as never[]),
     ]);
 
+    const stats = await getUserStats(session.uid, user?.discordId).catch(
+      () => ({ totalDrafts: 0, totalPicks: 0 }),
+    );
+
     const featured = featuredDoc?.data() as
       | {
           prospectOfTheDay?: { playerId: string; overrideUntil: number };
           draftOfTheWeek?: { draftId: string; overrideUntil: number };
         }
       | undefined;
+
+    // Followed team season overview
+    let followedTeamData = undefined;
+    if (user?.followedTeam) {
+      const abbr = user.followedTeam;
+      const teamInfo = teams.find((t) => t.id === abbr);
+      const [teamDocs, schedule] = await Promise.all([
+        getCachedTeamDocs().catch(() => []),
+        getCachedSchedule(abbr).catch(() => null),
+      ]);
+      const teamDoc = teamDocs.find((d) => d.id === abbr);
+      const lastGame = schedule?.games[schedule.games.length - 1];
+      const colors = TEAM_COLORS[abbr];
+
+      followedTeamData = {
+        abbreviation: abbr,
+        name: teamInfo?.name ?? abbr,
+        colors: { primary: colors.primary, secondary: colors.secondary },
+        record: lastGame?.record,
+        seasonOverview: teamDoc?.seasonOverview,
+      };
+    }
 
     // Resolve draft of the week: check override first, then fall back to recent
     let draftOfWeek = null;
@@ -52,10 +85,11 @@ export default async function Home({
     return (
       <Dashboard
         displayName={user?.displayName ?? 'User'}
-        userStats={user?.stats}
+        userStats={stats.totalDrafts > 0 ? stats : undefined}
         prospect={getProspectOfTheDay(playerMap, featured?.prospectOfTheDay)}
         draftOfWeek={draftOfWeek}
         leaderboard={leaderboard}
+        followedTeam={followedTeamData}
       />
     );
   }

@@ -1,4 +1,5 @@
 import type { Player, Position, TeamAbbreviation, DraftSlot } from './types';
+import { teamSeeds } from './data/teams';
 
 export const CPU_PICK_WEIGHTS = { TOP: 0.7, MID: 0.9 } as const;
 
@@ -64,10 +65,19 @@ export function selectCpuPick(
 
   scored.sort((a, b) => a.score - b.score);
 
-  // Interpolated pick selection: wider candidate pool at higher randomness
+  // Interpolated pick selection: wider candidate pool at higher randomness,
+  // but damped when the top pick has a dominant score gap over alternatives.
+  // Gap ratio: how much worse #2 is relative to #1 (0 = identical, 1+ = dominant).
+  const gapDamp =
+    scored.length >= 2 && scored[0].score > 0
+      ? Math.min((scored[1].score - scored[0].score) / scored[0].score, 2) / 2
+      : 1;
+  // effectiveR shrinks toward 0 when the gap is large (dominant #1)
+  const effectiveR = r * (1 - gapDamp);
+
   const roll = Math.random();
   for (let i = 0; i < WILD_THRESHOLDS.length && i < scored.length; i++) {
-    const threshold = 1.0 - r * (1.0 - WILD_THRESHOLDS[i]);
+    const threshold = 1.0 - effectiveR * (1.0 - WILD_THRESHOLDS[i]);
     if (roll < threshold || i === scored.length - 1) {
       return scored[i].player;
     }
@@ -109,4 +119,33 @@ export function getTeamDraftedPositions(
     if (player) positions.push(player.position);
   }
   return positions;
+}
+
+/**
+ * Full CPU pick pipeline: resolve team needs, compute effective needs,
+ * and select a player. Consolidates the 10-line pattern repeated across
+ * bot, web, and guest draft code paths.
+ */
+export interface CpuPickContext {
+  team: TeamAbbreviation;
+  pickOrder: DraftSlot[];
+  pickedPlayerIds: string[];
+  playerMap: Map<string, Player>;
+  available: Player[];
+  options?: CpuPickOptions;
+}
+
+export function prepareCpuPick(ctx: CpuPickContext): Player {
+  const teamSeed = teamSeeds.get(ctx.team);
+  const draftedPositions = getTeamDraftedPositions(
+    ctx.pickOrder,
+    ctx.pickedPlayerIds,
+    ctx.team,
+    ctx.playerMap,
+  );
+  const effectiveNeeds = getEffectiveNeeds(
+    teamSeed?.needs ?? [],
+    draftedPositions,
+  );
+  return selectCpuPick(ctx.available, effectiveNeeds, ctx.options);
 }

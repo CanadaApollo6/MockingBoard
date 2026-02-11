@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { buildPickOrder, buildFuturePicks } from '@/lib/draft-actions';
 import { getPlayerMap } from '@/lib/data';
-import { GuestDraftRoom } from '@/components/guest-draft-room';
+import { LocalDraftRoom } from '@/components/draft/local-draft-room';
 import { teams, generateDraftName } from '@mockingboard/shared';
 import { getDraftDisplayName } from '@/lib/format';
 import type {
@@ -113,7 +113,7 @@ export default async function GuestDraftPage({
       <h1 className="mb-6 text-2xl font-bold">
         {getDraftDisplayName(initialDraft)}
       </h1>
-      <GuestDraftRoom initialDraft={initialDraft} players={players} />
+      <LocalDraftRoom initialDraft={initialDraft} players={players} />
     </main>
   );
 }

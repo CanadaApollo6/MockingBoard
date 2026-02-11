@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSessionUser } from '@/lib/auth-session';
 import { leaveLobby } from '@/lib/lobby-actions';
+import { safeError } from '@/lib/validate';
 
 export async function POST(
   _request: Request,
@@ -15,10 +16,11 @@ export async function POST(
 
   try {
     await leaveLobby(draftId, session.uid);
-    return NextResponse.json({ status: 'ok' });
+    return NextResponse.json({ ok: true });
   } catch (err) {
-    const message =
-      err instanceof Error ? err.message : 'Failed to leave draft';
-    return NextResponse.json({ error: message }, { status: 400 });
+    return NextResponse.json(
+      { error: safeError(err, 'Failed to leave draft') },
+      { status: 400 },
+    );
   }
 }

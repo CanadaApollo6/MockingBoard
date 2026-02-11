@@ -3,7 +3,8 @@ import 'server-only';
 import { Timestamp } from 'firebase-admin/firestore';
 import { adminDb } from './firebase-admin';
 import { getCachedPlayerMap, getCachedScoutProfiles } from './cache';
-import { sanitize } from './sanitize';
+import { sanitize, hydrateDoc, hydrateDocs } from './sanitize';
+import { AppError } from './validate';
 import type {
   Draft,
   Pick,
@@ -29,15 +30,19 @@ export async function getDrafts(options?: {
   query = query.limit(options?.limit ?? 50);
 
   const snapshot = await query.get();
-  return sanitize(
-    snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Draft),
-  );
+  return sanitize(hydrateDocs<Draft>(snapshot));
 }
 
 export async function getDraft(draftId: string): Promise<Draft | null> {
   const doc = await adminDb.collection('drafts').doc(draftId).get();
   if (!doc.exists) return null;
-  return sanitize({ id: doc.id, ...doc.data() } as Draft);
+  return sanitize(hydrateDoc<Draft>(doc));
+}
+
+export async function getDraftOrFail(draftId: string): Promise<Draft> {
+  const draft = await getDraft(draftId);
+  if (!draft) throw new AppError('Draft not found', 404);
+  return draft;
 }
 
 export async function getDraftPicks(draftId: string): Promise<Pick[]> {
@@ -48,9 +53,7 @@ export async function getDraftPicks(draftId: string): Promise<Pick[]> {
     .orderBy('overall')
     .get();
 
-  return sanitize(
-    snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Pick),
-  );
+  return sanitize(hydrateDocs<Pick>(snapshot));
 }
 
 export async function getPlayerMap(year: number): Promise<Map<string, Player>> {
@@ -64,9 +67,7 @@ export async function getDraftTrades(draftId: string): Promise<Trade[]> {
     .where('status', '==', 'accepted')
     .get();
 
-  return sanitize(
-    snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Trade),
-  );
+  return sanitize(hydrateDocs<Trade>(snapshot));
 }
 
 export async function getPublicLobbies(): Promise<Draft[]> {
@@ -78,9 +79,7 @@ export async function getPublicLobbies(): Promise<Draft[]> {
     .limit(20)
     .get();
 
-  return sanitize(
-    snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Draft),
-  );
+  return sanitize(hydrateDocs<Draft>(snapshot));
 }
 
 export async function getDraftsPaginated(options: {
@@ -103,9 +102,7 @@ export async function getDraftsPaginated(options: {
   query = query.limit(fetchLimit + 1);
 
   const snapshot = await query.get();
-  let drafts = sanitize(
-    snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Draft),
-  );
+  let drafts = sanitize(hydrateDocs<Draft>(snapshot));
 
   if (options.excludePrivate) {
     drafts = drafts.filter((d) => d.visibility !== 'private');
@@ -168,43 +165,38 @@ export async function getUserDraftsPaginated(
   return { drafts: sanitized.slice(0, limit), hasMore };
 }
 
-export async function getUserDrafts(
+// ---- User Stats ----
+
+export async function getUserStats(
   userId: string,
   discordId?: string,
-): Promise<Draft[]> {
+): Promise<{ totalDrafts: number; totalPicks: number }> {
   const ids = [userId, ...(discordId ? [discordId] : [])];
 
-  const [byParticipant, byCreator] = await Promise.all([
-    adminDb
-      .collection('drafts')
-      .where('participantIds', 'array-contains-any', ids)
-      .orderBy('createdAt', 'desc')
-      .limit(50)
-      .get(),
-    adminDb
-      .collection('drafts')
-      .where('createdBy', '==', userId)
-      .orderBy('createdAt', 'desc')
-      .limit(50)
-      .get(),
-  ]);
+  const draftsSnap = await adminDb
+    .collection('drafts')
+    .where('participantIds', 'array-contains-any', ids)
+    .select('status')
+    .get();
 
-  const seen = new Set<string>();
-  const drafts: Draft[] = [];
+  const completedDrafts = draftsSnap.docs.filter(
+    (d) => d.data().status === 'complete',
+  );
+  const totalDrafts = completedDrafts.length;
 
-  for (const doc of [...byParticipant.docs, ...byCreator.docs]) {
-    if (seen.has(doc.id)) continue;
-    seen.add(doc.id);
-    drafts.push({ id: doc.id, ...doc.data() } as Draft);
-  }
+  const pickCounts = await Promise.all(
+    completedDrafts.map((d) =>
+      d.ref
+        .collection('picks')
+        .where('userId', '==', userId)
+        .select()
+        .get()
+        .then((snap) => snap.size),
+    ),
+  );
+  const totalPicks = pickCounts.reduce((sum, c) => sum + c, 0);
 
-  drafts.sort((a, b) => {
-    const aTime = a.createdAt?.seconds ?? 0;
-    const bTime = b.createdAt?.seconds ?? 0;
-    return bTime - aTime;
-  });
-
-  return sanitize(drafts.slice(0, 50));
+  return { totalDrafts, totalPicks };
 }
 
 // ---- Scout Profiles ----
@@ -239,15 +231,13 @@ export async function getUserBoards(userId: string): Promise<BigBoard[]> {
     .orderBy('updatedAt', 'desc')
     .get();
 
-  return sanitize(
-    snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as BigBoard),
-  );
+  return sanitize(hydrateDocs<BigBoard>(snapshot));
 }
 
 export async function getBigBoard(boardId: string): Promise<BigBoard | null> {
   const doc = await adminDb.collection('bigBoards').doc(boardId).get();
   if (!doc.exists) return null;
-  return sanitize({ id: doc.id, ...doc.data() } as BigBoard);
+  return sanitize(hydrateDoc<BigBoard>(doc));
 }
 
 export async function getUserBoardForYear(
@@ -264,7 +254,7 @@ export async function getUserBoardForYear(
 
   if (snapshot.empty) return null;
   const doc = snapshot.docs[0];
-  return sanitize({ id: doc.id, ...doc.data() } as BigBoard);
+  return sanitize(hydrateDoc<BigBoard>(doc));
 }
 
 export async function getBoardSnapshots(
@@ -277,9 +267,7 @@ export async function getBoardSnapshots(
     .orderBy('createdAt', 'desc')
     .get();
 
-  return snap.docs.map(
-    (doc) => sanitize({ id: doc.id, ...doc.data() }) as BoardSnapshot,
-  );
+  return sanitize(hydrateDocs<BoardSnapshot>(snap));
 }
 
 export async function getBoardSnapshot(
@@ -294,7 +282,7 @@ export async function getBoardSnapshot(
     .get();
 
   if (!doc.exists) return null;
-  return sanitize({ id: doc.id, ...doc.data() }) as BoardSnapshot;
+  return sanitize(hydrateDoc<BoardSnapshot>(doc));
 }
 
 export async function getPublicBoards(options?: {
@@ -314,9 +302,7 @@ export async function getPublicBoards(options?: {
   query = query.limit(limit + 1);
 
   const snapshot = await query.get();
-  const boards = sanitize(
-    snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as BigBoard),
-  );
+  const boards = sanitize(hydrateDocs<BigBoard>(snapshot));
 
   const hasMore = boards.length > limit;
   return { boards: boards.slice(0, limit), hasMore };
@@ -334,11 +320,7 @@ export async function getPlayerReports(
     .limit(50)
     .get();
 
-  return sanitize(
-    snapshot.docs.map(
-      (doc) => ({ id: doc.id, ...doc.data() }) as ScoutingReport,
-    ),
-  );
+  return sanitize(hydrateDocs<ScoutingReport>(snapshot));
 }
 
 export async function getBigBoardBySlug(
@@ -352,8 +334,7 @@ export async function getBigBoardBySlug(
     .get();
 
   if (snapshot.empty) return null;
-  const doc = snapshot.docs[0];
-  return sanitize({ id: doc.id, ...doc.data() } as BigBoard);
+  return sanitize(hydrateDoc<BigBoard>(snapshot.docs[0]));
 }
 
 // ---- User Profiles ----
@@ -367,8 +348,7 @@ export async function getUserBySlug(slug: string): Promise<User | null> {
     .get();
 
   if (snapshot.empty) return null;
-  const doc = snapshot.docs[0];
-  return sanitize({ id: doc.id, ...doc.data() } as User);
+  return sanitize(hydrateDoc<User>(snapshot.docs[0]));
 }
 
 export async function getPublicUsers(options?: {
@@ -388,9 +368,7 @@ export async function getPublicUsers(options?: {
   query = query.limit(limit + 1);
 
   const snapshot = await query.get();
-  const users = sanitize(
-    snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as User),
-  );
+  const users = sanitize(hydrateDocs<User>(snapshot));
 
   const hasMore = users.length > limit;
   return { users: users.slice(0, limit), hasMore };
@@ -427,9 +405,7 @@ export async function getUserPublicBoards(userId: string): Promise<BigBoard[]> {
     .limit(10)
     .get();
 
-  return sanitize(
-    snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as BigBoard),
-  );
+  return sanitize(hydrateDocs<BigBoard>(snapshot));
 }
 
 export async function getUserReports(
@@ -442,11 +418,7 @@ export async function getUserReports(
     .limit(20)
     .get();
 
-  return sanitize(
-    snapshot.docs.map(
-      (doc) => ({ id: doc.id, ...doc.data() }) as ScoutingReport,
-    ),
-  );
+  return sanitize(hydrateDocs<ScoutingReport>(snapshot));
 }
 
 // ---- Dashboard ----
@@ -459,9 +431,9 @@ export async function getRecentCompletedDraft(): Promise<Draft | null> {
     .limit(5)
     .get();
 
-  const drafts = snapshot.docs
-    .map((doc) => ({ id: doc.id, ...doc.data() }) as Draft)
-    .filter((d) => d.visibility !== 'private');
+  const drafts = hydrateDocs<Draft>(snapshot).filter(
+    (d) => d.visibility !== 'private',
+  );
 
   if (drafts.length === 0) return null;
   return sanitize(drafts[0]);
@@ -475,8 +447,7 @@ export async function getTopDrafters(limit = 5): Promise<User[]> {
     .get();
 
   return sanitize(
-    snapshot.docs
-      .map((doc) => ({ id: doc.id, ...doc.data() }) as User)
+    hydrateDocs<User>(snapshot)
       .filter((u) => !u.isGuest && (u.stats?.totalDrafts ?? 0) > 0)
       .slice(0, limit),
   );

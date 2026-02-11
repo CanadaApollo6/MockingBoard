@@ -5,7 +5,14 @@ import type { Position } from '@mockingboard/shared';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
+import { getErrorMessage } from '@/lib/validate';
 
 interface ScoutOption {
   id: string;
@@ -113,7 +120,7 @@ export function CsvUploadPage({
       setPreview(data);
       setExcludeKeys(new Set());
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Preview failed');
+      setError(getErrorMessage(err, 'Preview failed'));
       setState('idle');
     }
   }
@@ -143,7 +150,7 @@ export function CsvUploadPage({
       setCommitResult(data);
       setState('done');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Commit failed');
+      setError(getErrorMessage(err, 'Commit failed'));
       setState('previewing');
     }
   }
@@ -341,14 +348,18 @@ export function CsvUploadPage({
           <label className="mb-1 block text-sm font-medium">Position</label>
           <Select
             value={position}
-            onChange={(e) => setPosition(e.target.value as Position)}
-            className="w-full"
+            onValueChange={(v) => setPosition(v as Position)}
           >
-            {POSITIONS.map((pos) => (
-              <option key={pos} value={pos}>
-                {pos}
-              </option>
-            ))}
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {POSITIONS.map((pos) => (
+                <SelectItem key={pos} value={pos}>
+                  {pos}
+                </SelectItem>
+              ))}
+            </SelectContent>
           </Select>
         </div>
 
@@ -356,16 +367,17 @@ export function CsvUploadPage({
           <label className="mb-1 block text-sm font-medium">
             Scout Profile
           </label>
-          <Select
-            value={scoutProfileId}
-            onChange={(e) => setScoutProfileId(e.target.value)}
-            className="w-full"
-          >
-            {scoutProfiles.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
+          <Select value={scoutProfileId} onValueChange={setScoutProfileId}>
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {scoutProfiles.map((p) => (
+                <SelectItem key={p.id} value={p.id}>
+                  {p.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
           </Select>
         </div>
 

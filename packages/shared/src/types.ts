@@ -1,8 +1,12 @@
 // Plain object representation of Firestore Timestamp.
 // Keeps shared package free of firebase-admin dependency.
+// Includes optional Admin SDK internal fields (_seconds, _nanoseconds)
+// which appear in some serialization paths.
 export interface FirestoreTimestamp {
   seconds: number;
   nanoseconds: number;
+  _seconds?: number;
+  _nanoseconds?: number;
 }
 
 // ---- Enums & Unions ----
@@ -71,6 +75,45 @@ export type TeamAbbreviation =
   | 'TEN'
   | 'WAS';
 
+const TEAM_ABBREVIATIONS: ReadonlySet<string> = new Set<string>([
+  'ARI',
+  'ATL',
+  'BAL',
+  'BUF',
+  'CAR',
+  'CHI',
+  'CIN',
+  'CLE',
+  'DAL',
+  'DEN',
+  'DET',
+  'GB',
+  'HOU',
+  'IND',
+  'JAX',
+  'KC',
+  'LAC',
+  'LAR',
+  'LV',
+  'MIA',
+  'MIN',
+  'NE',
+  'NO',
+  'NYG',
+  'NYJ',
+  'PHI',
+  'PIT',
+  'SEA',
+  'SF',
+  'TB',
+  'TEN',
+  'WAS',
+]);
+
+export function isTeamAbbreviation(value: string): value is TeamAbbreviation {
+  return TEAM_ABBREVIATIONS.has(value);
+}
+
 export type DraftStatus =
   | 'lobby'
   | 'active'
@@ -138,6 +181,11 @@ export interface User {
   isPublic?: boolean;
   favoriteTeam?: TeamAbbreviation;
   favoriteSchool?: string;
+  followedTeam?: TeamAbbreviation;
+  notificationPreferences?: {
+    inApp: boolean;
+    discord: boolean;
+  };
 }
 
 export interface Draft {
@@ -349,6 +397,8 @@ export interface ScoutProfile {
 
 export type BoardVisibility = 'private' | 'public';
 
+export type GradeSystem = 'tier' | 'nfl' | 'letter' | 'projection';
+
 export interface BigBoard {
   id: string;
   userId: string;
@@ -361,6 +411,9 @@ export interface BigBoard {
   slug?: string;
   description?: string;
   authorName?: string;
+  grades?: Record<string, number>;
+  preferredGradeSystem?: GradeSystem;
+  positionRankings?: Partial<Record<Position, string[]>>;
   createdAt: FirestoreTimestamp;
   updatedAt: FirestoreTimestamp;
 }
@@ -389,6 +442,7 @@ export interface ScoutingReport {
   authorName: string;
   year: number;
   grade?: number;
+  gradeSystem?: GradeSystem;
   comparison?: string;
   strengths?: string[];
   weaknesses?: string[];
@@ -418,9 +472,11 @@ export interface Coach {
 export interface KeyPlayerOverride {
   gsisId: string;
   name: string;
-  position: string;
+  position: Position;
   jersey: string;
   college: string;
+  experience?: number;
+  stats?: { label: string; value: string }[];
   statOverrides?: Record<string, number | string | null>;
 }
 
@@ -429,6 +485,20 @@ export interface KeyPlayerOverride {
 export interface FrontOfficeStaff {
   name: string;
   title: string;
+  since?: number;
+}
+
+// ---- Season Overview Types ----
+
+export interface Accolade {
+  player: string;
+  award: string;
+}
+
+export interface SeasonOverview {
+  finalResult?: string;
+  divisionResult?: string;
+  accolades?: Accolade[];
 }
 
 // ---- Team Season Types ----
@@ -512,6 +582,8 @@ export interface PickGrade {
   /** Position's index in team needs, or -1 if not a need */
   needIndex: number;
   hadBetterAlternative: boolean;
+  /** Consensus rank of the best player available at this pick slot */
+  bestAvailableRank: number;
   surplusValue: number;
   positionalMultiplier: number;
   /** Board rank - overall, if board provided */
@@ -525,7 +597,6 @@ export interface TeamDraftGrade {
   tier: string;
   picks: PickGrade[];
   scores: {
-    value: number;
     positionalValue: number;
     surplusValue: number;
     needs: number;
@@ -567,4 +638,38 @@ export interface SuggestedPick {
   playerId: string;
   score: number;
   reason: string;
+}
+
+// ---- Board Generation Types ----
+
+export interface BoardGenerationConfig {
+  position: Position | 'ALL';
+  weights: {
+    production: number; // 0-100
+    athleticism: number; // 0-100
+    conference: number; // 0-100
+    consensus: number; // 0-100
+  };
+  statOverrides?: Partial<Record<string, number>>; // stat key → weight 0-100
+}
+
+// ---- Notification Types ----
+
+export type NotificationType =
+  | 'new-follower'
+  | 'your-turn'
+  | 'trade-accepted'
+  | 'new-board';
+
+export interface AppNotification {
+  id: string;
+  userId: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+  link?: string;
+  read: boolean;
+  createdAt: FirestoreTimestamp;
+  actorId?: string;
+  actorName?: string;
 }

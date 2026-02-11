@@ -3,7 +3,7 @@ import type {
   StringSelectMenuInteraction,
 } from 'discord.js';
 import type { TeamAbbreviation } from '@mockingboard/shared';
-import { teams } from '@mockingboard/shared';
+import { teams, isTeamAbbreviation } from '@mockingboard/shared';
 import { getOrCreateUser } from '../services/user.service.js';
 import { getDraft, updateDraft } from '../services/draft.service.js';
 import {
@@ -17,7 +17,7 @@ import {
   assertDraftCreator,
   describeDraftStatus,
 } from './shared.js';
-import { advanceDraft } from './draftPicking.js';
+import { advanceDraft } from './draftAdvance.js';
 
 /**
  * Handle "Join Draft" button click
@@ -226,7 +226,15 @@ export async function handleTeamSelect(
     interaction.user.displayAvatarURL(),
   );
 
-  const selectedTeam = interaction.values[0] as TeamAbbreviation;
+  const selectedValue = interaction.values[0];
+  if (!isTeamAbbreviation(selectedValue)) {
+    await interaction.followUp({
+      content: 'Invalid team selection.',
+      ephemeral: true,
+    });
+    return;
+  }
+  const selectedTeam = selectedValue;
 
   if (draft.teamAssignments[selectedTeam] !== null) {
     await interaction.followUp({

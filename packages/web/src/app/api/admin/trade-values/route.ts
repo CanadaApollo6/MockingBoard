@@ -8,7 +8,7 @@ export async function GET() {
   const session = await getSessionUser();
   if (!session)
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (!isAdmin(session.uid))
+  if (!(await isAdmin(session.uid)))
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const doc = await adminDb.collection('config').doc('tradeValues').get();
@@ -19,7 +19,7 @@ export async function POST(request: Request) {
   const session = await getSessionUser();
   if (!session)
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (!isAdmin(session.uid))
+  if (!(await isAdmin(session.uid)))
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const body = await request.json();

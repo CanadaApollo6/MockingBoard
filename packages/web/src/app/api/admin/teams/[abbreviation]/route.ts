@@ -10,6 +10,7 @@ import type {
   Coach,
   FrontOfficeStaff,
   FuturePickSeed,
+  SeasonOverview,
   Position,
   TeamAbbreviation,
 } from '@mockingboard/shared';
@@ -24,7 +25,7 @@ export async function GET(
   const session = await getSessionUser();
   if (!session)
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (!isAdmin(session.uid))
+  if (!(await isAdmin(session.uid)))
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const { abbreviation } = await params;
@@ -41,6 +42,8 @@ export async function GET(
     frontOffice: data.frontOffice ?? [],
     needs: data.needs ?? [],
     futurePicks: data.futurePicks ?? [],
+    seasonOverview: data.seasonOverview ?? { accolades: [] },
+    city: data.city ?? '',
   });
 }
 
@@ -51,7 +54,7 @@ export async function POST(
   const session = await getSessionUser();
   if (!session)
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (!isAdmin(session.uid))
+  if (!(await isAdmin(session.uid)))
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const { abbreviation } = await params;
@@ -85,6 +88,17 @@ export async function POST(
     update.futurePicks = body.futurePicks as FuturePickSeed[];
   }
 
+  if (body.city !== undefined) {
+    update.city = body.city as string;
+  }
+
+  if (body.seasonOverview !== undefined) {
+    const so = body.seasonOverview as SeasonOverview;
+    if (so.accolades && so.accolades.length > 20)
+      return NextResponse.json({ error: 'Max 20 accolades' }, { status: 400 });
+    update.seasonOverview = so;
+  }
+
   if (Object.keys(update).length === 0)
     return NextResponse.json({ error: 'No data provided' }, { status: 400 });
 
@@ -96,6 +110,7 @@ export async function POST(
 
   resetTeamsCache();
   revalidatePath(`/teams/${abbr}`);
+  revalidatePath(`/teams/${abbr.toLowerCase()}`);
   revalidatePath('/teams');
 
   return NextResponse.json({ ok: true });

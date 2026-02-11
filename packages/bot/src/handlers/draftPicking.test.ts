@@ -21,10 +21,6 @@ vi.mock('../services/user.service.js', () => ({
   getOrCreateUser: vi.fn(),
 }));
 
-vi.mock('../services/cpu.service.js', () => ({
-  selectCpuPick: vi.fn(),
-}));
-
 vi.mock('../commands/draft.js', () => ({
   getCachedPlayers: vi.fn(),
 }));
@@ -60,14 +56,13 @@ import {
   handlePickButton,
   handlePick,
   handlePositionFilter,
-  advanceDraft,
 } from './draftPicking.js';
+import { advanceDraft } from './draftAdvance.js';
 
 // Import mocked modules to get references to the mock functions
 import * as draftService from '../services/draft.service.js';
 import * as userService from '../services/user.service.js';
 import * as pickService from '../services/pick.service.js';
-import * as cpuService from '../services/cpu.service.js';
 import * as draftCommand from '../commands/draft.js';
 
 // Cast to mocks for type safety
@@ -78,7 +73,6 @@ const mockClearPickTimer = draftService.clearPickTimer as Mock;
 const mockGetPickController = draftService.getPickController as Mock;
 const mockGetOrCreateUser = userService.getOrCreateUser as Mock;
 const mockGetPicksByDraft = pickService.getPicksByDraft as Mock;
-const mockSelectCpuPick = cpuService.selectCpuPick as Mock;
 const mockGetCachedPlayers = draftCommand.getCachedPlayers as Mock;
 
 function makeDraft(overrides: Partial<Draft> = {}): Draft {
@@ -497,20 +491,18 @@ describe('draftPicking handlers', () => {
       const draft = makeDraft({
         config: { ...makeDraft().config, cpuSpeed: 'instant' },
       });
-      const player = makePlayer({ id: 'cpu-pick' });
       // getPickController called in advanceDraft and again in doCpuPicksBatch loop
       mockGetPickController.mockReturnValue(null);
-      mockSelectCpuPick.mockReturnValue(player);
       mockRecordPickAndAdvance.mockResolvedValue({ isComplete: true });
       mockGetPicksByDraft.mockResolvedValue([]);
 
       const interaction = createMockInteraction();
       await advanceDraft(interaction, draft);
 
-      expect(mockSelectCpuPick).toHaveBeenCalled();
+      // prepareCpuPick runs with real logic and picks from available players
       expect(mockRecordPickAndAdvance).toHaveBeenCalledWith(
         'draft-1',
-        'cpu-pick',
+        expect.any(String),
         null,
       );
     });

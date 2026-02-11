@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
-import type { TeamAbbreviation, Position } from '@mockingboard/shared';
+import type { Position } from '@mockingboard/shared';
 import { teams } from '@mockingboard/shared';
 import { TEAM_COLORS } from '@/lib/team-colors';
 import { getPositionColor } from '@/lib/position-colors';
@@ -28,16 +28,6 @@ export function TeamDirectory({ capital }: TeamDirectoryProps) {
       return true;
     });
   }, [conference, division]);
-
-  // Rank teams by total capital value (descending)
-  const valueRanks = useMemo(() => {
-    const sorted = [...teams]
-      .map((t) => ({ id: t.id, value: capital[t.id]?.totalValue ?? 0 }))
-      .sort((a, b) => b.value - a.value);
-    const ranks = new Map<TeamAbbreviation, number>();
-    sorted.forEach((entry, i) => ranks.set(entry.id, i + 1));
-    return ranks;
-  }, [capital]);
 
   return (
     <div className="space-y-6">
@@ -71,7 +61,6 @@ export function TeamDirectory({ capital }: TeamDirectoryProps) {
         {filtered.map((team) => {
           const colors = TEAM_COLORS[team.id];
           const cap = capital[team.id];
-          const rank = valueRanks.get(team.id) ?? 32;
 
           return (
             <Link key={team.id} href={`/teams/${team.id}`}>
@@ -95,9 +84,6 @@ export function TeamDirectory({ capital }: TeamDirectoryProps) {
                           {team.conference} {team.division}
                         </p>
                       </div>
-                      <span className="shrink-0 font-mono text-xs text-muted-foreground">
-                        #{rank}
-                      </span>
                     </div>
 
                     {/* Draft capital summary */}
@@ -106,12 +92,11 @@ export function TeamDirectory({ capital }: TeamDirectoryProps) {
                         {cap?.pickCount ?? 0} pick
                         {(cap?.pickCount ?? 0) !== 1 ? 's' : ''}
                       </span>
-                      <span>{(cap?.totalValue ?? 0).toFixed(0)} pts</span>
                     </div>
 
                     {/* Top needs */}
                     <div className="mt-3 flex flex-wrap gap-1">
-                      {team.needs.slice(0, 4).map((pos: Position) => (
+                      {team.needs.slice(0, 5).map((pos: Position) => (
                         <Badge
                           key={pos}
                           style={{
@@ -123,12 +108,12 @@ export function TeamDirectory({ capital }: TeamDirectoryProps) {
                           {pos}
                         </Badge>
                       ))}
-                      {team.needs.length > 4 && (
+                      {team.needs.length > 5 && (
                         <Badge
                           variant="outline"
                           className="px-1.5 py-0 text-[10px]"
                         >
-                          +{team.needs.length - 4}
+                          +{team.needs.length - 5}
                         </Badge>
                       )}
                     </div>

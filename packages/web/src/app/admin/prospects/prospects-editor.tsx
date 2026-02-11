@@ -5,8 +5,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
 import type { Player, Position } from '@mockingboard/shared';
+import { getErrorMessage } from '@/lib/validate';
 
 const ALL_POSITIONS: Position[] = [
   'QB',
@@ -106,7 +113,7 @@ export function ProspectsEditor({ initialYear }: ProspectsEditorProps) {
     } catch (err) {
       setMessage({
         type: 'error',
-        text: err instanceof Error ? err.message : 'Save failed',
+        text: getErrorMessage(err, 'Save failed'),
       });
     }
   };
@@ -124,7 +131,7 @@ export function ProspectsEditor({ initialYear }: ProspectsEditorProps) {
     } catch (err) {
       setMessage({
         type: 'error',
-        text: err instanceof Error ? err.message : 'Delete failed',
+        text: getErrorMessage(err, 'Delete failed'),
       });
     }
   };
@@ -147,16 +154,17 @@ export function ProspectsEditor({ initialYear }: ProspectsEditorProps) {
           placeholder="Search name or school..."
           className="w-48"
         />
-        <Select
-          value={posFilter}
-          onChange={(e) => setPosFilter(e.target.value)}
-        >
-          <option value="">All Positions</option>
-          {ALL_POSITIONS.map((p) => (
-            <option key={p} value={p}>
-              {p}
-            </option>
-          ))}
+        <Select value={posFilter} onValueChange={setPosFilter}>
+          <SelectTrigger>
+            <SelectValue placeholder="All Positions" />
+          </SelectTrigger>
+          <SelectContent>
+            {ALL_POSITIONS.map((p) => (
+              <SelectItem key={p} value={p}>
+                {p}
+              </SelectItem>
+            ))}
+          </SelectContent>
         </Select>
         <Button onClick={handleSearch} disabled={loading} size="sm">
           {loading ? 'Loading...' : 'Search'}
@@ -232,19 +240,23 @@ export function ProspectsEditor({ initialYear }: ProspectsEditorProps) {
                         <td className="py-1.5 pr-2">
                           <Select
                             value={editData.position ?? ''}
-                            onChange={(e) =>
+                            onValueChange={(v) =>
                               setEditData((d) => ({
                                 ...d,
-                                position: e.target.value as Position,
+                                position: v as Position,
                               }))
                             }
-                            className="text-xs"
                           >
-                            {ALL_POSITIONS.map((pos) => (
-                              <option key={pos} value={pos}>
-                                {pos}
-                              </option>
-                            ))}
+                            <SelectTrigger className="text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {ALL_POSITIONS.map((pos) => (
+                                <SelectItem key={pos} value={pos}>
+                                  {pos}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
                           </Select>
                         </td>
                         <td className="py-1.5 pr-2">

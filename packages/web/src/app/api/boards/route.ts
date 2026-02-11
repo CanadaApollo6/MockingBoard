@@ -3,6 +3,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { getSessionUser } from '@/lib/auth-session';
 import { adminDb } from '@/lib/firebase-admin';
 import { getUserBoards } from '@/lib/data';
+import { notifyNewBoard } from '@/lib/notifications';
 import { generateDraftName } from '@mockingboard/shared';
 
 export async function GET() {
@@ -62,6 +63,32 @@ export async function POST(request: Request) {
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
     });
+
+    // Fire-and-forget: notify followers of new board
+    adminDb
+      .collection('follows')
+      .where('followeeId', '==', session.uid)
+      .limit(100)
+      .get()
+      .then(async (snap) => {
+        if (snap.empty) return;
+        const userDoc = await adminDb
+          .collection('users')
+          .doc(session.uid)
+          .get();
+        const authorName = userDoc.data()?.displayName ?? 'A scout';
+        await Promise.all(
+          snap.docs.map((doc) =>
+            notifyNewBoard(
+              doc.data().followerId,
+              authorName,
+              boardData.name,
+              ref.id,
+            ),
+          ),
+        );
+      })
+      .catch((err) => console.error('Board notification failed:', err));
 
     return NextResponse.json({ id: ref.id, ...boardData });
   } catch (err) {

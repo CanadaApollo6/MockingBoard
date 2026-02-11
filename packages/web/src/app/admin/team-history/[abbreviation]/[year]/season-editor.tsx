@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import type {
   TeamAbbreviation,
+  Position,
   KeyPlayerOverride,
   Coach,
   FrontOfficeStaff,
@@ -12,11 +13,18 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
 import {
   PlayerSearchInput,
   type PlayerSearchResult,
-} from '@/components/player-search-input';
+} from '@/components/player/player-search-input';
+import { getErrorMessage } from '@/lib/validate';
 
 const PLAYOFF_OPTIONS = [
   '',
@@ -81,7 +89,7 @@ export function SeasonEditor({
     } catch (err) {
       setMessage({
         type: 'error',
-        text: err instanceof Error ? err.message : 'Save failed',
+        text: getErrorMessage(err, 'Save failed'),
       });
     } finally {
       setSaving(false);
@@ -127,7 +135,7 @@ export function SeasonEditor({
       {
         gsisId: result.gsisId,
         name: result.name,
-        position: result.position,
+        position: result.position as Position,
         jersey: result.jersey,
         college: result.college,
       },
@@ -235,14 +243,24 @@ export function SeasonEditor({
                 <div className="flex items-center gap-2">
                   <label className="text-sm font-medium">Playoff Result</label>
                   <Select
-                    value={playoffResult}
-                    onChange={(e) => setPlayoffResult(e.target.value)}
+                    value={playoffResult || '__none__'}
+                    onValueChange={(v) =>
+                      setPlayoffResult(v === '__none__' ? '' : v)
+                    }
                   >
-                    {PLAYOFF_OPTIONS.map((opt) => (
-                      <option key={opt} value={opt}>
-                        {opt || '(none)'}
-                      </option>
-                    ))}
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PLAYOFF_OPTIONS.map((opt) => (
+                        <SelectItem
+                          key={opt || '__none__'}
+                          value={opt || '__none__'}
+                        >
+                          {opt || '(none)'}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
                 </div>
               </div>
@@ -280,20 +298,27 @@ export function SeasonEditor({
                       className="flex-1"
                     />
                     <Select
-                      value={coach.role}
-                      onChange={(e) => updateCoach(i, 'role', e.target.value)}
+                      value={coach.role || '__none__'}
+                      onValueChange={(v) =>
+                        updateCoach(i, 'role', v === '__none__' ? '' : v)
+                      }
                     >
-                      <option value="">Select role</option>
-                      <option value="Head Coach">Head Coach</option>
-                      <option value="Offensive Coordinator">
-                        Offensive Coordinator
-                      </option>
-                      <option value="Defensive Coordinator">
-                        Defensive Coordinator
-                      </option>
-                      <option value="Special Teams Coordinator">
-                        Special Teams Coordinator
-                      </option>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">(none)</SelectItem>
+                        <SelectItem value="Head Coach">Head Coach</SelectItem>
+                        <SelectItem value="Offensive Coordinator">
+                          Offensive Coordinator
+                        </SelectItem>
+                        <SelectItem value="Defensive Coordinator">
+                          Defensive Coordinator
+                        </SelectItem>
+                        <SelectItem value="Special Teams Coordinator">
+                          Special Teams Coordinator
+                        </SelectItem>
+                      </SelectContent>
                     </Select>
                     <Input
                       type="number"

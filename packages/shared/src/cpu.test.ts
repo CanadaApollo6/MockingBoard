@@ -93,29 +93,30 @@ describe('selectCpuPick', () => {
   });
 
   it('picks second-best when random falls between TOP and MID', () => {
+    // Use ranks with a small relative gap so gap-damping stays mild
     vi.spyOn(Math, 'random').mockReturnValue(0.75);
 
     const players = [
-      makePlayer({ consensusRank: 1 }),
-      makePlayer({ consensusRank: 2 }),
-      makePlayer({ consensusRank: 3 }),
+      makePlayer({ consensusRank: 10, id: 'p10' }),
+      makePlayer({ consensusRank: 11, id: 'p11' }),
+      makePlayer({ consensusRank: 12, id: 'p12' }),
     ];
 
     const pick = selectCpuPick(players, []);
-    expect(pick.consensusRank).toBe(2);
+    expect(pick.consensusRank).toBe(11);
   });
 
   it('picks third-best when random exceeds MID', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.95);
 
     const players = [
-      makePlayer({ consensusRank: 1 }),
-      makePlayer({ consensusRank: 2 }),
-      makePlayer({ consensusRank: 3 }),
+      makePlayer({ consensusRank: 10, id: 'p10' }),
+      makePlayer({ consensusRank: 11, id: 'p11' }),
+      makePlayer({ consensusRank: 12, id: 'p12' }),
     ];
 
     const pick = selectCpuPick(players, []);
-    expect(pick.consensusRank).toBe(3);
+    expect(pick.consensusRank).toBe(12);
   });
 
   it('throws when no players are available', () => {
@@ -165,14 +166,14 @@ describe('selectCpuPick with CpuPickOptions', () => {
   });
 
   it('can select from wider pool at high randomness', () => {
-    // At randomness=1, thresholds are [0.40, 0.65, 0.83, 0.93, 1.0]
-    // Roll of 0.95 lands in the 5th bucket (93–100%)
+    // Use ranks with small relative gap so gap-damping stays mild.
+    // At randomness=1 with small gap, effective thresholds stay wide.
     vi.spyOn(Math, 'random').mockReturnValue(0.95);
-    const players = [1, 2, 3, 4, 5].map((r) =>
-      makePlayer({ consensusRank: r }),
+    const players = [10, 11, 12, 13, 14].map((r) =>
+      makePlayer({ consensusRank: r, id: `p${r}` }),
     );
     const pick = selectCpuPick(players, [], { randomness: 1.0 });
-    expect(pick.consensusRank).toBe(5);
+    expect(pick.consensusRank).toBe(14);
   });
 
   it('ignores team needs when needsWeight is 0', () => {

@@ -4,6 +4,7 @@ import {
   filterAndSortPickOrder,
   buildFuturePicksFromSeeds,
   calculatePickAdvancement,
+  preparePickRecord,
 } from './draft';
 
 function makeDraft(overrides: Partial<Draft> = {}): Draft {
@@ -230,5 +231,130 @@ describe('calculatePickAdvancement', () => {
     const result = calculatePickAdvancement(draft);
     expect(result.nextRound).toBe(3);
     expect(result.isComplete).toBe(true);
+  });
+});
+
+describe('preparePickRecord', () => {
+  it('computes pick data for a valid mid-draft pick', () => {
+    const draft = makeDraft({
+      currentPick: 1,
+      currentRound: 1,
+      pickOrder: [
+        makeSlot({
+          overall: 1,
+          round: 1,
+          pick: 1,
+          team: 'TEN' as TeamAbbreviation,
+        }),
+        makeSlot({
+          overall: 2,
+          round: 1,
+          pick: 2,
+          team: 'CLE' as TeamAbbreviation,
+        }),
+      ],
+      pickedPlayerIds: [],
+    });
+
+    const result = preparePickRecord(draft, 'player-1', 'user-1', 'pick-id-1');
+
+    expect(result.pickData).toEqual({
+      draftId: 'draft-1',
+      overall: 1,
+      round: 1,
+      pick: 1,
+      team: 'TEN',
+      userId: 'user-1',
+      playerId: 'player-1',
+    });
+    expect(result.draftUpdates).toEqual({
+      currentPick: 2,
+      currentRound: 1,
+      status: 'active',
+    });
+    expect(result.pick.id).toBe('pick-id-1');
+    expect(result.pick.playerId).toBe('player-1');
+    expect(result.isComplete).toBe(false);
+  });
+
+  it('marks draft complete on the last pick', () => {
+    const draft = makeDraft({
+      currentPick: 2,
+      currentRound: 1,
+      pickOrder: [
+        makeSlot({ overall: 1, round: 1 }),
+        makeSlot({ overall: 2, round: 1 }),
+      ],
+      pickedPlayerIds: ['other-player'],
+    });
+
+    const result = preparePickRecord(draft, 'player-2', null, 'pick-id-2');
+
+    expect(result.isComplete).toBe(true);
+    expect(result.draftUpdates.status).toBe('complete');
+    expect(result.draftUpdates.currentPick).toBe(3);
+    expect(result.pick.userId).toBeNull();
+  });
+
+  it('uses teamOverride when present', () => {
+    const draft = makeDraft({
+      pickOrder: [
+        makeSlot({
+          overall: 1,
+          round: 1,
+          team: 'TEN' as TeamAbbreviation,
+          teamOverride: 'NYJ' as TeamAbbreviation,
+        }),
+      ],
+    });
+
+    const result = preparePickRecord(draft, 'player-1', 'user-1', 'pick-1');
+
+    expect(result.pickData.team).toBe('NYJ');
+    expect(result.pick.team).toBe('NYJ');
+  });
+
+  it('throws when draft is not active', () => {
+    const draft = makeDraft({ status: 'paused' });
+    expect(() => preparePickRecord(draft, 'p1', 'u1', 'pk1')).toThrow(
+      'Draft is not active',
+    );
+  });
+
+  it('throws when player is already drafted', () => {
+    const draft = makeDraft({
+      pickOrder: [makeSlot()],
+      pickedPlayerIds: ['player-1'],
+    });
+    expect(() => preparePickRecord(draft, 'player-1', 'u1', 'pk1')).toThrow(
+      'Player already drafted',
+    );
+  });
+
+  it('throws when no more picks in draft', () => {
+    const draft = makeDraft({
+      currentPick: 5,
+      pickOrder: [makeSlot()],
+    });
+    expect(() => preparePickRecord(draft, 'p1', 'u1', 'pk1')).toThrow(
+      'No more picks in draft',
+    );
+  });
+
+  it('advances round at boundary', () => {
+    const draft = makeDraft({
+      currentPick: 2,
+      currentRound: 1,
+      pickOrder: [
+        makeSlot({ overall: 1, round: 1 }),
+        makeSlot({ overall: 2, round: 1 }),
+        makeSlot({ overall: 33, round: 2 }),
+      ],
+    });
+
+    const result = preparePickRecord(draft, 'player-1', null, 'pk1');
+
+    expect(result.draftUpdates.currentRound).toBe(2);
+    expect(result.isComplete).toBe(false);
   });
 });

@@ -13,8 +13,8 @@ export {
   handlePickButton,
   handlePick,
   handlePositionFilter,
-  advanceDraft,
 } from './draftPicking.js';
+export { advanceDraft } from './draftAdvance.js';
 
 // Trade button handlers
 export {

@@ -5,6 +5,7 @@ import type { DraftResultPick, TeamAbbreviation } from '@mockingboard/shared';
 import { teams } from '@mockingboard/shared';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { getErrorMessage } from '@/lib/validate';
 
 const validTeams = new Set<string>(teams.map((t) => t.id));
 
@@ -112,7 +113,7 @@ export function CsvImport({ onImport, onCancel }: CsvImportProps) {
         setError('');
         setParsed(picks);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to parse CSV');
+        setError(getErrorMessage(err, 'Failed to parse CSV'));
         setParsed(null);
       }
     };

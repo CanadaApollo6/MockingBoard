@@ -4,9 +4,16 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import type { Announcement } from '@/lib/cache';
+import { getErrorMessage } from '@/lib/validate';
 
 interface SettingsEditorProps {
   initialDraftYear: number;
@@ -60,7 +67,7 @@ export function SettingsEditor({
     } catch (err) {
       setMessage({
         type: 'error',
-        text: err instanceof Error ? err.message : 'Save failed',
+        text: getErrorMessage(err, 'Save failed'),
       });
     } finally {
       setSaving(false);
@@ -84,7 +91,7 @@ export function SettingsEditor({
     } catch (err) {
       setMessage({
         type: 'error',
-        text: err instanceof Error ? err.message : 'Save failed',
+        text: getErrorMessage(err, 'Save failed'),
       });
     } finally {
       setSavingAnnouncement(false);
@@ -115,7 +122,7 @@ export function SettingsEditor({
     } catch (err) {
       setMessage({
         type: 'error',
-        text: err instanceof Error ? err.message : 'Save failed',
+        text: getErrorMessage(err, 'Save failed'),
       });
     } finally {
       setSavingNames(false);
@@ -132,7 +139,7 @@ export function SettingsEditor({
     } catch (err) {
       setMessage({
         type: 'error',
-        text: err instanceof Error ? err.message : 'Flush failed',
+        text: getErrorMessage(err, 'Flush failed'),
       });
     } finally {
       setFlushing(false);
@@ -231,16 +238,21 @@ export function SettingsEditor({
               <label className="w-32 text-sm font-medium">Variant</label>
               <Select
                 value={announcement.variant}
-                onChange={(e) =>
+                onValueChange={(v) =>
                   setAnnouncement((a) => ({
                     ...a,
-                    variant: e.target.value as 'info' | 'warning' | 'success',
+                    variant: v as 'info' | 'warning' | 'success',
                   }))
                 }
               >
-                <option value="info">Info (Blue)</option>
-                <option value="warning">Warning (Amber)</option>
-                <option value="success">Success (Green)</option>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="info">Info (Blue)</SelectItem>
+                  <SelectItem value="warning">Warning (Amber)</SelectItem>
+                  <SelectItem value="success">Success (Green)</SelectItem>
+                </SelectContent>
               </Select>
             </div>
 

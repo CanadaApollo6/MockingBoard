@@ -1,8 +1,14 @@
 import { NextResponse } from 'next/server';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import { getSessionUser } from '@/lib/auth-session';
+import { rateLimit, getClientIp } from '@/lib/rate-limit';
+import { safeError } from '@/lib/validate';
 
 export async function POST(request: Request) {
+  if (!rateLimit(`email-link:${getClientIp(request)}`, 5, 60_000)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+  }
+
   const session = await getSessionUser();
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -44,7 +50,7 @@ export async function POST(request: Request) {
       updatedAt: new Date(),
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ ok: true });
   } catch (err) {
     console.error('Email link failed:', err);
 
@@ -56,7 +62,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const message = err instanceof Error ? err.message : 'Failed to link email';
-    return NextResponse.json({ error: message }, { status: 400 });
+    return NextResponse.json(
+      { error: safeError(err, 'Failed to link email') },
+      { status: 400 },
+    );
   }
 }

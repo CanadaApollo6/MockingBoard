@@ -4,6 +4,7 @@ import { isAdmin } from '@/lib/admin';
 import { adminDb } from '@/lib/firebase-admin';
 import { getCachedPlayers } from '@/lib/cache';
 import { scoreMockPick, aggregateDraftScore } from '@/lib/scoring';
+import { hydrateDoc } from '@/lib/sanitize';
 import type {
   Draft,
   Pick,
@@ -15,7 +16,7 @@ export async function GET(request: Request) {
   const session = await getSessionUser();
   if (!session)
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (!isAdmin(session.uid))
+  if (!(await isAdmin(session.uid)))
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const { searchParams } = new URL(request.url);
@@ -51,7 +52,7 @@ export async function POST(request: Request) {
   const session = await getSessionUser();
   if (!session)
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (!isAdmin(session.uid))
+  if (!(await isAdmin(session.uid)))
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const body = await request.json();
@@ -101,7 +102,7 @@ export async function POST(request: Request) {
   const batch = adminDb.batch();
 
   for (const draftDoc of draftsSnap.docs) {
-    const draft = { id: draftDoc.id, ...draftDoc.data() } as Draft;
+    const draft = hydrateDoc<Draft>(draftDoc);
 
     // Get picks for this draft — stored in subcollection or inline
     const picksSnap = await adminDb
@@ -116,7 +117,7 @@ export async function POST(request: Request) {
     // Group picks by user
     const picksByUser = new Map<string, Pick[]>();
     for (const pickDoc of picksSnap.docs) {
-      const pick = { id: pickDoc.id, ...pickDoc.data() } as Pick;
+      const pick = hydrateDoc<Pick>(pickDoc);
       const userId = pick.userId ?? draft.createdBy;
       const arr = picksByUser.get(userId) ?? [];
       arr.push(pick);

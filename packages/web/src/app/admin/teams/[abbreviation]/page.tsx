@@ -19,7 +19,7 @@ export default async function AdminTeamEditorPage({
 }) {
   const session = await getSessionUser();
   if (!session) redirect('/login');
-  if (!isAdmin(session.uid)) {
+  if (!(await isAdmin(session.uid))) {
     return (
       <main className="mx-auto max-w-4xl px-4 py-8">
         <h1 className="text-2xl font-bold">Access Denied</h1>
@@ -50,11 +50,13 @@ export default async function AdminTeamEditorPage({
       <TeamEditor
         abbreviation={abbr}
         teamName={team.name}
+        currentCity={data.city ?? team.city}
         currentKeyPlayers={data.keyPlayers ?? []}
         currentCoachingStaff={data.coachingStaff ?? coachingStaffs[abbr] ?? []}
         currentFrontOffice={data.frontOffice ?? []}
         currentNeeds={data.needs ?? team.needs}
         currentFuturePicks={data.futurePicks ?? []}
+        currentSeasonOverview={data.seasonOverview ?? { accolades: [] }}
       />
     </main>
   );

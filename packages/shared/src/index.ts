@@ -29,11 +29,14 @@ export type {
   CustomPlayer,
   BoardSnapshot,
   BoardVisibility,
+  GradeSystem,
   ScoutingReport,
   Follow,
   Coach,
   KeyPlayerOverride,
   FrontOfficeStaff,
+  Accolade,
+  SeasonOverview,
   TeamSeason,
   DraftResultPick,
   DraftDayTrade,
@@ -46,13 +49,16 @@ export type {
   TradeAnalysis,
   OptimalPick,
   SuggestedPick,
+  BoardGenerationConfig,
+  NotificationType,
+  AppNotification,
 } from './types';
 
-// Constants
-export { POSITION_GROUPS } from './types';
+// Constants & Guards
+export { POSITION_GROUPS, isTeamAbbreviation } from './types';
 
 // Seed data
-export { teams, type TeamSeed } from './data/index';
+export { teams, teamSeeds, type TeamSeed } from './data/index';
 export { coachingStaffs } from './data/coaching-staffs';
 
 // Trade values
@@ -67,19 +73,24 @@ export {
 // CPU logic
 export {
   selectCpuPick,
+  prepareCpuPick,
   CPU_PICK_WEIGHTS,
   NEED_MULTIPLIERS,
   getEffectiveNeeds,
   getTeamDraftedPositions,
   type CpuPickOptions,
+  type CpuPickContext,
 } from './cpu';
 
 // Draft logic
 export {
+  CPU_SPEED_DELAY,
   getPickController,
   filterAndSortPickOrder,
   buildFuturePicksFromSeeds,
   calculatePickAdvancement,
+  preparePickRecord,
+  type PreparedPick,
 } from './draft';
 
 // Draft names
@@ -112,6 +123,19 @@ export {
   analyzeAllTrades,
   suggestPick,
 } from './draft-analytics';
+
+// Board generation
+export { generateBoardRankings, getHeadlineStats } from './board-generator';
+
+// Grades
+export {
+  GRADE_SYSTEMS,
+  getGradeDisplay,
+  getGradeOptions,
+  nflGradeToInternal,
+  internalToNflGrade,
+  type GradeDisplay,
+} from './grades';
 
 // Prospect import
 export {

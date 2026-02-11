@@ -222,12 +222,6 @@ Extract platform-agnostic business logic from bot services to `packages/shared`.
 - [x] CPU positional value weighting across all pick call sites (fourth-root scaling for subtle premium-position boost)
 - [x] 60 analytics tests + 5 CPU positional weight tests + 7 suggestPick tests (508 total)
 
-### Milestone 3.7: Dynasty/Keeper Mode
-
-- [ ] Carry over rosters between draft years
-- [ ] Keeper slot designation and management
-- [ ] Multi-year draft history per league
-
 ---
 
 ## Phase 4: Big Board & Community Scouting ✓
@@ -720,6 +714,12 @@ Server-side and client-side enforcement of Free/Pro boundaries across the platfo
 - [ ] Use forked team in mock drafts
 - [ ] Picks reflect trades made in scenario
 - [ ] Draft results save back to scenario
+
+### Milestone 9.5: Dynasty/Keeper Mode
+
+- [ ] Carry over rosters between draft years
+- [ ] Keeper slot designation and management
+- [ ] Multi-year draft history per league
 
 **Phase 9 Complete**: Content creators can create "what if" scenarios and return to them over time.
 

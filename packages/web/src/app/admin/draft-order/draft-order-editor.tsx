@@ -5,12 +5,19 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
 import {
   teams,
   type DraftSlot,
   type TeamAbbreviation,
 } from '@mockingboard/shared';
+import { getErrorMessage } from '@/lib/validate';
 
 const ALL_TEAMS = teams.map((t) => t.id).sort();
 const ROUNDS = 7;
@@ -104,7 +111,7 @@ export function DraftOrderEditor({
     } catch (err) {
       setMessage({
         type: 'error',
-        text: err instanceof Error ? err.message : 'Save failed',
+        text: getErrorMessage(err, 'Save failed'),
       });
     } finally {
       setSaving(false);
@@ -235,22 +242,24 @@ export function DraftOrderEditor({
                               {editingSlot === slot.overall ? (
                                 <Select
                                   value={slot.team}
-                                  onChange={(e) =>
+                                  onValueChange={(v) =>
                                     handleTeamChange(
                                       slot.overall,
-                                      e.target.value as TeamAbbreviation,
+                                      v as TeamAbbreviation,
                                       false,
                                     )
                                   }
-                                  onBlur={() => setEditingSlot(null)}
-                                  autoFocus
-                                  className="text-xs"
                                 >
-                                  {ALL_TEAMS.map((t) => (
-                                    <option key={t} value={t}>
-                                      {t}
-                                    </option>
-                                  ))}
+                                  <SelectTrigger className="text-xs">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {ALL_TEAMS.map((t) => (
+                                      <SelectItem key={t} value={t}>
+                                        {t}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
                                 </Select>
                               ) : (
                                 <button
@@ -280,25 +289,26 @@ export function DraftOrderEditor({
                               ) : (
                                 <Select
                                   value=""
-                                  onChange={(e) => {
-                                    if (e.target.value) {
-                                      handleTeamChange(
-                                        slot.overall,
-                                        e.target.value as TeamAbbreviation,
-                                        true,
-                                      );
-                                    }
-                                  }}
-                                  className="text-xs text-muted-foreground"
+                                  onValueChange={(v) =>
+                                    handleTeamChange(
+                                      slot.overall,
+                                      v as TeamAbbreviation,
+                                      true,
+                                    )
+                                  }
                                 >
-                                  <option value="">— no trade —</option>
-                                  {ALL_TEAMS.filter((t) => t !== slot.team).map(
-                                    (t) => (
-                                      <option key={t} value={t}>
+                                  <SelectTrigger className="text-xs text-muted-foreground">
+                                    <SelectValue placeholder="— no trade —" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {ALL_TEAMS.filter(
+                                      (t) => t !== slot.team,
+                                    ).map((t) => (
+                                      <SelectItem key={t} value={t}>
                                         {t}
-                                      </option>
-                                    ),
-                                  )}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
                                 </Select>
                               )}
                             </td>

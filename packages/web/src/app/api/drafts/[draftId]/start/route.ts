@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSessionUser } from '@/lib/auth-session';
 import { startDraft } from '@/lib/lobby-actions';
+import { safeError, AppError } from '@/lib/validate';
 
 export async function POST(
   _request: Request,
@@ -17,13 +18,8 @@ export async function POST(
     const result = await startDraft(draftId, session.uid);
     return NextResponse.json(result);
   } catch (err) {
-    const message =
-      err instanceof Error ? err.message : 'Failed to start draft';
-    const status = message.includes('not found')
-      ? 404
-      : message.includes('Only the creator')
-        ? 403
-        : 400;
+    const message = safeError(err, 'Failed to start draft');
+    const status = err instanceof AppError ? err.status : 400;
     return NextResponse.json({ error: message }, { status });
   }
 }

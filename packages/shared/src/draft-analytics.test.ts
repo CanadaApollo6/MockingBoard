@@ -416,12 +416,23 @@ describe('gradeTeamDraft', () => {
       [200, 200, 200],
       0,
     );
-    expect(grade.scores.needs).toBe(100);
+    // Weighted needs: QB=1.0 (top need), WR=0.5 → (1.0+0.5)/2 picks * 100 = 75
+    expect(grade.scores.needs).toBe(75);
     expect(grade.needsFilled).toBe(2);
   });
 
-  it('team with all reaches scores low on value dimension', () => {
-    // Players ranked far below their pick slots
+  it('team with all reaches scores low on BPA dimension', () => {
+    // Players ranked far below their pick slots, with better players available
+    const good1 = makePlayer({
+      consensusRank: 1,
+      position: 'QB',
+      id: 'good-1',
+    });
+    const good2 = makePlayer({
+      consensusRank: 2,
+      position: 'EDGE',
+      id: 'good-2',
+    });
     const bad1 = makePlayer({
       consensusRank: 100,
       position: 'WR',
@@ -434,12 +445,17 @@ describe('gradeTeamDraft', () => {
     });
 
     const picks = [
-      gradePick(makePick(1, 'bad-1', 'ARI'), bad1, [], [bad1, bad2]),
-      gradePick(makePick(2, 'bad-2', 'ARI'), bad2, [], [bad2]),
+      gradePick(
+        makePick(1, 'bad-1', 'ARI'),
+        bad1,
+        [],
+        [good1, good2, bad1, bad2],
+      ),
+      gradePick(makePick(2, 'bad-2', 'ARI'), bad2, [], [good2, bad2]),
     ];
 
     const grade = gradeTeamDraft('ARI', picks, [], [200, 200], 0);
-    expect(grade.scores.value).toBeLessThan(40);
+    expect(grade.scores.bpaAdherence).toBeLessThan(40);
   });
 
   it('team drafting premium positions early scores high on positional value', () => {

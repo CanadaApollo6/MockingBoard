@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { getCachedDraftOrderSlots, getCachedSeasonConfig } from '@/lib/cache';
-import { TradeCalculator } from '@/components/trade-calculator';
+import { TradeCalculator } from '@/components/trade/trade-calculator';
 
 export const revalidate = 3600;
 

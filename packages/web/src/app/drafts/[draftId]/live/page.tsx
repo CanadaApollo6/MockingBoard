@@ -8,9 +8,10 @@ import {
 import { getSessionUser } from '@/lib/auth-session';
 import { resolveUser, isUserInDraft } from '@/lib/user-resolve';
 import { getDraftDisplayName } from '@/lib/format';
-import { LiveDraftView } from '@/components/live-draft-view';
-import { DraftRoom } from '@/components/draft-room';
-import { LobbyView } from '@/components/lobby-view';
+import { LiveDraftView } from '@/components/draft/live-draft-view';
+import { DraftRoom } from '@/components/draft/draft-room';
+import { LocalDraftRoom } from '@/components/draft/local-draft-room';
+import { LobbyView } from '@/components/draft/lobby-view';
 
 export default async function LiveDraftPage({
   params,
@@ -56,6 +57,25 @@ export default async function LiveDraftPage({
 
   if (isParticipant) {
     const bigBoard = await getUserBoardForYear(session.uid, draft.config.year);
+    const isSingleUser = Object.keys(draft.participants).length === 1;
+
+    if (isSingleUser) {
+      return (
+        <main className="mx-auto max-w-screen-xl px-4 py-8">
+          <h1 className="mb-6 text-2xl font-bold">
+            {getDraftDisplayName(draft)}
+          </h1>
+          <LocalDraftRoom
+            initialDraft={draft}
+            players={players}
+            userId={session.uid}
+            draftId={draftId}
+            bigBoardRankings={bigBoard?.rankings}
+            initialPicks={picks}
+          />
+        </main>
+      );
+    }
 
     return (
       <main className="mx-auto max-w-screen-xl px-4 py-8">

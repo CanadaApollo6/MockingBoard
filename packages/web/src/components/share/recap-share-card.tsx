@@ -1,5 +1,6 @@
 import type { TeamDraftGrade, Player } from '@mockingboard/shared';
 import { getGradeTier } from '@mockingboard/shared';
+import { gradeHex, tierHex } from '@/lib/grade-color';
 import { getTeamColor } from '@/lib/team-colors';
 import { getTeamName } from '@/lib/teams';
 
@@ -10,41 +11,7 @@ interface RecapShareCardProps {
   players: Record<string, Player>;
 }
 
-function gradeHex(grade: number): string {
-  if (grade >= 80) return '#3dffa0';
-  if (grade >= 60) return '#60a5fa';
-  if (grade >= 40) return '#ffb84d';
-  return '#ff4d6a';
-}
-
-function labelText(label: string): string {
-  switch (label) {
-    case 'great-value':
-      return 'Steal';
-    case 'good-value':
-      return 'Value';
-    case 'fair':
-      return 'Fair';
-    case 'slight-reach':
-      return 'Slight Reach';
-    case 'reach':
-      return 'Reach';
-    case 'big-reach':
-      return 'Big Reach';
-    default:
-      return label;
-  }
-}
-
-function labelColor(label: string): string {
-  if (label === 'great-value' || label === 'good-value') return '#3dffa0';
-  if (label === 'big-reach' || label === 'reach') return '#ff4d6a';
-  if (label === 'slight-reach') return '#ffb84d';
-  return '#71717a';
-}
-
 const DIMENSIONS: { key: keyof TeamDraftGrade['scores']; label: string }[] = [
-  { key: 'value', label: 'Value' },
   { key: 'positionalValue', label: 'Positional' },
   { key: 'surplusValue', label: 'Surplus' },
   { key: 'needs', label: 'Needs' },
@@ -110,12 +77,19 @@ export function RecapShareCard({
               fontSize: 48,
               fontWeight: 800,
               lineHeight: 1,
-              color: gradeHex(grade.overallGrade),
+              color: tierHex(tier),
             }}
           >
             {grade.overallGrade}
           </div>
-          <div style={{ fontSize: 13, color: '#71717a', marginTop: 4 }}>
+          <div
+            style={{
+              fontSize: 14,
+              fontWeight: 600,
+              color: tierHex(tier),
+              marginTop: 4,
+            }}
+          >
             {tier}
           </div>
         </div>
@@ -132,7 +106,7 @@ export function RecapShareCard({
                 display: 'flex',
                 alignItems: 'center',
                 gap: 8,
-                marginBottom: 6,
+                marginBottom: 12,
                 fontSize: 12,
               }}
             >
@@ -148,8 +122,8 @@ export function RecapShareCard({
               <div
                 style={{
                   flex: 1,
-                  height: 6,
-                  borderRadius: 3,
+                  height: 8,
+                  borderRadius: 4,
                   backgroundColor: '#27272a',
                   overflow: 'hidden',
                 }}
@@ -158,7 +132,7 @@ export function RecapShareCard({
                   style={{
                     width: `${value}%`,
                     height: '100%',
-                    borderRadius: 3,
+                    borderRadius: 4,
                     backgroundColor: gradeHex(value),
                   }}
                 />
@@ -179,32 +153,25 @@ export function RecapShareCard({
       </div>
 
       {/* Stats row */}
-      <div
-        style={{
-          display: 'flex',
-          gap: 24,
-          marginBottom: 20,
-          fontSize: 12,
-          color: '#71717a',
-        }}
-      >
-        <span>
-          Needs: {grade.needsFilled}/{grade.totalNeeds}
-        </span>
-        {grade.tradeNetValue !== 0 && (
-          <span>
-            Trade value:{' '}
-            <span
-              style={{
-                color: grade.tradeNetValue > 0 ? '#3dffa0' : '#ff4d6a',
-              }}
-            >
-              {grade.tradeNetValue > 0 ? '+' : ''}
-              {Math.round(grade.tradeNetValue)}
-            </span>
+      {grade.tradeNetValue !== 0 && (
+        <div
+          style={{
+            marginBottom: 20,
+            fontSize: 12,
+            color: '#71717a',
+          }}
+        >
+          Trade value:{' '}
+          <span
+            style={{
+              color: grade.tradeNetValue > 0 ? '#3dffa0' : '#ff4d6a',
+            }}
+          >
+            {grade.tradeNetValue > 0 ? '+' : ''}
+            {Math.round(grade.tradeNetValue)}
           </span>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Picks table */}
       <table
@@ -234,17 +201,16 @@ export function RecapShareCard({
             <th style={{ textAlign: 'center', padding: '6px 8px', width: 50 }}>
               Grade
             </th>
-            <th style={{ textAlign: 'center', padding: '6px 8px', width: 90 }}>
-              Label
-            </th>
-            <th style={{ textAlign: 'right', padding: '6px 8px', width: 45 }}>
-              +/-
-            </th>
           </tr>
         </thead>
         <tbody>
           {grade.picks.map((pick) => {
             const player = players[pick.playerId];
+            const delta = pick.valueDelta;
+            const nameColor =
+              delta >= 5 ? '#3dffa0' : delta <= -5 ? '#ff4d6a' : '#fafafa';
+            const deltaColor =
+              delta > 0 ? '#3dffa0' : delta < 0 ? '#ff4d6a' : '#71717a';
             return (
               <tr
                 key={pick.overall}
@@ -262,8 +228,25 @@ export function RecapShareCard({
                 >
                   {pick.overall}
                 </td>
-                <td style={{ padding: '7px 8px', fontWeight: 500 }}>
+                <td
+                  style={{
+                    padding: '7px 8px',
+                    fontWeight: 500,
+                    color: nameColor,
+                  }}
+                >
                   {player?.name ?? 'Unknown'}
+                  <span
+                    style={{
+                      marginLeft: 4,
+                      fontFamily: 'monospace',
+                      fontSize: 11,
+                      color: deltaColor,
+                    }}
+                  >
+                    ({delta > 0 ? '+' : ''}
+                    {delta})
+                  </span>
                 </td>
                 <td style={{ textAlign: 'center', padding: '7px 8px' }}>
                   <span
@@ -285,34 +268,6 @@ export function RecapShareCard({
                   >
                     {pick.pickScore}
                   </span>
-                </td>
-                <td style={{ textAlign: 'center', padding: '7px 8px' }}>
-                  <span
-                    style={{
-                      fontSize: 10,
-                      fontWeight: 600,
-                      color: labelColor(pick.label),
-                    }}
-                  >
-                    {labelText(pick.label)}
-                  </span>
-                </td>
-                <td
-                  style={{
-                    textAlign: 'right',
-                    padding: '7px 8px',
-                    fontFamily: 'monospace',
-                    fontSize: 12,
-                    color:
-                      pick.valueDelta > 0
-                        ? '#3dffa0'
-                        : pick.valueDelta < 0
-                          ? '#ff4d6a'
-                          : '#71717a',
-                  }}
-                >
-                  {pick.valueDelta > 0 ? '+' : ''}
-                  {pick.valueDelta}
                 </td>
               </tr>
             );

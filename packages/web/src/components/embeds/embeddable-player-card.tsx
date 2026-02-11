@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { getPositionColor } from '@/lib/position-colors';
 import { schoolColorStyle } from '@/lib/school-colors';
 import { UNRANKED } from '@/lib/player-utils';
-import { BareLayout } from '@/components/bare-layout';
+import { BareLayout } from '@/components/layout/bare-layout';
 
 interface EmbeddablePlayerCardProps {
   player: Player;

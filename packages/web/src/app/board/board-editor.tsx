@@ -22,14 +22,26 @@ import type {
   BigBoard,
   BoardSnapshot,
   CustomPlayer,
+  GradeSystem,
 } from '@mockingboard/shared';
+import { GRADE_SYSTEMS } from '@mockingboard/shared';
 import { useBigBoard } from '@/hooks/use-big-board';
-import { BoardPlayerRow } from '@/components/board-player-row';
-import { BoardToolbar } from '@/components/board-toolbar';
+import { BoardPlayerRow } from '@/components/board/board-player-row';
+import { BoardToolbar } from '@/components/board/board-toolbar';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
 import { DraftGuideButton } from '@/components/draft-guide/draft-guide-button';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { getPositionColor } from '@/lib/position-colors';
+import { BoardGeneratorDialog } from '@/components/board/board-generator-dialog';
+import { Sparkles } from 'lucide-react';
+
 interface BoardEditorProps {
   players: Record<string, Player>;
   initialBoard: BigBoard | null;
@@ -39,7 +51,9 @@ interface BoardEditorProps {
 export function BoardEditor({ players, initialBoard, year }: BoardEditorProps) {
   const [board, setBoard] = useState<BigBoard | null>(initialBoard);
   const [isCreating, setIsCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
   const [restoreKey, setRestoreKey] = useState(0);
+  const [generatorOpen, setGeneratorOpen] = useState(false);
 
   async function handleRestore(snapshotRankings: string[]) {
     if (!board) return;
@@ -60,6 +74,7 @@ export function BoardEditor({ players, initialBoard, year }: BoardEditorProps) {
 
   async function handleCreate(basedOn: 'consensus' | 'blank') {
     setIsCreating(true);
+    setCreateError(null);
     try {
       const initialRankings =
         basedOn === 'consensus' ? sortedPlayers.map((p) => p.id) : [];
@@ -80,6 +95,37 @@ export function BoardEditor({ players, initialBoard, year }: BoardEditorProps) {
       setBoard(created);
     } catch (err) {
       console.error('Failed to create board:', err);
+      setCreateError(
+        err instanceof Error ? err.message : 'Failed to create board',
+      );
+    } finally {
+      setIsCreating(false);
+    }
+  }
+
+  async function handleCreateFromWeights(rankings: string[]) {
+    setIsCreating(true);
+    setCreateError(null);
+    try {
+      const res = await fetch('/api/boards', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: `My ${year} Board`,
+          year,
+          basedOn: 'consensus',
+          rankings,
+        }),
+      });
+
+      if (!res.ok) throw new Error('Failed to create board');
+      const created: BigBoard = await res.json();
+      setBoard(created);
+    } catch (err) {
+      console.error('Failed to create board:', err);
+      setCreateError(
+        err instanceof Error ? err.message : 'Failed to create board',
+      );
     } finally {
       setIsCreating(false);
     }
@@ -92,12 +138,20 @@ export function BoardEditor({ players, initialBoard, year }: BoardEditorProps) {
         <p className="mb-8 text-sm text-muted-foreground">
           Rank {sortedPlayers.length} prospects your way.
         </p>
-        <div className="flex gap-4">
+        <div className="flex flex-wrap justify-center gap-4">
           <Button
             onClick={() => handleCreate('consensus')}
             disabled={isCreating}
           >
             Start from Consensus
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setGeneratorOpen(true)}
+            disabled={isCreating}
+          >
+            <Sparkles className="mr-1.5 h-4 w-4" />
+            Generate from Weights
           </Button>
           <Button
             variant="outline"
@@ -112,6 +166,15 @@ export function BoardEditor({ players, initialBoard, year }: BoardEditorProps) {
             Creating board...
           </p>
         )}
+        {createError && (
+          <p className="mt-4 text-sm text-destructive">{createError}</p>
+        )}
+        <BoardGeneratorDialog
+          open={generatorOpen}
+          onOpenChange={setGeneratorOpen}
+          players={players}
+          onGenerate={handleCreateFromWeights}
+        />
       </div>
     );
   }
@@ -149,6 +212,7 @@ function BoardEditorInner({
   const [snapshots, setSnapshots] = useState<BoardSnapshot[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [restoringId, setRestoringId] = useState<string | null>(null);
+  const [generatorOpen, setGeneratorOpen] = useState(false);
 
   const fetchSnapshots = useCallback(async () => {
     try {
@@ -192,6 +256,8 @@ function BoardEditorInner({
   const {
     rankings,
     customPlayers,
+    grades,
+    preferredGradeSystem,
     isSaving,
     isDirty,
     movePlayer,
@@ -199,10 +265,15 @@ function BoardEditorInner({
     removePlayer,
     addCustomPlayer,
     removeCustomPlayer,
+    setRankingsFromGenerator,
+    setGrade,
+    setPreferredGradeSystem,
   } = useBigBoard({
     boardId: board.id,
     initialRankings: board.rankings,
     initialCustomPlayers: board.customPlayers,
+    initialGrades: board.grades,
+    initialPreferredGradeSystem: board.preferredGradeSystem,
   });
 
   const customPlayerMap = useMemo(() => {
@@ -332,6 +403,40 @@ function BoardEditorInner({
           }}
         />
 
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="xs"
+            onClick={() => setGeneratorOpen(true)}
+          >
+            <Sparkles className="mr-1 h-3.5 w-3.5" />
+            Regenerate
+          </Button>
+
+          <Select
+            value={preferredGradeSystem}
+            onValueChange={(v) => setPreferredGradeSystem(v as GradeSystem)}
+          >
+            <SelectTrigger className="h-7 gap-1 px-2 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {GRADE_SYSTEMS.map((s) => (
+                <SelectItem key={s.id} value={s.id}>
+                  {s.label} Grades
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <BoardGeneratorDialog
+          open={generatorOpen}
+          onOpenChange={setGeneratorOpen}
+          players={players}
+          onGenerate={setRankingsFromGenerator}
+        />
+
         <DraftGuideButton
           boardName={board.name}
           year={board.year}
@@ -422,6 +527,9 @@ function BoardEditorInner({
                       player={player}
                       customName={custom?.name}
                       consensusRank={player?.consensusRank}
+                      grade={grades[id]}
+                      gradeSystem={preferredGradeSystem}
+                      onGradeChange={(g) => setGrade(id, g)}
                       onRemove={() =>
                         custom ? removeCustomPlayer(id) : removePlayer(id)
                       }

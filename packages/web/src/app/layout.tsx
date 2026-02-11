@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import { Inter, Barlow_Condensed, JetBrains_Mono } from 'next/font/google';
-import { ThemeProvider } from '@/components/theme-provider';
-import { AuthProvider } from '@/components/auth-provider';
-import { AppShell } from '@/components/app-shell';
+import { ThemeProvider } from '@/components/layout/theme-provider';
+import { AuthProvider } from '@/components/auth/auth-provider';
+import { AppShell } from '@/components/layout/app-shell';
 import { getCachedAnnouncement } from '@/lib/cache';
 import './globals.css';
 

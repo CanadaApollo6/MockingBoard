@@ -1,8 +1,10 @@
 import Link from 'next/link';
-import type { Player, Draft, User } from '@mockingboard/shared';
+import type { Player, Draft, User, SeasonOverview } from '@mockingboard/shared';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { schoolColorStyle } from '@/lib/school-colors';
+import { GradientCard } from '@/components/ui/gradient-card';
+import { getSchoolColor } from '@/lib/school-colors';
+import { SeasonOverviewCard } from './team-breakdown/season-overview-card';
 
 interface DashboardProps {
   displayName: string;
@@ -14,6 +16,13 @@ interface DashboardProps {
   prospect: Player | null;
   draftOfWeek: Draft | null;
   leaderboard: User[];
+  followedTeam?: {
+    abbreviation: string;
+    name: string;
+    colors: { primary: string; secondary: string };
+    record?: string;
+    seasonOverview?: SeasonOverview;
+  };
 }
 
 export function Dashboard({
@@ -22,6 +31,7 @@ export function Dashboard({
   prospect,
   draftOfWeek,
   leaderboard,
+  followedTeam,
 }: DashboardProps) {
   return (
     <main className="mx-auto max-w-screen-xl px-4 py-8">
@@ -53,52 +63,51 @@ export function Dashboard({
       {/* Widget Grid */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {/* Prospect of the Day */}
-        <Card style={prospect ? schoolColorStyle(prospect.school) : undefined}>
-          {prospect && (
-            <div
-              className="h-1 rounded-t-xl"
-              style={{
-                background:
-                  'linear-gradient(to right, var(--school-primary), var(--school-secondary))',
-              }}
-            />
-          )}
-          <CardContent className="pl-5 pt-0">
-            <p className="mb-3 text-xs font-medium uppercase tracking-widest text-muted-foreground">
-              Prospect of the Day
-            </p>
-            {prospect ? (
-              <div>
-                <Link href={`/players/${prospect.id}`} className="group">
-                  <p className="font-[family-name:var(--font-display)] text-xl font-bold uppercase tracking-tight group-hover:text-primary">
-                    {prospect.name}
-                  </p>
-                </Link>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  #{prospect.consensusRank} · {prospect.position} ·{' '}
-                  {prospect.school}
+        {prospect ? (
+          <GradientCard
+            from={getSchoolColor(prospect.school).primary}
+            to={getSchoolColor(prospect.school).secondary}
+          >
+            <div className="p-5">
+              <p className="mb-3 text-xs font-medium uppercase tracking-widest text-white/70">
+                Prospect of the Day
+              </p>
+              <Link href={`/players/${prospect.id}`} className="group">
+                <p className="font-[family-name:var(--font-display)] text-xl font-bold uppercase tracking-tight group-hover:text-white/80">
+                  {prospect.name}
                 </p>
-                {prospect.scouting?.comparison && (
-                  <p className="mt-2 text-sm">
-                    <span className="text-muted-foreground">NFL Comp:</span>{' '}
-                    <span className="font-medium">
-                      {prospect.scouting.comparison}
-                    </span>
-                  </p>
-                )}
-                {prospect.scouting?.summary && (
-                  <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
-                    {prospect.scouting.summary}
-                  </p>
-                )}
-              </div>
-            ) : (
+              </Link>
+              <p className="mt-1 text-sm text-white/70">
+                #{prospect.consensusRank} · {prospect.position} ·{' '}
+                {prospect.school}
+              </p>
+              {prospect.scouting?.comparison && (
+                <p className="mt-2 text-sm">
+                  <span className="text-white/70">NFL Comp:</span>{' '}
+                  <span className="font-medium">
+                    {prospect.scouting.comparison}
+                  </span>
+                </p>
+              )}
+              {prospect.scouting?.summary && (
+                <p className="mt-2 line-clamp-2 text-sm text-white/70">
+                  {prospect.scouting.summary}
+                </p>
+              )}
+            </div>
+          </GradientCard>
+        ) : (
+          <Card>
+            <CardContent className="p-5">
+              <p className="mb-3 text-xs font-medium uppercase tracking-widest text-muted-foreground">
+                Prospect of the Day
+              </p>
               <p className="text-sm text-muted-foreground">
                 No prospects available.
               </p>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
 
         {/* User Stats */}
         <Card>
@@ -213,6 +222,28 @@ export function Dashboard({
           </CardContent>
         </Card>
       </div>
+
+      {/* Followed Team Season Overview */}
+      {followedTeam &&
+        (() => {
+          const { record, seasonOverview } = followedTeam;
+          const hasData =
+            record ||
+            seasonOverview?.finalResult ||
+            seasonOverview?.divisionResult ||
+            (seasonOverview?.accolades && seasonOverview.accolades.length > 0);
+
+          if (!hasData) return null;
+
+          return (
+            <Link
+              href={`/teams/${followedTeam.abbreviation}`}
+              className="mt-6 block"
+            >
+              <SeasonOverviewCard team={followedTeam} showTeamName />
+            </Link>
+          );
+        })()}
     </main>
   );
 }

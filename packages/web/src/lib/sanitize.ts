@@ -20,3 +20,17 @@ export function sanitize<T>(data: T): T {
     }),
   );
 }
+
+/** Hydrate a single Firestore document snapshot into a typed object with its id. */
+export function hydrateDoc<T extends { id: string }>(
+  doc: FirebaseFirestore.DocumentSnapshot,
+): T {
+  return { id: doc.id, ...doc.data() } as T;
+}
+
+/** Hydrate all documents from a query snapshot into typed objects. */
+export function hydrateDocs<T extends { id: string }>(
+  snapshot: FirebaseFirestore.QuerySnapshot,
+): T[] {
+  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as T);
+}

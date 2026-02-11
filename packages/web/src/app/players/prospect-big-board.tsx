@@ -3,8 +3,8 @@
 import { useState, useMemo } from 'react';
 import type { Player, Position } from '@mockingboard/shared';
 import { Button } from '@/components/ui/button';
-import { ProspectCard } from '@/components/prospect-card';
-import { ProspectRow } from '@/components/prospect-row';
+import { ProspectCard } from '@/components/player/prospect-card';
+import { ProspectRow } from '@/components/player/prospect-row';
 
 interface ProspectBigBoardProps {
   players: Player[];

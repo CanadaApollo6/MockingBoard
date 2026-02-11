@@ -7,6 +7,8 @@ import type {
   Coach,
   FrontOfficeStaff,
   FuturePickSeed,
+  SeasonOverview,
+  Accolade,
   Position,
 } from '@mockingboard/shared';
 import { teams } from '@mockingboard/shared';
@@ -15,11 +17,19 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
 import {
   PlayerSearchInput,
   type PlayerSearchResult,
-} from '@/components/player-search-input';
+} from '@/components/player/player-search-input';
+import { Separator } from '@/components/ui/separator';
+import { getErrorMessage } from '@/lib/validate';
 
 const ALL_POSITIONS: Position[] = [
   'QB',
@@ -41,11 +51,13 @@ const ALL_TEAM_IDS = teams.map((t) => t.id).sort();
 interface TeamEditorProps {
   abbreviation: TeamAbbreviation;
   teamName: string;
+  currentCity: string;
   currentKeyPlayers: KeyPlayerOverride[];
   currentCoachingStaff: Coach[];
   currentFrontOffice: FrontOfficeStaff[];
   currentNeeds: Position[];
   currentFuturePicks: FuturePickSeed[];
+  currentSeasonOverview: SeasonOverview;
 }
 
 // ---- Key Players Section ----
@@ -68,11 +80,22 @@ function KeyPlayersEditor({
       {
         gsisId: result.gsisId,
         name: result.name,
-        position: result.position,
+        position: result.position as Position,
         jersey: result.jersey,
         college: result.college,
+        experience: result.yearsExp,
       },
     ]);
+  };
+
+  const handleUpdate = (
+    index: number,
+    field: keyof KeyPlayerOverride,
+    value: string | number,
+  ) => {
+    const updated = [...players];
+    updated[index] = { ...updated[index], [field]: value };
+    setPlayers(updated);
   };
 
   const handleRemove = (gsisId: string) => {
@@ -85,29 +108,54 @@ function KeyPlayersEditor({
         {players.map((player, i) => (
           <div
             key={player.gsisId}
-            className="flex items-center justify-between rounded-md border px-3 py-2"
+            className="rounded-md border px-3 py-2 space-y-2"
           >
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-muted-foreground">{i + 1}</span>
-              <span className="font-medium">{player.name}</span>
-              <Badge variant="outline" className="text-xs">
-                {player.position}
-              </Badge>
-              <span className="font-mono text-xs text-muted-foreground">
-                #{player.jersey}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                {player.college}
-              </span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-muted-foreground">{i + 1}</span>
+                <span className="font-medium">{player.name}</span>
+                <span className="font-mono text-xs text-muted-foreground">
+                  #{player.jersey}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {player.college}
+                </span>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleRemove(player.gsisId)}
+                className="text-xs text-destructive hover:text-destructive"
+              >
+                Remove
+              </Button>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleRemove(player.gsisId)}
-              className="text-xs text-destructive hover:text-destructive"
-            >
-              Remove
-            </Button>
+            <div className="flex items-center gap-2">
+              <Select
+                value={player.position}
+                onValueChange={(v) => handleUpdate(i, 'position', v)}
+              >
+                <SelectTrigger className="w-24">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ALL_POSITIONS.map((pos) => (
+                    <SelectItem key={pos} value={pos}>
+                      {pos}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input
+                type="number"
+                value={player.experience ?? 0}
+                onChange={(e) =>
+                  handleUpdate(i, 'experience', parseInt(e.target.value) || 0)
+                }
+                className="w-20"
+              />
+              <span className="text-xs text-muted-foreground">yrs exp</span>
+            </div>
           </div>
         ))}
       </div>
@@ -170,18 +218,13 @@ function CoachingStaffEditor({
             placeholder="Name"
             className="flex-1"
           />
-          <Select
+          <Input
+            type="text"
             value={coach.role}
             onChange={(e) => handleUpdate(i, 'role', e.target.value)}
-          >
-            <option value="">Select role</option>
-            <option value="Head Coach">Head Coach</option>
-            <option value="Offensive Coordinator">Offensive Coordinator</option>
-            <option value="Defensive Coordinator">Defensive Coordinator</option>
-            <option value="Special Teams Coordinator">
-              Special Teams Coordinator
-            </option>
-          </Select>
+            placeholder="Role (e.g., Quarterbacks Coach)"
+            className="flex-1"
+          />
           <Input
             type="number"
             value={coach.since}
@@ -220,7 +263,7 @@ function FrontOfficeEditor({
   const handleUpdate = (
     index: number,
     field: keyof FrontOfficeStaff,
-    value: string,
+    value: string | number,
   ) => {
     const updated = [...staff];
     updated[index] = { ...updated[index], [field]: value };
@@ -228,7 +271,10 @@ function FrontOfficeEditor({
   };
 
   const handleAdd = () => {
-    setStaff([...staff, { name: '', title: '' }]);
+    setStaff([
+      ...staff,
+      { name: '', title: '', since: new Date().getFullYear() },
+    ]);
   };
 
   const handleRemove = (index: number) => {
@@ -252,6 +298,15 @@ function FrontOfficeEditor({
             onChange={(e) => handleUpdate(i, 'title', e.target.value)}
             placeholder="Title (e.g., General Manager)"
             className="flex-1"
+          />
+          <Input
+            type="number"
+            value={person.since ?? ''}
+            onChange={(e) =>
+              handleUpdate(i, 'since', parseInt(e.target.value) || 0)
+            }
+            placeholder="Since"
+            className="w-20"
           />
           <Button
             variant="ghost"
@@ -426,35 +481,49 @@ function FuturePicksEditor({
       {picks.map((pick, i) => (
         <div key={i} className="flex items-center gap-2">
           <Select
-            value={pick.year}
-            onChange={(e) => handleUpdate(i, 'year', parseInt(e.target.value))}
+            value={String(pick.year)}
+            onValueChange={(v) => handleUpdate(i, 'year', parseInt(v))}
           >
-            {futureYears.map((y) => (
-              <option key={y} value={y}>
-                {y}
-              </option>
-            ))}
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {futureYears.map((y) => (
+                <SelectItem key={y} value={String(y)}>
+                  {y}
+                </SelectItem>
+              ))}
+            </SelectContent>
           </Select>
           <Select
-            value={pick.round}
-            onChange={(e) => handleUpdate(i, 'round', parseInt(e.target.value))}
-            className="w-20"
+            value={String(pick.round)}
+            onValueChange={(v) => handleUpdate(i, 'round', parseInt(v))}
           >
-            {[1, 2, 3, 4, 5, 6, 7].map((r) => (
-              <option key={r} value={r}>
-                Rd {r}
-              </option>
-            ))}
+            <SelectTrigger className="w-20">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {[1, 2, 3, 4, 5, 6, 7].map((r) => (
+                <SelectItem key={r} value={String(r)}>
+                  Rd {r}
+                </SelectItem>
+              ))}
+            </SelectContent>
           </Select>
           <Select
             value={pick.originalTeam}
-            onChange={(e) => handleUpdate(i, 'originalTeam', e.target.value)}
+            onValueChange={(v) => handleUpdate(i, 'originalTeam', v)}
           >
-            {ALL_TEAM_IDS.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {ALL_TEAM_IDS.map((t) => (
+                <SelectItem key={t} value={t}>
+                  {t}
+                </SelectItem>
+              ))}
+            </SelectContent>
           </Select>
           <Button
             variant="ghost"
@@ -480,17 +549,128 @@ function FuturePicksEditor({
   );
 }
 
+// ---- Season Overview Section ----
+
+function SeasonOverviewEditor({
+  overview,
+  setOverview,
+}: {
+  overview: SeasonOverview;
+  setOverview: (o: SeasonOverview) => void;
+}) {
+  const accolades = overview.accolades ?? [];
+
+  const handleAccoladeAdd = () => {
+    setOverview({
+      ...overview,
+      accolades: [...accolades, { player: '', award: '' }],
+    });
+  };
+
+  const handleAccoladeUpdate = (
+    index: number,
+    field: keyof Accolade,
+    value: string,
+  ) => {
+    const updated = [...accolades];
+    updated[index] = { ...updated[index], [field]: value };
+    setOverview({ ...overview, accolades: updated });
+  };
+
+  const handleAccoladeRemove = (index: number) => {
+    setOverview({
+      ...overview,
+      accolades: accolades.filter((_, i) => i !== index),
+    });
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="space-y-3">
+        <div>
+          <label className="text-xs font-medium text-muted-foreground">
+            Final Result
+          </label>
+          <Input
+            type="text"
+            value={overview.finalResult ?? ''}
+            onChange={(e) =>
+              setOverview({ ...overview, finalResult: e.target.value })
+            }
+            placeholder="e.g., Lost In Super Bowl, Missed Playoffs"
+          />
+        </div>
+        <div>
+          <label className="text-xs font-medium text-muted-foreground">
+            Division Result
+          </label>
+          <Input
+            type="text"
+            value={overview.divisionResult ?? ''}
+            onChange={(e) =>
+              setOverview({ ...overview, divisionResult: e.target.value })
+            }
+            placeholder="e.g., 1st in AFC East"
+          />
+        </div>
+      </div>
+
+      <Separator />
+
+      <div className="space-y-3">
+        <p className="text-xs font-medium text-muted-foreground">
+          Accolades (NFL Honours, All-Pro, etc.)
+        </p>
+        {accolades.map((accolade, i) => (
+          <div key={i} className="flex items-center gap-2">
+            <Input
+              type="text"
+              value={accolade.player}
+              onChange={(e) =>
+                handleAccoladeUpdate(i, 'player', e.target.value)
+              }
+              placeholder="Player name"
+              className="flex-1"
+            />
+            <Input
+              type="text"
+              value={accolade.award}
+              onChange={(e) => handleAccoladeUpdate(i, 'award', e.target.value)}
+              placeholder="Award (e.g., NFL MVP, 1st Team All-Pro)"
+              className="flex-1"
+            />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleAccoladeRemove(i)}
+              className="text-xs text-destructive hover:text-destructive"
+            >
+              Remove
+            </Button>
+          </div>
+        ))}
+        <Button variant="outline" size="sm" onClick={handleAccoladeAdd}>
+          Add Accolade
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 // ---- Main Editor ----
 
 export function TeamEditor({
   abbreviation,
   teamName,
+  currentCity,
   currentKeyPlayers,
   currentCoachingStaff,
   currentFrontOffice,
   currentNeeds,
   currentFuturePicks,
+  currentSeasonOverview,
 }: TeamEditorProps) {
+  const [city, setCity] = useState(currentCity);
   const [keyPlayers, setKeyPlayers] =
     useState<KeyPlayerOverride[]>(currentKeyPlayers);
   const [coachingStaff, setCoachingStaff] =
@@ -500,6 +680,9 @@ export function TeamEditor({
   const [needs, setNeeds] = useState<Position[]>(currentNeeds);
   const [futurePicks, setFuturePicks] =
     useState<FuturePickSeed[]>(currentFuturePicks);
+  const [seasonOverview, setSeasonOverview] = useState<SeasonOverview>(
+    currentSeasonOverview,
+  );
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{
     type: 'success' | 'error';
@@ -523,7 +706,7 @@ export function TeamEditor({
     } catch (err) {
       setMessage({
         type: 'error',
-        text: err instanceof Error ? err.message : 'Save failed',
+        text: getErrorMessage(err, 'Save failed'),
       });
     } finally {
       setSaving(false);
@@ -535,7 +718,28 @@ export function TeamEditor({
       <h1 className="mb-1 font-[family-name:var(--font-display)] text-2xl font-bold uppercase tracking-tight">
         {teamName}
       </h1>
-      <p className="mb-6 text-sm text-muted-foreground">{abbreviation}</p>
+      <p className="mb-4 text-sm text-muted-foreground">{abbreviation}</p>
+
+      <div className="mb-6 flex items-end gap-2">
+        <div className="flex-1">
+          <label className="text-xs font-medium text-muted-foreground">
+            City
+          </label>
+          <Input
+            type="text"
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+            placeholder="e.g., Foxboro, MA"
+          />
+        </div>
+        <Button
+          onClick={() => save('City', { city })}
+          disabled={saving}
+          size="sm"
+        >
+          {saving ? 'Saving...' : 'Save City'}
+        </Button>
+      </div>
 
       {message && (
         <div
@@ -564,6 +768,7 @@ export function TeamEditor({
           <TabsTrigger value="futurepicks">
             Future Picks ({futurePicks.length})
           </TabsTrigger>
+          <TabsTrigger value="seasonoverview">Season Overview</TabsTrigger>
         </TabsList>
 
         <TabsContent value="needs" className="mt-4">
@@ -682,6 +887,31 @@ export function TeamEditor({
                   size="sm"
                 >
                   {saving ? 'Saving...' : 'Save Future Picks'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="seasonoverview" className="mt-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium">
+                Season Overview
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <SeasonOverviewEditor
+                overview={seasonOverview}
+                setOverview={setSeasonOverview}
+              />
+              <div className="mt-4 flex justify-end">
+                <Button
+                  onClick={() => save('Season overview', { seasonOverview })}
+                  disabled={saving}
+                  size="sm"
+                >
+                  {saving ? 'Saving...' : 'Save Season Overview'}
                 </Button>
               </div>
             </CardContent>

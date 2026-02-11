@@ -1,10 +1,19 @@
 import type {
+  CpuSpeed,
   Draft,
   DraftSlot,
   FutureDraftPick,
   FuturePickSeed,
+  Pick,
   TeamAbbreviation,
 } from './types';
+
+/** Delay in milliseconds before each CPU pick, keyed by speed setting. */
+export const CPU_SPEED_DELAY: Record<CpuSpeed, number> = {
+  instant: 0,
+  fast: 300,
+  normal: 1500,
+};
 
 /**
  * Get the user ID that controls a pick, considering trades.
@@ -114,4 +123,82 @@ export function calculatePickAdvancement(draft: Draft): {
   const nextRound = nextSlot?.round ?? draft.currentRound;
 
   return { nextPick, nextRound, isComplete };
+}
+
+/** Data returned by preparePickRecord for callers to execute Firestore writes. */
+export interface PreparedPick {
+  pickData: {
+    draftId: string;
+    overall: number;
+    round: number;
+    pick: number;
+    team: TeamAbbreviation;
+    userId: string | null;
+    playerId: string;
+  };
+  draftUpdates: {
+    currentPick: number;
+    currentRound: number;
+    status: 'active' | 'complete';
+  };
+  pick: Pick;
+  isComplete: boolean;
+}
+
+/**
+ * Validate preconditions and compute all data needed to record a pick.
+ * Pure function — caller handles the Firestore transaction/batch.
+ *
+ * @param draft    Current draft document (must be active)
+ * @param playerId The player being picked
+ * @param userId   The user making the pick (null for CPU)
+ * @param pickId   Pre-generated Firestore doc ID for the pick
+ */
+export function preparePickRecord(
+  draft: Draft,
+  playerId: string,
+  userId: string | null,
+  pickId: string,
+): PreparedPick {
+  if (draft.status !== 'active') {
+    throw new Error('Draft is not active');
+  }
+
+  const currentSlot = draft.pickOrder[draft.currentPick - 1];
+  if (!currentSlot) {
+    throw new Error('No more picks in draft');
+  }
+
+  const pickedPlayerIds = draft.pickedPlayerIds ?? [];
+  if (pickedPlayerIds.includes(playerId)) {
+    throw new Error('Player already drafted');
+  }
+
+  const team = currentSlot.teamOverride ?? currentSlot.team;
+  const { nextPick, nextRound, isComplete } = calculatePickAdvancement(draft);
+
+  const pickData = {
+    draftId: draft.id,
+    overall: currentSlot.overall,
+    round: currentSlot.round,
+    pick: currentSlot.pick,
+    team,
+    userId,
+    playerId,
+  };
+
+  return {
+    pickData,
+    draftUpdates: {
+      currentPick: nextPick,
+      currentRound: nextRound,
+      status: isComplete ? 'complete' : 'active',
+    },
+    pick: {
+      id: pickId,
+      ...pickData,
+      createdAt: { seconds: 0, nanoseconds: 0 },
+    },
+    isComplete,
+  };
 }

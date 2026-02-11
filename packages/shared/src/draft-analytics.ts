@@ -163,6 +163,11 @@ export function gradePick(
 
   const label = classifyPick(valueDelta, pick.overall);
 
+  const bestAvailableRank =
+    availablePlayers.length > 0
+      ? Math.min(...availablePlayers.map((p) => p.consensusRank))
+      : player.consensusRank;
+
   const hadBetterAlternative =
     availablePlayers.length > 0 &&
     availablePlayers.some(
@@ -187,6 +192,7 @@ export function gradePick(
     label,
     needIndex,
     hadBetterAlternative,
+    bestAvailableRank,
     surplusValue: positionAdjustedSurplus(pick.overall, player.position),
     positionalMultiplier: multiplier,
     boardDelta,
@@ -210,7 +216,6 @@ export function gradeTeamDraft(
       tier: 'Average',
       picks: [],
       scores: {
-        value: 50,
         positionalValue: 50,
         surplusValue: 50,
         needs: 50,
@@ -222,10 +227,6 @@ export function gradeTeamDraft(
       highlights: [],
     };
   }
-
-  // Value: average pick score (already 0-100)
-  const valueScore =
-    teamPicks.reduce((sum, p) => sum + p.pickScore, 0) / teamPicks.length;
 
   // Positional value: how well premium capital was used on premium positions
   const avgPosContrib =
@@ -244,24 +245,43 @@ export function gradeTeamDraft(
   const surplusScore =
     classMean > 0 ? clamp((teamSurplus / classMean) * 50, 0, 100) : 50;
 
-  // Needs: fraction of team needs addressed
-  const filledPositions = new Set(teamPicks.map((p) => p.position));
-  const needsFilled = teamNeeds.filter((n) => filledPositions.has(n)).length;
+  // Needs: weighted need score normalized by picks available.
+  // Each need gets a linearly decreasing weight: top need = 1, bottom = 1/N.
+  // Score = sum(need weights of drafted positions) / totalPicks * 100.
+  const needWeights = new Map<Position, number>();
+  const n = teamNeeds.length;
+  for (let i = 0; i < n; i++) {
+    const weight = (n - i) / n;
+    // If a position appears multiple times, keep the highest (first) weight
+    if (!needWeights.has(teamNeeds[i])) {
+      needWeights.set(teamNeeds[i], weight);
+    }
+  }
+  let needSum = 0;
+  const filledPositions = new Set<Position>();
+  for (const p of teamPicks) {
+    const w = needWeights.get(p.position);
+    if (w !== undefined && !filledPositions.has(p.position)) {
+      needSum += w;
+      filledPositions.add(p.position);
+    }
+  }
+  const needsFilled = filledPositions.size;
   const needsScore =
-    teamNeeds.length > 0 ? (needsFilled / teamNeeds.length) * 100 : 50;
+    teamPicks.length > 0 ? (needSum / teamPicks.length) * 100 : 50;
 
-  // BPA adherence: penalize reaches relative to draft slot
+  // BPA adherence: how close to best available player did you pick?
+  // Gap = ranks below BPA you drafted. Tolerance scales with draft position:
+  // tight at the top (2 ranks), loose late (pick * 0.1).
   const bpaScore =
     teamPicks.reduce((sum, p) => {
-      const reachPenalty =
-        p.valueDelta < 0
-          ? Math.min(1, Math.abs(p.valueDelta) / Math.max(3, p.overall * 0.24))
-          : 0;
-      return sum + (1 - reachPenalty) * 100;
+      const gap = p.consensusRank - p.bestAvailableRank;
+      const tolerance = Math.max(2, p.overall * 0.1);
+      const penalty = gap > 0 ? Math.min(1, gap / tolerance) : 0;
+      return sum + (1 - penalty) * 100;
     }, 0) / teamPicks.length;
 
   const scores = {
-    value: Math.round(valueScore),
     positionalValue: Math.round(positionalScore),
     surplusValue: Math.round(surplusScore),
     needs: Math.round(needsScore),
@@ -269,18 +289,17 @@ export function gradeTeamDraft(
   };
 
   const overallGrade = Math.round(
-    scores.value * 0.3 +
-      scores.positionalValue * 0.2 +
-      scores.surplusValue * 0.15 +
-      scores.needs * 0.2 +
-      scores.bpaAdherence * 0.15,
+    scores.positionalValue * 0.25 +
+      scores.surplusValue * 0.25 +
+      scores.needs * 0.25 +
+      scores.bpaAdherence * 0.25,
   );
 
   const tier = getGradeTier(overallGrade);
   const highlights = generateHighlights(
     teamPicks,
     needsFilled,
-    teamNeeds.length,
+    teamPicks.length,
   );
 
   return {
@@ -299,7 +318,7 @@ export function gradeTeamDraft(
 function generateHighlights(
   picks: PickGrade[],
   needsFilled: number,
-  totalNeeds: number,
+  totalPicks: number,
 ): string[] {
   const highlights: string[] = [];
 
@@ -317,8 +336,8 @@ function generateHighlights(
     highlights.push(`Reach: pick #${r.overall} (ranked #${r.consensusRank})`);
   }
 
-  if (totalNeeds > 0) {
-    highlights.push(`Filled ${needsFilled}/${totalNeeds} needs`);
+  if (totalPicks > 0) {
+    highlights.push(`Filled ${needsFilled}/${totalPicks} picks on needs`);
   }
 
   return highlights;

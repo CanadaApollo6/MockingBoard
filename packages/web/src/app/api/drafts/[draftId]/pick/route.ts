@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getSessionUser } from '@/lib/auth-session';
 import { recordPick, runCpuCascade } from '@/lib/draft-actions';
 import { getCachedPlayerMap } from '@/lib/cache';
+import { getDraftOrFail } from '@/lib/data';
 import { adminDb } from '@/lib/firebase-admin';
 import {
   resolveWebhookConfig,
@@ -9,7 +10,11 @@ import {
   sendDraftComplete,
 } from '@/lib/discord-webhook';
 import { getPickController } from '@mockingboard/shared';
+import { hydrateDoc } from '@/lib/sanitize';
 import type { Draft, Pick } from '@mockingboard/shared';
+import { notifyYourTurn } from '@/lib/notifications';
+import { rateLimit } from '@/lib/rate-limit';
+import { AppError, safeError } from '@/lib/validate';
 
 export async function POST(
   request: Request,
@@ -18,6 +23,10 @@ export async function POST(
   const session = await getSessionUser();
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  if (!rateLimit(`pick:${session.uid}`, 30, 60_000)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
   }
 
   const { draftId } = await params;
@@ -39,11 +48,7 @@ export async function POST(
 
   try {
     // Authorization: verify user controls current pick
-    const draftDoc = await adminDb.collection('drafts').doc(draftId).get();
-    if (!draftDoc.exists) {
-      return NextResponse.json({ error: 'Draft not found' }, { status: 404 });
-    }
-    const draft = { id: draftDoc.id, ...draftDoc.data() } as Draft;
+    const draft = await getDraftOrFail(draftId);
 
     if (draft.status !== 'active') {
       return NextResponse.json(
@@ -73,11 +78,33 @@ export async function POST(
     let allNewPicks: Pick[] = [pick];
     let draftCompleted = pickComplete;
 
-    // Run CPU cascade for remaining CPU picks (skip when trades enabled — client drives single-pick mode)
-    if (!pickComplete && !draft.config.tradesEnabled) {
+    // Run CPU cascade only for instant speed (non-instant speeds are paced by the client)
+    if (
+      !pickComplete &&
+      !draft.config.tradesEnabled &&
+      (draft.config.cpuSpeed ?? 'normal') === 'instant'
+    ) {
       const cascade = await runCpuCascade(draftId);
       allNewPicks = [pick, ...cascade.picks];
       draftCompleted = cascade.isComplete;
+    }
+
+    // Fire-and-forget: notify next human picker
+    if (!draftCompleted) {
+      adminDb
+        .collection('drafts')
+        .doc(draftId)
+        .get()
+        .then((snap) => {
+          const d = hydrateDoc<Draft>(snap);
+          const nextSlot = d.pickOrder[d.currentPick - 1];
+          if (!nextSlot) return;
+          const next = getPickController(d, nextSlot);
+          if (next && next !== session.uid) {
+            return notifyYourTurn(next, draftId, draft.name ?? 'Draft');
+          }
+        })
+        .catch((err) => console.error('Your-turn notification failed:', err));
     }
 
     // Fire-and-forget: webhook notifications
@@ -125,9 +152,12 @@ export async function POST(
       isComplete: draftCompleted,
     });
   } catch (err) {
+    if (err instanceof AppError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     console.error('Failed to record pick:', err);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Failed to record pick' },
+      { error: safeError(err, 'Failed to record pick') },
       { status: 500 },
     );
   }
