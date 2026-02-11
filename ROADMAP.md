@@ -529,9 +529,9 @@ Auth-gated admin dashboard (`/admin`) with 12 feature sections, eliminating depl
 
 - [x] Tankathon-style draft order page with pick ownership and trade value chart
 - [x] Standalone trade value calculator (outside of active drafts)
-- [ ] Support for salary cap implications in trade evaluation (precursor to Phase 9)
+- [ ] Support for salary cap implications in trade evaluation → fulfilled by Milestone 9.4 (Trade Simulator)
 
-**Phase 6.5 Status**: Team breakdown pages and draft order/trade value tools are complete. Salary cap integration remains as a future Phase 9 precursor.
+**Phase 6.5 Status**: Team breakdown pages and draft order/trade value tools are complete. Salary cap trade integration deferred to Phase 9.4.
 
 ---
 
@@ -686,42 +686,166 @@ Server-side and client-side enforcement of Free/Pro boundaries across the platfo
 
 ## Phase 9: GM Mode / Offseason Simulator
 
-**Goal**: Full offseason simulation for content creators and serious fans.
+**Goal**: Full offseason simulation where users can explore "what if" scenarios with real contract data and accurate salary cap math. The tool is a calculator, not an oracle — it shows consequences of decisions, not recommendations.
 
-**Prerequisites**: Research NFL salary cap mechanics, contract structures, free agency rules.
+**Design Principles** (informed by competitive analysis of StickToTheModel and PFN):
 
-### Milestone 9.1: Salary Cap Foundation
+- **Facts, not opinions**: Every number shown is derived from real contract data or deterministic math. No estimated market values, no AI-generated rankings, no "smart suggestions."
+- **Complete or nothing**: Cap features ship with full CBA Article 13 compliance — dead money, post-June 1 designations, veteran salary benefit, Top 51, restructure mechanics. No half-measures.
+- **User is the GM**: No CPU-initiated trades or signings. No "guardrails" on user decisions. Let them make mistakes — show the cap consequences clearly.
+- **Tiered complexity**: Casual users can do basic moves (cut, sign, draft). Cap nerds can define void years, incentive structures, and restructure specifics. Both paths produce accurate cap math.
+- **Editorial UX, not spreadsheets**: Maintain MockingBoard's magazine/editorial design language. PFN's offseason tool is technically strong but visually overwhelming — giant tables of 90 players with no hierarchy or guidance. Most users thinking "mock offseason" want to extend a few guys, sign a big name or two, then draft — not re-sign scout team players to futures contracts. The interface supports progressive disclosure: start with the moves the user wants to make, reveal full roster complexity only on demand. Card-based layouts, clear visual hierarchy, and action-first flows.
 
-- [ ] Research and document NFL salary cap rules
-- [ ] Ingest contract data (source TBD - may need manual curation or paid API)
-- [ ] Model cap hits, dead money, restructures
-- [ ] Team cap situation snapshots by date
+**UX Approach — Progressive Disclosure**:
 
-### Milestone 9.2: Team Forking
+1. **"Make a Move" flow** (default entry point): Search a player or browse key categories (expiring contracts, top cap hits, free agents by position). Select a player → see their card with contract details → pick an action (cut, extend, restructure, tag). Cap impact shown immediately.
+2. **Team overview** (one level deeper): Visual cap breakdown — committed vs. available space, biggest cap hits, expiring deals, dead money. Card-based, not table-first. Click any player card to enter the action flow.
+3. **Full roster table** (power user mode): Sortable/filterable table with every column. Available for users who want it, but never the landing experience. Toggle between card view and table view.
+4. **Scenario timeline** (narrative view): Moves displayed as a chronological story — "Cut Diggs (+$13.2M cap space) → Extended Gonzalez (5yr/$95M) → Signed Pitts (4yr/$56M) → Draft: WR at #4." Makes sharing feel natural and the offseason feel like a story, not a spreadsheet audit.
 
-- [ ] "Fork" a team from a specific date (like git branches)
-- [ ] Multiple save files per user
-- [ ] Name and describe each scenario
+**Prerequisites**: OTC or Spotrac API access for year-by-year contract data. CBA Article 13 as the rules specification.
 
-### Milestone 9.3: Free Agency Simulation
+### Milestone 9.1: Salary Cap Rules Engine
 
-- [ ] Available free agents list
-- [ ] Sign players with cap implications
-- [ ] CPU teams make signings too (optional realism)
+Core math engine implementing CBA Article 13 cap accounting rules. All calculations are deterministic — given contract terms, the output is provably correct.
 
-### Milestone 9.4: Integrated Draft
+- [ ] Contract component modeling: base salary, signing bonus (5-year max proration), roster bonus, option bonus, workout bonus, reporting bonus, incentives (LTBE/NLTBE classification), escalators, void years
+- [ ] Cap hit calculation: base salary + prorated signing bonus + prorated option bonus + roster bonus + workout bonus + LTBE incentives
+- [ ] Dead money calculation: pre-June 1 (all remaining proration accelerates) vs. post-June 1 (split across current + next year)
+- [ ] Post-June 1 designation tracking (2 per team limit)
+- [ ] Restructure math: salary-to-bonus conversion with reproration over remaining years (up to 5-year max), including void year additions
+- [ ] Franchise tag calculation: non-exclusive (avg top 5 cap hits at position) and exclusive (avg top 5 salaries at position), with 120%/144% consecutive-year escalators
+- [ ] Transition tag calculation: avg top 10 salaries at position
+- [ ] Veteran Salary Benefit: veterans on minimum deals cap-charged at 2-year vet minimum rate (league subsidizes difference)
+- [ ] Top 51 rule (offseason) vs. full-roster counting (regular season)
+- [ ] Cap rollover: unused space carries forward year-to-year
+- [ ] Cash spending floor tracking (89-90% over rolling multi-year period, separate from cap charges)
+- [ ] Rookie wage scale: slot values by draft position, 4-year structure, 5th-year option tiers (franchise tag / transition tag / top-20 avg / top-25 avg based on Pro Bowl selections), Proven Performance Escalator
+- [ ] Incentive classification logic: prior-year performance determines LTBE vs. NLTBE; year-end netting with carry-forward adjustments
+- [ ] Comprehensive unit tests for every calculation against known real-world contract examples
 
-- [ ] Use forked team in mock drafts
-- [ ] Picks reflect trades made in scenario
-- [ ] Draft results save back to scenario
+### Milestone 9.2: Contract Data Pipeline
 
-### Milestone 9.5: Dynasty/Keeper Mode
+- [ ] Secure API access from Over The Cap or Spotrac for year-by-year contract breakdowns (base salary, signing bonus proration, roster bonus, cap hit, dead money, guarantees per year)
+- [ ] Define Firestore contract data model: per-player, per-year with all CBA Article 13 components
+- [ ] Sync pipeline: periodic fetch → validate → store (respect API rate limits — OTC/Spotrac standard plans allow 1-2 fetches per week)
+- [ ] Supplement with nflverse open-source data for contract summaries (APY, total value, total guarantees — 25 fields, free, no API key)
+- [ ] Data freshness tracking: last-updated timestamp per player, staleness indicators in UI
+- [ ] Admin review/override interface for data discrepancies or manual corrections
+- [ ] Annual offseason data refresh workflow (new contracts, restructures, cuts, trades as they happen)
 
-- [ ] Carry over rosters between draft years
+### Milestone 9.3: Contract Builder
+
+User-facing contract creation tool with tiered complexity. Used for signing free agents, building extensions, exploring hypothetical contracts, and as a standalone reference tool.
+
+- [ ] **Basic mode**: APY, years, total guarantees → auto-distributes into per-year structure using standard NFL patterns
+- [ ] **Standard mode**: Per-year base salary, signing bonus, roster bonuses, per-year guarantee toggles (fully guaranteed / injury only / none)
+- [ ] **Advanced mode**: Void years, option bonuses, incentives (LTBE/NLTBE with threshold definition), escalators, workout bonuses, reporting bonuses
+- [ ] Real-time cap impact preview: as user adjusts any term, instantly show per-year cap hits, dead money schedule, and total cap commitment
+- [ ] Franchise tag calculator: select position → see computed tag value (non-exclusive, exclusive, transition), with consecutive-year escalator preview
+- [ ] Rookie contract calculator: select draft slot → see slotted 4-year contract values, 5th-year option projections
+- [ ] **Standalone contract calculator page** (`/tools/contracts`): public reference tool (like the existing trade value calculator). Build any hypothetical contract without entering a scenario. Optionally select a team to see whether they could absorb the contract under their current cap — shows "fits" or "needs $X in cap space" with no further prescription. Pure calculator, no scenario required
+
+### Milestone 9.4: Trade Simulator
+
+Upgrade the existing standalone trade value calculator into a full NFL trade simulator — the NFL equivalent of the NBA Trade Machine. Currently the tool only evaluates draft pick value (Rich Hill chart). With contract data, it becomes cap-aware. Fulfills the Phase 6.5.2 precursor item.
+
+- [ ] **Multi-team trade builder**: select 2-3 teams, add players and/or draft picks to each side. Extends the existing `/tools/trade-calculator` page rather than replacing it
+- [ ] **Draft pick value balance**: existing Rich Hill trade value chart comparison (already built), retained as one dimension of the trade evaluation
+- [ ] **Cap impact per team**: for each team in the trade, show before/after cap situation — dead money absorbed by the team trading away, contract absorbed by the receiving team
+- [ ] **Dead money breakdown**: team sending a player sees remaining prorated bonus accelerate (pre/post June 1). Team receiving sees the player's remaining contract at face value (no bonus proration carries over)
+- [ ] **Cap feasibility check**: "Team X can absorb this trade" or "Team X needs $Y in cap space" — factual, no prescription on how to create the space
+- [ ] **Player search with contract cards**: search any NFL player, see their contract details inline, drag into a trade side. Same card-based editorial style as the rest of Phase 9
+- [ ] **Shareable trade proposals**: unique URL per trade configuration for sharing on social media / Discord. Extend existing `html-to-image` sharing for trade graphics
+- [ ] **Scenario integration**: trades built in the simulator can be imported into a scenario (9.8), applying the cap changes to the user's forked roster
+- [ ] Also usable as a standalone reference tool without entering a scenario — pure calculator mode
+
+### Milestone 9.5: Team Cap Dashboard
+
+Per-team salary cap overview. Card-based editorial layout by default, full table available as power-user toggle.
+
+- [ ] **Visual cap overview** (default view): cap summary hero (total committed, dead money, available space, Top 51 effective space), followed by card groups — biggest cap hits, expiring contracts, dead money leaders. Click any player card → action flow (cut/extend/restructure/tag)
+- [ ] **"Make a Move" search**: prominent search bar — type a player name, see their contract card, pick an action. Primary entry point for users who know what move they want to make
+- [ ] **Full roster table** (toggle): sortable/filterable by cap hit, dead money, position, contract years remaining, guarantee status. Power-user mode, not the default landing
+- [ ] Factual "what if" answers surfaced as sortable columns in table view:
+  - "Who saves me the most cap space if cut?" → cap savings column (pre-June 1 and post-June 1 side by side)
+  - "Who has the largest dead money hit?" → dead money column
+  - "What's a restructure worth?" → restructure savings column (max convertible amount and resulting cap relief)
+- [ ] Year-over-year cap projection: see committed cap hits 1-4 years out (identifies future cap cliffs)
+- [ ] No "smart suggestions" or "recommended cuts" — just clear, well-presented data
+
+### Milestone 9.6: Roster Management Actions
+
+Each action shows immediate before/after cap impact. All math powered by the 9.1 rules engine.
+
+- [ ] **Cut player**: pre-June 1 vs. post-June 1 toggle, show dead money vs. cap savings for each, post-June 1 designation counter (2/team)
+- [ ] **Restructure contract**: select player → see max convertible base salary → preview new proration schedule and per-year cap hits. Option to add void years for further spread
+- [ ] **Extend contract**: opens contract builder (9.3) pre-filled with current terms, user adds years/money, see combined cap impact of existing + extension
+- [ ] **Franchise tag / transition tag**: auto-calculated value by position, one tag per team per year, consecutive-year escalator shown if applicable
+- [ ] **Trade player**: opens trade simulator (9.4) within the scenario context. Dead money stays with original team, acquiring team takes contract at face value. Trade results apply to the scenario's cap state
+- [ ] Action history with undo (revert any individual action or chain of actions)
+
+### Milestone 9.7: Scenario Builder (Team Forking)
+
+The differentiating feature — git for NFL rosters. This is where the Letterboxd-for-NFL-Draft analogy shines: people share and react to each other's offseason plans.
+
+- [ ] Fork any team's current roster + cap situation as a starting point
+- [ ] Chain actions: cut → restructure → sign FA → draft → see cumulative cap impact at each step
+- [ ] **Scenario timeline view**: moves displayed as a narrative story — "Cut Diggs (+$13.2M) → Extended Gonzalez (5yr/$95M) → Signed Pitts (4yr/$56M) → Draft: WR at #4." Makes sharing feel natural, not like a spreadsheet audit
+- [ ] Multiple save files per user (name and describe each scenario, e.g. "All-in 2026" or "Youth Movement")
+- [ ] Share scenarios publicly (like public boards) with unique URLs
+- [ ] Compare two scenarios side by side (yours vs. a friend's, or two of your own)
+- [ ] Shareable scenario cards for social media (extend existing `html-to-image` sharing infrastructure)
+- [ ] Community browse: see what scenarios other users have built for each team
+
+### Milestone 9.8: Free Agency
+
+Present facts. Let users decide. No rankings, no estimates, no CPU signings.
+
+- [ ] Free agent database: card-based browse by position group (like the prospect big board), with factual details — age, prior contract (APY, years, guarantees), years of experience, draft pedigree, statistical production
+- [ ] Sort by any factual column — explicitly no subjective "tier" or "ranking" column
+- [ ] Click any FA card → contract builder (9.3) opens with that player, define your terms, see cap impact, confirm signing
+- [ ] Cap implications shown immediately within the active scenario
+- [ ] Track community signing patterns: "X users have signed this player, avg contract Y" (descriptive, not prescriptive — social proof, not a recommendation)
+- [ ] Restricted free agent handling: qualifying offer mechanics, right of first refusal, draft pick compensation
+
+### Milestone 9.9: Integrated Draft
+
+Connect the offseason pipeline to the existing mock draft engine.
+
+- [ ] Start a mock draft from a saved scenario (roster reflects all offseason moves)
+- [ ] Draft needs auto-update based on cuts/signings/trades made in the scenario
+- [ ] Rookie contract slot values applied automatically based on pick position (from 9.1 rookie wage scale)
+- [ ] Draft results save back to the scenario (complete offseason-to-draft pipeline)
+- [ ] Traded picks from scenario carry into mock draft pick order
+
+### Milestone 9.10: Compensatory Pick Projections
+
+Informational projections based on the CBA formula, clearly labeled as estimates (this is one area where estimation is unavoidable and understood by users).
+
+- [ ] Track UFA gains and losses per team within a scenario
+- [ ] Project compensatory pick round based on APY, snap count thresholds, and honors formula
+- [ ] Display as "projected" with clear methodology disclosure
+- [ ] Update projections dynamically as user makes FA moves in scenarios
+
+### Milestone 9.11: Dynasty / Keeper Mode
+
+- [ ] Carry over rosters between draft years within a persistent league
 - [ ] Keeper slot designation and management
 - [ ] Multi-year draft history per league
+- [ ] Year-over-year cap tracking across seasons
+- [ ] Aging and retirement modeling (contract expirations, UFA status)
 
-**Phase 9 Complete**: Content creators can create "what if" scenarios and return to them over time.
+### Anti-Features (What We Explicitly Won't Build)
+
+- **No AI-generated player rankings or tier lists** — sort by facts, don't rank by opinion
+- **No CPU-initiated trades or signings** — the user is the GM, period
+- **No "smart suggestions"** — show data clearly, let users draw conclusions
+- **No estimated contract values for free agents** — we don't know what a player will sign for, and pretending otherwise erodes trust
+- **No half-baked cap features** — if we can't model dead money correctly, we don't ship a cap tool
+- **No "guardrails" on user decisions** — show consequences, don't prevent actions. If someone wants to sign every elite FA, let them, and let the cap math explain why it doesn't work
+
+**Phase 9 Complete**: Users have a full offseason simulator with accurate cap math, real contract data, and shareable "what if" scenarios — powered by facts, not opinions.
 
 ---
 
