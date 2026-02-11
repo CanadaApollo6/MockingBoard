@@ -127,6 +127,24 @@ service cloud.firestore {
     }
 
     // ============================================
+    // Config Collection
+    // Public read (draft day mode, etc.), admin-only write
+    // ============================================
+    match /config/{configId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // ============================================
+    // Draft Results Collection
+    // Public read, admin-only write
+    // ============================================
+    match /draftResults/{year} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // ============================================
     // Trades Collection
     // Only draft participants can read/write
     // ============================================

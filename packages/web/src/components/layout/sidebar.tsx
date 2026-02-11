@@ -25,6 +25,7 @@ import {
   BarChart3,
   Trophy,
   Crosshair,
+  Timer,
 } from 'lucide-react';
 import { useAuth } from '@/components/auth/auth-provider';
 import { ThemeToggle } from '@/components/layout/theme-toggle';
@@ -40,6 +41,7 @@ const NAV_GROUPS = [
     label: 'Drafts',
     items: [
       { href: '/drafts', label: 'My Drafts', icon: FileText },
+      { href: '/draft-day', label: 'Draft Day', icon: Timer },
       { href: '/companion', label: 'Companion', icon: Crosshair },
       { href: '/lobbies', label: 'Join Lobby', icon: Users },
     ],
