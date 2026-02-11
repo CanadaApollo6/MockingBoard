@@ -4,7 +4,7 @@ import { getSessionUser } from '@/lib/auth-session';
 import { adminDb } from '@/lib/firebase-admin';
 import { teams } from '@mockingboard/shared';
 
-const VALID_TEAMS = new Set(teams.map((t) => t.id));
+const VALID_TEAMS: Set<string> = new Set(teams.map((t) => t.id));
 
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
