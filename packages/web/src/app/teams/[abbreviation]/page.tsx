@@ -7,18 +7,11 @@ import {
   coachingStaffs,
   isTeamAbbreviation,
 } from '@mockingboard/shared';
-import type {
-  PlayerStatsRecord,
-  RosterRecord,
-  DepthChartRecord,
-} from '@nflverse/nflreadts';
 import {
   getCachedDraftOrderSlots,
   getCachedTeamDocs,
   getCachedRoster,
-  getCachedSeasonStats,
-  getCachedNflRoster,
-  getCachedDepthCharts,
+  getCachedSchedule,
   getCachedSeasonConfig,
 } from '@/lib/cache';
 import { TEAM_COLORS } from '@/lib/team-colors';
@@ -27,25 +20,12 @@ import {
   type OwnedPick,
   type TradedAwayPick,
   type TeamCapitalRank,
-} from '@/components/team-breakdown';
-import type {
-  KeyPlayerCardProps,
-  KeyPlayerStat,
-} from '@/components/key-player-card';
+} from '@/components/team-breakdown/team-breakdown';
+import type { KeyPlayerCardProps } from '@/components/team-breakdown/key-player-card';
 
 export const revalidate = 3600;
 
 const teamMap = new Map(teams.map((t) => [t.id, t]));
-
-// Positions to feature: display label → depth chart abbreviations that match
-const KEY_POSITION_MAP: [string, string[]][] = [
-  ['QB', ['QB']],
-  ['WR', ['WR']],
-  ['RB', ['RB']],
-  ['EDGE', ['DE', 'OLB', 'EDGE', 'LOLB', 'ROLB', 'LDE', 'RDE']],
-  ['CB', ['CB', 'LCB', 'RCB']],
-];
-const MAX_KEY_PLAYERS = 4;
 
 export async function generateMetadata({
   params,
@@ -67,117 +47,6 @@ export function generateStaticParams() {
   return teams.map((t) => ({ abbreviation: t.id }));
 }
 
-function buildStatPills(
-  position: string,
-  stats: Partial<PlayerStatsRecord> | undefined,
-): KeyPlayerStat[] {
-  if (!stats) return [];
-  const pills: KeyPlayerStat[] = [];
-
-  const fmt = (v: unknown) =>
-    typeof v === 'number' ? v.toLocaleString() : String(v ?? 0);
-
-  if (position === 'QB') {
-    if (stats.passing_yards != null)
-      pills.push({ label: 'YDS', value: fmt(stats.passing_yards) });
-    if (stats.passing_tds != null)
-      pills.push({ label: 'TD', value: fmt(stats.passing_tds) });
-    if (stats.passing_interceptions != null)
-      pills.push({ label: 'INT', value: fmt(stats.passing_interceptions) });
-    if (
-      stats.completions != null &&
-      stats.attempts != null &&
-      stats.attempts > 0
-    )
-      pills.push({
-        label: 'CMP%',
-        value: ((stats.completions / stats.attempts) * 100).toFixed(1),
-      });
-  } else if (position === 'RB') {
-    if (stats.rushing_yards != null)
-      pills.push({ label: 'YDS', value: fmt(stats.rushing_yards) });
-    if (stats.rushing_tds != null)
-      pills.push({ label: 'TD', value: fmt(stats.rushing_tds) });
-    if (stats.carries != null)
-      pills.push({ label: 'CAR', value: fmt(stats.carries) });
-  } else if (position === 'WR' || position === 'TE') {
-    if (stats.receptions != null)
-      pills.push({ label: 'REC', value: fmt(stats.receptions) });
-    if (stats.receiving_yards != null)
-      pills.push({ label: 'YDS', value: fmt(stats.receiving_yards) });
-    if (stats.receiving_tds != null)
-      pills.push({ label: 'TD', value: fmt(stats.receiving_tds) });
-  } else {
-    // Defensive players — show what's available
-    if (stats.def_tackles_combined != null)
-      pills.push({ label: 'TKL', value: fmt(stats.def_tackles_combined) });
-    if (stats.def_sacks != null)
-      pills.push({ label: 'SCK', value: fmt(stats.def_sacks) });
-    if (stats.def_interceptions != null)
-      pills.push({ label: 'INT', value: fmt(stats.def_interceptions) });
-    if (stats.def_pass_defended != null)
-      pills.push({ label: 'PD', value: fmt(stats.def_pass_defended) });
-  }
-
-  return pills.slice(0, 4);
-}
-
-function buildKeyPlayers(
-  abbr: TeamAbbreviation,
-  depthCharts: DepthChartRecord[],
-  nflRoster: RosterRecord[],
-  seasonStats: PlayerStatsRecord[],
-): KeyPlayerCardProps[] {
-  const colors = TEAM_COLORS[abbr];
-
-  // Depth chart starters for this team (pos_rank 1 = starter)
-  const teamStarters = depthCharts.filter(
-    (d) => d.team === abbr && d.pos_rank === 1,
-  );
-
-  // Roster entries for player details (jersey, experience, college)
-  const rosterByGsis = new Map<string, RosterRecord>();
-  for (const r of nflRoster) {
-    if (r.team === abbr && r.gsis_id) rosterByGsis.set(r.gsis_id, r);
-  }
-
-  const featured: KeyPlayerCardProps[] = [];
-
-  for (const [displayPos, abbrs] of KEY_POSITION_MAP) {
-    if (featured.length >= MAX_KEY_PLAYERS) break;
-
-    const starter = teamStarters.find((d) => abbrs.includes(d.pos_abb));
-    if (!starter) continue;
-
-    const gsisId = starter.gsis_id ?? '';
-    const rosterEntry = gsisId ? rosterByGsis.get(gsisId) : undefined;
-    const playerName = starter.player_name ?? rosterEntry?.full_name ?? '';
-
-    // Find season stats — try gsis_id first, fall back to display name match
-    let stats: PlayerStatsRecord | undefined = gsisId
-      ? seasonStats.find((s) => s.player_id === gsisId)
-      : undefined;
-    if (!stats && playerName) {
-      const nameLower = playerName.toLowerCase();
-      stats = seasonStats.find(
-        (s) => (s.player_display_name ?? '').toLowerCase() === nameLower,
-      );
-    }
-
-    featured.push({
-      name: playerName || 'Unknown',
-      position: displayPos,
-      jersey: String(rosterEntry?.jersey_number ?? ''),
-      experience: rosterEntry?.years_exp ?? 0,
-      college: rosterEntry?.college ?? '',
-      teamColors: { primary: colors.primary, secondary: colors.secondary },
-      stats: buildStatPills(displayPos, stats),
-    });
-  }
-
-  return featured;
-}
-
 export default async function TeamPage({
   params,
 }: {
@@ -190,16 +59,13 @@ export default async function TeamPage({
   const team = teamMap.get(abbr);
   if (!team) notFound();
 
-  const { draftYear, statsYear } = await getCachedSeasonConfig();
-  const [slots, teamDocs, roster, seasonStats, nflRoster, depthCharts] =
-    await Promise.all([
-      getCachedDraftOrderSlots(draftYear),
-      getCachedTeamDocs(),
-      getCachedRoster(abbr),
-      getCachedSeasonStats(statsYear),
-      getCachedNflRoster(statsYear),
-      getCachedDepthCharts(statsYear),
-    ]);
+  const { draftYear } = await getCachedSeasonConfig();
+  const [slots, teamDocs, roster, schedule] = await Promise.all([
+    getCachedDraftOrderSlots(draftYear),
+    getCachedTeamDocs(),
+    getCachedRoster(abbr),
+    getCachedSchedule(abbr),
+  ]);
 
   // Picks this team currently owns
   const ownedPicks: OwnedPick[] = slots
@@ -243,32 +109,19 @@ export default async function TeamPage({
   const futurePicks: FuturePickSeed[] = teamDoc?.futurePicks ?? [];
 
   const totalValue = ownedPicks.reduce((sum, p) => sum + p.value, 0);
-  const rank = capitalRanking.findIndex((r) => r.team === abbr) + 1;
 
-  // Key players: prefer admin-curated, fall back to auto-detected
+  // Key players from admin curation
   const colors = TEAM_COLORS[abbr];
-  const adminKeyPlayers = teamDoc?.keyPlayers;
-  let keyPlayers: KeyPlayerCardProps[];
-  if (adminKeyPlayers && adminKeyPlayers.length > 0) {
-    keyPlayers = adminKeyPlayers.map((kp) => {
-      const stats = seasonStats.find((s) => s.player_id === kp.gsisId);
-      const merged = kp.statOverrides
-        ? { ...stats, ...kp.statOverrides }
-        : stats;
-      const rosterEntry = nflRoster.find((r) => r.gsis_id === kp.gsisId);
-      return {
-        name: kp.name,
-        position: kp.position,
-        jersey: kp.jersey,
-        experience: rosterEntry?.years_exp ?? 0,
-        college: kp.college,
-        teamColors: { primary: colors.primary, secondary: colors.secondary },
-        stats: buildStatPills(kp.position, merged),
-      };
-    });
-  } else {
-    keyPlayers = buildKeyPlayers(abbr, depthCharts, nflRoster, seasonStats);
-  }
+  const adminKeyPlayers = teamDoc?.keyPlayers ?? [];
+  const keyPlayers: KeyPlayerCardProps[] = adminKeyPlayers.map((kp) => ({
+    name: kp.name,
+    position: kp.position,
+    jersey: kp.jersey,
+    experience: kp.experience ?? 0,
+    college: kp.college,
+    teamColors: { primary: colors.primary, secondary: colors.secondary },
+    stats: kp.stats ?? [],
+  }));
 
   // Coaching staff: Firestore > hardcoded fallback
   const coachingStaff = teamDoc?.coachingStaff ?? coachingStaffs[abbr] ?? [];
@@ -276,21 +129,32 @@ export default async function TeamPage({
   // Front office
   const frontOffice = teamDoc?.frontOffice ?? [];
 
+  // Season overview (admin-curated)
+  const seasonOverview = teamDoc?.seasonOverview;
+
+  // Merge admin-curated overrides over seed data
+  const resolvedTeam = {
+    ...team,
+    ...(teamDoc?.needs && { needs: teamDoc.needs }),
+    ...(teamDoc?.city && { city: teamDoc.city }),
+  };
+
   return (
     <main className="mx-auto max-w-screen-xl px-4 py-8">
       <TeamBreakdown
-        team={team}
+        team={resolvedTeam}
         ownedPicks={ownedPicks}
         tradedAway={tradedAway}
         futurePicks={futurePicks}
         totalValue={totalValue}
-        rank={rank}
         capitalRanking={capitalRanking}
         year={draftYear}
         roster={roster}
         keyPlayers={keyPlayers}
+        schedule={schedule}
         coachingStaff={coachingStaff}
         frontOffice={frontOffice}
+        seasonOverview={seasonOverview}
       />
     </main>
   );

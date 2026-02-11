@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { getPublicBoards, getPublicUsers } from '@/lib/data';
-import { BoardCard } from '@/components/board-card';
-import { AnalystProfileCard } from '@/components/analyst-profile-card';
+import { BoardCard } from '@/components/board/board-card';
+import { AnalystProfileCard } from '@/components/profile/analyst-profile-card';
 
 export const dynamic = 'force-dynamic';
 

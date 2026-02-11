@@ -1,5 +1,5 @@
 import { getScoutProfiles } from '@/lib/data';
-import { ScoutProfileCard } from '@/components/scout-profile-card';
+import { ScoutProfileCard } from '@/components/profile/scout-profile-card';
 
 export default async function ScoutsPage() {
   const profiles = await getScoutProfiles();

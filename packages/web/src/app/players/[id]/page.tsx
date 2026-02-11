@@ -1,14 +1,14 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getPlayerMap, getPlayerReports, getPlayerVideos } from '@/lib/data';
-import { PlayerHero } from '@/components/player-hero';
+import { PlayerHero } from '@/components/player/player-hero';
 import { PlayerJsonLd } from './json-ld';
-import { ProspectDetails } from '@/components/prospect-details';
-import { CommunityGradeSummary } from '@/components/community-grade-summary';
-import { CommunityReports } from '@/components/community-reports';
-import { QuickGrade } from '@/components/quick-grade';
-import { WordCloud } from '@/components/word-cloud';
-import { VideoGallery } from '@/components/video-gallery';
+import { ProspectDetails } from '@/components/player/prospect-details';
+import { CommunityGradeSummary } from '@/components/community/community-grade-summary';
+import { CommunityReports } from '@/components/community/community-reports';
+import { QuickGrade } from '@/components/grade/quick-grade';
+import { WordCloud } from '@/components/community/word-cloud';
+import { VideoGallery } from '@/components/video/video-gallery';
 import { getCachedSeasonConfig } from '@/lib/cache';
 
 interface Props {

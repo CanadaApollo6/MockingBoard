@@ -3,7 +3,13 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
 import { getErrorMessage } from '@/lib/validate';
 
 interface ScoringStatus {
@@ -100,14 +106,19 @@ export function ScoringEditor({
       <div className="flex items-center gap-3">
         <label className="text-sm font-medium">Year:</label>
         <Select
-          value={year}
-          onChange={(e) => setYear(parseInt(e.target.value))}
+          value={String(year)}
+          onValueChange={(v) => setYear(parseInt(v))}
         >
-          {years.map((y) => (
-            <option key={y} value={y}>
-              {y}
-            </option>
-          ))}
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {years.map((y) => (
+              <SelectItem key={y} value={String(y)}>
+                {y}
+              </SelectItem>
+            ))}
+          </SelectContent>
         </Select>
       </div>
 

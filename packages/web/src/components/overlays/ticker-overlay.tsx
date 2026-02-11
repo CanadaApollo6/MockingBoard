@@ -8,7 +8,7 @@ import type {
   TeamAbbreviation,
 } from '@mockingboard/shared';
 import { useLiveDraft } from '@/hooks/use-live-draft';
-import { BareLayout } from '@/components/bare-layout';
+import { BareLayout } from '@/components/layout/bare-layout';
 import { getTeamName } from '@/lib/teams';
 import { getTeamColor, ensureVisible } from '@/lib/team-colors';
 import { getPositionColor } from '@/lib/position-colors';

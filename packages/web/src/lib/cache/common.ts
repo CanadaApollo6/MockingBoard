@@ -11,7 +11,7 @@ export const DRAFT_ORDER_TTL = 24 * 60 * 60 * 1000; // 24 hours
 export const TEAMS_TTL = 24 * 60 * 60 * 1000; // 24 hours
 export const SCOUT_PROFILES_TTL = 24 * 60 * 60 * 1000; // 24 hours
 export const ROSTER_TTL = 6 * 60 * 60 * 1000; // 6 hours
-export const NFLVERSE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+export const SCHEDULE_TTL = 6 * 60 * 60 * 1000; // 6 hours
 export const SEARCH_TTL = 5 * 60 * 1000; // 5 minutes
 export const SEASON_CONFIG_TTL = 5 * 60 * 1000; // 5 minutes
 

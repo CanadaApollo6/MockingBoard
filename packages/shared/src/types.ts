@@ -181,6 +181,7 @@ export interface User {
   isPublic?: boolean;
   favoriteTeam?: TeamAbbreviation;
   favoriteSchool?: string;
+  followedTeam?: TeamAbbreviation;
   notificationPreferences?: {
     inApp: boolean;
     discord: boolean;
@@ -474,6 +475,8 @@ export interface KeyPlayerOverride {
   position: Position;
   jersey: string;
   college: string;
+  experience?: number;
+  stats?: { label: string; value: string }[];
   statOverrides?: Record<string, number | string | null>;
 }
 
@@ -482,6 +485,20 @@ export interface KeyPlayerOverride {
 export interface FrontOfficeStaff {
   name: string;
   title: string;
+  since?: number;
+}
+
+// ---- Season Overview Types ----
+
+export interface Accolade {
+  player: string;
+  award: string;
+}
+
+export interface SeasonOverview {
+  finalResult?: string;
+  divisionResult?: string;
+  accolades?: Accolade[];
 }
 
 // ---- Team Season Types ----

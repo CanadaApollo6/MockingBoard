@@ -1,16 +1,8 @@
 import {
-  loadPlayerStats,
-  loadRosters,
-  loadDepthCharts,
-  type PlayerStatsRecord,
-  type RosterRecord,
-  type DepthChartRecord,
-} from '@nflverse/nflreadts';
-import {
   type CacheEntry,
   getOrExpire,
   ROSTER_TTL,
-  NFLVERSE_TTL,
+  SCHEDULE_TTL,
 } from './common';
 
 // ---- NFL Roster cache (keyed by team abbreviation, from ESPN API) ----
@@ -145,71 +137,115 @@ export async function getCachedRoster(
   }
 }
 
-// ---- nflverse data (keyed by season) ----
+// ---- NFL Schedule cache (keyed by team abbreviation, from ESPN API) ----
 
-const playerStatsCache = new Map<number, CacheEntry<PlayerStatsRecord[]>>();
-const nflRosterCache = new Map<number, CacheEntry<RosterRecord[]>>();
-const depthChartCache = new Map<number, CacheEntry<DepthChartRecord[]>>();
-
-/** Season-aggregated player stats from nflverse. Cached for 24 hours. */
-export async function getCachedSeasonStats(
-  season: number,
-): Promise<PlayerStatsRecord[]> {
-  const cached = getOrExpire(playerStatsCache, season);
-  if (cached) return cached;
-
-  try {
-    const result = await loadPlayerStats(season, { summaryLevel: 'reg' });
-    // loadPlayerStats returns Result<T, E> — unwrap the value
-    const data = result.ok ? result.value : [];
-    playerStatsCache.set(season, {
-      data,
-      expiresAt: Date.now() + NFLVERSE_TTL,
-    });
-    return data;
-  } catch (err) {
-    console.error(`Failed to load nflverse player stats for ${season}:`, err);
-    return [];
-  }
+export interface GameResult {
+  week: number;
+  weekLabel: string;
+  opponent: string;
+  opponentName: string;
+  isHome: boolean;
+  isWin: boolean;
+  isTie: boolean;
+  teamScore: number;
+  opponentScore: number;
+  record: string;
 }
 
-/** Roster/depth chart entries from nflverse. Cached for 24 hours. */
-export async function getCachedNflRoster(
-  season: number,
-): Promise<RosterRecord[]> {
-  const cached = getOrExpire(nflRosterCache, season);
-  if (cached) return cached;
-
-  try {
-    const data = await loadRosters(season);
-    nflRosterCache.set(season, {
-      data,
-      expiresAt: Date.now() + NFLVERSE_TTL,
-    });
-    return data;
-  } catch (err) {
-    console.error(`Failed to load nflverse roster for ${season}:`, err);
-    return [];
-  }
+export interface TeamSchedule {
+  games: GameResult[];
 }
 
-/** Depth chart entries from nflverse. Cached for 24 hours. */
-export async function getCachedDepthCharts(
-  season: number,
-): Promise<DepthChartRecord[]> {
-  const cached = getOrExpire(depthChartCache, season);
+interface EspnCompetitor {
+  id: string;
+  homeAway: string;
+  winner: boolean;
+  score: { value: number; displayValue: string };
+  team: { abbreviation: string; displayName: string };
+  record?: Array<{ displayValue: string }>;
+}
+
+interface EspnEvent {
+  week: { number: number; text: string };
+  competitions: Array<{
+    competitors: EspnCompetitor[];
+    status: { type: { completed: boolean } };
+  }>;
+}
+
+function transformEspnSchedule(
+  json: Record<string, unknown>,
+  espnId: number,
+): GameResult[] {
+  const events = (json.events ?? []) as EspnEvent[];
+  const results: GameResult[] = [];
+
+  for (const event of events) {
+    const comp = event.competitions?.[0];
+    if (!comp?.status?.type?.completed) continue;
+
+    const us = comp.competitors.find((c) => c.id === String(espnId));
+    const them = comp.competitors.find((c) => c.id !== String(espnId));
+    if (!us || !them) continue;
+
+    const teamScore = us.score?.value ?? 0;
+    const opponentScore = them.score?.value ?? 0;
+
+    results.push({
+      week: event.week.number,
+      weekLabel: event.week.text,
+      opponent: them.team.abbreviation,
+      opponentName: them.team.displayName,
+      isHome: us.homeAway === 'home',
+      isWin: us.winner === true,
+      isTie: teamScore === opponentScore,
+      teamScore,
+      opponentScore,
+      record: us.record?.[0]?.displayValue ?? '',
+    });
+  }
+
+  return results;
+}
+
+const scheduleCache = new Map<string, CacheEntry<TeamSchedule>>();
+
+/** Returns the current season's game results for a team from ESPN. Cached for 6 hours. */
+export async function getCachedSchedule(
+  team: string,
+): Promise<TeamSchedule | null> {
+  const cached = getOrExpire(scheduleCache, team);
   if (cached) return cached;
 
+  const espnId = ESPN_TEAM_IDS[team];
+  if (!espnId) return null;
+
   try {
-    const data = await loadDepthCharts(season);
-    depthChartCache.set(season, {
-      data,
-      expiresAt: Date.now() + NFLVERSE_TTL,
+    const base = `https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/${espnId}/schedule`;
+    const [regRes, postRes] = await Promise.all([
+      fetch(`${base}?seasontype=2`),
+      fetch(`${base}?seasontype=3`),
+    ]);
+
+    const games: GameResult[] = [];
+
+    if (regRes.ok) {
+      const json = (await regRes.json()) as Record<string, unknown>;
+      games.push(...transformEspnSchedule(json, espnId));
+    }
+    if (postRes.ok) {
+      const json = (await postRes.json()) as Record<string, unknown>;
+      games.push(...transformEspnSchedule(json, espnId));
+    }
+
+    const schedule: TeamSchedule = { games };
+    scheduleCache.set(team, {
+      data: schedule,
+      expiresAt: Date.now() + SCHEDULE_TTL,
     });
-    return data;
-  } catch (err) {
-    console.error(`Failed to load nflverse depth charts for ${season}:`, err);
-    return [];
+    return schedule;
+  } catch {
+    return null;
   }
 }
 
@@ -218,7 +254,5 @@ export async function getCachedDepthCharts(
 /** Invalidate all external API caches. */
 export function resetExternalCaches() {
   rosterCache.clear();
-  playerStatsCache.clear();
-  nflRosterCache.clear();
-  depthChartCache.clear();
+  scheduleCache.clear();
 }

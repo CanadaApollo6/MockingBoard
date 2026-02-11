@@ -1,5 +1,5 @@
 import { getCachedSeasonConfig } from '@/lib/cache';
-import { DraftCreator } from '@/components/draft-creator';
+import { DraftCreator } from '@/components/draft/draft-creator';
 
 export default async function NewDraftPage() {
   const { draftYear } = await getCachedSeasonConfig();

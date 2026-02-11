@@ -3,7 +3,7 @@
 import type { Player } from '@mockingboard/shared';
 import { Badge } from '@/components/ui/badge';
 import { getPositionColor } from '@/lib/position-colors';
-import { BareLayout } from '@/components/bare-layout';
+import { BareLayout } from '@/components/layout/bare-layout';
 
 interface EmbeddableBoardViewProps {
   boardName: string;

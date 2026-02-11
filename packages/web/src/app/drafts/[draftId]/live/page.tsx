@@ -8,10 +8,10 @@ import {
 import { getSessionUser } from '@/lib/auth-session';
 import { resolveUser, isUserInDraft } from '@/lib/user-resolve';
 import { getDraftDisplayName } from '@/lib/format';
-import { LiveDraftView } from '@/components/live-draft-view';
-import { DraftRoom } from '@/components/draft-room';
-import { LocalDraftRoom } from '@/components/local-draft-room';
-import { LobbyView } from '@/components/lobby-view';
+import { LiveDraftView } from '@/components/draft/live-draft-view';
+import { DraftRoom } from '@/components/draft/draft-room';
+import { LocalDraftRoom } from '@/components/draft/local-draft-room';
+import { LobbyView } from '@/components/draft/lobby-view';
 
 export default async function LiveDraftPage({
   params,

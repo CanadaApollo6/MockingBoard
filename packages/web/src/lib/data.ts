@@ -165,6 +165,40 @@ export async function getUserDraftsPaginated(
   return { drafts: sanitized.slice(0, limit), hasMore };
 }
 
+// ---- User Stats ----
+
+export async function getUserStats(
+  userId: string,
+  discordId?: string,
+): Promise<{ totalDrafts: number; totalPicks: number }> {
+  const ids = [userId, ...(discordId ? [discordId] : [])];
+
+  const draftsSnap = await adminDb
+    .collection('drafts')
+    .where('participantIds', 'array-contains-any', ids)
+    .select('status')
+    .get();
+
+  const completedDrafts = draftsSnap.docs.filter(
+    (d) => d.data().status === 'complete',
+  );
+  const totalDrafts = completedDrafts.length;
+
+  const pickCounts = await Promise.all(
+    completedDrafts.map((d) =>
+      d.ref
+        .collection('picks')
+        .where('userId', '==', userId)
+        .select()
+        .get()
+        .then((snap) => snap.size),
+    ),
+  );
+  const totalPicks = pickCounts.reduce((sum, c) => sum + c, 0);
+
+  return { totalDrafts, totalPicks };
+}
+
 // ---- Scout Profiles ----
 
 export async function getScoutProfiles(): Promise<ScoutProfile[]> {

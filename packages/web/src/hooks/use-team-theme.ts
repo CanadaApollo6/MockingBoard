@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useTheme } from 'next-themes';
-import { useAuth } from '@/components/auth-provider';
+import { useAuth } from '@/components/auth/auth-provider';
 import { TEAM_COLORS, deriveThemeOverrides } from '@/lib/team-colors';
 import { getSchoolColor } from '@/lib/school-colors';
 import type { TeamAbbreviation } from '@mockingboard/shared';

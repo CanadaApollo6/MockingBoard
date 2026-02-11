@@ -35,6 +35,8 @@ export type {
   Coach,
   KeyPlayerOverride,
   FrontOfficeStaff,
+  Accolade,
+  SeasonOverview,
   TeamSeason,
   DraftResultPick,
   DraftDayTrade,

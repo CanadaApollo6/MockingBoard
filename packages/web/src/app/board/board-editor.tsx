@@ -26,13 +26,20 @@ import type {
 } from '@mockingboard/shared';
 import { GRADE_SYSTEMS } from '@mockingboard/shared';
 import { useBigBoard } from '@/hooks/use-big-board';
-import { BoardPlayerRow } from '@/components/board-player-row';
-import { BoardToolbar } from '@/components/board-toolbar';
+import { BoardPlayerRow } from '@/components/board/board-player-row';
+import { BoardToolbar } from '@/components/board/board-toolbar';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
 import { DraftGuideButton } from '@/components/draft-guide/draft-guide-button';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { getPositionColor } from '@/lib/position-colors';
-import { BoardGeneratorDialog } from '@/components/board-generator-dialog';
+import { BoardGeneratorDialog } from '@/components/board/board-generator-dialog';
 import { Sparkles } from 'lucide-react';
 
 interface BoardEditorProps {
@@ -406,19 +413,21 @@ function BoardEditorInner({
             Regenerate
           </Button>
 
-          <select
+          <Select
             value={preferredGradeSystem}
-            onChange={(e) =>
-              setPreferredGradeSystem(e.target.value as GradeSystem)
-            }
-            className="rounded-md border bg-background px-2 py-1 text-xs"
+            onValueChange={(v) => setPreferredGradeSystem(v as GradeSystem)}
           >
-            {GRADE_SYSTEMS.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.label} Grades
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className="h-7 gap-1 px-2 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {GRADE_SYSTEMS.map((s) => (
+                <SelectItem key={s.id} value={s.id}>
+                  {s.label} Grades
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <BoardGeneratorDialog

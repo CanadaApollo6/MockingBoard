@@ -4,7 +4,13 @@ import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
 import { getErrorMessage } from '@/lib/validate';
 
 interface ModerationItem {
@@ -82,26 +88,33 @@ export function ModerationQueue() {
     <div className="space-y-4">
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3">
-        <Select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-        >
-          {STATUS_OPTIONS.map((s) => (
-            <option key={s} value={s}>
-              {s.charAt(0).toUpperCase() + s.slice(1)}
-            </option>
-          ))}
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {STATUS_OPTIONS.map((s) => (
+              <SelectItem key={s} value={s}>
+                {s.charAt(0).toUpperCase() + s.slice(1)}
+              </SelectItem>
+            ))}
+          </SelectContent>
         </Select>
         <Select
-          value={typeFilter}
-          onChange={(e) => setTypeFilter(e.target.value)}
+          value={typeFilter || 'all'}
+          onValueChange={(v) => setTypeFilter(v === 'all' ? '' : v)}
         >
-          <option value="">All Types</option>
-          {CONTENT_TYPES.filter(Boolean).map((t) => (
-            <option key={t} value={t}>
-              {t}
-            </option>
-          ))}
+          <SelectTrigger>
+            <SelectValue placeholder="All Types" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Types</SelectItem>
+            {CONTENT_TYPES.filter(Boolean).map((t) => (
+              <SelectItem key={t} value={t}>
+                {t}
+              </SelectItem>
+            ))}
+          </SelectContent>
         </Select>
         <Button
           variant="outline"

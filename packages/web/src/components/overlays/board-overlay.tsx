@@ -2,8 +2,8 @@
 
 import type { Draft, Pick, Player } from '@mockingboard/shared';
 import { useLiveDraft } from '@/hooks/use-live-draft';
-import { DraftBoard } from '@/components/draft-board';
-import { BareLayout } from '@/components/bare-layout';
+import { DraftBoard } from '@/components/draft/draft-board';
+import { BareLayout } from '@/components/layout/bare-layout';
 import { useSearchParams } from 'next/navigation';
 
 interface BoardOverlayProps {

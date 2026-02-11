@@ -13,7 +13,7 @@ import { getCachedTeamDocs } from '@/lib/cache';
 import { getSessionUser } from '@/lib/auth-session';
 import { resolveUser, isUserInDraft } from '@/lib/user-resolve';
 import { formatDraftDate, getDraftDisplayName } from '@/lib/format';
-import { TradeSummary } from '@/components/trade-summary';
+import { TradeSummary } from '@/components/trade/trade-summary';
 import { DraftRecapSummary } from '@/components/recap/draft-recap-summary';
 import { TeamGradeCard } from '@/components/recap/team-grade-card';
 import { PickBreakdown } from '@/components/recap/pick-breakdown';

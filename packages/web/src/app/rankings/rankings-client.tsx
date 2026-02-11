@@ -22,9 +22,9 @@ import type { Player, Position, BigBoard } from '@mockingboard/shared';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { GradeBadge } from '@/components/grade-badge';
+import { GradeBadge } from '@/components/grade/grade-badge';
 import { getPositionColor } from '@/lib/position-colors';
-import { BoardGeneratorDialog } from '@/components/board-generator-dialog';
+import { BoardGeneratorDialog } from '@/components/board/board-generator-dialog';
 import { Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 

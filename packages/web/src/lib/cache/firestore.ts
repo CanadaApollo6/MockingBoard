@@ -6,6 +6,7 @@ import type {
   Coach,
   KeyPlayerOverride,
   FrontOfficeStaff,
+  SeasonOverview,
   Position,
   User,
   BigBoard,
@@ -90,6 +91,8 @@ export interface CachedTeamDoc {
   coachingStaff?: Coach[];
   frontOffice?: FrontOfficeStaff[];
   needs?: Position[];
+  city?: string;
+  seasonOverview?: SeasonOverview;
 }
 
 let teamsCache: CacheEntry<CachedTeamDoc[]> | null = null;
@@ -108,6 +111,8 @@ export async function getCachedTeamDocs(): Promise<CachedTeamDoc[]> {
       coachingStaff: data.coachingStaff as Coach[] | undefined,
       frontOffice: data.frontOffice as FrontOfficeStaff[] | undefined,
       needs: data.needs as Position[] | undefined,
+      city: data.city as string | undefined,
+      seasonOverview: data.seasonOverview as SeasonOverview | undefined,
     };
   });
 

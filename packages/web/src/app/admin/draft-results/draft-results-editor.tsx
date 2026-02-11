@@ -6,7 +6,13 @@ import { teams } from '@mockingboard/shared';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
 import { CsvImport } from './csv-import';
 import { getErrorMessage } from '@/lib/validate';
 
@@ -130,14 +136,19 @@ export function DraftResultsEditor({
       <div className="mb-6 flex items-center gap-4">
         <label className="text-sm font-medium">Year</label>
         <Select
-          value={year}
-          onChange={(e) => setYear(parseInt(e.target.value))}
+          value={String(year)}
+          onValueChange={(v) => setYear(parseInt(v))}
         >
-          {[2024, 2025, 2026, 2027].map((y) => (
-            <option key={y} value={y}>
-              {y}
-            </option>
-          ))}
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {[2024, 2025, 2026, 2027].map((y) => (
+              <SelectItem key={y} value={String(y)}>
+                {y}
+              </SelectItem>
+            ))}
+          </SelectContent>
         </Select>
         <span className="text-sm text-muted-foreground">
           {picks.length} picks entered
@@ -180,14 +191,18 @@ export function DraftResultsEditor({
                     </span>
                     <Select
                       value={pick.team}
-                      onChange={(e) => updatePick(i, 'team', e.target.value)}
-                      className="w-20"
+                      onValueChange={(v) => updatePick(i, 'team', v)}
                     >
-                      {teamOptions.map((t) => (
-                        <option key={t} value={t}>
-                          {t}
-                        </option>
-                      ))}
+                      <SelectTrigger className="w-20">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {teamOptions.map((t) => (
+                          <SelectItem key={t} value={t}>
+                            {t}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
                     </Select>
                     <Input
                       type="text"
@@ -239,30 +254,34 @@ export function DraftResultsEditor({
                       </span>
                       <Select
                         value={pick.trade.tradedFrom}
-                        onChange={(e) =>
-                          updateTrade(i, 'tradedFrom', e.target.value)
-                        }
-                        className="w-20 text-xs"
+                        onValueChange={(v) => updateTrade(i, 'tradedFrom', v)}
                       >
-                        {teamOptions.map((t) => (
-                          <option key={t} value={t}>
-                            {t}
-                          </option>
-                        ))}
+                        <SelectTrigger className="w-20 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {teamOptions.map((t) => (
+                            <SelectItem key={t} value={t}>
+                              {t}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
                       </Select>
                       <span className="text-xs text-muted-foreground">to</span>
                       <Select
                         value={pick.trade.tradedTo}
-                        onChange={(e) =>
-                          updateTrade(i, 'tradedTo', e.target.value)
-                        }
-                        className="w-20 text-xs"
+                        onValueChange={(v) => updateTrade(i, 'tradedTo', v)}
                       >
-                        {teamOptions.map((t) => (
-                          <option key={t} value={t}>
-                            {t}
-                          </option>
-                        ))}
+                        <SelectTrigger className="w-20 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {teamOptions.map((t) => (
+                            <SelectItem key={t} value={t}>
+                              {t}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
                       </Select>
                       <Input
                         type="text"

@@ -8,8 +8,8 @@ import type {
   TeamAbbreviation,
 } from '@mockingboard/shared';
 import { useLiveDraft } from '@/hooks/use-live-draft';
-import { DraftClock } from '@/components/draft-clock';
-import { BareLayout } from '@/components/bare-layout';
+import { DraftClock } from '@/components/draft/draft-clock';
+import { BareLayout } from '@/components/layout/bare-layout';
 import { timestampToDate } from '@/lib/format';
 
 function useClockRemaining(draft: Draft | null): number | null {

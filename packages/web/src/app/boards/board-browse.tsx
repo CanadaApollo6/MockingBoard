@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import type { BigBoard } from '@mockingboard/shared';
 import { Button } from '@/components/ui/button';
-import { BoardCard } from '@/components/board-card';
+import { BoardCard } from '@/components/board/board-card';
 
 interface BoardBrowseProps {
   initialBoards: BigBoard[];

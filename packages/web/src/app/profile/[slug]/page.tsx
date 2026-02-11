@@ -9,10 +9,10 @@ import {
   getPlayerMap,
 } from '@/lib/data';
 import { getSessionUser } from '@/lib/auth-session';
-import { FollowButton } from '@/components/follow-button';
+import { FollowButton } from '@/components/profile/follow-button';
 import { ProfileShareButton } from '@/components/share/profile-share-button';
-import { BoardCard } from '@/components/board-card';
-import { ReportCard } from '@/components/report-card';
+import { BoardCard } from '@/components/board/board-card';
+import { ReportCard } from '@/components/community/report-card';
 import { getCachedSeasonConfig } from '@/lib/cache';
 
 interface Props {

@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { getDraft, getDraftPicks, getPlayerMap } from '@/lib/data';
-import { SpectatorView } from '@/components/spectator-view';
+import { SpectatorView } from '@/components/draft/spectator-view';
 
 export default async function SpectatePage({
   params,

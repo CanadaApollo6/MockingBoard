@@ -50,11 +50,13 @@ export default async function AdminTeamEditorPage({
       <TeamEditor
         abbreviation={abbr}
         teamName={team.name}
+        currentCity={data.city ?? team.city}
         currentKeyPlayers={data.keyPlayers ?? []}
         currentCoachingStaff={data.coachingStaff ?? coachingStaffs[abbr] ?? []}
         currentFrontOffice={data.frontOffice ?? []}
         currentNeeds={data.needs ?? team.needs}
         currentFuturePicks={data.futurePicks ?? []}
+        currentSeasonOverview={data.seasonOverview ?? { accolades: [] }}
       />
     </main>
   );

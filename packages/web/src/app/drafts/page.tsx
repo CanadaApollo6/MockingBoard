@@ -1,7 +1,7 @@
 import { getUserDraftsPaginated } from '@/lib/data';
 import { getSessionUser } from '@/lib/auth-session';
 import { resolveUser } from '@/lib/user-resolve';
-import { DraftsGrid } from '@/components/drafts-grid';
+import { DraftsGrid } from '@/components/draft/drafts-grid';
 import Link from 'next/link';
 
 const PAGE_SIZE = 10;

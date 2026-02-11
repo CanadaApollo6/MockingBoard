@@ -3,9 +3,20 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
-import { useAuth } from '@/components/auth-provider';
+import { teams } from '@mockingboard/shared';
+import { useAuth } from '@/components/auth/auth-provider';
 import { Button } from '@/components/ui/button';
+import { TEAM_COLORS, hexToHsl } from '@/lib/team-colors';
+import { cn } from '@/lib/utils';
 import { getErrorMessage } from '@/lib/validate';
+
+const AFC_TEAMS = teams.filter((t) => t.conference === 'AFC');
+const NFC_TEAMS = teams.filter((t) => t.conference === 'NFC');
+
+function teamForeground(hex: string): string {
+  const [, , l] = hexToHsl(hex);
+  return l > 55 ? '#0a0a0b' : '#ffffff';
+}
 
 function sanitizeSlug(value: string): string {
   return value
@@ -36,6 +47,9 @@ export function ProfilePageClient() {
   const [bluesky, setBluesky] = useState(profile?.links?.bluesky ?? '');
   const [website, setWebsite] = useState(profile?.links?.website ?? '');
   const [isPublic, setIsPublic] = useState(profile?.isPublic ?? false);
+  const [followedTeam, setFollowedTeam] = useState<string | null>(
+    profile?.followedTeam ?? null,
+  );
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
 
@@ -71,6 +85,7 @@ export function ProfilePageClient() {
           avatar: avatar.trim() || undefined,
           links: Object.keys(links).length > 0 ? links : undefined,
           isPublic,
+          followedTeam,
         }),
       });
 
@@ -136,6 +151,50 @@ export function ProfilePageClient() {
             className={inputClass}
           />
         </div>
+      </div>
+
+      {/* Followed Team */}
+      <div className="space-y-3">
+        <label className="block text-sm font-medium">My Team</label>
+        <p className="text-xs text-muted-foreground">
+          Follow an NFL team to see their season overview on your dashboard.
+        </p>
+        {(['AFC', 'NFC'] as const).map((conf) => {
+          const confTeams = conf === 'AFC' ? AFC_TEAMS : NFC_TEAMS;
+          return (
+            <div key={conf}>
+              <p className="mb-2 text-xs font-medium text-muted-foreground">
+                {conf}
+              </p>
+              <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-8">
+                {confTeams.map((t) => {
+                  const colors = TEAM_COLORS[t.id];
+                  const isSelected = followedTeam === t.id;
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setFollowedTeam(isSelected ? null : t.id)}
+                      title={t.name}
+                      className={cn(
+                        'flex h-9 items-center justify-center rounded-md text-xs font-bold transition-all',
+                        isSelected
+                          ? 'ring-2 ring-ring ring-offset-2 ring-offset-background'
+                          : 'opacity-80 hover:opacity-100',
+                      )}
+                      style={{
+                        backgroundColor: colors.primary,
+                        color: teamForeground(colors.primary),
+                      }}
+                    >
+                      {t.id}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* Visibility */}
