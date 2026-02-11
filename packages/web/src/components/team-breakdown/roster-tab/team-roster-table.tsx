@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
 import {
   Table,
   TableBody,
@@ -6,8 +6,8 @@ import {
   TableRow,
   TableHead,
   TableHeader,
-} from '../ui/table';
-import { Badge } from '../ui/badge';
+} from '../../ui/table';
+import { Badge } from '../../ui/badge';
 import { getPositionColor } from '@/lib/position-colors';
 import type { TeamRoster, RosterPlayer } from '@/lib/cache';
 

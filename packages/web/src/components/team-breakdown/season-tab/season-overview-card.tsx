@@ -9,20 +9,22 @@ import { SeasonOverview } from '@mockingboard/shared';
 interface SeasonOverviewCardProps {
   team: {
     name: string;
-    colors: { primary: string; secondary: string };
-    record?: string;
-    seasonOverview?: SeasonOverview;
   };
+  colors: { primary: string; secondary: string };
+  record?: string;
+  seasonOverview?: SeasonOverview;
   showTeamName?: boolean;
 }
 
 export const SeasonOverviewCard = ({
   team,
+  record,
+  seasonOverview,
+  colors,
   showTeamName = false,
 }: SeasonOverviewCardProps) => {
-  const { record, seasonOverview } = team;
   return (
-    <GradientCard from={team.colors.primary} to={team.colors.secondary}>
+    <GradientCard from={colors.primary} to={colors.secondary}>
       <GradientCardContent>
         {showTeamName && (
           <p className="mb-4 text-xs font-medium uppercase tracking-widest text-white/70">

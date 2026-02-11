@@ -21,7 +21,7 @@ import {
   type TradedAwayPick,
   type TeamCapitalRank,
 } from '@/components/team-breakdown/team-breakdown';
-import type { KeyPlayerCardProps } from '@/components/team-breakdown/key-player-card';
+import type { KeyPlayerCardProps } from '@/components/team-breakdown/roster-tab/key-player-card';
 
 export const revalidate = 3600;
 
