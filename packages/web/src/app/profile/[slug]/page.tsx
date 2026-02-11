@@ -6,6 +6,7 @@ import {
   getFollowCounts,
   getUserPublicBoards,
   getUserReports,
+  getUserDraftScores,
   getPlayerMap,
 } from '@/lib/data';
 import { getSessionUser } from '@/lib/auth-session';
@@ -42,11 +43,12 @@ export default async function ProfilePage({ params }: Props) {
 
   if (!user) notFound();
 
-  const [session, counts, boards, reports] = await Promise.all([
+  const [session, counts, boards, reports, draftScores] = await Promise.all([
     getSessionUser(),
     getFollowCounts(user.id),
     getUserPublicBoards(user.id),
     getUserReports(user.id),
+    getUserDraftScores(user.id),
   ]);
 
   const isOwnProfile = session?.uid === user.id;
@@ -163,6 +165,51 @@ export default async function ProfilePage({ params }: Props) {
           )}
         </div>
       </div>
+
+      {/* Accuracy stats */}
+      {draftScores.length > 0 && (
+        <div className="mt-8 rounded-lg border bg-card p-5">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold">Prediction Accuracy</h2>
+            <Link
+              href="/leaderboard"
+              className="text-sm text-mb-accent hover:underline"
+            >
+              View Leaderboard
+            </Link>
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <div className="text-center">
+              <p className="font-mono text-2xl font-bold">
+                {user.stats?.accuracyScore ?? 0}%
+              </p>
+              <p className="text-xs text-muted-foreground">Accuracy Score</p>
+            </div>
+            <div className="text-center">
+              <p className="font-mono text-2xl font-bold">
+                {draftScores.length}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Predictions Scored
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="font-mono text-2xl font-bold">
+                {Math.max(...draftScores.map((s) => s.percentage))}%
+              </p>
+              <p className="text-xs text-muted-foreground">Best Draft Score</p>
+            </div>
+            <div className="text-center">
+              <p className="font-mono text-2xl font-bold">
+                {draftScores.reduce((sum, s) => sum + s.pickCount, 0)}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Total Picks Scored
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Content: boards + reports */}
       <div className="mt-10 grid gap-10 lg:grid-cols-2">

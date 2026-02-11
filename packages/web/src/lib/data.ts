@@ -16,6 +16,7 @@ import type {
   ScoutingReport,
   User,
   VideoBreakdown,
+  DraftResultPick,
 } from '@mockingboard/shared';
 
 export async function getDrafts(options?: {
@@ -442,15 +443,129 @@ export async function getRecentCompletedDraft(): Promise<Draft | null> {
 export async function getTopDrafters(limit = 5): Promise<User[]> {
   const snapshot = await adminDb
     .collection('users')
-    .orderBy('stats.totalDrafts', 'desc')
+    .orderBy('stats.accuracyScore', 'desc')
     .limit(limit + 5)
     .get();
 
   return sanitize(
     hydrateDocs<User>(snapshot)
-      .filter((u) => !u.isGuest && (u.stats?.totalDrafts ?? 0) > 0)
+      .filter((u) => !u.isGuest && (u.stats?.accuracyScore ?? 0) > 0)
       .slice(0, limit),
   );
+}
+
+export interface LeaderboardEntry {
+  userId: string;
+  displayName: string;
+  slug?: string;
+  isPublic?: boolean;
+  avgScore: number;
+  draftCount: number;
+}
+
+export async function getLeaderboard(limit = 50): Promise<User[]> {
+  const snapshot = await adminDb
+    .collection('users')
+    .orderBy('stats.accuracyScore', 'desc')
+    .limit(limit + 10)
+    .get();
+
+  return sanitize(
+    hydrateDocs<User>(snapshot)
+      .filter((u) => !u.isGuest && (u.stats?.accuracyScore ?? 0) > 0)
+      .slice(0, limit),
+  );
+}
+
+export async function getYearLeaderboard(
+  year: number,
+): Promise<LeaderboardEntry[]> {
+  const scoresSnap = await adminDb
+    .collection('draftScores')
+    .where('year', '==', year)
+    .where('isLocked', '==', true)
+    .get();
+
+  if (scoresSnap.empty) return [];
+
+  // Group by userId
+  const byUser = new Map<string, { totalPct: number; count: number }>();
+  for (const doc of scoresSnap.docs) {
+    const data = doc.data();
+    const userId = data.userId as string;
+    const pct = (data.percentage as number) ?? 0;
+    const existing = byUser.get(userId) ?? { totalPct: 0, count: 0 };
+    existing.totalPct += pct;
+    existing.count++;
+    byUser.set(userId, existing);
+  }
+
+  // Resolve user display names
+  const userIds = [...byUser.keys()];
+  const userDocs = await Promise.all(
+    userIds.map((id) => adminDb.collection('users').doc(id).get()),
+  );
+
+  const entries: LeaderboardEntry[] = [];
+  for (let i = 0; i < userIds.length; i++) {
+    const userId = userIds[i];
+    const agg = byUser.get(userId)!;
+    const userData = userDocs[i].data();
+    entries.push({
+      userId,
+      displayName: (userData?.displayName as string) ?? 'Unknown',
+      slug: userData?.slug as string | undefined,
+      isPublic: userData?.isPublic as boolean | undefined,
+      avgScore: Math.round(agg.totalPct / agg.count),
+      draftCount: agg.count,
+    });
+  }
+
+  return entries.sort((a, b) => b.avgScore - a.avgScore);
+}
+
+// ---- Draft Results & Scores ----
+
+export async function getDraftResults(
+  year: number,
+): Promise<DraftResultPick[]> {
+  const doc = await adminDb.collection('draftResults').doc(`${year}`).get();
+  if (!doc.exists) return [];
+  return (doc.data()?.picks as DraftResultPick[]) ?? [];
+}
+
+export interface DraftScoreDoc {
+  draftId: string;
+  year: number;
+  totalScore: number;
+  maxScore: number;
+  percentage: number;
+  pickCount: number;
+  scoredAt: Date;
+}
+
+export async function getUserDraftScores(
+  userId: string,
+): Promise<DraftScoreDoc[]> {
+  const snapshot = await adminDb
+    .collection('draftScores')
+    .where('userId', '==', userId)
+    .where('isLocked', '==', true)
+    .get();
+
+  return snapshot.docs.map((doc) => {
+    const d = doc.data();
+    return {
+      draftId: d.draftId as string,
+      year: d.year as number,
+      totalScore: d.totalScore as number,
+      maxScore: d.maxScore as number,
+      percentage: d.percentage as number,
+      pickCount: d.pickCount as number,
+      scoredAt:
+        d.scoredAt instanceof Timestamp ? d.scoredAt.toDate() : d.scoredAt,
+    };
+  });
 }
 
 // ---- Video Breakdowns ----

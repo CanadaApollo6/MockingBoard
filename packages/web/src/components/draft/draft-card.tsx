@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { X } from 'lucide-react';
+import { X, Lock } from 'lucide-react';
 import type { Draft, TeamAbbreviation } from '@mockingboard/shared';
 import { formatDraftDate, getDraftDisplayName } from '@/lib/format';
 import { getTeamColor } from '@/lib/team-colors';
@@ -132,6 +132,12 @@ export function DraftCard({
                   <Badge variant={STATUS_VARIANT[draft.status]}>
                     {STATUS_LABEL[draft.status]}
                   </Badge>
+                  {draft.isLocked && (
+                    <Badge variant="outline" className="gap-1">
+                      <Lock className="h-3 w-3" />
+                      Prediction
+                    </Badge>
+                  )}
                   {(canCancel || canDelete) && (
                     <button
                       className="rounded p-0.5 text-muted-foreground transition-colors hover:text-destructive"

@@ -83,11 +83,12 @@ export async function POST(request: Request) {
   const playerMap = new Map<string, Player>();
   for (const p of players) playerMap.set(p.id, p);
 
-  // Find all completed drafts for this year
+  // Find all locked (prediction) drafts for this year
   const draftsSnap = await adminDb
     .collection('drafts')
     .where('status', '==', 'complete')
     .where('config.year', '==', year)
+    .where('isLocked', '==', true)
     .get();
 
   const scored: Array<{
@@ -99,12 +100,15 @@ export async function POST(request: Request) {
     pickCount: number;
   }> = [];
 
+  // Track affected users for accuracy aggregation
+  const affectedUserIds = new Set<string>();
+
   const batch = adminDb.batch();
 
   for (const draftDoc of draftsSnap.docs) {
     const draft = hydrateDoc<Draft>(draftDoc);
 
-    // Get picks for this draft — stored in subcollection or inline
+    // Get picks for this draft
     const picksSnap = await adminDb
       .collection('drafts')
       .doc(draft.id)
@@ -143,12 +147,15 @@ export async function POST(request: Request) {
         draftId: draft.id,
         year,
         userId,
+        isLocked: true,
         scoredAt: new Date(),
         totalScore: result.totalScore,
         maxScore: result.maxScore,
         percentage: result.percentage,
         pickCount: pickScores.length,
       });
+
+      affectedUserIds.add(userId);
 
       scored.push({
         draftId: draft.id,
@@ -165,10 +172,35 @@ export async function POST(request: Request) {
     await batch.commit();
   }
 
+  // Aggregate accuracy scores for affected users
+  let usersUpdated = 0;
+  for (const userId of affectedUserIds) {
+    const userScores = await adminDb
+      .collection('draftScores')
+      .where('userId', '==', userId)
+      .where('isLocked', '==', true)
+      .get();
+
+    if (userScores.empty) continue;
+
+    let totalPct = 0;
+    for (const doc of userScores.docs) {
+      totalPct += (doc.data().percentage as number) ?? 0;
+    }
+    const avgAccuracy = Math.round(totalPct / userScores.size);
+
+    await adminDb
+      .collection('users')
+      .doc(userId)
+      .update({ 'stats.accuracyScore': avgAccuracy });
+    usersUpdated++;
+  }
+
   return NextResponse.json({
     ok: true,
     draftsScored: draftsSnap.size,
     resultsWritten: scored.length,
+    usersUpdated,
     results: scored.slice(0, 20),
   });
 }
