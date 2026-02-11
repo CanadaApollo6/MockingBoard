@@ -9,6 +9,7 @@ import {
   LayoutList,
   Eye,
   GalleryHorizontalEnd,
+  Shirt,
   Loader2,
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
@@ -18,7 +19,8 @@ const TYPE_META: Record<
   SearchResult['type'],
   { label: string; icon: typeof Search }
 > = {
-  player: { label: 'Players', icon: Users },
+  player: { label: 'Prospects', icon: Users },
+  'nfl-player': { label: 'NFL Players', icon: Shirt },
   team: { label: 'Teams', icon: GalleryHorizontalEnd },
   user: { label: 'Users', icon: User },
   board: { label: 'Boards', icon: LayoutList },
@@ -27,6 +29,7 @@ const TYPE_META: Record<
 
 const TYPE_ORDER: SearchResult['type'][] = [
   'player',
+  'nfl-player',
   'team',
   'user',
   'board',

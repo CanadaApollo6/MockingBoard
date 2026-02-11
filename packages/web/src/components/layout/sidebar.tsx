@@ -22,6 +22,7 @@ import {
   LogOut,
   LogIn,
   Shirt,
+  Contact,
   BarChart3,
   Trophy,
   Crosshair,
@@ -68,6 +69,7 @@ const NAV_GROUPS = [
     items: [
       { href: '/draft-order', label: 'Draft Order', icon: ListOrdered },
       { href: '/teams', label: 'Teams', icon: GalleryHorizontalEnd },
+      { href: '/players', label: 'NFL Players', icon: Contact },
       {
         href: '/trade-calculator',
         label: 'Trade Calculator',

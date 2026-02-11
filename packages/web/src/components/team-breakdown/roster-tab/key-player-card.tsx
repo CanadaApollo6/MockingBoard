@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { GradientCard } from '@/components/ui/gradient-card';
 
@@ -7,6 +8,7 @@ export interface KeyPlayerStat {
 }
 
 export interface KeyPlayerCardProps {
+  espnId?: string;
   name: string;
   position: string;
   jersey: string;
@@ -17,6 +19,7 @@ export interface KeyPlayerCardProps {
 }
 
 export function KeyPlayerCard({
+  espnId,
   name,
   position,
   jersey,
@@ -27,7 +30,7 @@ export function KeyPlayerCard({
 }: KeyPlayerCardProps) {
   const expLabel = experience === 0 ? 'Rookie' : `${experience}yr`;
 
-  return (
+  const card = (
     <GradientCard from={teamColors.primary} to={teamColors.secondary}>
       <div className="flex items-center gap-4 p-4">
         {/* Jersey number */}
@@ -38,7 +41,7 @@ export function KeyPlayerCard({
         {/* Info */}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <p className="truncate font-[family-name:var(--font-display)] text-base font-bold uppercase tracking-tight">
+            <p className="truncate font-[family-name:var(--font-display)] text-2xl font-bold uppercase tracking-tight">
               {name}
             </p>
           </div>
@@ -72,4 +75,10 @@ export function KeyPlayerCard({
       </div>
     </GradientCard>
   );
+
+  if (espnId) {
+    return <Link href={`/players/${espnId}`}>{card}</Link>;
+  }
+
+  return card;
 }

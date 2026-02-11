@@ -108,7 +108,15 @@ export default async function TeamPage({
   // Key players from admin curation
   const colors = TEAM_COLORS[abbr];
   const adminKeyPlayers = teamDoc?.keyPlayers ?? [];
+
+  // Build name → ESPN ID lookup from roster
+  const rosterPlayers = roster
+    ? [...roster.offense, ...roster.defense, ...roster.specialTeams]
+    : [];
+  const nameToEspnId = new Map(rosterPlayers.map((p) => [p.name, p.id]));
+
   const keyPlayers: KeyPlayerCardProps[] = adminKeyPlayers.map((kp) => ({
+    espnId: nameToEspnId.get(kp.name),
     name: kp.name,
     position: kp.position,
     jersey: kp.jersey,
