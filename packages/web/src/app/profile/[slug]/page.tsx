@@ -7,8 +7,11 @@ import {
   getUserPublicBoards,
   getUserReports,
   getUserDraftScores,
+  getUserDraftingIdentity,
   getPlayerMap,
 } from '@/lib/data';
+import { teams } from '@mockingboard/shared';
+import { Badge } from '@/components/ui/badge';
 import { getSessionUser } from '@/lib/auth-session';
 import { FollowButton } from '@/components/profile/follow-button';
 import { ProfileShareButton } from '@/components/share/profile-share-button';
@@ -30,11 +33,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const description =
     user.bio ?? `${user.displayName}'s draft analyst profile on MockingBoard.`;
 
-  return {
-    title,
-    description,
-    openGraph: { title, description, type: 'profile' },
-  };
+  return { title, description };
 }
 
 export default async function ProfilePage({ params }: Props) {
@@ -43,13 +42,15 @@ export default async function ProfilePage({ params }: Props) {
 
   if (!user) notFound();
 
-  const [session, counts, boards, reports, draftScores] = await Promise.all([
-    getSessionUser(),
-    getFollowCounts(user.id),
-    getUserPublicBoards(user.id),
-    getUserReports(user.id),
-    getUserDraftScores(user.id),
-  ]);
+  const [session, counts, boards, reports, draftScores, identity] =
+    await Promise.all([
+      getSessionUser(),
+      getFollowCounts(user.id),
+      getUserPublicBoards(user.id),
+      getUserReports(user.id),
+      getUserDraftScores(user.id),
+      getUserDraftingIdentity(user.id, user.discordId),
+    ]);
 
   const isOwnProfile = session?.uid === user.id;
 
@@ -84,6 +85,7 @@ export default async function ProfilePage({ params }: Props) {
                 user={user}
                 boardCount={boards.length}
                 reportCount={reports.length}
+                topPositions={identity?.topPositions.map((p) => p.position)}
               />
             )}
           </div>
@@ -205,6 +207,57 @@ export default async function ProfilePage({ params }: Props) {
               </p>
               <p className="text-xs text-muted-foreground">
                 Total Picks Scored
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Drafting Identity */}
+      {identity && (
+        <div className="mt-8 rounded-lg border bg-card p-5">
+          <h2 className="text-lg font-bold">Drafting Identity</h2>
+          <div className="mt-4 flex flex-wrap items-center gap-6">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                Top Positions
+              </p>
+              <div className="mt-1.5 flex gap-2">
+                {identity.topPositions.map(({ position, count }) => (
+                  <Badge key={position} variant="outline" className="text-sm">
+                    {position}{' '}
+                    <span className="ml-1 text-muted-foreground">
+                      ({count})
+                    </span>
+                  </Badge>
+                ))}
+              </div>
+            </div>
+            {identity.favoriteTeam && (
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  Most Drafted For
+                </p>
+                <p className="mt-1.5 text-sm font-medium">
+                  {teams.find((t) => t.id === identity.favoriteTeam)?.name ??
+                    identity.favoriteTeam}
+                </p>
+              </div>
+            )}
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                Completed Drafts
+              </p>
+              <p className="mt-1.5 font-mono text-sm font-bold">
+                {identity.totalDrafts}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                Total Picks
+              </p>
+              <p className="mt-1.5 font-mono text-sm font-bold">
+                {identity.totalPicks}
               </p>
             </div>
           </div>

@@ -178,7 +178,7 @@ Extract platform-agnostic business logic from bot services to `packages/shared`.
 - [x] Client-side pick timer with auto-pick on expiry and urgency states
 - [x] Multiplayer trade support (human-to-human and human-to-CPU)
 - [x] Pause/resume for draft hosts
-- [ ] Server-side timer enforcement via `clockExpiresAt` field
+- [x] Server-side timer enforcement via `clockExpiresAt` field
 
 ### Milestone 3.4: Platform Sync ✓
 
@@ -285,8 +285,8 @@ Extract platform-agnostic business logic from bot services to `packages/shared`.
 
 ### Milestone 4.6: Advanced Board Generation
 
-- [ ] Rapid-generate boards filtered by position group with trait and production weighting
-- [ ] Compare your board to friends' boards and community scouts (moved from 4.1)
+- [x] Rapid-generate boards filtered by position group with trait and production weighting
+- [x] Compare your board to friends' boards and community scouts (moved from 4.1)
 
 ### Milestone 4.7: Data Pipeline
 
@@ -433,10 +433,10 @@ Auth-gated admin dashboard (`/admin`) with 12 feature sections, eliminating depl
 - [ ] During draft: highlight players that match user's tendencies
 - [ ] Sleeper alerts: undervalued players matching user's profile
 
-### Milestone 5.4: Shareable Profiles
+### Milestone 5.4: Shareable Profiles ✓
 
-- [ ] Public profile page with scouting identity
-- [ ] Shareable graphics/cards for social media
+- [x] Public profile page with scouting identity (drafting identity section: top positions, most-drafted-for team, draft/pick counts)
+- [x] Shareable graphics/cards for social media (ProfileShareCard PNG + OG image route for link previews)
 
 **Phase 5 Complete**: Users have a persistent scouting identity that evolves with each draft.
 
