@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { GradientCard } from '@/components/ui/gradient-card';
 import { getSchoolColor } from '@/lib/school-colors';
-import { SeasonOverviewCard } from './team-breakdown/season-overview-card';
+import { SeasonOverviewCard } from './team-breakdown/season-tab/season-overview-card';
 
 interface DashboardProps {
   displayName: string;
@@ -240,7 +240,13 @@ export function Dashboard({
               href={`/teams/${followedTeam.abbreviation}`}
               className="mt-6 block"
             >
-              <SeasonOverviewCard team={followedTeam} showTeamName />
+              <SeasonOverviewCard
+                team={followedTeam}
+                record={record}
+                seasonOverview={seasonOverview}
+                colors={followedTeam.colors}
+                showTeamName
+              />
             </Link>
           );
         })()}

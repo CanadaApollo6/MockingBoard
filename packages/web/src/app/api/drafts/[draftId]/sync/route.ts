@@ -64,7 +64,7 @@ export async function POST(
     const batch = adminDb.batch();
 
     // Update draft document
-    const draftUpdate: Record<string, unknown> = {
+    const draftUpdate: FirebaseFirestore.UpdateData<FirebaseFirestore.DocumentData> = {
       status: body.status,
       currentPick: body.currentPick,
       currentRound: body.currentRound,
