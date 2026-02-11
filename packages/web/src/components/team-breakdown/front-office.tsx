@@ -12,24 +12,24 @@ export function FrontOffice({
 
   return (
     <div className="space-y-4">
-      {/* Top Executive — prominent card */}
+      {/* Top Executive — gradient card */}
       {topExec && (
-        <div className="rounded-lg border p-4">
-          <div
-            className="mb-3 h-1 rounded-full"
-            style={{
-              background: `linear-gradient(to right, ${teamColors.primary}, ${teamColors.secondary})`,
-            }}
-          />
-          <p className="font-[family-name:var(--font-display)] text-xl font-bold uppercase tracking-tight">
+        <div
+          className="relative overflow-hidden rounded-lg p-5"
+          style={{
+            background: `linear-gradient(135deg, ${teamColors.primary}, ${teamColors.secondary})`,
+          }}
+        >
+          <p className="font-[family-name:var(--font-display)] text-2xl font-bold uppercase tracking-tight text-white">
             {topExec.name}
           </p>
-          <div className="mt-1 flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">
-              {topExec.title}
-            </span>
+          <div className="mt-1.5 flex items-center gap-2">
+            <span className="text-sm text-white/80">{topExec.title}</span>
             {topExec.since && (
-              <Badge variant="outline" className="text-xs">
+              <Badge
+                variant="outline"
+                className="border-white/30 text-xs text-white/80"
+              >
                 Since {topExec.since}
               </Badge>
             )}

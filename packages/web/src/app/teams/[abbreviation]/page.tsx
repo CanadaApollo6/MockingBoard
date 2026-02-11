@@ -1,12 +1,7 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import type { TeamAbbreviation, FuturePickSeed } from '@mockingboard/shared';
-import {
-  teams,
-  getPickValue,
-  coachingStaffs,
-  isTeamAbbreviation,
-} from '@mockingboard/shared';
+import { teams, getPickValue, isTeamAbbreviation } from '@mockingboard/shared';
 import {
   getCachedDraftOrderSlots,
   getCachedTeamDocs,
@@ -123,8 +118,8 @@ export default async function TeamPage({
     stats: kp.stats ?? [],
   }));
 
-  // Coaching staff: Firestore > hardcoded fallback
-  const coachingStaff = teamDoc?.coachingStaff ?? coachingStaffs[abbr] ?? [];
+  // Coaching staff from Firestore
+  const coachingStaff = teamDoc?.coachingStaff ?? [];
 
   // Front office
   const frontOffice = teamDoc?.frontOffice ?? [];
