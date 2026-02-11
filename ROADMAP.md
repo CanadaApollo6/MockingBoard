@@ -360,10 +360,10 @@ Extract platform-agnostic business logic from bot services to `packages/shared`.
 ### Milestone 4.75.1: Notification System
 
 - [ ] In-app notification feed (bell icon, unread count, notification drawer)
-- [ ] Notification triggers: new follower, new report on a player you've scouted, new board from someone you follow, new video on a player you've scouted
-- [ ] Draft notifications: trade proposals, your turn (multiplayer), draft completed
+- [x] Notification triggers: new follower, new report on a player you've scouted, new board from someone you follow, new video on a player you've scouted
+- [x] Draft notifications: trade proposals, your turn (multiplayer), draft completed
 - [ ] Email digest option (daily/weekly summary of activity)
-- [ ] Notification preferences per user (toggle categories on/off)
+- [x] Notification preferences per user (toggle categories on/off)
 
 ### Milestone 4.75.2: Admin Dashboard & Content Management ✓
 
@@ -475,9 +475,9 @@ Auth-gated admin dashboard (`/admin`) with 12 feature sections, eliminating depl
 
 ### Milestone 6.1: Prediction Locking
 
-- [ ] Allow users to "lock in" a mock draft as a prediction
-- [ ] Timestamp and freeze locked predictions
-- [ ] Support multiple locked predictions per user (track best, average, etc.)
+- [x] Allow users to "lock in" a mock draft as a prediction
+- [x] Timestamp and freeze locked predictions
+- [x] Support multiple locked predictions per user (track best, average, etc.)
 
 ### Milestone 6.2: Real Draft Integration ✓
 
@@ -487,7 +487,7 @@ Auth-gated admin dashboard (`/admin`) with 12 feature sections, eliminating depl
 
 ### Milestone 6.3: Leaderboards
 
-- [ ] Global leaderboard by accuracy score
+- [x] Global leaderboard by accuracy score
 - [ ] Leaderboard by server/community
 - [ ] Historical leaderboards (by year)
 - [ ] "Bold take" bonus: extra credit for correctly predicting reaches/slides
@@ -495,9 +495,9 @@ Auth-gated admin dashboard (`/admin`) with 12 feature sections, eliminating depl
 
 ### Milestone 6.4: Receipts & Sharing
 
-- [ ] Auto-generate "I called it" graphics when predictions hit
-- [ ] Historical accuracy stats on user profiles
-- [ ] Live draft companion: surface correct predictions in real time as picks happen
+- [x] Auto-generate "I called it" graphics when predictions hit
+- [x] Historical accuracy stats on user profiles
+- [x] Live draft companion: surface correct predictions in real time as picks happen
 
 ### Milestone 6.5: Analyst Mock Draft Aggregation
 
