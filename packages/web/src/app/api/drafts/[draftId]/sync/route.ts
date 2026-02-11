@@ -64,14 +64,15 @@ export async function POST(
     const batch = adminDb.batch();
 
     // Update draft document
-    const draftUpdate: FirebaseFirestore.UpdateData<FirebaseFirestore.DocumentData> = {
-      status: body.status,
-      currentPick: body.currentPick,
-      currentRound: body.currentRound,
-      pickedPlayerIds: body.pickedPlayerIds,
-      pickOrder: body.pickOrder,
-      updatedAt: FieldValue.serverTimestamp(),
-    };
+    const draftUpdate: FirebaseFirestore.UpdateData<FirebaseFirestore.DocumentData> =
+      {
+        status: body.status,
+        currentPick: body.currentPick,
+        currentRound: body.currentRound,
+        pickedPlayerIds: body.pickedPlayerIds,
+        pickOrder: body.pickOrder,
+        updatedAt: FieldValue.serverTimestamp(),
+      };
     if (body.futurePicks !== undefined) {
       draftUpdate.futurePicks = body.futurePicks;
     }

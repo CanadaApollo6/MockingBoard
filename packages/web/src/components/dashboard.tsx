@@ -188,9 +188,17 @@ export function Dashboard({
         {/* Leaderboard Top 5 */}
         <Card>
           <CardContent className="p-5">
-            <p className="mb-3 text-xs font-medium uppercase tracking-widest text-muted-foreground">
-              Leaderboard
-            </p>
+            <div className="mb-3 flex items-center justify-between">
+              <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+                Leaderboard
+              </p>
+              <Link
+                href="/leaderboard"
+                className="text-xs text-muted-foreground hover:text-primary"
+              >
+                View All
+              </Link>
+            </div>
             {leaderboard.length > 0 ? (
               <ol className="space-y-2">
                 {leaderboard.map((u, i) => (
@@ -208,15 +216,15 @@ export function Dashboard({
                     ) : (
                       <span className="font-medium">{u.displayName}</span>
                     )}
-                    <span className="ml-auto text-xs text-muted-foreground">
-                      {u.stats?.totalDrafts ?? 0} drafts
+                    <span className="ml-auto font-mono text-xs text-muted-foreground">
+                      {u.stats?.accuracyScore ?? 0}%
                     </span>
                   </li>
                 ))}
               </ol>
             ) : (
               <p className="text-sm text-muted-foreground">
-                No leaderboard data yet.
+                No predictions scored yet.
               </p>
             )}
           </CardContent>

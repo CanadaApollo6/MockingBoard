@@ -7,11 +7,13 @@ import {
   getDraftPicks,
   getPlayerMap,
   getDraftTrades,
+  getDraftResults,
   getBigBoard,
 } from '@/lib/data';
 import { getCachedTeamDocs } from '@/lib/cache';
 import { getSessionUser } from '@/lib/auth-session';
 import { resolveUser, isUserInDraft } from '@/lib/user-resolve';
+import { scoreMockPick, aggregateDraftScore } from '@/lib/scoring';
 import { formatDraftDate, getDraftDisplayName } from '@/lib/format';
 import { TradeSummary } from '@/components/trade/trade-summary';
 import { DraftRecapSummary } from '@/components/recap/draft-recap-summary';
@@ -19,6 +21,9 @@ import { TeamGradeCard } from '@/components/recap/team-grade-card';
 import { PickBreakdown } from '@/components/recap/pick-breakdown';
 import { TradeAnalysisCard } from '@/components/recap/trade-analysis-card';
 import { ShareButton } from '@/components/share/share-button';
+import { LockPredictionButton } from '@/components/draft/lock-prediction-button';
+import { PredictionBreakdown } from '@/components/draft/prediction-breakdown';
+import { ReceiptShareButton } from '@/components/share/receipt-share-button';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -93,6 +98,26 @@ export default async function DraftDetailPage({
       tg.picks.some((p) => p.boardDelta != null),
     ) ?? false;
 
+  // Score picks against actual draft results for locked predictions
+  const predictionScore =
+    draft.isLocked && draft.status === 'complete' && picks.length > 0
+      ? await (async () => {
+          const actualResults = await getDraftResults(draft.config.year);
+          if (actualResults.length === 0) return null;
+          const pickScores = picks.map((pick) => {
+            const player = playerMap.get(pick.playerId);
+            return scoreMockPick(
+              player?.name ?? 'Unknown',
+              pick.team,
+              player?.position ?? '',
+              pick.overall,
+              actualResults,
+            );
+          });
+          return aggregateDraftScore(pickScores);
+        })()
+      : null;
+
   return (
     <main className="mx-auto max-w-screen-xl px-4 py-8">
       {/* Header */}
@@ -115,13 +140,31 @@ export default async function DraftDetailPage({
                 : draft.status}
           </Badge>
           {draft.status === 'complete' && (
-            <ShareButton
-              draft={draft}
-              picks={picks}
-              players={playersObj}
-              userTeams={userTeams}
-              recap={recap}
-            />
+            <>
+              {session?.uid === draft.createdBy && (
+                <LockPredictionButton
+                  draftId={draftId}
+                  isLocked={draft.isLocked ?? false}
+                />
+              )}
+              <ShareButton
+                draft={draft}
+                picks={picks}
+                players={playersObj}
+                userTeams={userTeams}
+                recap={recap}
+              />
+              {predictionScore && (
+                <ReceiptShareButton
+                  displayName={user?.displayName ?? 'Drafter'}
+                  draftName={getDraftDisplayName(draft)}
+                  draftId={draftId}
+                  year={draft.config.year}
+                  pickScores={predictionScore.pickScores}
+                  percentage={predictionScore.percentage}
+                />
+              )}
+            </>
           )}
         </div>
         <div className="mt-2 flex flex-wrap gap-2 text-sm text-muted-foreground sm:gap-4">
@@ -184,6 +227,20 @@ export default async function DraftDetailPage({
               </div>
             </>
           )}
+        </>
+      )}
+
+      {/* Prediction Scoring */}
+      {predictionScore && (
+        <>
+          <Separator className="my-6" />
+          <h2 className="mb-4 text-lg font-semibold">Prediction Scoring</h2>
+          <PredictionBreakdown
+            pickScores={predictionScore.pickScores}
+            totalScore={predictionScore.totalScore}
+            maxScore={predictionScore.maxScore}
+            percentage={predictionScore.percentage}
+          />
         </>
       )}
 

@@ -85,7 +85,11 @@ export default async function Home({
     return (
       <Dashboard
         displayName={user?.displayName ?? 'User'}
-        userStats={stats.totalDrafts > 0 ? stats : undefined}
+        userStats={
+          stats.totalDrafts > 0
+            ? { ...stats, accuracyScore: user?.stats?.accuracyScore }
+            : undefined
+        }
         prospect={getProspectOfTheDay(playerMap, featured?.prospectOfTheDay)}
         draftOfWeek={draftOfWeek}
         leaderboard={leaderboard}

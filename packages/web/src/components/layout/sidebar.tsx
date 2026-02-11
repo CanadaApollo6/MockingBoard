@@ -23,6 +23,8 @@ import {
   LogIn,
   Shirt,
   BarChart3,
+  Trophy,
+  Crosshair,
 } from 'lucide-react';
 import { useAuth } from '@/components/auth/auth-provider';
 import { ThemeToggle } from '@/components/layout/theme-toggle';
@@ -38,6 +40,7 @@ const NAV_GROUPS = [
     label: 'Drafts',
     items: [
       { href: '/drafts', label: 'My Drafts', icon: FileText },
+      { href: '/companion', label: 'Companion', icon: Crosshair },
       { href: '/lobbies', label: 'Join Lobby', icon: Users },
     ],
   },
@@ -55,6 +58,7 @@ const NAV_GROUPS = [
     items: [
       { href: '/community', label: 'Community', icon: Globe },
       { href: '/scouts', label: 'Scouts', icon: Eye },
+      { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
     ],
   },
   {
