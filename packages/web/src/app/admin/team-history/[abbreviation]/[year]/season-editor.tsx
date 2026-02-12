@@ -106,8 +106,7 @@ export function SeasonEditor({
     updated[index] = { ...updated[index], [field]: value };
     setCoaches(updated);
   };
-  const addCoach = () =>
-    setCoaches([...coaches, { name: '', role: '', since: year }]);
+  const addCoach = () => setCoaches([...coaches, { name: '', role: '' }]);
   const removeCoach = (index: number) =>
     setCoaches(coaches.filter((_, i) => i !== index));
 
@@ -320,15 +319,6 @@ export function SeasonEditor({
                         </SelectItem>
                       </SelectContent>
                     </Select>
-                    <Input
-                      type="number"
-                      value={coach.since}
-                      onChange={(e) =>
-                        updateCoach(i, 'since', parseInt(e.target.value) || 0)
-                      }
-                      placeholder="Since"
-                      className="w-20"
-                    />
                     <Button
                       variant="ghost"
                       size="sm"

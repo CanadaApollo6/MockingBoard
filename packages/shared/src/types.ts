@@ -464,7 +464,6 @@ export interface Follow {
 export interface Coach {
   name: string;
   role: string;
-  since: number;
 }
 
 // ---- Key Player Types ----
@@ -485,7 +484,6 @@ export interface KeyPlayerOverride {
 export interface FrontOfficeStaff {
   name: string;
   title: string;
-  since?: number;
 }
 
 // ---- Season Overview Types ----
@@ -672,4 +670,75 @@ export interface AppNotification {
   createdAt: FirestoreTimestamp;
   actorId?: string;
   actorName?: string;
+}
+
+// ---- Contract / Salary Cap Types ----
+
+export interface PlayerContract {
+  player: string;
+  baseSalary: number;
+  proratedBonus: number;
+  signingBonus: number;
+  optionBonus: number;
+  rosterBonus: number;
+  rosterBonusRegular: number;
+  rosterBonusPerGame: number;
+  workoutBonus: number;
+  otherBonus: number;
+  guaranteedSalary: number;
+  capNumber: number;
+  deadMoney: {
+    cutPreJune1: number;
+    cutPostJune1: number;
+    tradePreJune1: number;
+    tradePostJune1: number;
+  };
+  capSavings: {
+    cutPreJune1: number;
+    cutPostJune1: number;
+    tradePreJune1: number;
+    tradePostJune1: number;
+  };
+  restructureSavings: number;
+  extensionSavings: number;
+}
+
+export interface FreeAgentEntry {
+  player: string;
+  age: number;
+  years: number;
+  faType: 'UFA' | 'RFA' | 'ERFA';
+  franchiseTender: number;
+  transitionTender: number;
+  position?: string;
+  snaps?: number;
+  apy?: number;
+  guarantees?: number;
+}
+
+export interface DeadCapEntry {
+  name: string;
+  capNumber: number;
+}
+
+export interface TeamContractData {
+  year: number;
+  capSpace: number;
+  effectiveCapSpace: number;
+  playerCount: number;
+  activeCapSpending: number;
+  deadMoneyTotal: number;
+  salaryCap: number;
+  roster: PlayerContract[];
+  freeAgents: FreeAgentEntry[];
+  deadCap: DeadCapEntry[];
+}
+
+export interface LeagueCapOverview {
+  team: string;
+  capSpace: number;
+  effectiveCapSpace: number;
+  playerCount: number;
+  activeCapSpending: number;
+  deadMoney: number;
 }

@@ -51,7 +51,10 @@ export const TeamRosterTable = ({ roster }: TeamRosterProps) => {
                 const players = roster[key];
                 if (players.length === 0) return null;
                 return [
-                  <TableRow key={`group-${key}`} className="hover:bg-transparent">
+                  <TableRow
+                    key={`group-${key}`}
+                    className="hover:bg-transparent"
+                  >
                     <TableCell
                       colSpan={COL_COUNT}
                       className="pt-6 pb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground"

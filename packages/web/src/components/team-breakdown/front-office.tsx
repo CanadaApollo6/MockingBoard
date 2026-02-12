@@ -1,5 +1,4 @@
 import type { FrontOfficeStaff } from '@mockingboard/shared';
-import { Badge } from '@/components/ui/badge';
 
 export function FrontOffice({
   staff,
@@ -23,37 +22,22 @@ export function FrontOffice({
           <p className="font-[family-name:var(--font-display)] text-2xl font-bold uppercase tracking-tight text-white">
             {topExec.name}
           </p>
-          <div className="mt-1.5 flex items-center gap-2">
-            <span className="text-sm text-white/80">{topExec.title}</span>
-            {topExec.since && (
-              <Badge
-                variant="outline"
-                className="border-white/30 text-xs text-white/80"
-              >
-                Since {topExec.since}
-              </Badge>
-            )}
-          </div>
+          <p className="mt-1.5 text-sm text-white/80">{topExec.title}</p>
         </div>
       )}
 
       {/* Remaining staff */}
       {rest.length > 0 && (
         <div className="space-y-1">
-          {rest.map((fo) => (
+          {rest.map((fo, i) => (
             <div
-              key={fo.name}
+              key={`${fo.name}-${fo.title}-${i}`}
               className="flex items-center justify-between rounded-md px-3 py-2.5 transition-colors hover:bg-muted/50"
             >
               <div>
                 <p className="text-sm font-medium">{fo.name}</p>
                 <p className="text-xs text-muted-foreground">{fo.title}</p>
               </div>
-              {fo.since && (
-                <Badge variant="outline" className="text-xs">
-                  Since {fo.since}
-                </Badge>
-              )}
             </div>
           ))}
         </div>

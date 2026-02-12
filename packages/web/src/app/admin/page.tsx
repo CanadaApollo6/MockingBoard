@@ -56,6 +56,16 @@ const sections = [
     href: '/admin/scoring',
   },
   {
+    title: 'Contracts',
+    description: 'Import OTC salary cap data',
+    href: '/admin/contracts',
+  },
+  {
+    title: 'Staff Import',
+    description: 'Import coaching staff from Wikipedia',
+    href: '/admin/staff',
+  },
+  {
     title: 'Moderation',
     description: 'Review user-generated content',
     href: '/admin/moderation',

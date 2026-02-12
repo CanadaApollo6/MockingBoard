@@ -7,10 +7,12 @@ import type {
   Coach,
   FrontOfficeStaff,
   SeasonOverview,
+  TeamContractData,
 } from '@mockingboard/shared';
 import type { TeamSeed } from '@mockingboard/shared';
 import type { TeamRoster, TeamSchedule } from '@/lib/cache';
 import { TEAM_COLORS } from '@/lib/team-colors';
+import { normalizePlayerName } from '@/lib/format';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { type KeyPlayerCardProps } from '@/components/team-breakdown/roster-tab/key-player-card';
@@ -19,6 +21,8 @@ import { FrontOffice } from '@/components/team-breakdown/front-office';
 import { DraftTab } from './draft-tab/draft-tab';
 import { SeasonTab } from './season-tab/season-tab';
 import { RosterTab } from './roster-tab/roster-tab';
+import { CapTab } from './cap-tab/cap-tab';
+import { FreeAgentsTab } from './free-agents-tab/free-agents-tab';
 
 export interface OwnedPick {
   overall: number;
@@ -56,6 +60,7 @@ interface TeamBreakdownProps {
   coachingStaff: Coach[];
   frontOffice?: FrontOfficeStaff[];
   seasonOverview?: SeasonOverview;
+  contracts: TeamContractData | null;
 }
 
 export function TeamBreakdown({
@@ -72,9 +77,17 @@ export function TeamBreakdown({
   seasonOverview,
   roster,
   keyPlayers,
+  contracts,
 }: TeamBreakdownProps) {
   const colors = TEAM_COLORS[team.id];
   const maxValue = capitalRanking[0]?.totalValue ?? 1;
+
+  const allPlayers = roster
+    ? [...roster.offense, ...roster.defense, ...roster.specialTeams]
+    : [];
+  const nameToPosition = new Map(
+    allPlayers.map((p) => [normalizePlayerName(p.name), p.position]),
+  );
 
   return (
     <div className="space-y-6">
@@ -123,6 +136,8 @@ export function TeamBreakdown({
         <TabsList>
           <TabsTrigger value="draft">Draft</TabsTrigger>
           <TabsTrigger value="roster">Roster</TabsTrigger>
+          <TabsTrigger value="cap">Cap</TabsTrigger>
+          <TabsTrigger value="free-agents">Free Agents</TabsTrigger>
           <TabsTrigger value="season">Season</TabsTrigger>
           <TabsTrigger value="coaches">Coaches</TabsTrigger>
           <TabsTrigger value="front-office">Front Office</TabsTrigger>
@@ -145,6 +160,36 @@ export function TeamBreakdown({
 
         <TabsContent value="roster" className="space-y-6">
           <RosterTab roster={roster} keyPlayers={keyPlayers} />
+        </TabsContent>
+
+        {/* ---- Cap Tab ---- */}
+        <TabsContent value="cap" className="space-y-6">
+          {contracts ? (
+            <CapTab
+              contracts={contracts}
+              colors={colors}
+              nameToPosition={nameToPosition}
+            />
+          ) : (
+            <p className="py-8 text-center text-sm text-muted-foreground">
+              Cap data not available.
+            </p>
+          )}
+        </TabsContent>
+
+        {/* ---- Free Agents Tab ---- */}
+        <TabsContent value="free-agents" className="space-y-6">
+          {contracts ? (
+            <FreeAgentsTab
+              freeAgents={contracts.freeAgents}
+              colors={colors}
+              nameToPosition={nameToPosition}
+            />
+          ) : (
+            <p className="py-8 text-center text-sm text-muted-foreground">
+              Free agent data not available.
+            </p>
+          )}
         </TabsContent>
 
         {/* ---- Season Tab ---- */}

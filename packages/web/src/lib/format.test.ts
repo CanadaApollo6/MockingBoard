@@ -3,6 +3,8 @@ import {
   timestampToDate,
   formatDraftDate,
   formatRelativeTime,
+  fmtDollar,
+  normalizePlayerName,
 } from './format.js';
 import type { FirestoreTimestamp } from '@mockingboard/shared';
 
@@ -57,6 +59,50 @@ describe('format', () => {
       expect(result).toContain('2024');
       expect(result).toContain('Jan');
     });
+  });
+
+  describe('fmtDollar', () => {
+    it('formats zero', () => expect(fmtDollar(0)).toBe('$0'));
+    it('formats millions', () => expect(fmtDollar(46_300_000)).toBe('$46.3M'));
+    it('formats thousands', () => expect(fmtDollar(478_000)).toBe('$478K'));
+    it('formats small amounts', () => expect(fmtDollar(500)).toBe('$500'));
+    it('formats negative', () =>
+      expect(fmtDollar(-12_500_000)).toBe('-$12.5M'));
+  });
+
+  describe('normalizePlayerName', () => {
+    it('strips suffix II', () =>
+      expect(normalizePlayerName('Patrick Mahomes II')).toBe(
+        'patrick mahomes',
+      ));
+    it('strips suffix Jr.', () =>
+      expect(normalizePlayerName('Odell Beckham Jr.')).toBe('odell beckham'));
+    it('strips suffix III', () =>
+      expect(normalizePlayerName('Robert Griffin III')).toBe('robert griffin'));
+    it('strips periods from initials', () =>
+      expect(normalizePlayerName('T.J. Watt')).toBe('tj watt'));
+    it('lowercases', () =>
+      expect(normalizePlayerName('LAMAR JACKSON')).toBe('lamar jackson'));
+    it('collapses whitespace', () =>
+      expect(normalizePlayerName('  Josh   Allen  ')).toBe('joshua allen'));
+    it('handles plain name unchanged', () =>
+      expect(normalizePlayerName('Jalen Hurts')).toBe('jalen hurts'));
+
+    // Nickname canonicalization
+    it('canonicalizes Mike → Michael', () =>
+      expect(normalizePlayerName('Mike Onwenu')).toBe('michael onwenu'));
+    it('matches Michael directly', () =>
+      expect(normalizePlayerName('Michael Onwenu')).toBe('michael onwenu'));
+    it('canonicalizes Matt → Matthew', () =>
+      expect(normalizePlayerName('Matt Stafford')).toBe('matthew stafford'));
+    it('canonicalizes Chris → Christopher', () =>
+      expect(normalizePlayerName('Chris Jones')).toBe('christopher jones'));
+    it('canonicalizes Zach → Zachary', () =>
+      expect(normalizePlayerName('Zach Wilson')).toBe('zachary wilson'));
+    it('canonicalizes with suffix stripping', () =>
+      expect(normalizePlayerName('Mike Evans Jr.')).toBe('michael evans'));
+    it('leaves unknown first names alone', () =>
+      expect(normalizePlayerName('Lamar Jackson')).toBe('lamar jackson'));
   });
 
   describe('formatRelativeTime', () => {

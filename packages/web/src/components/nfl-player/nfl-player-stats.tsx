@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -11,6 +12,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Sparkline } from '@/components/ui/sparkline';
+import {
+  getKeyStatIndices,
+  parseStatValue,
+  type KeyStatIndex,
+} from './stat-keys';
 import type {
   EspnStatCategory,
   EspnGameLog,
@@ -26,7 +33,6 @@ export function NflPlayerStats({
   statCategories,
   gameLog,
 }: NflPlayerStatsProps) {
-  // Filter to categories that have actual data
   const activeCats = statCategories.filter(
     (c) => c.seasons.length > 0 || c.totals.length > 0,
   );
@@ -46,9 +52,13 @@ export function NflPlayerStats({
         {gameLog && <TabsTrigger value="gamelog">Game Log</TabsTrigger>}
       </TabsList>
 
-      <TabsContent value="career" className="mt-4 space-y-6">
+      <TabsContent value="career" className="mt-4 space-y-8">
         {activeCats.map((cat) => (
-          <CareerStatsTable key={cat.name} category={cat} />
+          <div key={cat.name} className="space-y-4">
+            <h2 className="text-lg font-medium">{cat.displayName}</h2>
+            <CareerHeadlineCards category={cat} />
+            <SeasonTimeline category={cat} />
+          </div>
         ))}
       </TabsContent>
 
@@ -61,61 +71,168 @@ export function NflPlayerStats({
   );
 }
 
-// ---- Career Stats Table ----
+// ---- Career Headline Cards ----
 
-function CareerStatsTable({ category }: { category: EspnStatCategory }) {
+function CareerHeadlineCards({ category }: { category: EspnStatCategory }) {
+  const keyStats = getKeyStatIndices(category);
+  if (keyStats.length === 0) return null;
+
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg font-medium">
-          {category.displayName}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="pb-4">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="sticky left-0 bg-card">Season</TableHead>
-                {category.labels.map((label, i) => (
-                  <TableHead key={i} className="text-right">
-                    {label}
-                  </TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {category.seasons.map((season) => (
-                <TableRow key={season.displayName}>
-                  <TableCell className="sticky left-0 bg-card font-medium">
-                    {season.displayName}
-                  </TableCell>
-                  {season.stats.map((val, i) => (
-                    <TableCell key={i} className="text-right font-mono text-sm">
-                      {val}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      {keyStats.map((stat) => (
+        <StatCard key={stat.name} category={category} stat={stat} />
+      ))}
+    </div>
+  );
+}
 
-              {/* Career totals row */}
-              {category.totals.length > 0 && (
-                <TableRow className="border-t-2 font-bold">
-                  <TableCell className="sticky left-0 bg-card">
-                    Career
-                  </TableCell>
-                  {category.totals.map((val, i) => (
-                    <TableCell key={i} className="text-right font-mono text-sm">
-                      {val}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+function StatCard({
+  category,
+  stat,
+}: {
+  category: EspnStatCategory;
+  stat: KeyStatIndex;
+}) {
+  const total = category.totals[stat.index] ?? '--';
+  const seasonValues = category.seasons.map((s) =>
+    parseStatValue(s.stats[stat.index] ?? '0'),
+  );
+
+  return (
+    <div className="rounded-lg border bg-card p-4">
+      <p className="text-xs uppercase tracking-wide text-muted-foreground">
+        {stat.displayName}
+      </p>
+      <p className="mt-1 font-mono text-2xl font-bold">{total}</p>
+      {seasonValues.length > 1 && (
+        <Sparkline
+          values={seasonValues}
+          width={80}
+          height={24}
+          className="mt-2 text-muted-foreground"
+        />
+      )}
+      <p className="mt-1 text-xs text-muted-foreground">
+        {category.seasons.length} season{category.seasons.length !== 1 && 's'}
+      </p>
+    </div>
+  );
+}
+
+// ---- Season Timeline ----
+
+function SeasonTimeline({ category }: { category: EspnStatCategory }) {
+  if (category.seasons.length === 0) return null;
+
+  const keyStats = getKeyStatIndices(category);
+  const reversedSeasons = [...category.seasons].reverse();
+
+  return (
+    <div className="relative ml-4 border-l-2 border-border pl-6">
+      {reversedSeasons.map((season, i) => (
+        <SeasonNode
+          key={season.displayName}
+          seasonName={season.displayName}
+          stats={season.stats}
+          labels={category.labels}
+          displayNames={category.displayNames}
+          keyStats={keyStats}
+          defaultExpanded={i === 0}
+        />
+      ))}
+
+      {/* Career totals node */}
+      {category.totals.length > 0 && (
+        <SeasonNode
+          seasonName="Career"
+          stats={category.totals}
+          labels={category.labels}
+          displayNames={category.displayNames}
+          keyStats={keyStats}
+          defaultExpanded={false}
+          isCareer
+        />
+      )}
+    </div>
+  );
+}
+
+function SeasonNode({
+  seasonName,
+  stats,
+  labels,
+  displayNames,
+  keyStats,
+  defaultExpanded,
+  isCareer,
+}: {
+  seasonName: string;
+  stats: string[];
+  labels: string[];
+  displayNames: string[];
+  keyStats: KeyStatIndex[];
+  defaultExpanded: boolean;
+  isCareer?: boolean;
+}) {
+  const [expanded, setExpanded] = useState(defaultExpanded);
+
+  // Key stat pills: e.g. "4,739 YDS · 34 TD · 9 INT"
+  const pills = keyStats
+    .map((ks) => {
+      const val = stats[ks.index];
+      if (!val || val === '--') return null;
+      return `${val} ${ks.label}`;
+    })
+    .filter(Boolean);
+
+  return (
+    <div className="relative pb-6 last:pb-0">
+      {/* Dot on the timeline */}
+      <div
+        className={`absolute -left-[31px] top-1 h-3.5 w-3.5 rounded-full border-2 border-background ${
+          isCareer ? 'bg-primary' : 'bg-muted-foreground'
+        }`}
+      />
+
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="flex w-full items-start gap-2 text-left"
+      >
+        <span
+          className={`shrink-0 font-mono text-sm font-medium ${isCareer ? 'text-primary' : ''}`}
+        >
+          {seasonName}
+        </span>
+        <span className="mt-0.5 text-sm text-muted-foreground">
+          {pills.join(' · ')}
+        </span>
+        <span className="ml-auto mt-0.5 shrink-0 text-muted-foreground">
+          {expanded ? (
+            <ChevronDown className="h-4 w-4" />
+          ) : (
+            <ChevronRight className="h-4 w-4" />
+          )}
+        </span>
+      </button>
+
+      {expanded && (
+        <div className="mt-2 overflow-x-auto rounded-md border bg-muted/30 p-3">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(5rem,1fr))] gap-x-4 gap-y-1">
+            {labels.map((label, i) => (
+              <div key={i} className="min-w-0">
+                <p
+                  className="text-xs text-muted-foreground"
+                  title={displayNames[i]}
+                >
+                  {label}
+                </p>
+                <p className="font-mono text-sm">{stats[i] ?? '--'}</p>
+              </div>
+            ))}
+          </div>
         </div>
-      </CardContent>
-    </Card>
+      )}
+    </div>
   );
 }
 
@@ -133,7 +250,6 @@ function GameLogTable({ gameLog }: { gameLog: EspnGameLog }) {
     );
   }
 
-  // Build rows: merge event metadata with stat values
   const rows = group.events
     .map((ev) => {
       const meta = gameLog.events.get(ev.eventId);
@@ -141,7 +257,6 @@ function GameLogTable({ gameLog }: { gameLog: EspnGameLog }) {
     })
     .filter(Boolean) as (EspnGameLogEntry & { stats: string[] })[];
 
-  // Sort by week ascending
   rows.sort((a, b) => a.week - b.week);
 
   return (

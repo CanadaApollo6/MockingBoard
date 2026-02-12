@@ -197,10 +197,7 @@ function CoachingStaffEditor({
   };
 
   const handleAdd = () => {
-    setCoaches([
-      ...coaches,
-      { name: '', role: '', since: new Date().getFullYear() },
-    ]);
+    setCoaches([...coaches, { name: '', role: '' }]);
   };
 
   const handleRemove = (index: number) => {
@@ -224,15 +221,6 @@ function CoachingStaffEditor({
             onChange={(e) => handleUpdate(i, 'role', e.target.value)}
             placeholder="Role (e.g., Quarterbacks Coach)"
             className="flex-1"
-          />
-          <Input
-            type="number"
-            value={coach.since}
-            onChange={(e) =>
-              handleUpdate(i, 'since', parseInt(e.target.value) || 0)
-            }
-            placeholder="Since"
-            className="w-20"
           />
           <Button
             variant="ghost"
@@ -271,10 +259,7 @@ function FrontOfficeEditor({
   };
 
   const handleAdd = () => {
-    setStaff([
-      ...staff,
-      { name: '', title: '', since: new Date().getFullYear() },
-    ]);
+    setStaff([...staff, { name: '', title: '' }]);
   };
 
   const handleRemove = (index: number) => {
@@ -298,15 +283,6 @@ function FrontOfficeEditor({
             onChange={(e) => handleUpdate(i, 'title', e.target.value)}
             placeholder="Title (e.g., General Manager)"
             className="flex-1"
-          />
-          <Input
-            type="number"
-            value={person.since ?? ''}
-            onChange={(e) =>
-              handleUpdate(i, 'since', parseInt(e.target.value) || 0)
-            }
-            placeholder="Since"
-            className="w-20"
           />
           <Button
             variant="ghost"

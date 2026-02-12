@@ -5,14 +5,17 @@ import {
   GradientCardContent,
 } from '@/components/ui/gradient-card';
 import { isTeamAbbreviation } from '@mockingboard/shared';
+import type { PlayerContract } from '@mockingboard/shared';
 import { TEAM_COLORS } from '@/lib/team-colors';
+import { fmtDollar } from '@/lib/format';
 import type { EspnPlayerBio } from '@/lib/cache';
 
 interface NflPlayerHeroProps {
   bio: EspnPlayerBio;
+  contract?: PlayerContract;
 }
 
-export function NflPlayerHero({ bio }: NflPlayerHeroProps) {
+export function NflPlayerHero({ bio, contract }: NflPlayerHeroProps) {
   const teamAbbr = bio.teamAbbreviation;
   const teamColors = isTeamAbbreviation(teamAbbr)
     ? TEAM_COLORS[teamAbbr]
@@ -32,11 +35,11 @@ export function NflPlayerHero({ bio }: NflPlayerHeroProps) {
       <GradientCardContent>
         <div className="flex flex-wrap items-start gap-6">
           {/* Jersey number */}
-          <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-white/15 font-mono text-4xl font-bold">
+          <div className="flex h-22 w-22 shrink-0 self-center items-center justify-center rounded-full bg-white/15 font-mono text-5xl font-bold">
             {bio.jersey}
           </div>
 
-          <div className="flex-1 space-y-2">
+          <div className="min-w-0 flex-1 space-y-2">
             <div className="flex flex-wrap items-center gap-3">
               {/* Name */}
               <h1 className="font-[family-name:var(--font-display)] text-3xl font-bold uppercase leading-tight tracking-tight sm:text-5xl">
@@ -86,6 +89,26 @@ export function NflPlayerHero({ bio }: NflPlayerHeroProps) {
               {bio.displayBirthPlace && <span>{bio.displayBirthPlace}</span>}
             </div>
           </div>
+
+          {/* Contract info — right side, spread horizontally */}
+          {contract && (
+            <div className="flex shrink-0 self-center flex-wrap gap-x-5 gap-y-1 text-sm">
+              <span>
+                <span className="text-white/50">Cap Hit</span>{' '}
+                <span className="font-medium">
+                  {fmtDollar(contract.capNumber)}
+                </span>
+              </span>
+              <span>
+                <span className="text-white/50">Base Salary</span>{' '}
+                {fmtDollar(contract.baseSalary)}
+              </span>
+              <span>
+                <span className="text-white/50">Dead Cap</span>{' '}
+                {fmtDollar(contract.deadMoney.cutPreJune1)}
+              </span>
+            </div>
+          )}
         </div>
       </GradientCardContent>
     </GradientCard>

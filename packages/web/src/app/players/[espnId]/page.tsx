@@ -2,7 +2,13 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
-import { getCachedEspnPlayerBio, getCachedEspnPlayerData } from '@/lib/cache';
+import { isTeamAbbreviation } from '@mockingboard/shared';
+import {
+  getCachedEspnPlayerBio,
+  getCachedEspnPlayerData,
+  getCachedTeamContracts,
+} from '@/lib/cache';
+import { normalizePlayerName } from '@/lib/format';
 import { NflPlayerHero } from '@/components/nfl-player/nfl-player-hero';
 import { NflPlayerStats } from '@/components/nfl-player/nfl-player-stats';
 
@@ -30,6 +36,17 @@ export default async function NflPlayerPage({ params }: Props) {
 
   if (!data) notFound();
 
+  // Look up this player's contract from their team's contract data
+  const teamAbbr = data.bio.teamAbbreviation;
+  const contracts = isTeamAbbreviation(teamAbbr)
+    ? await getCachedTeamContracts(teamAbbr)
+    : null;
+  const playerContract = contracts?.roster.find(
+    (c) =>
+      normalizePlayerName(c.player) ===
+      normalizePlayerName(data.bio.displayName),
+  );
+
   return (
     <main className="mx-auto max-w-screen-xl px-4 py-8">
       <Link
@@ -40,7 +57,7 @@ export default async function NflPlayerPage({ params }: Props) {
         All Players
       </Link>
 
-      <NflPlayerHero bio={data.bio} />
+      <NflPlayerHero bio={data.bio} contract={playerContract} />
 
       <div className="mt-8">
         <NflPlayerStats
