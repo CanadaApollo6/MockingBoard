@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { adminDb, adminAuth } from '@/lib/firebase-admin';
+import { adminDb, adminAuth } from '@/lib/firebase/firebase-admin';
 import { getOrigin } from '@/lib/url';
-import { getSessionUser } from '@/lib/auth-session';
+import { getSessionUser } from '@/lib/firebase/auth-session';
 
 const DISCORD_TOKEN_URL = 'https://discord.com/api/oauth2/token';
 const DISCORD_USER_URL = 'https://discord.com/api/users/@me';

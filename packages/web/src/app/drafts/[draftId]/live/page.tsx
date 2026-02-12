@@ -4,10 +4,10 @@ import {
   getDraftPicks,
   getPlayerMap,
   getUserBoardForYear,
-} from '@/lib/data';
-import { getSessionUser } from '@/lib/auth-session';
+} from '@/lib/firebase/data';
+import { getSessionUser } from '@/lib/firebase/auth-session';
 import { resolveUser, isUserInDraft } from '@/lib/user-resolve';
-import { getDraftDisplayName } from '@/lib/format';
+import { getDraftDisplayName } from '@/lib/firebase/format';
 import { LiveDraftView } from '@/components/draft/live-draft-view';
 import { DraftRoom } from '@/components/draft/draft-room';
 import { LocalDraftRoom } from '@/components/draft/local-draft-room';

@@ -10,8 +10,8 @@ import type {
 import { useLiveDraft } from '@/hooks/use-live-draft';
 import { BareLayout } from '@/components/layout/bare-layout';
 import { getTeamName } from '@/lib/teams';
-import { getTeamColor, ensureVisible } from '@/lib/team-colors';
-import { getPositionColor } from '@/lib/position-colors';
+import { getTeamColor, ensureVisible } from '@/lib/colors/team-colors';
+import { getPositionColor } from '@/lib/colors/position-colors';
 import { Badge } from '@/components/ui/badge';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSearchParams } from 'next/navigation';

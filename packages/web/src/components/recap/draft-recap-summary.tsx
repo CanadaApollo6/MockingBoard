@@ -1,6 +1,6 @@
 import type { DraftRecap, PickLabel } from '@mockingboard/shared';
 import { getGradeTier } from '@mockingboard/shared';
-import { gradeColor } from '@/lib/grade-color';
+import { gradeColor } from '@/lib/colors/grade-color';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 function countLabels(recap: DraftRecap): Record<PickLabel, number> {

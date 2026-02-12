@@ -9,12 +9,12 @@ import {
   getDraftTrades,
   getDraftResults,
   getBigBoard,
-} from '@/lib/data';
+} from '@/lib/firebase/data';
 import { getCachedTeamDocs } from '@/lib/cache';
-import { getSessionUser } from '@/lib/auth-session';
+import { getSessionUser } from '@/lib/firebase/auth-session';
 import { resolveUser, isUserInDraft } from '@/lib/user-resolve';
 import { scoreMockPick, aggregateDraftScore } from '@/lib/scoring';
-import { formatDraftDate, getDraftDisplayName } from '@/lib/format';
+import { formatDraftDate, getDraftDisplayName } from '@/lib/firebase/format';
 import { TradeSummary } from '@/components/trade/trade-summary';
 import { DraftRecapSummary } from '@/components/recap/draft-recap-summary';
 import { TeamGradeCard } from '@/components/recap/team-grade-card';

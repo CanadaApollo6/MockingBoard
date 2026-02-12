@@ -1,17 +1,17 @@
 import { NextResponse } from 'next/server';
 import { FieldValue } from 'firebase-admin/firestore';
 import { revalidatePath } from 'next/cache';
-import { getSessionUser } from '@/lib/auth-session';
-import { adminDb } from '@/lib/firebase-admin';
-import { isAdmin } from '@/lib/admin';
+import { getSessionUser } from '@/lib/firebase/auth-session';
+import { adminDb } from '@/lib/firebase/firebase-admin';
+import { isAdmin } from '@/lib/firebase/admin';
 import { resetTeamsCache } from '@/lib/cache';
 import type {
   TeamAbbreviation,
   Coach,
   FrontOfficeStaff,
 } from '@mockingboard/shared';
-import { WIKI_TEAM_NAMES } from '@/lib/wiki-slugs';
-import { parseWikiStaff } from '@/lib/wiki-staff-parser';
+import { WIKI_TEAM_NAMES } from '@/lib/data-import/wiki-slugs';
+import { parseWikiStaff } from '@/lib/data-import/wiki-staff-parser';
 
 const WIKI_USER_AGENT =
   'MockingBoard/1.0 (https://mockingboard.com; contact@mockingboard.com)';

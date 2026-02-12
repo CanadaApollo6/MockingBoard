@@ -7,7 +7,7 @@ import {
   signInWithPopup,
   GoogleAuthProvider,
 } from 'firebase/auth';
-import { getClientAuth } from '@/lib/firebase';
+import { getClientAuth } from '@/lib/firebase/firebase';
 import { getErrorMessage } from '@/lib/validate';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

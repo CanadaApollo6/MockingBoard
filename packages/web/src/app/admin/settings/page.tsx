@@ -1,9 +1,9 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { getSessionUser } from '@/lib/auth-session';
-import { isAdmin } from '@/lib/admin';
+import { getSessionUser } from '@/lib/firebase/auth-session';
+import { isAdmin } from '@/lib/firebase/admin';
 import { getCachedSeasonConfig } from '@/lib/cache';
-import { adminDb } from '@/lib/firebase-admin';
+import { adminDb } from '@/lib/firebase/firebase-admin';
 import { SettingsEditor } from './settings-editor';
 import type { Announcement } from '@/lib/cache';
 

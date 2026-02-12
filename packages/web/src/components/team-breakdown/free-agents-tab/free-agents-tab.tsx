@@ -4,8 +4,8 @@ import {
   GradientCardContent,
 } from '@/components/ui/gradient-card';
 import { Badge } from '@/components/ui/badge';
-import { getPositionColor } from '@/lib/position-colors';
-import { normalizePlayerName, fmtDollar } from '@/lib/format';
+import { getPositionColor } from '@/lib/colors/position-colors';
+import { normalizePlayerName, fmtDollar } from '@/lib/firebase/format';
 
 const FA_TYPES: FreeAgentEntry['faType'][] = ['UFA', 'RFA', 'ERFA'];
 

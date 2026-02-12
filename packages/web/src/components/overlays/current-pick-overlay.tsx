@@ -10,7 +10,7 @@ import type {
 import { useLiveDraft } from '@/hooks/use-live-draft';
 import { DraftClock } from '@/components/draft/draft-clock';
 import { BareLayout } from '@/components/layout/bare-layout';
-import { timestampToDate } from '@/lib/format';
+import { timestampToDate } from '@/lib/firebase/format';
 
 function useClockRemaining(draft: Draft | null): number | null {
   const [remaining, setRemaining] = useState<number | null>(null);

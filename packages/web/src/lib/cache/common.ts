@@ -1,8 +1,8 @@
 import 'server-only';
 
 // Re-export shared dependencies so domain files import from './common' only
-export { adminDb } from '../firebase-admin';
-export { sanitize, hydrateDoc, hydrateDocs } from '../sanitize';
+export { adminDb } from '../firebase/firebase-admin';
+export { sanitize, hydrateDoc, hydrateDocs } from '../firebase/sanitize';
 
 // ---- TTLs ----
 

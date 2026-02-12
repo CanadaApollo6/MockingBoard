@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseOverlayTheme, isBare } from './overlay-theme';
+import { parseOverlayTheme, isBare } from './overlay-theme.js';
 
 describe('parseOverlayTheme', () => {
   it('returns "dark" for valid dark input', () => {

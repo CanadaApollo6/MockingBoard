@@ -1,8 +1,8 @@
 import Link from 'next/link';
 import type { Player } from '@mockingboard/shared';
 import { Badge } from '@/components/ui/badge';
-import { getPositionColor } from '@/lib/position-colors';
-import { schoolColorStyle } from '@/lib/school-colors';
+import { getPositionColor } from '@/lib/colors/position-colors';
+import { schoolColorStyle } from '@/lib/colors/school-colors';
 import { UNRANKED, YEAR_LABELS } from '@/lib/player-utils';
 import { ProspectDetails } from '@/components/player/prospect-details';
 

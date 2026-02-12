@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import { getSessionUser } from '@/lib/auth-session';
-import { isAdmin } from '@/lib/admin';
-import { adminDb } from '@/lib/firebase-admin';
+import { getSessionUser } from '@/lib/firebase/auth-session';
+import { isAdmin } from '@/lib/firebase/admin';
+import { adminDb } from '@/lib/firebase/firebase-admin';
 import { getCachedPlayers } from '@/lib/cache';
 import { scoreMockPick, aggregateDraftScore } from '@/lib/scoring';
-import { hydrateDoc } from '@/lib/sanitize';
+import { hydrateDoc } from '@/lib/firebase/sanitize';
 import type {
   Draft,
   Pick,

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebase-admin';
-import { sanitize } from '@/lib/sanitize';
+import { adminDb } from '@/lib/firebase/firebase-admin';
+import { sanitize } from '@/lib/firebase/sanitize';
 
 const SENSITIVE_FIELDS = [
   'email',

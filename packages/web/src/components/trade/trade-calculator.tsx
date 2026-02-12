@@ -7,7 +7,7 @@ import {
   baseSurplusValue,
 } from '@mockingboard/shared';
 import { getTeamName } from '@/lib/teams';
-import { TEAM_COLORS } from '@/lib/team-colors';
+import { TEAM_COLORS } from '@/lib/colors/team-colors';
 import type { TeamAbbreviation } from '@mockingboard/shared';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';

@@ -1,13 +1,13 @@
 import 'server-only';
 
 import { FieldValue } from 'firebase-admin/firestore';
-import { adminDb } from '../firebase-admin';
+import { adminDb } from '../firebase/firebase-admin';
 import {
   getCachedDraftOrderSlots,
   getCachedTeamDocs,
   getCachedDraftNames,
 } from '../cache';
-import { hydrateDoc } from '../sanitize';
+import { hydrateDoc } from '../firebase/sanitize';
 import type {
   Draft,
   DraftFormat,

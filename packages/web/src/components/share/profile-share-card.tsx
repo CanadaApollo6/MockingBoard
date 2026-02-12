@@ -1,5 +1,5 @@
 import type { User, Position } from '@mockingboard/shared';
-import { getTeamColor } from '@/lib/team-colors';
+import { getTeamColor } from '@/lib/colors/team-colors';
 
 interface ProfileShareCardProps {
   user: User;

@@ -2,9 +2,9 @@ import 'server-only';
 
 import { Timestamp } from 'firebase-admin/firestore';
 import { adminDb } from './firebase-admin';
-import { getCachedPlayerMap, getCachedScoutProfiles } from './cache';
+import { getCachedPlayerMap, getCachedScoutProfiles } from '../cache';
 import { sanitize, hydrateDoc, hydrateDocs } from './sanitize';
-import { AppError } from './validate';
+import { AppError } from '../validate';
 import type {
   Draft,
   Pick,

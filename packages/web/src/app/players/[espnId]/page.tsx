@@ -8,7 +8,7 @@ import {
   getCachedEspnPlayerData,
   getCachedTeamContracts,
 } from '@/lib/cache';
-import { normalizePlayerName } from '@/lib/format';
+import { normalizePlayerName } from '@/lib/firebase/format';
 import { NflPlayerHero } from '@/components/nfl-player/nfl-player-hero';
 import { NflPlayerStats } from '@/components/nfl-player/nfl-player-stats';
 

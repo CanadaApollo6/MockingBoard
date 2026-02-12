@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Trophy } from 'lucide-react';
-import type { LeaderboardEntry } from '@/lib/data';
+import type { LeaderboardEntry } from '@/lib/firebase/data';
 import {
   Select,
   SelectTrigger,

@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signInWithCustomToken } from 'firebase/auth';
-import { getClientAuth } from '@/lib/firebase';
+import { getClientAuth } from '@/lib/firebase/firebase';
 
 export function AuthCallbackClient() {
   const router = useRouter();

@@ -1,4 +1,4 @@
-import { getScoutProfiles } from '@/lib/data';
+import { getScoutProfiles } from '@/lib/firebase/data';
 import { ScoutProfileCard } from '@/components/profile/scout-profile-card';
 
 export default async function ScoutsPage() {

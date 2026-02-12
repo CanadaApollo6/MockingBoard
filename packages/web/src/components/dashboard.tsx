@@ -3,7 +3,7 @@ import type { Player, Draft, User, SeasonOverview } from '@mockingboard/shared';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { GradientCard } from '@/components/ui/gradient-card';
-import { getSchoolColor } from '@/lib/school-colors';
+import { getSchoolColor } from '@/lib/colors/school-colors';
 import { SeasonOverviewCard } from './team-breakdown/season-tab/season-overview-card';
 
 interface DashboardProps {

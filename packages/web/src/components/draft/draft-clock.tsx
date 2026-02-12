@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import type { TeamAbbreviation } from '@mockingboard/shared';
 import { getTeamName } from '@/lib/teams';
-import { getTeamColor, ensureVisible } from '@/lib/team-colors';
+import { getTeamColor, ensureVisible } from '@/lib/colors/team-colors';
 import { Badge } from '@/components/ui/badge';
 
 interface DraftClockProps {

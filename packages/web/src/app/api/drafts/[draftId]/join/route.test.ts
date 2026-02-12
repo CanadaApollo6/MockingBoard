@@ -10,7 +10,7 @@ const { mockGetSessionUser, mockResolveUser, mockJoinLobby } = vi.hoisted(
 );
 
 vi.mock('server-only', () => ({}));
-vi.mock('@/lib/auth-session', () => ({
+vi.mock('@/lib/firebase/auth-session', () => ({
   getSessionUser: () => mockGetSessionUser(),
 }));
 vi.mock('@/lib/user-resolve', () => ({

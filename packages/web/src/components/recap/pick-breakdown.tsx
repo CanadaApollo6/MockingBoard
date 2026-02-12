@@ -1,6 +1,6 @@
 import type { DraftRecap, Player } from '@mockingboard/shared';
-import { gradeColor } from '@/lib/grade-color';
-import { getTeamColor } from '@/lib/team-colors';
+import { gradeColor } from '@/lib/colors/grade-color';
+import { getTeamColor } from '@/lib/colors/team-colors';
 import { getTeamName } from '@/lib/teams';
 import { Badge } from '@/components/ui/badge';
 import {

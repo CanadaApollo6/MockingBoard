@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { getPublicBoards } from '@/lib/data';
+import { getPublicBoards } from '@/lib/firebase/data';
 import { BoardBrowse } from './board-browse';
 
 export const dynamic = 'force-dynamic';

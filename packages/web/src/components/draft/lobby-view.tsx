@@ -11,7 +11,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { getDraftDisplayName } from '@/lib/format';
+import { getDraftDisplayName } from '@/lib/firebase/format';
 import { cn } from '@/lib/utils';
 import { getErrorMessage } from '@/lib/validate';
 

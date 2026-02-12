@@ -1,16 +1,16 @@
 import { NextResponse } from 'next/server';
-import { getSessionUser } from '@/lib/auth-session';
+import { getSessionUser } from '@/lib/firebase/auth-session';
 import { recordPick, runCpuCascade } from '@/lib/draft-actions';
 import { getCachedPlayerMap } from '@/lib/cache';
-import { getDraftOrFail } from '@/lib/data';
-import { adminDb } from '@/lib/firebase-admin';
+import { getDraftOrFail } from '@/lib/firebase/data';
+import { adminDb } from '@/lib/firebase/firebase-admin';
 import {
   resolveWebhookConfig,
   sendPickAnnouncement,
   sendDraftComplete,
 } from '@/lib/discord-webhook';
 import { getPickController } from '@mockingboard/shared';
-import { hydrateDoc } from '@/lib/sanitize';
+import { hydrateDoc } from '@/lib/firebase/sanitize';
 import type { Draft, Pick } from '@mockingboard/shared';
 import { notifyYourTurn } from '@/lib/notifications';
 import { rateLimit } from '@/lib/rate-limit';

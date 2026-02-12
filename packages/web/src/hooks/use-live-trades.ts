@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
-import { getClientDb } from '@/lib/firebase';
+import { getClientDb } from '@/lib/firebase/firebase';
 import type { Trade } from '@mockingboard/shared';
 
 export function useLiveTrades(draftId: string): Trade[] {

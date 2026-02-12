@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { getSessionUser } from '@/lib/auth-session';
+import { getSessionUser } from '@/lib/firebase/auth-session';
 import { SettingsClient } from './settings-client';
 
 export default async function SettingsPage() {

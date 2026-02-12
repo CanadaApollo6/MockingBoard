@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getBigBoardBySlug, getPlayerMap } from '@/lib/data';
+import { getBigBoardBySlug, getPlayerMap } from '@/lib/firebase/data';
 import { PublicBoardView } from '@/components/board/public-board-view';
 import { DraftGuideButton } from '@/components/draft-guide/draft-guide-button';
 import type { Player } from '@mockingboard/shared';

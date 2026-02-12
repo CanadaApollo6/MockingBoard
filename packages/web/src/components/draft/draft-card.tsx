@@ -4,8 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { X, Lock } from 'lucide-react';
 import type { Draft, TeamAbbreviation } from '@mockingboard/shared';
-import { formatDraftDate, getDraftDisplayName } from '@/lib/format';
-import { getTeamColor } from '@/lib/team-colors';
+import { formatDraftDate, getDraftDisplayName } from '@/lib/firebase/format';
+import { getTeamColor } from '@/lib/colors/team-colors';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {

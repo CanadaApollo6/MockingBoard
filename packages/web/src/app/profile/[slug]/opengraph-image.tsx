@@ -1,6 +1,10 @@
 import { ImageResponse } from 'next/og';
-import { getUserBySlug, getUserPublicBoards, getUserReports } from '@/lib/data';
-import { getTeamColor } from '@/lib/team-colors';
+import {
+  getUserBySlug,
+  getUserPublicBoards,
+  getUserReports,
+} from '@/lib/firebase/data';
+import { getTeamColor } from '@/lib/colors/team-colors';
 
 export const runtime = 'nodejs';
 export const contentType = 'image/png';

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { signInAnonymously } from 'firebase/auth';
-import { getClientAuth } from '@/lib/firebase';
+import { getClientAuth } from '@/lib/firebase/firebase';
 import { getErrorMessage } from '@/lib/validate';
 import { Button } from '@/components/ui/button';
 import {

@@ -12,7 +12,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { getPositionColor } from '@/lib/position-colors';
+import { getPositionColor } from '@/lib/colors/position-colors';
 import type { RosterPlayerWithTeam } from '@/lib/cache';
 
 const POSITION_FILTERS = [

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebase-admin';
-import { getSessionUser } from '@/lib/auth-session';
-import { SCHOOL_COLORS } from '@/lib/school-colors';
+import { adminDb } from '@/lib/firebase/firebase-admin';
+import { getSessionUser } from '@/lib/firebase/auth-session';
+import { SCHOOL_COLORS } from '@/lib/colors/school-colors';
 
 const VALID_TEAMS = new Set([
   'ARI',

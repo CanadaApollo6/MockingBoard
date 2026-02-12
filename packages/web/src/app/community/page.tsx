@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { getPublicBoards, getPublicUsers } from '@/lib/data';
+import { getPublicBoards, getPublicUsers } from '@/lib/firebase/data';
 import { BoardCard } from '@/components/board/board-card';
 import { AnalystProfileCard } from '@/components/profile/analyst-profile-card';
 

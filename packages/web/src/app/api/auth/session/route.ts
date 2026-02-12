@@ -3,7 +3,7 @@ import {
   createSessionCookie,
   SESSION_COOKIE_NAME,
   SESSION_EXPIRY_MS,
-} from '@/lib/auth-session';
+} from '@/lib/firebase/auth-session';
 
 export async function POST(request: Request) {
   try {

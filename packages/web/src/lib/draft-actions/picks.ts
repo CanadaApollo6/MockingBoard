@@ -1,10 +1,10 @@
 import 'server-only';
 
 import { FieldValue } from 'firebase-admin/firestore';
-import { adminDb } from '../firebase-admin';
+import { adminDb } from '../firebase/firebase-admin';
 import { getCachedPlayers } from '../cache';
-import { getBigBoard } from '../data';
-import { hydrateDoc } from '../sanitize';
+import { getBigBoard } from '../firebase/data';
+import { hydrateDoc } from '../firebase/sanitize';
 import type { Draft, DraftSlot, Pick, Player } from '@mockingboard/shared';
 import {
   prepareCpuPick,

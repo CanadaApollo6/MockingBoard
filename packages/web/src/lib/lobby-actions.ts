@@ -1,11 +1,11 @@
 import 'server-only';
 
 import { FieldValue } from 'firebase-admin/firestore';
-import { adminDb } from './firebase-admin';
+import { adminDb } from './firebase/firebase-admin';
 import { runCpuCascade } from './draft-actions';
 import { AppError } from './validate';
 import { getPickController } from '@mockingboard/shared';
-import { hydrateDoc } from './sanitize';
+import { hydrateDoc } from './firebase/sanitize';
 import type {
   Draft,
   TeamAbbreviation,

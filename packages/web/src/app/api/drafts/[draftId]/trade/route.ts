@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { getSessionUser } from '@/lib/auth-session';
+import { getSessionUser } from '@/lib/firebase/auth-session';
 import { createWebTrade } from '@/lib/draft-actions';
-import { getDraftOrFail } from '@/lib/data';
+import { getDraftOrFail } from '@/lib/firebase/data';
 import { AppError, safeError } from '@/lib/validate';
 import type { TeamAbbreviation, TradePiece } from '@mockingboard/shared';
 

@@ -1,7 +1,7 @@
 import type { TeamDraftGrade, Player } from '@mockingboard/shared';
 import { getGradeTier } from '@mockingboard/shared';
-import { gradeHex, tierHex } from '@/lib/grade-color';
-import { getTeamColor } from '@/lib/team-colors';
+import { gradeHex, tierHex } from '@/lib/colors/grade-color';
+import { getTeamColor } from '@/lib/colors/team-colors';
 import { getTeamName } from '@/lib/teams';
 
 interface RecapShareCardProps {

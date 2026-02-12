@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getSessionUser } from '@/lib/auth-session';
+import { getSessionUser } from '@/lib/firebase/auth-session';
 import {
   buildPickOrder,
   buildFuturePicks,
@@ -7,7 +7,7 @@ import {
 } from '@/lib/draft-actions';
 import { rateLimit } from '@/lib/rate-limit';
 import { resolveUser } from '@/lib/user-resolve';
-import { adminDb } from '@/lib/firebase-admin';
+import { adminDb } from '@/lib/firebase/firebase-admin';
 import { sendDraftStarted } from '@/lib/discord-webhook';
 import { teams } from '@mockingboard/shared';
 import type {

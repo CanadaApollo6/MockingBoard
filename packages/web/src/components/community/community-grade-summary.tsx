@@ -1,5 +1,5 @@
 import type { ScoutingReport } from '@mockingboard/shared';
-import { gradeColor } from '@/lib/grade-color';
+import { gradeColor } from '@/lib/colors/grade-color';
 
 interface CommunityGradeSummaryProps {
   reports: ScoutingReport[];

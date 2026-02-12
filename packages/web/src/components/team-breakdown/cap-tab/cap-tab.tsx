@@ -14,7 +14,7 @@ import {
   CollapsibleContent,
 } from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
-import { normalizePlayerName, fmtDollar } from '@/lib/format';
+import { normalizePlayerName, fmtDollar } from '@/lib/firebase/format';
 import { PositionBars } from './position-bars';
 import { ContractCard } from './contract-card';
 

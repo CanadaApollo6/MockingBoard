@@ -1,7 +1,10 @@
 import { notFound } from 'next/navigation';
-import { getScoutProfileBySlug, getScoutContributedPlayers } from '@/lib/data';
+import {
+  getScoutProfileBySlug,
+  getScoutContributedPlayers,
+} from '@/lib/firebase/data';
 import { Badge } from '@/components/ui/badge';
-import { getPositionColor } from '@/lib/position-colors';
+import { getPositionColor } from '@/lib/colors/position-colors';
 
 const TIER_LABELS: Record<string, string> = {
   contributor: 'Contributor',

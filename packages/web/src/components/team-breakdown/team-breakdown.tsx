@@ -11,8 +11,8 @@ import type {
 } from '@mockingboard/shared';
 import type { TeamSeed } from '@mockingboard/shared';
 import type { TeamRoster, TeamSchedule } from '@/lib/cache';
-import { TEAM_COLORS } from '@/lib/team-colors';
-import { normalizePlayerName } from '@/lib/format';
+import { TEAM_COLORS } from '@/lib/colors/team-colors';
+import { normalizePlayerName } from '@/lib/firebase/format';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { type KeyPlayerCardProps } from '@/components/team-breakdown/roster-tab/key-player-card';

@@ -70,7 +70,7 @@ function findTier(grade: number) {
   return TIERS.find((t) => grade >= t.min && grade <= t.max) ?? null;
 }
 
-export { gradeColor } from '@/lib/grade-color';
+export { gradeColor } from '@/lib/colors/grade-color';
 
 export function GradeSlider({ value, onChange }: GradeSliderProps) {
   const activeTier = value != null ? findTier(value) : null;

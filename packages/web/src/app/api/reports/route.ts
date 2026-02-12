@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { FieldValue } from 'firebase-admin/firestore';
-import { getSessionUser } from '@/lib/auth-session';
-import { adminDb } from '@/lib/firebase-admin';
-import { sanitize } from '@/lib/sanitize';
+import { getSessionUser } from '@/lib/firebase/auth-session';
+import { adminDb } from '@/lib/firebase/firebase-admin';
+import { sanitize } from '@/lib/firebase/sanitize';
 import type { ScoutingReport } from '@mockingboard/shared';
 
 export async function GET(request: Request) {

@@ -1,7 +1,7 @@
 import type { PlayerContract } from '@mockingboard/shared';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { getPositionColor } from '@/lib/position-colors';
-import { normalizePlayerName, fmtDollar } from '@/lib/format';
+import { getPositionColor } from '@/lib/colors/position-colors';
+import { normalizePlayerName, fmtDollar } from '@/lib/firebase/format';
 
 const POSITION_GROUPS = [
   { label: 'QB', positions: ['QB'] },

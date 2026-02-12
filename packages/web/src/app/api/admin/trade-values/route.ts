@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { getSessionUser } from '@/lib/auth-session';
-import { isAdmin } from '@/lib/admin';
-import { adminDb } from '@/lib/firebase-admin';
+import { getSessionUser } from '@/lib/firebase/auth-session';
+import { isAdmin } from '@/lib/firebase/admin';
+import { adminDb } from '@/lib/firebase/firebase-admin';
 import { resetAllCaches } from '@/lib/cache';
 
 export async function GET() {

@@ -32,7 +32,7 @@ vi.mock('firebase-admin/firestore', () => ({
     arrayUnion: (...args: unknown[]) => ({ _arrayUnion: args }),
   },
 }));
-vi.mock('../firebase-admin', () => ({
+vi.mock('../firebase/firebase-admin', () => ({
   adminDb: { collection: mockCollection },
 }));
 vi.mock('../cache', () => ({
@@ -41,7 +41,7 @@ vi.mock('../cache', () => ({
   getCachedTeamDocs: (...args: unknown[]) => mockGetCachedTeamDocs(...args),
   getCachedDraftNames: (...args: unknown[]) => mockGetCachedDraftNames(...args),
 }));
-vi.mock('../sanitize', () => ({
+vi.mock('../firebase/sanitize', () => ({
   hydrateDoc: (doc: { id: string; data: () => Record<string, unknown> }) => ({
     id: doc.id,
     ...doc.data(),

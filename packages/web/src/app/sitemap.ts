@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next';
-import { adminDb } from '@/lib/firebase-admin';
+import { adminDb } from '@/lib/firebase/firebase-admin';
 import {
   getCachedPlayers,
   getCachedScoutProfiles,

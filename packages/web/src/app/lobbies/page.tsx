@@ -1,6 +1,6 @@
 import Link from 'next/link';
-import { getPublicLobbies } from '@/lib/data';
-import { getDraftDisplayName } from '@/lib/format';
+import { getPublicLobbies } from '@/lib/firebase/data';
+import { getDraftDisplayName } from '@/lib/firebase/format';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 

@@ -4,8 +4,8 @@ import { motion } from 'framer-motion';
 import type { Player, Position } from '@mockingboard/shared';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { getPositionColor } from '@/lib/position-colors';
-import { schoolColorStyle } from '@/lib/school-colors';
+import { getPositionColor } from '@/lib/colors/position-colors';
+import { schoolColorStyle } from '@/lib/colors/school-colors';
 import { AttributionBadge } from '@/components/player/attribution-badge';
 import {
   UNRANKED,

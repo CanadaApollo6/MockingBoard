@@ -1,6 +1,6 @@
 import Link from 'next/link';
-import { getSessionUser } from '@/lib/auth-session';
-import { getPlayerMap, getUserBoardForYear } from '@/lib/data';
+import { getSessionUser } from '@/lib/firebase/auth-session';
+import { getPlayerMap, getUserBoardForYear } from '@/lib/firebase/data';
 import { getCachedSeasonConfig } from '@/lib/cache';
 import { BoardEditor } from './board-editor';
 

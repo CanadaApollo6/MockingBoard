@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import { getSessionUser } from '@/lib/auth-session';
-import { isAdmin } from '@/lib/admin';
-import { adminDb } from '@/lib/firebase-admin';
+import { getSessionUser } from '@/lib/firebase/auth-session';
+import { isAdmin } from '@/lib/firebase/admin';
+import { adminDb } from '@/lib/firebase/firebase-admin';
 import { resetPlayerCache } from '@/lib/cache';
-import { hydrateDocs } from '@/lib/sanitize';
+import { hydrateDocs } from '@/lib/firebase/sanitize';
 import type { Player, Position } from '@mockingboard/shared';
 
 export async function GET(request: Request) {

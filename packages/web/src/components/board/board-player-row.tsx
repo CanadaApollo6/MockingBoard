@@ -5,7 +5,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { Player, GradeSystem } from '@mockingboard/shared';
 import { Badge } from '@/components/ui/badge';
-import { getPositionColor } from '@/lib/position-colors';
+import { getPositionColor } from '@/lib/colors/position-colors';
 import { cn } from '@/lib/utils';
 import { GradeBadge } from '@/components/grade/grade-badge';
 import { GradePicker } from '@/components/grade/grade-picker';

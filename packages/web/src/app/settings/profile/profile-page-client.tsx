@@ -6,7 +6,7 @@ import { ArrowLeft, ExternalLink } from 'lucide-react';
 import { teams } from '@mockingboard/shared';
 import { useAuth } from '@/components/auth/auth-provider';
 import { Button } from '@/components/ui/button';
-import { TEAM_COLORS, hexToHsl } from '@/lib/team-colors';
+import { TEAM_COLORS, hexToHsl } from '@/lib/colors/team-colors';
 import { cn } from '@/lib/utils';
 import { getErrorMessage } from '@/lib/validate';
 

@@ -3,8 +3,8 @@
 import { useEffect } from 'react';
 import { useTheme } from 'next-themes';
 import { useAuth } from '@/components/auth/auth-provider';
-import { TEAM_COLORS, deriveThemeOverrides } from '@/lib/team-colors';
-import { getSchoolColor } from '@/lib/school-colors';
+import { TEAM_COLORS, deriveThemeOverrides } from '@/lib/colors/team-colors';
+import { getSchoolColor } from '@/lib/colors/school-colors';
 import type { TeamAbbreviation } from '@mockingboard/shared';
 
 /** CSS variables that team theming overrides — used for cleanup. */

@@ -1,6 +1,6 @@
 import type { TeamDraftGrade, Player } from '@mockingboard/shared';
-import { barColor, gradeColor, tierColor } from '@/lib/grade-color';
-import { getTeamColor } from '@/lib/team-colors';
+import { barColor, gradeColor, tierColor } from '@/lib/colors/grade-color';
+import { getTeamColor } from '@/lib/colors/team-colors';
 import { getTeamName } from '@/lib/teams';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 

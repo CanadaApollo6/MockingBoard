@@ -1,4 +1,4 @@
-import { getSessionUser } from '@/lib/auth-session';
+import { getSessionUser } from '@/lib/firebase/auth-session';
 import { resolveUser } from '@/lib/user-resolve';
 import {
   getPlayerMap,
@@ -6,7 +6,7 @@ import {
   getDraft,
   getTopDrafters,
   getUserStats,
-} from '@/lib/data';
+} from '@/lib/firebase/data';
 import { teams } from '@mockingboard/shared';
 import { LandingHero } from '@/components/landing-hero';
 import { Dashboard } from '@/components/dashboard';
@@ -16,8 +16,8 @@ import {
   getCachedTeamDocs,
   getCachedSchedule,
 } from '@/lib/cache';
-import { TEAM_COLORS } from '@/lib/team-colors';
-import { adminDb } from '@/lib/firebase-admin';
+import { TEAM_COLORS } from '@/lib/colors/team-colors';
+import { adminDb } from '@/lib/firebase/firebase-admin';
 
 export default async function Home({
   searchParams,

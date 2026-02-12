@@ -6,8 +6,8 @@ import {
 } from '@/components/ui/gradient-card';
 import { isTeamAbbreviation } from '@mockingboard/shared';
 import type { PlayerContract } from '@mockingboard/shared';
-import { TEAM_COLORS } from '@/lib/team-colors';
-import { fmtDollar } from '@/lib/format';
+import { TEAM_COLORS } from '@/lib/colors/team-colors';
+import { fmtDollar } from '@/lib/firebase/format';
 import type { EspnPlayerBio } from '@/lib/cache';
 
 interface NflPlayerHeroProps {

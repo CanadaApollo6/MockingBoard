@@ -1,10 +1,14 @@
 import { redirect } from 'next/navigation';
-import { getDraftPicks, getDraftResults, getPlayerMap } from '@/lib/data';
-import { adminDb } from '@/lib/firebase-admin';
-import { getSessionUser } from '@/lib/auth-session';
+import {
+  getDraftPicks,
+  getDraftResults,
+  getPlayerMap,
+} from '@/lib/firebase/data';
+import { adminDb } from '@/lib/firebase/firebase-admin';
+import { getSessionUser } from '@/lib/firebase/auth-session';
 import { resolveUser } from '@/lib/user-resolve';
 import { getCachedSeasonConfig } from '@/lib/cache';
-import { hydrateDoc } from '@/lib/sanitize';
+import { hydrateDoc } from '@/lib/firebase/sanitize';
 import { scoreMockPick, aggregateDraftScore } from '@/lib/scoring';
 import type { Draft, DraftResultPick, Pick } from '@mockingboard/shared';
 import type { PickScore, DraftScoreResult } from '@/lib/scoring';

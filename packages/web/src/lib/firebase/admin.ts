@@ -1,4 +1,4 @@
-import { adminDb } from '@/lib/firebase-admin';
+import { adminDb } from '@/lib/firebase/firebase-admin';
 
 /** TTL cache so repeated checks in the same request don't re-read Firestore. */
 const cache = new Map<string, { value: boolean; expiry: number }>();

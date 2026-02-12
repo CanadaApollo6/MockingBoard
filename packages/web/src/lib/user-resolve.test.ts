@@ -5,7 +5,7 @@ import { vi } from 'vitest';
 vi.mock('server-only', () => ({}));
 vi.mock('./firebase-admin', () => ({ adminDb: {} }));
 
-import { isUserInDraft } from './user-resolve';
+import { isUserInDraft } from './user-resolve.js';
 import type { Draft } from '@mockingboard/shared';
 
 function makeDraft(participants: Record<string, string>): Draft {

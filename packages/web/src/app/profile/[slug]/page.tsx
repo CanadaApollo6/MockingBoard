@@ -9,10 +9,10 @@ import {
   getUserDraftScores,
   getUserDraftingIdentity,
   getPlayerMap,
-} from '@/lib/data';
+} from '@/lib/firebase/data';
 import { teams } from '@mockingboard/shared';
 import { Badge } from '@/components/ui/badge';
-import { getSessionUser } from '@/lib/auth-session';
+import { getSessionUser } from '@/lib/firebase/auth-session';
 import { FollowButton } from '@/components/profile/follow-button';
 import { ProfileShareButton } from '@/components/share/profile-share-button';
 import { BoardCard } from '@/components/board/board-card';

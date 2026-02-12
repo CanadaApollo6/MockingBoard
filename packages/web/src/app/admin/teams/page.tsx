@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { getSessionUser } from '@/lib/auth-session';
-import { isAdmin } from '@/lib/admin';
+import { getSessionUser } from '@/lib/firebase/auth-session';
+import { isAdmin } from '@/lib/firebase/admin';
 import { getCachedTeamDocs } from '@/lib/cache';
 import { teams } from '@mockingboard/shared';
 import { Badge } from '@/components/ui/badge';

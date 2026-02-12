@@ -2,8 +2,8 @@
 
 import type { Player } from '@mockingboard/shared';
 import { Badge } from '@/components/ui/badge';
-import { getPositionColor } from '@/lib/position-colors';
-import { schoolColorStyle } from '@/lib/school-colors';
+import { getPositionColor } from '@/lib/colors/position-colors';
+import { schoolColorStyle } from '@/lib/colors/school-colors';
 import { UNRANKED } from '@/lib/player-utils';
 import { BareLayout } from '@/components/layout/bare-layout';
 

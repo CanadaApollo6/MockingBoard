@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { FieldValue } from 'firebase-admin/firestore';
-import { getSessionUser } from '@/lib/auth-session';
-import { getDraftOrFail } from '@/lib/data';
-import { adminDb } from '@/lib/firebase-admin';
+import { getSessionUser } from '@/lib/firebase/auth-session';
+import { getDraftOrFail } from '@/lib/firebase/data';
+import { adminDb } from '@/lib/firebase/firebase-admin';
 import { assertDraftCreator } from '@/lib/user-resolve';
 import { AppError } from '@/lib/validate';
 

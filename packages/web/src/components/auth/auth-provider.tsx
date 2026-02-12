@@ -13,7 +13,7 @@ import {
   type User as FirebaseUser,
 } from 'firebase/auth';
 import { doc, onSnapshot } from 'firebase/firestore';
-import { getClientAuth, getClientDb } from '@/lib/firebase';
+import { getClientAuth, getClientDb } from '@/lib/firebase/firebase';
 import type { TeamAbbreviation } from '@mockingboard/shared';
 
 export interface UserProfile {

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { getSessionUser } from '@/lib/auth-session';
-import { adminDb } from '@/lib/firebase-admin';
-import { sanitize } from '@/lib/sanitize';
+import { getSessionUser } from '@/lib/firebase/auth-session';
+import { adminDb } from '@/lib/firebase/firebase-admin';
+import { sanitize } from '@/lib/firebase/sanitize';
 
 export async function GET() {
   const session = await getSessionUser();

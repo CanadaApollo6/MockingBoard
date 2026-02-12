@@ -9,13 +9,13 @@ const { mockGetSessionUser, mockCreateWebTrade, mockGetDraftOrFail } =
   }));
 
 vi.mock('server-only', () => ({}));
-vi.mock('@/lib/auth-session', () => ({
+vi.mock('@/lib/firebase/auth-session', () => ({
   getSessionUser: () => mockGetSessionUser(),
 }));
 vi.mock('@/lib/draft-actions', () => ({
   createWebTrade: (...args: unknown[]) => mockCreateWebTrade(...args),
 }));
-vi.mock('@/lib/data', () => ({
+vi.mock('@/lib/firebase/data', () => ({
   getDraftOrFail: (...args: unknown[]) => mockGetDraftOrFail(...args),
 }));
 vi.mock('@/lib/validate', () => ({

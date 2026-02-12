@@ -1,7 +1,7 @@
 import 'server-only';
 
-import { adminDb } from './firebase-admin';
-import { hydrateDoc } from './sanitize';
+import { adminDb } from './firebase/firebase-admin';
+import { hydrateDoc } from './firebase/sanitize';
 import { AppError } from './validate';
 import type { Draft, User } from '@mockingboard/shared';
 

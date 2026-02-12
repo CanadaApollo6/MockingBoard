@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getSessionUser } from '@/lib/auth-session';
+import { getSessionUser } from '@/lib/firebase/auth-session';
 import { leaveLobby } from '@/lib/lobby-actions';
 import { safeError } from '@/lib/validate';
 

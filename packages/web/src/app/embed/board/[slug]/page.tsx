@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { getBigBoardBySlug, getPlayerMap } from '@/lib/data';
+import { getBigBoardBySlug, getPlayerMap } from '@/lib/firebase/data';
 import { EmbeddableBoardView } from '@/components/embeds/embeddable-board-view';
 import type { Player } from '@mockingboard/shared';
 

@@ -1,9 +1,13 @@
-import { adminDb } from '@/lib/firebase-admin';
-import { getDraftResults, getDraftPicks, getPlayerMap } from '@/lib/data';
-import { getSessionUser } from '@/lib/auth-session';
+import { adminDb } from '@/lib/firebase/firebase-admin';
+import {
+  getDraftResults,
+  getDraftPicks,
+  getPlayerMap,
+} from '@/lib/firebase/data';
+import { getSessionUser } from '@/lib/firebase/auth-session';
 import { resolveUser } from '@/lib/user-resolve';
 import { getCachedSeasonConfig } from '@/lib/cache';
-import { hydrateDoc } from '@/lib/sanitize';
+import { hydrateDoc } from '@/lib/firebase/sanitize';
 import { scoreMockPick, aggregateDraftScore } from '@/lib/scoring';
 import type { Draft } from '@mockingboard/shared';
 import type { PickScore } from '@/lib/scoring';
