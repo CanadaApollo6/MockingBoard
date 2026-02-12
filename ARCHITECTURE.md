@@ -2,593 +2,324 @@
 
 ## Overview
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                              CLIENTS                                         │
-├─────────────────────┬─────────────────────┬─────────────────────────────────┤
-│    Discord Bot      │      Web App        │     iMessage Extension          │
-│    (discord.js)     │   (Next.js/Remix)   │        (Future)                 │
-└──────────┬──────────┴──────────┬──────────┴─────────────────────────────────┘
-           │                     │
-           │                     │
-           ▼                     ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           FIREBASE                                           │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│   ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐        │
-│   │  Firebase Auth  │    │    Firestore    │    │ Cloud Functions │        │
-│   │                 │    │                 │    │   (optional)    │        │
-│   │ - Discord OAuth │    │ - Users         │    │                 │        │
-│   │ - Session mgmt  │    │ - Drafts        │    │ - Scheduled     │        │
-│   │                 │    │ - Picks         │    │   tasks         │        │
-│   │                 │    │ - Players       │    │ - Webhooks      │        │
-│   │                 │    │ - Teams         │    │                 │        │
-│   └─────────────────┘    └─────────────────┘    └─────────────────┘        │
-│                                                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-## Data Models
-
-### User
-
-```typescript
-interface User {
-  id: string; // Firestore document ID
-  discordId: string; // Discord user ID (primary identifier initially)
-  firebaseUid?: string; // Firebase Auth UID (linked when web account created)
-  discordUsername: string; // Cached for display
-  discordAvatar?: string; // Cached avatar URL
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
-
-  // Preferences (Phase 4+)
-  preferences?: {
-    statedWeights?: PreferenceWeights;
-    revealedWeights?: PreferenceWeights; // Computed from drafting behavior
-  };
-
-  // Stats (Phase 5+)
-  stats?: {
-    totalDrafts: number;
-    totalPicks: number;
-    accuracyScore?: number;
-  };
-}
-
-interface PreferenceWeights {
-  athleticism: number; // 0-100
-  production: number; // 0-100
-  conference: Record<string, number>; // e.g., { "SEC": 80, "Big Ten": 70 }
-  positionalValue: Record<Position, number>;
-}
+```text
+┌──────────────────────────────────────────────────────────────────┐
+│                            CLIENTS                               │
+├──────────────────┬──────────────────┬────────────────────────────┤
+│   Discord Bot    │     Web App      │    iMessage Extension      │
+│  (discord.js)    │  (Next.js 16)    │       (Future)             │
+└────────┬─────────┴────────┬─────────┴────────────────────────────┘
+         │                  │
+         ▼                  ▼
+┌──────────────────────────────────────────────────────────────────┐
+│                         FIREBASE                                 │
+├──────────────────────────────────────────────────────────────────┤
+│  ┌──────────────┐  ┌──────────────┐  ┌────────────────────────┐ │
+│  │ Firebase Auth │  │  Firestore   │  │  Firebase App Hosting  │ │
+│  │              │  │              │  │                        │ │
+│  │ - Discord    │  │ - Users      │  │  - Next.js web app     │ │
+│  │ - Google     │  │ - Drafts     │  │  - SSR + ISR           │ │
+│  │ - Email/pwd  │  │ - Players    │  │  - API routes          │ │
+│  │ - Sessions   │  │ - Teams      │  │                        │ │
+│  │              │  │ - Boards     │  │                        │ │
+│  │              │  │ - Reports    │  │                        │ │
+│  └──────────────┘  └──────────────┘  └────────────────────────┘ │
+└──────────────────────────────────────────────────────────────────┘
+         │
+         ▼
+┌──────────────────────────────────────────────────────────────────┐
+│                      GOOGLE CLOUD                                │
+├──────────────────────────────────────────────────────────────────┤
+│  ┌──────────────┐  ┌──────────────┐  ┌────────────────────────┐ │
+│  │  Cloud Run   │  │ Cloud Build  │  │   Secret Manager       │ │
+│  │  (Bot host)  │  │ (CI/CD bot)  │  │   (Credentials)        │ │
+│  └──────────────┘  └──────────────┘  └────────────────────────┘ │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
-### Draft
+## Monorepo Structure
 
-```typescript
-interface Draft {
-  id: string; // Firestore document ID
-  createdBy: string; // User ID
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
-
-  // Configuration
-  config: {
-    rounds: number; // 1-7
-    secondsPerPick: number; // 0 for unlimited
-    format: 'full' | 'single-team'; // Full 32-team or single team focus
-    year: number; // Draft class year
-  };
-
-  // State
-  status: 'lobby' | 'active' | 'paused' | 'complete';
-  currentPick: number; // 1-indexed overall pick number
-  currentRound: number;
-  clockExpiresAt?: Timestamp; // When current pick times out
-
-  // Platform info
-  platform: 'discord' | 'web';
-  discord?: {
-    guildId: string;
-    channelId: string;
-    threadId: string;
-  };
-
-  // Participants: map of team abbreviation to user assignment
-  // null value means CPU-controlled
-  teamAssignments: Record<TeamAbbreviation, string | null>;
-
-  // Pick order for the draft (accounts for trades in future)
-  pickOrder: DraftSlot[];
-
-  // Locked prediction (Phase 5)
-  isLocked?: boolean;
-  lockedAt?: Timestamp;
-}
-
-interface DraftSlot {
-  overall: number; // Overall pick number
-  round: number;
-  pick: number; // Pick within round
-  team: TeamAbbreviation;
-}
+```text
+mockingboard/
+├── packages/
+│   ├── bot/              # Discord bot — discord.js, slash commands, draft management
+│   ├── web/              # Next.js 16 web app — App Router, server components, ISR
+│   └── shared/           # Shared types, utilities, constants — platform-agnostic logic
+├── firebase/             # Firestore rules and indexes
+├── cloudbuild.yaml       # Cloud Build config for bot deployment
+├── turbo.json            # Turborepo pipeline config
+└── vitest.config.ts      # Root test config
 ```
 
-### Pick
+**Workspaces**: `@mockingboard/bot`, `@mockingboard/web`, `@mockingboard/shared`
 
-```typescript
-interface Pick {
-  id: string; // Firestore document ID
-  draftId: string; // Parent draft
+**Build orchestration**: Turborepo with npm workspaces. `shared` builds first, then `bot` and `web` in parallel.
 
-  overall: number; // Overall pick number
-  round: number;
-  pick: number; // Pick within round
+## Tech Stack
 
-  team: TeamAbbreviation;
-  userId: string | null; // null if CPU pick
-  playerId: string;
-
-  // Context for preference analysis (Phase 4)
-  context?: {
-    availablePlayerIds: string[]; // Who was available
-    pickTimestamp: Timestamp;
-    secondsUsed?: number;
-  };
-
-  createdAt: Timestamp;
-}
-```
-
-### Player
-
-```typescript
-interface Player {
-  id: string; // Firestore document ID
-
-  // Core info
-  name: string;
-  position: Position;
-  school: string;
-
-  // Rankings
-  consensusRank: number; // ADP / consensus big board rank
-  year: number; // Draft class year
-
-  // Extended attributes (populated over time)
-  attributes?: {
-    conference: string;
-    height?: number; // Inches
-    weight?: number; // Pounds
-    fortyYard?: number; // Seconds
-    vertical?: number; // Inches
-    bench?: number; // Reps
-    broad?: number; // Inches
-    cone?: number; // Seconds
-    shuttle?: number; // Seconds
-    armLength?: number; // Inches
-    handSize?: number; // Inches
-    captain?: boolean;
-    yearInSchool?: 'FR' | 'SO' | 'JR' | 'SR';
-    gamesStarted?: number;
-  };
-
-  // Scouting (future: crowdsourced or licensed)
-  scouting?: {
-    summary?: string;
-    strengths?: string[];
-    weaknesses?: string[];
-    comparison?: string; // "Pro comparison: Player X"
-  };
-
-  updatedAt: Timestamp;
-}
-
-type Position =
-  | 'QB'
-  | 'RB'
-  | 'WR'
-  | 'TE'
-  | 'OT'
-  | 'OG'
-  | 'C'
-  | 'EDGE'
-  | 'DL'
-  | 'LB'
-  | 'CB'
-  | 'S'
-  | 'K'
-  | 'P';
-```
-
-### Team
-
-```typescript
-interface Team {
-  id: TeamAbbreviation; // e.g., "NE", "DAL"
-  name: string; // e.g., "New England Patriots"
-  city: string; // e.g., "New England"
-  mascot: string; // e.g., "Patriots"
-  conference: 'AFC' | 'NFC';
-  division: 'North' | 'South' | 'East' | 'West';
-
-  // Current year draft capital
-  picks: {
-    year: number;
-    slots: DraftSlot[];
-  };
-
-  // For CPU drafting logic
-  needs?: Position[]; // Ordered list of positional needs
-
-  // Flavor for solo mode (Phase 3)
-  personality?: {
-    tendencies?: string; // "Always takes BPA"
-    recentDraftHistory?: string;
-    reportedInterests?: string[];
-  };
-}
-
-type TeamAbbreviation =
-  | 'ARI'
-  | 'ATL'
-  | 'BAL'
-  | 'BUF'
-  | 'CAR'
-  | 'CHI'
-  | 'CIN'
-  | 'CLE'
-  | 'DAL'
-  | 'DEN'
-  | 'DET'
-  | 'GB'
-  | 'HOU'
-  | 'IND'
-  | 'JAX'
-  | 'KC'
-  | 'LAC'
-  | 'LAR'
-  | 'LV'
-  | 'MIA'
-  | 'MIN'
-  | 'NE'
-  | 'NO'
-  | 'NYG'
-  | 'NYJ'
-  | 'PHI'
-  | 'PIT'
-  | 'SEA'
-  | 'SF'
-  | 'TB'
-  | 'TEN'
-  | 'WAS';
-```
-
-## Firestore Schema
-
-```
-/users
-  /{userId}
-    - discordId
-    - firebaseUid
-    - discordUsername
-    - ...
-
-/drafts
-  /{draftId}
-    - config
-    - status
-    - teamAssignments
-    - pickOrder
-    - ...
-
-    /picks (subcollection)
-      /{pickId}
-        - overall
-        - round
-        - team
-        - playerId
-        - userId
-        - ...
-
-/players
-  /{playerId}
-    - name
-    - position
-    - school
-    - consensusRank
-    - ...
-
-/teams
-  /{teamAbbreviation}
-    - name
-    - picks
-    - needs
-    - ...
-
-/bigBoards (Phase 6)
-  /{boardId}
-    - userId
-    - year
-    - rankings: playerId[]
-    - ...
-
-/predictions (Phase 5)
-  /{predictionId}
-    - userId
-    - draftId
-    - lockedAt
-    - ...
-
-/actualResults (Phase 5)
-  /{year}
-    - picks: { overall, playerId, team }[]
-```
-
-## Discord Bot Architecture
-
-```
-/packages/bot
-  /src
-    index.ts                 # Entry point, client initialization
-
-    /commands                # Slash command definitions
-      startdraft.ts
-      pick.ts
-      board.ts
-      status.ts
-      pause.ts
-      resume.ts
-
-    /events                  # Discord event handlers
-      ready.ts
-      interactionCreate.ts
-
-    /services                # Business logic
-      draft.service.ts       # Draft state management
-      pick.service.ts        # Pick recording and validation
-      player.service.ts      # Player queries
-      user.service.ts        # User management
-      cpu.service.ts         # CPU pick logic
-
-    /components              # Discord UI components
-      playerButtons.ts       # Button rows for player selection
-      draftEmbed.ts          # Rich embeds for draft state
-      pickAnnouncement.ts    # Pick announcement formatting
-
-    /utils
-      firestore.ts           # Firestore client and helpers
-      formatting.ts          # Text formatting utilities
-
-    /types
-      index.ts               # Re-export from shared
-```
-
-### Command Flow Example: Making a Pick
-
-```
-User clicks player button
-        │
-        ▼
-interactionCreate.ts
-        │
-        ▼
-Validate: Is it user's turn? Is player available?
-        │
-        ▼
-pick.service.recordPick()
-        │
-        ├── Write Pick document to Firestore
-        ├── Update Draft.currentPick
-        └── Update Draft.clockExpiresAt
-        │
-        ▼
-pickAnnouncement.ts → Post pick to thread
-        │
-        ▼
-draft.service.advanceDraft()
-        │
-        ├── If draft complete → Post summary, set status
-        └── If next pick is CPU → cpu.service.makePick() → recurse
-        │
-        ▼
-playerButtons.ts → Send new buttons to next user
-```
+| Layer         | Technology                          | Notes                                                        |
+| ------------- | ----------------------------------- | ------------------------------------------------------------ |
+| Language      | TypeScript 5.7                      | Strict mode, shared types across all packages                |
+| Web framework | Next.js 16 (App Router)             | Server components, ISR, API routes                           |
+| UI            | React 19, Tailwind CSS 4, shadcn/ui | Radix primitives, team-color theming                         |
+| Bot framework | discord.js                          | Slash commands, button interactions, thread management       |
+| Database      | Cloud Firestore                     | Real-time listeners, security rules, composite indexes       |
+| Auth          | Firebase Auth                       | Discord OAuth, Google OAuth, email/password, session cookies |
+| Hosting (web) | Firebase App Hosting                | Managed Cloud Run under the hood, SSR support                |
+| Hosting (bot) | Google Cloud Run                    | Always-on (min-instances=1), single container                |
+| CI/CD (bot)   | Cloud Build                         | Dockerfile → Artifact Registry → Cloud Run                   |
+| Secrets       | Google Secret Manager               | Discord token, Firebase service account                      |
+| Testing       | Vitest, Testing Library             | 500+ unit tests across all packages                          |
+| Monorepo      | Turborepo + npm workspaces          | Parallel builds, shared config                               |
+| Rich text     | TipTap                              | Scouting report editor                                       |
+| Drag & drop   | @dnd-kit                            | Big board ranking                                            |
+| PDF           | @react-pdf/renderer                 | Client-side draft guide generation                           |
+| Animations    | Framer Motion                       | Page transitions, draft UI                                   |
 
 ## Web App Architecture
 
+```text
+packages/web/src/
+├── app/                          # Next.js App Router
+│   ├── admin/                    # Auth-gated admin dashboard (12 sections)
+│   ├── api/                      # API routes (drafts, auth, boards, reports, etc.)
+│   ├── auth/                     # Sign-in, sign-up, OAuth callbacks
+│   ├── board/                    # Big board builder + comparison
+│   ├── boards/                   # Public board browse + [slug] view
+│   ├── community/                # Discovery hub
+│   ├── companion/                # Draft day companion
+│   ├── draft-order/              # Draft order page
+│   ├── drafts/                   # Draft history, detail, creation, guest mode
+│   ├── embed/                    # Embeddable widgets (board, player card)
+│   ├── leaderboard/              # Accuracy leaderboard
+│   ├── lobbies/                  # Public lobby browser
+│   ├── overlay/                  # OBS stream overlays
+│   ├── players/                  # NFL player directory + [espnId] detail
+│   ├── profile/                  # Public user profiles + [slug]
+│   ├── prospects/                # Prospect browse + [id] hub
+│   ├── scouts/                   # Scout directory + [slug]
+│   ├── settings/                 # User settings + profile editor
+│   ├── teams/                    # Team breakdowns + [abbreviation]
+│   └── trade-calculator/         # Standalone trade value calculator
+├── components/                   # React components by feature area
+│   ├── auth/                     # OAuth buttons, auth guards
+│   ├── board/                    # Board builder, board cards
+│   ├── community/                # Community feed, profile cards
+│   ├── draft/                    # Draft UI, pick interface, lobby
+│   ├── draft-guide/              # PDF generation components
+│   ├── grade/                    # Grade display, grade buttons
+│   ├── layout/                   # Sidebar, navigation, dashboard widgets
+│   ├── nfl-player/               # NFL player cards, stat tables
+│   ├── notification/             # Notification drawer, bell icon
+│   ├── overlays/                 # OBS overlay components
+│   ├── player/                   # Prospect cards, player hero
+│   ├── profile/                  # Profile pages, share cards
+│   ├── recap/                    # Draft recap, team grades
+│   ├── share/                    # Image sharing, share buttons
+│   ├── team-breakdown/           # Team pages (cap, roster, draft, FA tabs)
+│   ├── trade/                    # Trade modal, trade UI
+│   ├── ui/                       # shadcn/ui primitives
+│   └── video/                    # Video gallery, video submit
+├── hooks/                        # React hooks
+│   ├── use-big-board.ts          # Board state management
+│   ├── use-draft-core.ts         # Draft state machine
+│   ├── use-draft-timer.ts        # Pick countdown timer
+│   ├── use-live-draft.ts         # Firestore onSnapshot listener
+│   ├── use-live-trades.ts        # Real-time trade updates
+│   ├── use-local-draft.ts        # Guest mode (client-side state)
+│   ├── use-notifications.ts      # Notification subscription
+│   ├── use-pick-timer.ts         # SVG progress ring timer
+│   └── use-team-theme.ts         # Team color theming
+├── lib/                          # Server-side utilities
+│   ├── cache/                    # ISR cache, ESPN data cache, player cache
+│   ├── colors/                   # Team colors, gradient utilities
+│   ├── data-import/              # CSV import, prospect parsers
+│   ├── draft-actions/            # Server-side draft logic (picks, trades, setup)
+│   └── firebase/                 # Admin SDK, auth sessions, data queries, sanitization
+└── middleware.ts                 # Auth middleware, route protection
 ```
-/packages/web
-  /src
-    /app                     # Next.js App Router (or Remix routes)
-      layout.tsx
-      page.tsx               # Home/landing
 
-      /auth
-        /login/page.tsx
-        /callback/page.tsx   # Discord OAuth callback
+### Key Patterns
 
-      /drafts
-        page.tsx             # Draft history list
-        /[draftId]/page.tsx  # Draft detail view
-        /new/page.tsx        # Create draft (Phase 3)
-        /live/[draftId]/page.tsx  # Live draft UI (Phase 3)
+**Server Components + ISR**: Data-driven pages (teams, players, draft order) use server components with `revalidate = 3600`. Initial paint is SSR, then ISR handles staleness.
 
-      /profile
-        page.tsx             # User profile, scouting identity (Phase 4)
+**Real-time Hydration**: Live draft pages SSR the initial state, then hydrate with Firestore `onSnapshot` listeners for real-time updates (picks, trades, timer, participants).
 
-      /leaderboard
-        page.tsx             # Accuracy leaderboard (Phase 5)
+**ESPN Data Caching**: In-memory `CacheEntry<T>` with `getOrExpire()` pattern. 1-hour TTL for player data, 6-hour TTL for aggregated rosters. See `lib/cache/`.
 
-      /board
-        page.tsx             # Big board builder (Phase 6)
+**API Route Pattern**: All mutations go through `/api/` routes. Routes validate auth via `getSessionUser()`, call business logic in `lib/`, return JSON responses.
 
-    /components
-      /ui                    # Generic UI components
-      /draft                 # Draft-specific components
-      /player                # Player card, list, etc.
+## Discord Bot Architecture
 
-    /lib
-      firebase.ts            # Firebase client initialization
-      auth.ts                # Auth helpers
-      api.ts                 # Firestore queries
-
-    /hooks
-      useDraft.ts            # Real-time draft subscription
-      useUser.ts             # Current user state
+```text
+packages/bot/src/
+├── commands/                     # Slash command definitions
+│   ├── startdraft.ts             # /startdraft — create and configure a draft
+│   ├── draft.ts                  # /draft — manual pick command
+│   └── help.ts                   # /help — command reference
+├── components/                   # Discord UI (buttons, embeds, announcements)
+├── events/                       # Discord gateway event handlers
+├── handlers/                     # Draft flow orchestration
+│   ├── draftLobby.ts             # Lobby creation, team selection
+│   ├── draftPicking.ts           # Pick recording, player buttons
+│   ├── draftAdvance.ts           # Turn advancement, CPU cascade, completion
+│   ├── trade.ts                  # Trade execution
+│   ├── tradeProposal.ts          # Trade proposal UI
+│   └── shared.ts                 # Common handler utilities
+├── services/                     # Business logic
+│   ├── draft.service.ts          # Draft state management
+│   ├── pick.service.ts           # Pick recording and validation
+│   ├── player.service.ts         # Player queries
+│   ├── user.service.ts           # User management (lazy creation)
+│   ├── trade.service.ts          # Trade validation and execution
+│   ├── tradeTimer.service.ts     # Trade timeout management
+│   └── rateLimit.service.ts      # Command rate limiting
+├── utils/                        # Firestore client, formatting helpers
+└── index.ts                      # Entry point, client initialization
 ```
 
-## Authentication Flow
+### Command Flow: Making a Pick
 
-### Discord Bot (Phase 1)
-
-No authentication required. Users are identified by Discord ID. User documents are created lazily on first interaction.
-
-```
-User runs /startdraft
+```text
+User clicks player button
         │
         ▼
-Bot extracts interaction.user.id (Discord ID)
+interactionCreate event handler
         │
         ▼
-Check if User doc exists for discordId
-        │
-        ├── Yes → Use existing user
-        └── No  → Create User doc with discordId, cache username
-```
-
-### Web App with Discord OAuth (Phase 2+)
-
-```
-User clicks "Login with Discord"
+Validate: user's turn? player available?
         │
         ▼
-Redirect to Discord OAuth
+pick.service.recordPick()
+        ├── Write Pick document to Firestore
+        ├── Update Draft state (currentPick, clockExpiresAt)
+        └── Post pick announcement to thread
         │
         ▼
-User authorizes, Discord redirects to /auth/callback
+draftAdvance handler
+        ├── Draft complete? → Post summary, set status
+        └── Next pick is CPU? → CPU cascade (recursive picks)
         │
         ▼
-Exchange code for Discord access token
-        │
-        ▼
-Fetch Discord user info (id, username, avatar)
-        │
-        ▼
-Firebase Auth: signInWithCustomToken
-  (Cloud Function creates custom token from Discord ID)
-        │
-        ▼
-Check if User doc exists for discordId
-        │
-        ├── Yes → Link firebaseUid to existing User doc
-        └── No  → Create User doc with discordId + firebaseUid
-        │
-        ▼
-User is authenticated, session established
+Send player buttons to next human drafter
 ```
 
-## CPU Drafting Logic
+## Shared Package
 
-For solo mode and filling in non-user teams in multiplayer.
-
-### Basic Algorithm (MVP)
-
-```typescript
-function cpuPick(draft: Draft, team: Team, availablePlayers: Player[]): Player {
-  // 1. Filter to top N available by consensus rank
-  const topAvailable = availablePlayers
-    .sort((a, b) => a.consensusRank - b.consensusRank)
-    .slice(0, 10);
-
-  // 2. Check team needs
-  const needPlayers = topAvailable.filter((p) =>
-    team.needs?.includes(p.position),
-  );
-
-  // 3. If a need player is in top 5 available, take them
-  const topFive = topAvailable.slice(0, 5);
-  const needInTopFive = needPlayers.find((p) => topFive.includes(p));
-  if (needInTopFive) return needInTopFive;
-
-  // 4. Otherwise take BPA with slight randomization
-  const bpaIndex = weightedRandom([0, 1, 2], [0.7, 0.2, 0.1]);
-  return topAvailable[bpaIndex];
-}
+```text
+packages/shared/src/
+├── types.ts                      # All shared TypeScript types (Draft, Pick, Player, Team, etc.)
+├── draft.ts                      # Pick order building, turn resolution, draft state helpers
+├── cpu.ts                        # CPU pick logic (need-adjusted, positional weighting, variance)
+├── trade.ts                      # Trade validation (7 functions), CPU trade evaluation
+├── tradeValues.ts                # Rich Hill trade value chart
+├── draft-analytics.ts            # Post-draft grading engine (Massey/Thaler, Baldwin, OTC/PFF)
+├── grades.ts                     # Positional value model, surplus curves, pick classification
+├── board-generator.ts            # Rapid board generation with trait/production weighting
+├── draft-names.ts                # Auto-generated draft name logic
+├── prospect-import.ts            # CSV/sheet import parsers, data validation
+├── data/                         # Static data (teams, coaching staffs)
+└── index.ts                      # Public API exports
 ```
 
-### Enhanced Algorithm (Phase 3)
+**Design rule**: Only pure, platform-agnostic logic belongs in `shared`. No Firestore, no Discord, no Next.js imports. Both `bot` and `web` consume this package identically.
 
-Add team personalities, reported interests, historical tendencies. Occasionally make "surprising" picks that match real NFL chaos.
+## Authentication
 
-## Deployment Architecture
+Three providers, unified through Firebase Auth:
 
-### Phase 1 (MVP)
+| Provider       | Flow                                                                         |
+| -------------- | ---------------------------------------------------------------------------- |
+| Discord OAuth  | Redirect → callback → exchange code → Firebase custom token → session cookie |
+| Google OAuth   | Firebase Auth popup → session cookie                                         |
+| Email/Password | Firebase Auth createUser → session cookie                                    |
 
-```
-┌─────────────────────────────────────┐
-│          Google Cloud Run           │
-│                                     │
-│   Discord Bot (single container)    │
-│   - Runs continuously               │
-│   - Connects to Discord gateway     │
-│   - Reads/writes Firestore          │
-│                                     │
-└─────────────────────────────────────┘
-                  │
-                  ▼
-┌─────────────────────────────────────┐
-│            Firestore                │
-└─────────────────────────────────────┘
-```
+**Account linking**: Users can connect multiple providers to one account. `discordId` is optional (not all users come from Discord). Session cookies are HttpOnly, validated server-side via `getSessionUser()`.
 
-**Alternative**: Compute Engine (single small VM) if Cloud Run's request-based model doesn't suit the persistent Discord gateway connection.
+## Firestore Schema
 
-### Phase 2+ (With Web App)
-
-```
-┌──────────────────┐    ┌──────────────────┐
-│   Cloud Run      │    │     Vercel       │
-│   (Discord Bot)  │    │   (Next.js)      │
-└────────┬─────────┘    └────────┬─────────┘
-         │                       │
-         └───────────┬───────────┘
-                     │
-                     ▼
-         ┌───────────────────────┐
-         │       Firestore       │
-         └───────────────────────┘
-                     │
-                     ▼
-         ┌───────────────────────┐
-         │    Firebase Auth      │
-         └───────────────────────┘
+```text
+/users/{userId}                   # User profile, preferences, notification settings
+/drafts/{draftId}                 # Draft config, state, participants, pick order
+  /picks/{pickId}                 # Individual picks (subcollection)
+/players/{playerId}               # Prospect data (name, position, school, rank, attributes)
+/teams/{abbreviation}             # NFL team data (needs, picks, coaching staff, front office)
+/bigBoards/{boardId}              # User big boards (rankings, snapshots, visibility)
+/scoutingReports/{reportId}       # Community scouting reports (per user, per player, per year)
+/videos/{videoId}                 # Community video breakdowns
+/notifications/{notificationId}   # User notifications
+/predictions/{predictionId}       # Locked draft predictions
+/actualResults/{year}             # Real NFL draft results for scoring
+/draftOrder/{year}                # Official draft order with trade tracking
+/contracts/{teamAbbreviation}     # Team contract/cap data (admin-imported)
 ```
 
-**Web hosting options**:
+**Security rules**: Users can only read/write their own data and drafts they participate in. Admin routes are gated by a `role: 'admin'` field on the user document.
 
-- Vercel (easiest for Next.js)
-- Firebase Hosting (if using Remix or want all-Firebase)
-- Cloud Run (if you want everything in GCP)
+## Deployment
 
-## Key Technical Decisions
+### Web App (Firebase App Hosting)
 
-| Decision      | Choice                        | Rationale                                            |
-| ------------- | ----------------------------- | ---------------------------------------------------- |
-| Database      | Firestore                     | Real-time listeners, good DX, familiar to you        |
-| Bot framework | discord.js                    | Mature, TypeScript support, active community         |
-| Web framework | Next.js or Remix              | Both work well, pick based on preference             |
-| Auth          | Firebase Auth + Discord OAuth | Handles session management, easy Discord integration |
-| Hosting (bot) | Cloud Run or Compute Engine   | Depends on gateway connection requirements           |
-| Hosting (web) | Vercel                        | Zero-config Next.js deployment                       |
-| Monorepo      | npm workspaces or Turborepo   | Shared types between bot and web                     |
+```text
+packages/web/apphosting.yaml
+├── CPU: 1
+├── Memory: 512 MB
+├── Concurrency: 80
+├── Environment: Firebase credentials, OAuth config, app URL
+└── URL: https://mockingboard.app
+```
 
-## Security Considerations
+Deployed automatically by Firebase App Hosting (managed Cloud Run). Supports SSR, ISR, and API routes natively.
 
-- Firestore security rules: Users can only read/write their own data, drafts they participate in
-- Discord bot token stored in Secret Manager, not in code
-- Firebase Auth rules: Validate custom token creation in Cloud Function
-- Rate limiting on bot commands to prevent abuse
-- Validate all user input (pick selections, draft configuration)
+### Discord Bot (Cloud Run via Cloud Build)
+
+```text
+cloudbuild.yaml
+├── Build: Docker image from /Dockerfile
+├── Registry: us-central1-docker.pkg.dev/$PROJECT_ID/mockingboard/bot
+├── Deploy: Cloud Run (min-instances=1, max-instances=1, always-on)
+├── CPU: 1, Memory: 512 MB
+└── Secrets: Discord token, Firebase key (mounted at /secrets/)
+```
+
+### Infrastructure
+
+```text
+Firebase project
+├── Firestore (us-central1)
+│   ├── Security rules: firebase/firestore.rules
+│   └── Indexes: firebase/firestore.indexes.json
+├── Firebase Auth (Discord, Google, email/password providers)
+└── Firebase App Hosting (web app)
+
+Google Cloud project
+├── Cloud Run (bot)
+├── Cloud Build (bot CI/CD)
+├── Artifact Registry (Docker images)
+└── Secret Manager (credentials)
+```
+
+---
+
+## GM Mode Design Principles
+
+The following principles guide development of GM Mode (offseason simulation features on the [roadmap](ROADMAP.md)). Informed by competitive analysis of StickToTheModel and PFN.
+
+### Core Principles
+
+- **Facts, not opinions**: Every number is derived from real contract data or deterministic CBA math. No estimated market values, no AI-generated rankings.
+- **Complete or nothing**: Cap features ship with full CBA Article 13 compliance. No half-measures.
+- **User is the GM**: No CPU-initiated trades or signings. No guardrails on user decisions. Show consequences, don't prevent actions.
+- **Tiered complexity**: Casual users can do basic moves (cut, sign, draft). Cap nerds can define void years, incentive structures, and restructure specifics. Both paths produce accurate math.
+- **Editorial UX, not spreadsheets**: Card-based layouts, clear visual hierarchy, action-first flows. Progressive disclosure — start with the moves the user wants to make, reveal full roster complexity only on demand.
+
+### Anti-Features
+
+These are things we explicitly will not build:
+
+- No AI-generated player rankings or tier lists
+- No CPU-initiated trades or signings
+- No "smart suggestions" for roster moves
+- No estimated contract values for free agents
+- No half-baked cap features (complete CBA compliance or nothing)
+- No guardrails on user decisions (show consequences, don't prevent actions)
