@@ -1,29 +1,29 @@
 import type { Metadata } from 'next';
-import { getCachedPlayers, getCachedSeasonConfig } from '@/lib/cache';
-import { ProspectBigBoard } from './prospect-big-board';
+import { getCachedAllRosters } from '@/lib/cache';
+import { NflPlayerDirectory } from '@/components/nfl-player/nfl-player-directory';
+
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: '2026 Big Board',
+  title: 'NFL Players',
   description:
-    'Consensus 2026 NFL Draft prospect rankings with scouting reports, combine measurables, and stats.',
+    'Browse active NFL players across all 32 teams with stats, career data, and player info.',
 };
 
-export default async function PlayersPage() {
-  const { draftYear } = await getCachedSeasonConfig();
-  const players = await getCachedPlayers(draftYear);
+export default async function NflPlayersPage() {
+  const players = await getCachedAllRosters();
 
   return (
     <main className="mx-auto max-w-screen-xl px-4 py-8">
       <div className="mb-8">
         <h1 className="font-[family-name:var(--font-display)] text-3xl font-bold uppercase tracking-tight sm:text-4xl">
-          2026 Big Board
+          NFL Players
         </h1>
         <p className="mt-2 text-muted-foreground">
-          Consensus prospect rankings with scouting reports, measurables, and
-          stats.
+          Browse players across all 32 NFL teams.
         </p>
       </div>
-      <ProspectBigBoard players={players} />
+      <NflPlayerDirectory players={players} />
     </main>
   );
 }

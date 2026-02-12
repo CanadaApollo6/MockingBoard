@@ -6,11 +6,12 @@ import {
   getCachedSeasonConfig,
   getCachedPublicUsers,
   getCachedPublicBoards,
+  getCachedAllRosters,
 } from '@/lib/cache';
 
 export interface SearchResult {
   id: string;
-  type: 'player' | 'team' | 'user' | 'board' | 'scout';
+  type: 'player' | 'team' | 'user' | 'board' | 'scout' | 'nfl-player';
   name: string;
   description: string;
   href: string;
@@ -30,11 +31,12 @@ export async function GET(request: Request) {
   const q = raw.toLowerCase();
   const { draftYear } = await getCachedSeasonConfig();
 
-  const [players, users, boards, scouts] = await Promise.all([
+  const [players, users, boards, scouts, nflPlayers] = await Promise.all([
     getCachedPlayers(draftYear),
     getCachedPublicUsers(),
     getCachedPublicBoards(),
     getCachedScoutProfiles(),
+    getCachedAllRosters(),
   ]);
 
   const results: SearchResult[] = [];
@@ -53,7 +55,7 @@ export async function GET(request: Request) {
         type: 'player',
         name: p.name,
         description: `${p.position} — ${p.school}`,
-        href: `/players/${p.id}`,
+        href: `/prospects/${p.id}`,
       });
       playerCount++;
     }
@@ -122,6 +124,22 @@ export async function GET(request: Request) {
         href: `/scouts/${s.slug}`,
       });
       scoutCount++;
+    }
+  }
+
+  // NFL Players — match name, position, college
+  let nflCount = 0;
+  for (const p of nflPlayers) {
+    if (nflCount >= 5) break;
+    if (matches(p.name, q) || matches(p.position, q) || matches(p.college, q)) {
+      results.push({
+        id: p.id,
+        type: 'nfl-player',
+        name: p.name,
+        description: `${p.position} — ${p.teamName}`,
+        href: `/players/${p.id}`,
+      });
+      nflCount++;
     }
   }
 

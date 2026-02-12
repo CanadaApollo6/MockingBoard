@@ -8,8 +8,10 @@ import {
   getCachedRoster,
   getCachedSchedule,
   getCachedSeasonConfig,
+  getCachedTeamContracts,
 } from '@/lib/cache';
 import { TEAM_COLORS } from '@/lib/team-colors';
+import { normalizePlayerName } from '@/lib/format';
 import {
   TeamBreakdown,
   type OwnedPick,
@@ -55,11 +57,12 @@ export default async function TeamPage({
   if (!team) notFound();
 
   const { draftYear } = await getCachedSeasonConfig();
-  const [slots, teamDocs, roster, schedule] = await Promise.all([
+  const [slots, teamDocs, roster, schedule, contracts] = await Promise.all([
     getCachedDraftOrderSlots(draftYear),
     getCachedTeamDocs(),
     getCachedRoster(abbr),
     getCachedSchedule(abbr),
+    getCachedTeamContracts(abbr),
   ]);
 
   // Picks this team currently owns
@@ -108,7 +111,27 @@ export default async function TeamPage({
   // Key players from admin curation
   const colors = TEAM_COLORS[abbr];
   const adminKeyPlayers = teamDoc?.keyPlayers ?? [];
+
+  // Build name → ESPN ID lookup from roster
+  const rosterPlayers = roster
+    ? [...roster.offense, ...roster.defense, ...roster.specialTeams]
+    : [];
+  const nameToEspnId = new Map(
+    rosterPlayers.map((p) => [normalizePlayerName(p.name), p.id]),
+  );
+
+  // Strip Firestore metadata (e.g. updatedAt timestamp) before passing to client
+  let serializedContracts: typeof contracts = null;
+  if (contracts) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { updatedAt, ...rest } = contracts as typeof contracts & {
+      updatedAt?: unknown;
+    };
+    serializedContracts = rest;
+  }
+
   const keyPlayers: KeyPlayerCardProps[] = adminKeyPlayers.map((kp) => ({
+    espnId: nameToEspnId.get(normalizePlayerName(kp.name)),
     name: kp.name,
     position: kp.position,
     jersey: kp.jersey,
@@ -150,6 +173,7 @@ export default async function TeamPage({
         coachingStaff={coachingStaff}
         frontOffice={frontOffice}
         seasonOverview={seasonOverview}
+        contracts={serializedContracts}
       />
     </main>
   );

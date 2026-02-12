@@ -64,7 +64,7 @@ export function TeamDirectory({ capital }: TeamDirectoryProps) {
 
           return (
             <Link key={team.id} href={`/teams/${team.id}`}>
-              <Card className="h-full transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+              <Card className="h-full transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md pb-2 pt-5">
                 <CardContent className="p-0">
                   {/* Color accent bar */}
                   <div

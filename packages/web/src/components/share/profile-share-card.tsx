@@ -1,16 +1,18 @@
-import type { User } from '@mockingboard/shared';
+import type { User, Position } from '@mockingboard/shared';
 import { getTeamColor } from '@/lib/team-colors';
 
 interface ProfileShareCardProps {
   user: User;
   boardCount: number;
   reportCount: number;
+  topPositions?: Position[];
 }
 
 export function ProfileShareCard({
   user,
   boardCount,
   reportCount,
+  topPositions,
 }: ProfileShareCardProps) {
   const teamColors = user.favoriteTeam
     ? getTeamColor(user.favoriteTeam)
@@ -135,6 +137,44 @@ export function ProfileShareCard({
           </div>
         ))}
       </div>
+
+      {/* Top positions */}
+      {topPositions && topPositions.length > 0 && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            marginTop: 16,
+          }}
+        >
+          <span
+            style={{
+              fontSize: 11,
+              color: '#71717a',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+            }}
+          >
+            Top Positions
+          </span>
+          {topPositions.map((pos) => (
+            <span
+              key={pos}
+              style={{
+                fontSize: 13,
+                fontWeight: 600,
+                color: '#a1a1aa',
+                border: '1px solid #27272a',
+                borderRadius: 6,
+                padding: '2px 10px',
+              }}
+            >
+              {pos}
+            </span>
+          ))}
+        </div>
+      )}
 
       {/* Social links */}
       {links.length > 0 && (

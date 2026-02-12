@@ -1,5 +1,7 @@
+import { teams } from '@mockingboard/shared';
 import {
   type CacheEntry,
+  isExpired,
   getOrExpire,
   ROSTER_TTL,
   SCHEDULE_TTL,
@@ -18,6 +20,7 @@ export interface RosterPlayer {
   experience: number;
   college: string;
   headshotUrl: string;
+  status: string;
 }
 
 export interface TeamRoster {
@@ -67,6 +70,44 @@ const ESPN_POSITION_MAP: Record<string, string> = {
   FB: 'RB',
 };
 
+const OFFENSE_POSITIONS = new Set([
+  'QB',
+  'RB',
+  'FB',
+  'WR',
+  'TE',
+  'OT',
+  'OG',
+  'C',
+  'G',
+  'T',
+]);
+const SPECIAL_TEAMS_POSITIONS = new Set(['K', 'P', 'LS']);
+
+function mapPlayer(
+  p: Record<string, unknown>,
+  statusOverride?: string,
+): RosterPlayer {
+  const raw =
+    ((p.position as { abbreviation?: string }) ?? {}).abbreviation ?? '';
+  const position = ESPN_POSITION_MAP[raw] ?? raw;
+  const statusName =
+    statusOverride ?? ((p.status as { name?: string }) ?? {}).name ?? 'Active';
+  return {
+    id: (p.id as string) ?? '',
+    name: (p.displayName as string) ?? '',
+    jersey: (p.jersey as string) ?? '',
+    position,
+    height: (p.displayHeight as string) ?? '',
+    weight: (p.displayWeight as string) ?? '',
+    age: (p.age as number) ?? 0,
+    experience: ((p.experience as { years?: number }) ?? {}).years ?? 0,
+    college: ((p.college as { shortName?: string }) ?? {}).shortName ?? '',
+    headshotUrl: ((p.headshot as { href?: string }) ?? {}).href ?? '',
+    status: statusName,
+  };
+}
+
 function transformEspnRoster(json: Record<string, unknown>): TeamRoster {
   const groups = (json.athletes ?? []) as Array<{
     position: string;
@@ -82,30 +123,28 @@ function transformEspnRoster(json: Record<string, unknown>): TeamRoster {
 
   for (const group of groups) {
     const key = groupKeyMap[group.position];
-    if (!key) continue;
+    if (key) {
+      result[key] = (group.items ?? []).map((p) => mapPlayer(p));
+      continue;
+    }
 
-    result[key] = (group.items ?? [])
-      .filter(
-        (p) => (p.status as { type?: string } | undefined)?.type === 'active',
-      )
-      .map((p) => {
-        const raw =
-          ((p.position as { abbreviation?: string }) ?? {}).abbreviation ?? '';
-        const position = ESPN_POSITION_MAP[raw] ?? raw;
-        return {
-          id: (p.id as string) ?? '',
-          name: (p.displayName as string) ?? '',
-          jersey: (p.jersey as string) ?? '',
-          position,
-          height: (p.displayHeight as string) ?? '',
-          weight: (p.displayWeight as string) ?? '',
-          age: (p.age as number) ?? 0,
-          experience: ((p.experience as { years?: number }) ?? {}).years ?? 0,
-          college:
-            ((p.college as { shortName?: string }) ?? {}).shortName ?? '',
-          headshotUrl: ((p.headshot as { href?: string }) ?? {}).href ?? '',
-        };
-      });
+    // IR / injured / suspended — sort into positional groups by their position
+    if (
+      group.position === 'injuredReserveOrOut' ||
+      group.position === 'suspended'
+    ) {
+      const statusLabel = group.position === 'suspended' ? 'Suspended' : 'IR';
+      for (const p of group.items ?? []) {
+        const player = mapPlayer(p, statusLabel);
+        if (SPECIAL_TEAMS_POSITIONS.has(player.position)) {
+          result.specialTeams.push(player);
+        } else if (OFFENSE_POSITIONS.has(player.position)) {
+          result.offense.push(player);
+        } else {
+          result.defense.push(player);
+        }
+      }
+    }
   }
 
   return result;
@@ -249,10 +288,46 @@ export async function getCachedSchedule(
   }
 }
 
+// ---- Aggregated roster cache (all 32 teams for search / browse) ----
+
+export interface RosterPlayerWithTeam extends RosterPlayer {
+  teamAbbreviation: string;
+  teamName: string;
+}
+
+let allRostersCache: CacheEntry<RosterPlayerWithTeam[]> | null = null;
+
+/** Returns all active NFL players across all 32 teams. Cached for 6 hours. */
+export async function getCachedAllRosters(): Promise<RosterPlayerWithTeam[]> {
+  if (allRostersCache && !isExpired(allRostersCache))
+    return allRostersCache.data;
+
+  const teamAbbreviations = Object.keys(ESPN_TEAM_IDS);
+  const rosters = await Promise.all(
+    teamAbbreviations.map(async (abbr) => {
+      const roster = await getCachedRoster(abbr);
+      if (!roster) return [];
+      const teamInfo = teams.find((t) => t.id === abbr);
+      const teamName = teamInfo?.name ?? abbr;
+      const all = [
+        ...roster.offense,
+        ...roster.defense,
+        ...roster.specialTeams,
+      ];
+      return all.map((p) => ({ ...p, teamAbbreviation: abbr, teamName }));
+    }),
+  );
+
+  const flat = rosters.flat();
+  allRostersCache = { data: flat, expiresAt: Date.now() + ROSTER_TTL };
+  return flat;
+}
+
 // ---- Bulk reset ----
 
 /** Invalidate all external API caches. */
 export function resetExternalCaches() {
   rosterCache.clear();
   scheduleCache.clear();
+  allRostersCache = null;
 }

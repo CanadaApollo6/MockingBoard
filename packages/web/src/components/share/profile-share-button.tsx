@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { toPng, toBlob } from 'html-to-image';
-import type { User } from '@mockingboard/shared';
+import type { User, Position } from '@mockingboard/shared';
 import { Button } from '@/components/ui/button';
 import { ProfileShareCard } from './profile-share-card';
 import { X, Download, Copy, Check, Share2 } from 'lucide-react';
@@ -12,12 +12,14 @@ interface ProfileShareButtonProps {
   user: User;
   boardCount: number;
   reportCount: number;
+  topPositions?: Position[];
 }
 
 export function ProfileShareButton({
   user,
   boardCount,
   reportCount,
+  topPositions,
 }: ProfileShareButtonProps) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -122,6 +124,7 @@ export function ProfileShareButton({
                   user={user}
                   boardCount={boardCount}
                   reportCount={reportCount}
+                  topPositions={topPositions}
                 />
               </div>
             </div>

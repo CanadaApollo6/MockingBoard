@@ -1,6 +1,5 @@
 import type { Coach } from '@mockingboard/shared';
 import { ChevronRight } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import {
   Collapsible,
   CollapsibleTrigger,
@@ -12,7 +11,7 @@ interface CoachingStaffProps {
   teamColors: { primary: string; secondary: string };
 }
 
-type StaffGroup = 'offense' | 'defense' | 'special';
+type StaffGroup = 'offense' | 'defense' | 'special' | 'strength';
 
 const OFFENSE_KEYWORDS = [
   'offensive',
@@ -37,9 +36,17 @@ const DEFENSE_KEYWORDS = [
   'edge',
 ];
 const SPECIAL_KEYWORDS = ['special teams', 'kicking', 'punting'];
+const STRENGTH_KEYWORDS = [
+  'strength',
+  'conditioning',
+  'player performance',
+  'sports science',
+  'performance',
+];
 
 function classifyCoach(role: string): StaffGroup {
   const lower = role.toLowerCase();
+  if (STRENGTH_KEYWORDS.some((k) => lower.includes(k))) return 'strength';
   if (SPECIAL_KEYWORDS.some((k) => lower.includes(k))) return 'special';
   if (DEFENSE_KEYWORDS.some((k) => lower.includes(k))) return 'defense';
   if (OFFENSE_KEYWORDS.some((k) => lower.includes(k))) return 'offense';
@@ -50,6 +57,7 @@ const GROUP_LABELS: Record<StaffGroup, string> = {
   offense: 'Offense',
   defense: 'Defense',
   special: 'Special Teams',
+  strength: 'Strength & Conditioning',
 };
 
 export function CoachingStaff({ coaches, teamColors }: CoachingStaffProps) {
@@ -70,12 +78,18 @@ export function CoachingStaff({ coaches, teamColors }: CoachingStaffProps) {
     offense: [],
     defense: [],
     special: [],
+    strength: [],
   };
   for (const coach of staff) {
     groups[classifyCoach(coach.role)].push(coach);
   }
 
-  const groupOrder: StaffGroup[] = ['offense', 'defense', 'special'];
+  const groupOrder: StaffGroup[] = [
+    'offense',
+    'defense',
+    'special',
+    'strength',
+  ];
 
   return (
     <div className="space-y-6">
@@ -90,15 +104,7 @@ export function CoachingStaff({ coaches, teamColors }: CoachingStaffProps) {
           <p className="font-[family-name:var(--font-display)] text-2xl font-bold uppercase tracking-tight text-white">
             {headCoach.name}
           </p>
-          <div className="mt-1.5 flex items-center gap-2">
-            <span className="text-sm text-white/80">{headCoach.role}</span>
-            <Badge
-              variant="outline"
-              className="border-white/30 text-xs text-white/80"
-            >
-              Since {headCoach.since}
-            </Badge>
-          </div>
+          <p className="mt-1.5 text-sm text-white/80">{headCoach.role}</p>
         </div>
       )}
 
@@ -118,9 +124,9 @@ export function CoachingStaff({ coaches, teamColors }: CoachingStaffProps) {
               </span>
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-1 space-y-1 [animation-duration:400ms] data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
-              {members.map((coach) => (
+              {members.map((coach, i) => (
                 <div
-                  key={coach.name}
+                  key={`${coach.name}-${coach.role}-${i}`}
                   className="flex items-center justify-between rounded-md px-3 py-2.5 transition-colors hover:bg-muted/50"
                 >
                   <div>
@@ -129,9 +135,6 @@ export function CoachingStaff({ coaches, teamColors }: CoachingStaffProps) {
                       {coach.role}
                     </p>
                   </div>
-                  <Badge variant="outline" className="text-xs">
-                    Since {coach.since}
-                  </Badge>
                 </div>
               ))}
             </CollapsibleContent>

@@ -17,6 +17,8 @@ import type {
   User,
   VideoBreakdown,
   DraftResultPick,
+  Position,
+  TeamAbbreviation,
 } from '@mockingboard/shared';
 
 export async function getDrafts(options?: {
@@ -566,6 +568,92 @@ export async function getUserDraftScores(
         d.scoredAt instanceof Timestamp ? d.scoredAt.toDate() : d.scoredAt,
     };
   });
+}
+
+// ---- Drafting Identity ----
+
+export interface DraftingIdentity {
+  topPositions: { position: Position; count: number }[];
+  favoriteTeam: TeamAbbreviation | null;
+  totalDrafts: number;
+  totalPicks: number;
+}
+
+export async function getUserDraftingIdentity(
+  userId: string,
+  discordId?: string,
+): Promise<DraftingIdentity | null> {
+  const ids = [userId, ...(discordId ? [discordId] : [])];
+
+  const draftsSnap = await adminDb
+    .collection('drafts')
+    .where('participantIds', 'array-contains-any', ids)
+    .where('status', '==', 'complete')
+    .select()
+    .get();
+
+  if (draftsSnap.empty) return null;
+
+  const positionCounts = new Map<Position, number>();
+  const teamCounts = new Map<TeamAbbreviation, number>();
+  let totalPicks = 0;
+
+  await Promise.all(
+    draftsSnap.docs.map(async (draftDoc) => {
+      const picksSnap = await draftDoc.ref
+        .collection('picks')
+        .where('userId', '==', userId)
+        .get();
+
+      for (const pickDoc of picksSnap.docs) {
+        const pick = pickDoc.data() as Pick;
+        totalPicks++;
+
+        if (pick.team) {
+          teamCounts.set(pick.team, (teamCounts.get(pick.team) ?? 0) + 1);
+        }
+      }
+
+      // Batch-resolve positions from player cache
+      const playerIds = picksSnap.docs.map((d) => (d.data() as Pick).playerId);
+      if (playerIds.length === 0) return;
+
+      // Use the first available year's player map (picks span multiple years but positions are stable)
+      const playerMap = await getCachedPlayerMap(2026);
+      for (const pid of playerIds) {
+        const player = playerMap.get(pid);
+        if (player) {
+          positionCounts.set(
+            player.position,
+            (positionCounts.get(player.position) ?? 0) + 1,
+          );
+        }
+      }
+    }),
+  );
+
+  if (totalPicks === 0) return null;
+
+  const topPositions = [...positionCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([position, count]) => ({ position, count }));
+
+  let favoriteTeam: TeamAbbreviation | null = null;
+  let maxTeamCount = 0;
+  for (const [team, count] of teamCounts) {
+    if (count > maxTeamCount) {
+      maxTeamCount = count;
+      favoriteTeam = team;
+    }
+  }
+
+  return {
+    topPositions,
+    favoriteTeam,
+    totalDrafts: draftsSnap.size,
+    totalPicks,
+  };
 }
 
 // ---- Video Breakdowns ----

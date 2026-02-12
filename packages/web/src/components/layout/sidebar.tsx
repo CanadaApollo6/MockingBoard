@@ -22,6 +22,7 @@ import {
   LogOut,
   LogIn,
   Shirt,
+  Contact,
   BarChart3,
   Trophy,
   Crosshair,
@@ -49,7 +50,7 @@ const NAV_GROUPS = [
   {
     label: 'Scouting',
     items: [
-      { href: '/players', label: 'Players', icon: Shirt },
+      { href: '/prospects', label: 'Prospects', icon: Shirt },
       { href: '/board', label: 'My Board', icon: LayoutList },
       { href: '/rankings', label: 'Rankings', icon: BarChart3 },
       { href: '/boards', label: 'Boards', icon: Library },
@@ -68,6 +69,7 @@ const NAV_GROUPS = [
     items: [
       { href: '/draft-order', label: 'Draft Order', icon: ListOrdered },
       { href: '/teams', label: 'Teams', icon: GalleryHorizontalEnd },
+      { href: '/players', label: 'NFL Players', icon: Contact },
       {
         href: '/trade-calculator',
         label: 'Trade Calculator',

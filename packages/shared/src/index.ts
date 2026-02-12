@@ -52,6 +52,11 @@ export type {
   BoardGenerationConfig,
   NotificationType,
   AppNotification,
+  PlayerContract,
+  FreeAgentEntry,
+  DeadCapEntry,
+  TeamContractData,
+  LeagueCapOverview,
 } from './types';
 
 // Constants & Guards
