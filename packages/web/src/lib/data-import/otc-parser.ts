@@ -6,7 +6,7 @@ import type {
   LeagueCapOverview,
   TeamAbbreviation,
 } from '@mockingboard/shared';
-import { OTC_NAME_TO_ABBR } from './otc-slugs.js';
+import { OTC_NAME_TO_ABBR } from './otc-slugs';
 
 /** Strip $, commas, parentheses and parse to integer cents-free dollars. */
 function parseDollar(text: string): number {

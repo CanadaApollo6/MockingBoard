@@ -1,4 +1,4 @@
-import { parseFreeAgents } from './otc-parser.js';
+import { parseFreeAgents } from './otc-parser';
 
 const url = 'https://overthecap.com/calculator/atlanta-falcons';
 const res = await fetch(url, {
