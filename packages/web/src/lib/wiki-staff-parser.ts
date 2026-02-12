@@ -123,8 +123,9 @@ export function parseWikiStaff(html: string): {
 }
 
 function parseLiEntry(
-  $: cheerio.CheerioAPI,
-  li: cheerio.Element,
+  $: ReturnType<typeof cheerio.load>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  li: any,
   isFrontOffice: boolean,
   coachingStaff: Coach[],
   frontOffice: FrontOfficeStaff[],
