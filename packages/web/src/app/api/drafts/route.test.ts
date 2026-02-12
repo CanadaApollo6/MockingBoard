@@ -35,7 +35,7 @@ vi.mock('@/lib/draft-actions', () => ({
   buildFuturePicks: (...args: unknown[]) => mockBuildFuturePicks(...args),
   createWebDraft: (...args: unknown[]) => mockCreateWebDraft(...args),
 }));
-vi.mock('@/lib/user-resolve', () => ({
+vi.mock('@/lib/firebase/user-resolve', () => ({
   resolveUser: (...args: unknown[]) => mockResolveUser(...args),
 }));
 vi.mock('@/lib/firebase/firebase-admin', () => ({

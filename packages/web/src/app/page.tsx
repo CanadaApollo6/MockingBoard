@@ -1,5 +1,5 @@
 import { getSessionUser } from '@/lib/firebase/auth-session';
-import { resolveUser } from '@/lib/user-resolve';
+import { resolveUser } from '@/lib/firebase/user-resolve';
 import {
   getPlayerMap,
   getRecentCompletedDraft,

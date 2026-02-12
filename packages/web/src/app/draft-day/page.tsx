@@ -5,7 +5,7 @@ import {
   getPlayerMap,
 } from '@/lib/firebase/data';
 import { getSessionUser } from '@/lib/firebase/auth-session';
-import { resolveUser } from '@/lib/user-resolve';
+import { resolveUser } from '@/lib/firebase/user-resolve';
 import { getCachedSeasonConfig } from '@/lib/cache';
 import { hydrateDoc } from '@/lib/firebase/sanitize';
 import { scoreMockPick, aggregateDraftScore } from '@/lib/scoring';

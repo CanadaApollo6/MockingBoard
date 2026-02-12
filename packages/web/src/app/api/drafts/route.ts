@@ -6,7 +6,7 @@ import {
   createWebDraft,
 } from '@/lib/draft-actions';
 import { rateLimit } from '@/lib/rate-limit';
-import { resolveUser } from '@/lib/user-resolve';
+import { resolveUser } from '@/lib/firebase/user-resolve';
 import { adminDb } from '@/lib/firebase/firebase-admin';
 import { sendDraftStarted } from '@/lib/discord-webhook';
 import { teams } from '@mockingboard/shared';

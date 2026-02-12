@@ -12,7 +12,7 @@ import {
 } from '@/lib/firebase/data';
 import { getCachedTeamDocs } from '@/lib/cache';
 import { getSessionUser } from '@/lib/firebase/auth-session';
-import { resolveUser, isUserInDraft } from '@/lib/user-resolve';
+import { resolveUser, isUserInDraft } from '@/lib/firebase/user-resolve';
 import { scoreMockPick, aggregateDraftScore } from '@/lib/scoring';
 import { formatDraftDate, getDraftDisplayName } from '@/lib/firebase/format';
 import { TradeSummary } from '@/components/trade/trade-summary';

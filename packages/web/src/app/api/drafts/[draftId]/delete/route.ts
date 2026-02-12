@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getSessionUser } from '@/lib/firebase/auth-session';
 import { getDraftOrFail } from '@/lib/firebase/data';
 import { adminDb } from '@/lib/firebase/firebase-admin';
-import { assertDraftCreator } from '@/lib/user-resolve';
+import { assertDraftCreator } from '@/lib/firebase/user-resolve';
 import { AppError } from '@/lib/validate';
 
 export async function POST(
