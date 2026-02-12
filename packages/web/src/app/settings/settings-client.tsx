@@ -10,8 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { TEAM_COLORS, hexToHsl } from '@/lib/team-colors';
-import { SCHOOL_COLORS } from '@/lib/school-colors';
+import { TEAM_COLORS, hexToHsl } from '@/lib/colors/team-colors';
+import { SCHOOL_COLORS } from '@/lib/colors/school-colors';
 import { cn } from '@/lib/utils';
 import { getErrorMessage } from '@/lib/validate';
 

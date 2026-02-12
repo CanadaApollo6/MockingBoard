@@ -1,6 +1,10 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getPlayerMap, getPlayerReports, getPlayerVideos } from '@/lib/data';
+import {
+  getPlayerMap,
+  getPlayerReports,
+  getPlayerVideos,
+} from '@/lib/firebase/data';
 import { PlayerHero } from '@/components/player/player-hero';
 import { PlayerJsonLd } from './json-ld';
 import { ProspectDetails } from '@/components/player/prospect-details';

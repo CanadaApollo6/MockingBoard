@@ -1,7 +1,7 @@
 import type { Pick, Player, TeamAbbreviation } from '@mockingboard/shared';
 import { getTeamName } from '@/lib/teams';
-import { buildRowColors } from '@/lib/team-colors';
-import { getPositionColor } from '@/lib/position-colors';
+import { buildRowColors } from '@/lib/colors/team-colors';
+import { getPositionColor } from '@/lib/colors/position-colors';
 
 interface DraftShareCardProps {
   draftName: string;

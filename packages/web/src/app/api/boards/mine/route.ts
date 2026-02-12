@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getSessionUser } from '@/lib/auth-session';
-import { getUserBoardForYear } from '@/lib/data';
+import { getSessionUser } from '@/lib/firebase/auth-session';
+import { getUserBoardForYear } from '@/lib/firebase/data';
 
 export async function GET(request: Request) {
   const session = await getSessionUser();

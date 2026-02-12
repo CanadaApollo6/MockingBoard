@@ -12,7 +12,7 @@ import { DraftBoard } from '@/components/draft/draft-board';
 import { DraftClock } from '@/components/draft/draft-clock';
 import { BareLayout } from '@/components/layout/bare-layout';
 import { Badge } from '@/components/ui/badge';
-import { timestampToDate } from '@/lib/format';
+import { timestampToDate } from '@/lib/firebase/format';
 
 function useClockRemaining(draft: Draft | null): number | null {
   const [remaining, setRemaining] = useState<number | null>(null);

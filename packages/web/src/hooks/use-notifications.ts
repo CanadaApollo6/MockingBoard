@@ -9,7 +9,7 @@ import {
   query,
   limit,
 } from 'firebase/firestore';
-import { getClientDb } from '@/lib/firebase';
+import { getClientDb } from '@/lib/firebase/firebase';
 import { useAuth } from '@/components/auth/auth-provider';
 import type { AppNotification } from '@mockingboard/shared';
 

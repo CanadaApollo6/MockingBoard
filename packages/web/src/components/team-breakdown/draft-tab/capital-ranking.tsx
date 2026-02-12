@@ -2,7 +2,7 @@ import { Card, CardContent, CardTitle, CardHeader } from '@/components/ui/card';
 import Link from 'next/link';
 import { TeamSeed } from '../../../../../shared/src/data';
 import { TeamCapitalRank } from '../team-breakdown';
-import { TEAM_COLORS } from '@/lib/team-colors';
+import { TEAM_COLORS } from '@/lib/colors/team-colors';
 
 interface CapitalRankingProps {
   capitalRanking: TeamCapitalRank[];

@@ -1,9 +1,9 @@
 import { redirect } from 'next/navigation';
 import { buildPickOrder, buildFuturePicks } from '@/lib/draft-actions';
-import { getPlayerMap } from '@/lib/data';
+import { getPlayerMap } from '@/lib/firebase/data';
 import { LocalDraftRoom } from '@/components/draft/local-draft-room';
 import { teams, generateDraftName } from '@mockingboard/shared';
-import { getDraftDisplayName } from '@/lib/format';
+import { getDraftDisplayName } from '@/lib/firebase/format';
 import type {
   TeamAbbreviation,
   DraftFormat,

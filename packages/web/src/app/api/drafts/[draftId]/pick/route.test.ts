@@ -20,7 +20,7 @@ const {
 }));
 
 vi.mock('server-only', () => ({}));
-vi.mock('@/lib/auth-session', () => ({
+vi.mock('@/lib/firebase/auth-session', () => ({
   getSessionUser: () => mockGetSessionUser(),
 }));
 vi.mock('@/lib/rate-limit', () => ({
@@ -30,10 +30,10 @@ vi.mock('@/lib/draft-actions', () => ({
   recordPick: (...args: unknown[]) => mockRecordPick(...args),
   runCpuCascade: (...args: unknown[]) => mockRunCpuCascade(...args),
 }));
-vi.mock('@/lib/data', () => ({
+vi.mock('@/lib/firebase/data', () => ({
   getDraftOrFail: (...args: unknown[]) => mockGetDraftOrFail(...args),
 }));
-vi.mock('@/lib/firebase-admin', () => ({
+vi.mock('@/lib/firebase/firebase-admin', () => ({
   adminDb: { collection: mockCollection },
 }));
 vi.mock('@/lib/cache', () => ({
@@ -44,7 +44,7 @@ vi.mock('@/lib/discord-webhook', () => ({
   sendPickAnnouncement: vi.fn(),
   sendDraftComplete: vi.fn(),
 }));
-vi.mock('@/lib/sanitize', () => ({
+vi.mock('@/lib/firebase/sanitize', () => ({
   hydrateDoc: (doc: { id: string; data: () => Record<string, unknown> }) => ({
     id: doc.id,
     ...doc.data(),

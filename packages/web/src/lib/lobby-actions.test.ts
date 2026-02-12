@@ -31,7 +31,7 @@ vi.mock('firebase-admin/firestore', () => ({
     delete: () => 'FIELD_DELETE',
   },
 }));
-vi.mock('./firebase-admin', () => ({
+vi.mock('./firebase/firebase-admin', () => ({
   adminDb: { collection: mockCollection },
 }));
 vi.mock('./draft-actions', () => ({

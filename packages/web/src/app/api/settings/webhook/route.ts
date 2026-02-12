@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebase-admin';
-import { getSessionUser } from '@/lib/auth-session';
+import { adminDb } from '@/lib/firebase/firebase-admin';
+import { getSessionUser } from '@/lib/firebase/auth-session';
 import { DISCORD_WEBHOOK_RE } from '@/lib/discord-webhook';
 
 export async function PUT(request: Request) {

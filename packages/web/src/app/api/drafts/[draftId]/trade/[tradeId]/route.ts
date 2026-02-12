@@ -1,14 +1,14 @@
 import { NextResponse } from 'next/server';
-import { getSessionUser } from '@/lib/auth-session';
+import { getSessionUser } from '@/lib/firebase/auth-session';
 import {
   executeWebTrade,
   cancelWebTrade,
   rejectWebTrade,
   isTradeExpired,
 } from '@/lib/draft-actions';
-import { adminDb } from '@/lib/firebase-admin';
+import { adminDb } from '@/lib/firebase/firebase-admin';
 import { notifyTradeAccepted } from '@/lib/notifications';
-import { hydrateDoc } from '@/lib/sanitize';
+import { hydrateDoc } from '@/lib/firebase/sanitize';
 import { safeError } from '@/lib/validate';
 import type { Trade } from '@mockingboard/shared';
 

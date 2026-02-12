@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getSessionUser } from '@/lib/auth-session';
-import { adminDb } from '@/lib/firebase-admin';
+import { getSessionUser } from '@/lib/firebase/auth-session';
+import { adminDb } from '@/lib/firebase/firebase-admin';
 
 export async function DELETE(
   _request: Request,

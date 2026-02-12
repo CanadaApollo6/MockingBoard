@@ -2,7 +2,7 @@
 
 import type { Player } from '@mockingboard/shared';
 import { Badge } from '@/components/ui/badge';
-import { getPositionColor } from '@/lib/position-colors';
+import { getPositionColor } from '@/lib/colors/position-colors';
 import { BareLayout } from '@/components/layout/bare-layout';
 
 interface EmbeddableBoardViewProps {

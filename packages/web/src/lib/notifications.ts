@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { FieldValue } from 'firebase-admin/firestore';
-import { adminDb } from './firebase-admin';
+import { adminDb } from './firebase/firebase-admin';
 import { DISCORD_WEBHOOK_RE } from './discord-webhook';
 import type { NotificationType } from '@mockingboard/shared';
 

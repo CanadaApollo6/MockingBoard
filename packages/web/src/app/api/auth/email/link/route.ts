@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { adminAuth, adminDb } from '@/lib/firebase-admin';
-import { getSessionUser } from '@/lib/auth-session';
+import { adminAuth, adminDb } from '@/lib/firebase/firebase-admin';
+import { getSessionUser } from '@/lib/firebase/auth-session';
 import { rateLimit, getClientIp } from '@/lib/rate-limit';
 import { safeError } from '@/lib/validate';
 

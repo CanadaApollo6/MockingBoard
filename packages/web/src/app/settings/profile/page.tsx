@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { getSessionUser } from '@/lib/auth-session';
+import { getSessionUser } from '@/lib/firebase/auth-session';
 import { ProfilePageClient } from './profile-page-client';
 
 export default async function ProfileSettingsPage() {

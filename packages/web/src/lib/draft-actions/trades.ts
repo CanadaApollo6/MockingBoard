@@ -1,9 +1,9 @@
 import 'server-only';
 
 import { FieldValue } from 'firebase-admin/firestore';
-import { adminDb } from '../firebase-admin';
-import { hydrateDoc } from '../sanitize';
-import { extractTimestampMs } from '../format';
+import { adminDb } from '../firebase/firebase-admin';
+import { hydrateDoc } from '../firebase/sanitize';
+import { extractTimestampMs } from '../firebase/format';
 import type {
   Draft,
   Trade,

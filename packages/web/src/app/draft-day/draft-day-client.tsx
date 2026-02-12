@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { doc, onSnapshot, Timestamp } from 'firebase/firestore';
-import { getClientDb } from '@/lib/firebase';
+import { getClientDb } from '@/lib/firebase/firebase';
 import { Check, Minus, Clock } from 'lucide-react';
 import type { DraftResultPick } from '@mockingboard/shared';
 import type { PickScore } from '@/lib/scoring';

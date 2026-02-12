@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getSessionUser } from '@/lib/auth-session';
-import { resolveUser } from '@/lib/user-resolve';
+import { getSessionUser } from '@/lib/firebase/auth-session';
+import { resolveUser } from '@/lib/firebase/user-resolve';
 import { joinLobby } from '@/lib/lobby-actions';
 import { safeError, AppError } from '@/lib/validate';
 import type { TeamAbbreviation } from '@mockingboard/shared';

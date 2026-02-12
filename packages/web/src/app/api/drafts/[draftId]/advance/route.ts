@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { getSessionUser } from '@/lib/auth-session';
+import { getSessionUser } from '@/lib/firebase/auth-session';
 import { runCpuCascade, advanceSingleCpuPick } from '@/lib/draft-actions';
-import { getDraftOrFail } from '@/lib/data';
+import { getDraftOrFail } from '@/lib/firebase/data';
 import { AppError } from '@/lib/validate';
 
 export async function POST(

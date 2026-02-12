@@ -38,7 +38,7 @@ import {
 import { DraftGuideButton } from '@/components/draft-guide/draft-guide-button';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { getPositionColor } from '@/lib/position-colors';
+import { getPositionColor } from '@/lib/colors/position-colors';
 import { BoardGeneratorDialog } from '@/components/board/board-generator-dialog';
 import { Sparkles } from 'lucide-react';
 

@@ -9,7 +9,7 @@ import {
   TableHeader,
 } from '../../ui/table';
 import { Badge } from '../../ui/badge';
-import { getPositionColor } from '@/lib/position-colors';
+import { getPositionColor } from '@/lib/colors/position-colors';
 import type { TeamRoster, RosterPlayer } from '@/lib/cache';
 
 const COL_COUNT = 9;

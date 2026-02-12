@@ -9,8 +9,8 @@ import {
   CollapsibleTrigger,
   CollapsibleContent,
 } from '@/components/ui/collapsible';
-import { getPositionColor } from '@/lib/position-colors';
-import { fmtDollar } from '@/lib/format';
+import { getPositionColor } from '@/lib/colors/position-colors';
+import { fmtDollar } from '@/lib/firebase/format';
 
 interface ContractCardProps {
   contract: PlayerContract;

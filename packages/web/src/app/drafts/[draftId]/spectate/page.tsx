@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { getDraft, getDraftPicks, getPlayerMap } from '@/lib/data';
+import { getDraft, getDraftPicks, getPlayerMap } from '@/lib/firebase/data';
 import { SpectatorView } from '@/components/draft/spectator-view';
 
 export default async function SpectatePage({

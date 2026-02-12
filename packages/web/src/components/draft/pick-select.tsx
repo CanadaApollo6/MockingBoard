@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import type { TeamAbbreviation } from '@mockingboard/shared';
-import { TEAM_COLORS } from '@/lib/team-colors';
+import { TEAM_COLORS } from '@/lib/colors/team-colors';
 import { getTeamName } from '@/lib/teams';
 import { ChevronDown } from 'lucide-react';
 import { useClickOutside } from '@/hooks/use-click-outside';

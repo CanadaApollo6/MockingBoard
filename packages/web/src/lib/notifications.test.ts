@@ -13,7 +13,7 @@ const { mockAdd, mockGet, mockDoc, mockCollection, mockFetch } = vi.hoisted(
 );
 
 vi.mock('server-only', () => ({}));
-vi.mock('./firebase-admin', () => ({
+vi.mock('./firebase/firebase-admin', () => ({
   adminDb: { collection: mockCollection },
 }));
 vi.mock('firebase-admin/firestore', () => ({

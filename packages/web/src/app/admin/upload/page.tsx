@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
-import { getSessionUser } from '@/lib/auth-session';
-import { isAdmin } from '@/lib/admin';
-import { getScoutProfiles } from '@/lib/data';
+import { getSessionUser } from '@/lib/firebase/auth-session';
+import { isAdmin } from '@/lib/firebase/admin';
+import { getScoutProfiles } from '@/lib/firebase/data';
 import { CsvUploadPage } from './csv-upload-page';
 
 export default async function AdminUploadPage() {

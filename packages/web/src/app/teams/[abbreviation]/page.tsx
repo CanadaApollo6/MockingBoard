@@ -10,8 +10,8 @@ import {
   getCachedSeasonConfig,
   getCachedTeamContracts,
 } from '@/lib/cache';
-import { TEAM_COLORS } from '@/lib/team-colors';
-import { normalizePlayerName } from '@/lib/format';
+import { TEAM_COLORS } from '@/lib/colors/team-colors';
+import { normalizePlayerName } from '@/lib/firebase/format';
 import {
   TeamBreakdown,
   type OwnedPick,

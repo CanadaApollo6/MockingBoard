@@ -1,8 +1,8 @@
 'use server';
 
-import { getSessionUser } from '@/lib/auth-session';
-import { resolveUser } from '@/lib/user-resolve';
-import { getUserDraftsPaginated } from '@/lib/data';
+import { getSessionUser } from '@/lib/firebase/auth-session';
+import { resolveUser } from '@/lib/firebase/user-resolve';
+import { getUserDraftsPaginated } from '@/lib/firebase/data';
 import type { Draft } from '@mockingboard/shared';
 
 const PAGE_SIZE = 20;

@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import type { Player } from '@mockingboard/shared';
 import { Badge } from '@/components/ui/badge';
-import { getPositionColor } from '@/lib/position-colors';
+import { getPositionColor } from '@/lib/colors/position-colors';
 
 interface BoardCompareViewProps {
   currentRankings: string[];

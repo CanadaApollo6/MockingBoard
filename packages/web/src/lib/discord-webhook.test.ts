@@ -10,13 +10,13 @@ const { mockGet, mockDoc, mockCollection, mockFetch } = vi.hoisted(() => {
 });
 
 vi.mock('server-only', () => ({}));
-vi.mock('./firebase-admin', () => ({
+vi.mock('./firebase/firebase-admin', () => ({
   adminDb: { collection: mockCollection },
 }));
 vi.mock('./teams', () => ({
   getTeamName: (abbr: string) => `${abbr} Team`,
 }));
-vi.mock('./team-colors', () => ({
+vi.mock('./colors/team-colors', () => ({
   getTeamColor: () => ({ primary: '#003594', secondary: '#041E42' }),
 }));
 vi.stubGlobal('fetch', mockFetch);

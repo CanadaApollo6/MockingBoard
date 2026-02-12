@@ -1,5 +1,9 @@
 import Link from 'next/link';
-import { getBigBoard, getBoardSnapshot, getPlayerMap } from '@/lib/data';
+import {
+  getBigBoard,
+  getBoardSnapshot,
+  getPlayerMap,
+} from '@/lib/firebase/data';
 import { BoardCompareView } from './board-compare-view';
 
 interface ComparePageProps {

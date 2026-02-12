@@ -1,5 +1,5 @@
-import { getLeaderboard, getYearLeaderboard } from '@/lib/data';
-import type { LeaderboardEntry } from '@/lib/data';
+import { getLeaderboard, getYearLeaderboard } from '@/lib/firebase/data';
+import type { LeaderboardEntry } from '@/lib/firebase/data';
 import { getCachedSeasonConfig } from '@/lib/cache';
 import { LeaderboardPageClient } from './leaderboard-page-client';
 

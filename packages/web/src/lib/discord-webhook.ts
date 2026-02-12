@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { adminDb } from './firebase-admin';
+import { adminDb } from './firebase/firebase-admin';
 import type {
   Draft,
   Pick,
@@ -9,7 +9,7 @@ import type {
   TeamAbbreviation,
 } from '@mockingboard/shared';
 import { getTeamName } from './teams';
-import { getTeamColor } from './team-colors';
+import { getTeamColor } from './colors/team-colors';
 
 const MB_BLUE = 0x3b82f6;
 

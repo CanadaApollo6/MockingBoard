@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { getDraft, getDraftPicks, getPlayerMap } from '@/lib/data';
+import { getDraft, getDraftPicks, getPlayerMap } from '@/lib/firebase/data';
 import { TickerOverlay } from '@/components/overlays/ticker-overlay';
 
 export default async function TickerPage({

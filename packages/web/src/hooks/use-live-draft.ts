@@ -8,7 +8,7 @@ import {
   orderBy,
   query,
 } from 'firebase/firestore';
-import { getClientDb } from '@/lib/firebase';
+import { getClientDb } from '@/lib/firebase/firebase';
 import type { Draft, Pick } from '@mockingboard/shared';
 
 interface LiveDraftState {

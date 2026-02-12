@@ -35,19 +35,19 @@ vi.mock('firebase-admin/firestore', () => ({
     serverTimestamp: () => 'SERVER_TIMESTAMP',
   },
 }));
-vi.mock('../firebase-admin', () => ({
+vi.mock('../firebase/firebase-admin', () => ({
   adminDb: {
     collection: mockCollection,
     runTransaction: mockRunTransaction,
   },
 }));
-vi.mock('../sanitize', () => ({
+vi.mock('../firebase/sanitize', () => ({
   hydrateDoc: (doc: { id: string; data: () => Record<string, unknown> }) => ({
     id: doc.id,
     ...doc.data(),
   }),
 }));
-vi.mock('../format', () => ({
+vi.mock('../firebase/format', () => ({
   extractTimestampMs: (...args: unknown[]) => mockExtractTimestampMs(...args),
 }));
 

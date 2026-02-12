@@ -1,6 +1,6 @@
 import { Card, CardHeader, CardTitle, CardContent } from '../../ui/card';
 import { Badge } from '../../ui/badge';
-import { getPositionColor } from '@/lib/position-colors';
+import { getPositionColor } from '@/lib/colors/position-colors';
 import { OwnedDraftPicks } from './owned-draft-picks';
 import { FuturePicks } from './future-picks';
 import { getTeamName } from '@/lib/teams';

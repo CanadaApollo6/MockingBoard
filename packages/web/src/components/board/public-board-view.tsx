@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import type { Player, Position } from '@mockingboard/shared';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { getPositionColor } from '@/lib/position-colors';
+import { getPositionColor } from '@/lib/colors/position-colors';
 import { ProspectCard } from '@/components/player/prospect-card';
 import { ProspectRow } from '@/components/player/prospect-row';
 

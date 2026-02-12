@@ -6,7 +6,7 @@ import type { Player, Position } from '@mockingboard/shared';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { PlayerCard } from '@/components/player/player-card';
-import { getPositionColor } from '@/lib/position-colors';
+import { getPositionColor } from '@/lib/colors/position-colors';
 import { cn } from '@/lib/utils';
 
 interface PlayerPickerProps {

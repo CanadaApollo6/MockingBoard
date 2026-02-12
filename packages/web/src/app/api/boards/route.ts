@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { FieldValue } from 'firebase-admin/firestore';
-import { getSessionUser } from '@/lib/auth-session';
-import { adminDb } from '@/lib/firebase-admin';
-import { getUserBoards } from '@/lib/data';
+import { getSessionUser } from '@/lib/firebase/auth-session';
+import { adminDb } from '@/lib/firebase/firebase-admin';
+import { getUserBoards } from '@/lib/firebase/data';
 import { notifyNewBoard } from '@/lib/notifications';
 import { generateDraftName } from '@mockingboard/shared';
 

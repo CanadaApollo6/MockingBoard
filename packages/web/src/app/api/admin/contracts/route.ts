@@ -1,18 +1,18 @@
 import { NextResponse } from 'next/server';
 import { FieldValue } from 'firebase-admin/firestore';
 import { revalidatePath } from 'next/cache';
-import { getSessionUser } from '@/lib/auth-session';
-import { adminDb } from '@/lib/firebase-admin';
-import { isAdmin } from '@/lib/admin';
+import { getSessionUser } from '@/lib/firebase/auth-session';
+import { adminDb } from '@/lib/firebase/firebase-admin';
+import { isAdmin } from '@/lib/firebase/admin';
 import { resetContractsCache } from '@/lib/cache';
 import type { TeamAbbreviation, TeamContractData } from '@mockingboard/shared';
-import { OTC_TEAM_SLUGS } from '@/lib/otc-slugs';
+import { OTC_TEAM_SLUGS } from '@/lib/data-import/otc-slugs';
 import {
   parseRosterContracts,
   parseDeadCap,
   parseFreeAgents,
   parseLeagueCapSpace,
-} from '@/lib/otc-parser';
+} from '@/lib/data-import/otc-parser';
 
 /** Official NFLPA unadjusted salary cap — same for all 32 teams. */
 const SALARY_CAP_2025 = 279_200_000;

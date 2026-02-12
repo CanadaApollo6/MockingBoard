@@ -11,7 +11,7 @@ import type {
   DraftRecap,
 } from '@mockingboard/shared';
 import { getTeamName } from '@/lib/teams';
-import { formatDraftDate, getDraftDisplayName } from '@/lib/format';
+import { formatDraftDate, getDraftDisplayName } from '@/lib/firebase/format';
 import { Button } from '@/components/ui/button';
 import { DraftShareCard } from './draft-share-card';
 import { MyTeamShareCard } from './my-team-share-card';

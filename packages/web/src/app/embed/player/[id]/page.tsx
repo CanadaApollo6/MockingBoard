@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { getPlayerMap } from '@/lib/data';
+import { getPlayerMap } from '@/lib/firebase/data';
 import { getCachedSeasonConfig } from '@/lib/cache';
 import { EmbeddablePlayerCard } from '@/components/embeds/embeddable-player-card';
 

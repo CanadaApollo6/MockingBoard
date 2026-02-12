@@ -4,7 +4,7 @@ import {
   schoolColorStyle,
   SCHOOL_COLORS,
   DEFAULT_SCHOOL_COLOR,
-} from './school-colors';
+} from './school-colors.js';
 
 describe('school-colors', () => {
   it('has entries for FBS and FCS schools', () => {
