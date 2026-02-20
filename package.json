@@ -20,16 +20,19 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "build": "npm run build --workspaces --if-present",
-    "verify": "npm run lint && npm run test && npm run format:check && npm run test:e2e",
+    "verify": "npm run lint && npm run test && npm run test:e2e && npm run format:check",
     "clean_artifacts": "rm -rf packages/**/dist packages/**/node_modules",
     "clean_code": "eslint . --fix && prettier --write .",
     "clean_install": "npm run clean_artifacts && npm install",
     "register_commands": "npm run deploy-commands -w packages/bot",
     "seed:prospects": "npm run seed:prospects -w packages/bot",
-    "seed:scouts": "npm run seed:scouts -w packages/bot"
+    "seed:scouts": "npm run seed:scouts -w packages/bot",
+    "lighthouse": "lhci autorun",
+    "analyze": "ANALYZE=true npm run build -w packages/web"
   },
   "devDependencies": {
     "@eslint/js": "^9.18.0",
+    "@lhci/cli": "^0.15.1",
     "@playwright/test": "^1.58.2",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.0",
