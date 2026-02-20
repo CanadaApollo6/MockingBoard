@@ -45,12 +45,6 @@ const KEY_STATS: Record<string, string[]> = {
     'puntReturnYards',
     'puntReturnTouchdowns',
   ],
-  scoring: [
-    'totalTouchdowns',
-    'totalPoints',
-    'rushingTouchdowns',
-    'receivingTouchdowns',
-  ],
 };
 
 /** Parse a stat string to a number. Strips commas, %, handles "--" and empty. */

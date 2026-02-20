@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { getPositionColor } from '@/lib/colors/position-colors';
+import { getPositionsInGroup } from '@/lib/position-groups';
 import type { RosterPlayerWithTeam } from '@/lib/cache';
 
 const POSITION_FILTERS = [
@@ -28,22 +29,13 @@ const POSITION_FILTERS = [
   'K/P',
 ] as const;
 
-const OL_POSITIONS = new Set(['OT', 'OG', 'C', 'G', 'T']);
-const DL_POSITIONS = new Set(['DE', 'DT', 'NT']);
-const LB_POSITIONS = new Set(['LB', 'OLB', 'ILB', 'MLB']);
-const DB_POSITIONS = new Set(['CB', 'S', 'FS', 'SS']);
-const KP_POSITIONS = new Set(['K', 'P', 'LS']);
-
 function matchesPositionFilter(
   position: string,
   filter: (typeof POSITION_FILTERS)[number],
 ): boolean {
   if (filter === 'All') return true;
-  if (filter === 'OL') return OL_POSITIONS.has(position);
-  if (filter === 'DL') return DL_POSITIONS.has(position);
-  if (filter === 'LB') return LB_POSITIONS.has(position);
-  if (filter === 'DB') return DB_POSITIONS.has(position);
-  if (filter === 'K/P') return KP_POSITIONS.has(position);
+  const group = getPositionsInGroup(filter);
+  if (group.size > 0) return group.has(position);
   return position === filter;
 }
 

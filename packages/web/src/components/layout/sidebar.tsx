@@ -27,6 +27,7 @@ import {
   Trophy,
   Crosshair,
   Timer,
+  GitCompareArrows,
 } from 'lucide-react';
 import { useAuth } from '@/components/auth/auth-provider';
 import { ThemeToggle } from '@/components/layout/theme-toggle';
@@ -70,6 +71,11 @@ const NAV_GROUPS = [
       { href: '/draft-order', label: 'Draft Order', icon: ListOrdered },
       { href: '/teams', label: 'Teams', icon: GalleryHorizontalEnd },
       { href: '/players', label: 'NFL Players', icon: Contact },
+      {
+        href: '/comparePlayers',
+        label: 'Player Compare',
+        icon: GitCompareArrows,
+      },
       {
         href: '/trade-calculator',
         label: 'Trade Calculator',

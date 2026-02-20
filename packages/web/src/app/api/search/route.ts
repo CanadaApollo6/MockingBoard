@@ -8,6 +8,7 @@ import {
   getCachedPublicBoards,
   getCachedAllRosters,
 } from '@/lib/cache';
+import { getPositionsInGroup } from '@/lib/position-groups';
 
 export interface SearchResult {
   id: string;
@@ -29,6 +30,8 @@ export async function GET(request: Request) {
   }
 
   const q = raw.toLowerCase();
+  const posGroup = searchParams.get('posGroup');
+  const posGroupPositions = posGroup ? getPositionsInGroup(posGroup) : null;
   const { draftYear } = await getCachedSeasonConfig();
 
   const [players, users, boards, scouts, nflPlayers] = await Promise.all([
@@ -127,10 +130,11 @@ export async function GET(request: Request) {
     }
   }
 
-  // NFL Players — match name, position, college
+  // NFL Players — match name, position, college (optionally filtered by position group)
   let nflCount = 0;
   for (const p of nflPlayers) {
     if (nflCount >= 5) break;
+    if (posGroupPositions && !posGroupPositions.has(p.position)) continue;
     if (matches(p.name, q) || matches(p.position, q) || matches(p.college, q)) {
       results.push({
         id: p.id,

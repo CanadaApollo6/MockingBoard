@@ -6,6 +6,11 @@ const PERF_ROUTES = [
   { path: '/teams', name: 'teams' },
   { path: '/trade-calculator', name: 'trade calculator' },
   { path: '/drafts/new', name: 'draft creator' },
+  { path: '/comparePlayers', name: 'player compare (empty)' },
+  {
+    path: '/comparePlayers?p1=3139477&p2=3918298',
+    name: 'player compare (full)',
+  },
 ];
 
 for (const { path, name } of PERF_ROUTES) {
