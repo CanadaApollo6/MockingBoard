@@ -144,6 +144,10 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
 
+# Playwright
+/playwright-report/
+/test-results/
+
 # Claude files
 .claude/
 CLAUDE.md
