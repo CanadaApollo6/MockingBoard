@@ -3,83 +3,84 @@ import Link from 'next/link';
 import { getSessionUser } from '@/lib/firebase/auth-session';
 import { isAdmin } from '@/lib/firebase/admin';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Routes } from '@/routes';
 
 const sections = [
   {
     title: 'Team Management',
     description: 'Key players, coaching staff, front office',
-    href: '/admin/teams',
+    href: Routes.ADMIN_TEAMS,
   },
   {
     title: 'Draft Results',
     description: 'Enter actual NFL draft picks',
-    href: '/admin/draft-results',
+    href: Routes.ADMIN_DRAFT_RESULTS,
   },
   {
     title: 'Scouting Upload',
     description: 'Upload prospect CSV data',
-    href: '/admin/upload',
+    href: Routes.ADMIN_UPLOAD,
   },
   {
     title: 'Team History',
     description: 'Year-by-year records and key figures',
-    href: '/admin/team-history',
+    href: Routes.ADMIN_TEAM_HISTORY,
   },
   {
     title: 'Draft Order',
     description: 'Manage pick order and trades',
-    href: '/admin/draft-order',
+    href: Routes.ADMIN_DRAFT_ORDER,
   },
   {
     title: 'Prospects',
     description: 'Browse and edit prospect data',
-    href: '/admin/prospects',
+    href: Routes.ADMIN_PROSPECTS,
   },
   {
     title: 'Featured Content',
     description: 'Curate prospect and draft highlights',
-    href: '/admin/featured',
+    href: Routes.ADMIN_FEATURED,
   },
   {
     title: 'Trade Values',
     description: 'Edit the draft pick value chart',
-    href: '/admin/trade-values',
+    href: Routes.ADMIN_TRADE_VALUES,
   },
   {
     title: 'CPU Tuning',
     description: 'Adjust CPU draft behavior constants',
-    href: '/admin/cpu-tuning',
+    href: Routes.ADMIN_CPU_TUNING,
   },
   {
     title: 'Draft Scoring',
     description: 'Score mock drafts against real results',
-    href: '/admin/scoring',
+    href: Routes.ADMIN_SCORING,
   },
   {
     title: 'Contracts',
     description: 'Import OTC salary cap data',
-    href: '/admin/contracts',
+    href: Routes.ADMIN_CONTRACTS,
   },
   {
     title: 'Staff Import',
     description: 'Import coaching staff from Wikipedia',
-    href: '/admin/staff',
+    href: Routes.ADMIN_STAFF,
   },
   {
     title: 'Moderation',
     description: 'Review user-generated content',
-    href: '/admin/moderation',
+    href: Routes.ADMIN_MODERATION,
   },
   {
     title: 'Settings',
     description: 'Season config, announcements, cache',
-    href: '/admin/settings',
+    href: Routes.ADMIN_SETTINGS,
   },
 ];
 
 export default async function AdminDashboardPage() {
   const session = await getSessionUser();
-  if (!session) redirect('/login');
+  if (!session) redirect(Routes.AUTH);
   if (!(await isAdmin(session.uid))) {
     return (
       <main className="mx-auto max-w-4xl px-4 py-8">

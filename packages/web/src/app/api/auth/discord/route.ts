@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getOrigin } from '@/lib/url';
+import { Routes } from '@/routes';
 
 const DISCORD_AUTH_URL = 'https://discord.com/api/oauth2/authorize';
 
@@ -13,7 +14,7 @@ export async function GET(request: Request) {
   }
 
   const origin = getOrigin(request);
-  const redirectUri = `${origin}/api/auth/discord/callback`;
+  const redirectUri = `${origin}${Routes.API_AUTH_DISCORD_CALLBACK}`;
 
   const url = new URL(request.url);
   const isLink = url.searchParams.get('link') === 'true';

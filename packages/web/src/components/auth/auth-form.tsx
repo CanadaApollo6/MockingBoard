@@ -9,6 +9,7 @@ import {
 } from 'firebase/auth';
 import { getClientAuth } from '@/lib/firebase/firebase';
 import { getErrorMessage } from '@/lib/validate';
+import { Routes } from '@/routes';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -57,7 +58,7 @@ export function AuthForm({ initialMode = 'signin' }: AuthFormProps) {
       });
 
       await createSession(idToken);
-      router.replace('/drafts');
+      router.replace(Routes.DRAFTS);
     } catch (err) {
       const code = (err as { code?: string }).code;
       // User closed the popup — not an error
@@ -82,7 +83,7 @@ export function AuthForm({ initialMode = 'signin' }: AuthFormProps) {
       );
       const idToken = await credential.user.getIdToken();
       await createSession(idToken);
-      router.replace('/drafts');
+      router.replace(Routes.DRAFTS);
     } catch (err) {
       const code = (err as { code?: string }).code;
       if (
@@ -125,7 +126,7 @@ export function AuthForm({ initialMode = 'signin' }: AuthFormProps) {
       );
       const idToken = await credential.user.getIdToken();
       await createSession(idToken);
-      router.replace('/drafts');
+      router.replace(Routes.DRAFTS);
     } catch (err) {
       setError(getErrorMessage(err, 'Signup failed'));
     } finally {
@@ -236,7 +237,7 @@ export function AuthForm({ initialMode = 'signin' }: AuthFormProps) {
         </div>
 
         <div className="space-y-3">
-          <a href="/api/auth/discord">
+          <a href={Routes.API_AUTH_DISCORD}>
             <Button variant="outline" className="w-full mb-3">
               <svg
                 className="size-5"

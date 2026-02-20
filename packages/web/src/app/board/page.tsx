@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { getSessionUser } from '@/lib/firebase/auth-session';
 import { getPlayerMap, getUserBoardForYear } from '@/lib/firebase/data';
 import { getCachedSeasonConfig } from '@/lib/cache';
+import { Routes } from '@/routes';
 import { BoardEditor } from './board-editor';
 
 export default async function BoardPage() {
@@ -12,7 +13,7 @@ export default async function BoardPage() {
       <main className="mx-auto max-w-screen-xl px-4 py-8">
         <h1 className="mb-6 text-2xl font-bold">Big Board</h1>
         <p className="py-12 text-center text-muted-foreground">
-          <Link href="/login" className="text-primary hover:underline">
+          <Link href={Routes.AUTH} className="text-primary hover:underline">
             Sign in
           </Link>{' '}
           to create your Big Board.

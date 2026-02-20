@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { Routes } from '@/routes';
 import type {
   TeamAbbreviation,
   FuturePickSeed,
@@ -94,7 +95,7 @@ export function TeamBreakdown({
       {/* Header */}
       <div>
         <Link
-          href="/teams"
+          href={Routes.TEAMS}
           className="mb-3 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
         >
           <svg

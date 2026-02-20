@@ -28,6 +28,7 @@ import { DraftLayout } from '@/components/draft/draft-layout';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Routes } from '@/routes';
 import { ErrorBoundary } from '@/components/layout/error-boundary';
 
 const GUEST_ID = '__guest__';
@@ -119,7 +120,7 @@ export function LocalDraftRoom({
   // Redirect to recap page when authed draft completes
   useEffect(() => {
     if (isComplete && draftId) {
-      router.push(`/drafts/${draftId}`);
+      router.push(Routes.draft(draftId));
     }
   }, [isComplete, draftId, router]);
 
@@ -197,7 +198,7 @@ export function LocalDraftRoom({
     try {
       await cancel();
       if (draftId) {
-        router.push('/drafts');
+        router.push(Routes.DRAFTS);
       }
     } catch {
       setError('Failed to cancel draft');
@@ -246,7 +247,10 @@ export function LocalDraftRoom({
   const bannerNode = isGuest ? (
     <div className="rounded-lg border border-mb-accent/20 bg-mb-accent-muted px-4 py-3 text-sm text-muted-foreground">
       You are drafting as a guest.{' '}
-      <Link href="/auth" className="font-medium text-primary hover:underline">
+      <Link
+        href={Routes.AUTH}
+        className="font-medium text-primary hover:underline"
+      >
         Sign in
       </Link>{' '}
       to save your draft history and resume drafts later.

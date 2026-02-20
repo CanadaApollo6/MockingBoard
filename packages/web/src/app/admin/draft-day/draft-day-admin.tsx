@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Play, Pause, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { Routes } from '@/routes';
 
 type Mode = 'countdown' | 'live' | 'complete';
 
@@ -160,13 +161,13 @@ export function DraftDayAdmin({ initial }: DraftDayAdminProps) {
       <div className="rounded-lg border bg-card p-5">
         <h2 className="mb-3 font-semibold">Quick Links</h2>
         <div className="flex flex-wrap gap-3">
-          <Link href="/admin/draft-results">
+          <Link href={Routes.ADMIN_DRAFT_RESULTS}>
             <Button variant="outline" size="sm" className="gap-1.5">
               <ExternalLink className="h-3.5 w-3.5" />
               Enter Draft Results
             </Button>
           </Link>
-          <Link href="/draft-day" target="_blank">
+          <Link href={Routes.DRAFT_DAY} target="_blank">
             <Button variant="outline" size="sm" className="gap-1.5">
               <ExternalLink className="h-3.5 w-3.5" />
               View Draft Day Page

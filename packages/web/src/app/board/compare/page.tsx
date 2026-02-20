@@ -4,6 +4,7 @@ import {
   getBoardSnapshot,
   getPlayerMap,
 } from '@/lib/firebase/data';
+import { Routes } from '@/routes';
 import { BoardCompareView } from './board-compare-view';
 
 interface ComparePageProps {
@@ -18,7 +19,7 @@ export default async function ComparePage({ searchParams }: ComparePageProps) {
       <main className="mx-auto max-w-screen-xl px-4 py-8">
         <p className="text-muted-foreground">
           Missing boardId or snapshotId.{' '}
-          <Link href="/board" className="text-primary hover:underline">
+          <Link href={Routes.BOARD} className="text-primary hover:underline">
             Back to Board
           </Link>
         </p>
@@ -36,7 +37,7 @@ export default async function ComparePage({ searchParams }: ComparePageProps) {
       <main className="mx-auto max-w-screen-xl px-4 py-8">
         <p className="text-muted-foreground">
           Board or snapshot not found.{' '}
-          <Link href="/board" className="text-primary hover:underline">
+          <Link href={Routes.BOARD} className="text-primary hover:underline">
             Back to Board
           </Link>
         </p>
@@ -51,7 +52,7 @@ export default async function ComparePage({ searchParams }: ComparePageProps) {
     <main className="mx-auto max-w-screen-xl px-4 py-8">
       <div className="mb-6 flex items-center gap-3">
         <Link
-          href="/board"
+          href={Routes.BOARD}
           className="text-sm text-muted-foreground hover:text-foreground"
         >
           &larr; Back to Board

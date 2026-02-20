@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
+import { Routes } from '@/routes';
 import { Search } from 'lucide-react';
 import {
   Table,
@@ -115,7 +116,7 @@ export function NflPlayerDirectory({ players }: NflPlayerDirectoryProps) {
               <TableRow key={`${p.teamAbbreviation}-${p.id}`}>
                 <TableCell className="font-medium">
                   <Link
-                    href={`/players/${p.id}`}
+                    href={Routes.player(p.id)}
                     className="text-mb-accent hover:underline"
                   >
                     {p.name}
@@ -144,7 +145,7 @@ export function NflPlayerDirectory({ players }: NflPlayerDirectoryProps) {
                 </TableCell>
                 <TableCell className="text-sm">
                   <Link
-                    href={`/teams/${p.teamAbbreviation}`}
+                    href={Routes.team(p.teamAbbreviation)}
                     className="hover:underline"
                   >
                     {p.teamName}

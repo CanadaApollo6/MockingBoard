@@ -11,6 +11,7 @@ import {
   SelectItem,
 } from '@/components/ui/select';
 import { getErrorMessage } from '@/lib/validate';
+import { Routes } from '@/routes';
 
 interface ScoringStatus {
   year: number;
@@ -180,7 +181,7 @@ export function ScoringEditor({
                 {!status.hasResults && (
                   <p className="mt-2 text-xs text-muted-foreground">
                     Enter actual draft results first at{' '}
-                    <a href="/admin/draft-results" className="underline">
+                    <a href={Routes.ADMIN_DRAFT_RESULTS} className="underline">
                       Draft Results
                     </a>
                     .

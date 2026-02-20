@@ -11,6 +11,7 @@ import type {
   KeyPlayerOverride,
 } from '@mockingboard/shared';
 import { SeasonEditor } from './season-editor';
+import { Routes } from '@/routes';
 
 const validTeams = new Set<string>(teams.map((t) => t.id));
 
@@ -20,7 +21,7 @@ export default async function TeamSeasonPage({
   params: Promise<{ abbreviation: string; year: string }>;
 }) {
   const session = await getSessionUser();
-  if (!session) redirect('/login');
+  if (!session) redirect(Routes.AUTH);
   if (!(await isAdmin(session.uid))) redirect('/admin');
 
   const { abbreviation, year: yearStr } = await params;
@@ -50,7 +51,7 @@ export default async function TeamSeasonPage({
     <main className="mx-auto max-w-4xl px-4 py-8">
       <div className="mb-6 flex items-center justify-between">
         <Link
-          href="/admin/team-history"
+          href={Routes.ADMIN_TEAM_HISTORY}
           className="text-sm text-muted-foreground hover:text-foreground"
         >
           &larr; All Teams
@@ -59,7 +60,7 @@ export default async function TeamSeasonPage({
           {years.map((y) => (
             <Link
               key={y}
-              href={`/admin/team-history/${abbr}/${y}`}
+              href={Routes.adminTeamHistory(abbr, y)}
               className={`rounded-md px-2 py-1 text-xs ${
                 y === year
                   ? 'bg-primary text-primary-foreground'

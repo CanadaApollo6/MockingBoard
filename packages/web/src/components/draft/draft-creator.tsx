@@ -13,6 +13,7 @@ import type {
   NotificationLevel,
 } from '@mockingboard/shared';
 import { useAuth } from '@/components/auth/auth-provider';
+import { Routes } from '@/routes';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
@@ -178,7 +179,7 @@ export function DraftCreator({ defaultYear = 2026 }: { defaultYear?: number }) {
       }
 
       const { draftId } = await res.json();
-      router.push(`/drafts/${draftId}/live`);
+      router.push(Routes.draftLive(draftId));
     } catch (err) {
       setError(getErrorMessage(err));
       setSubmitting(false);
@@ -513,7 +514,7 @@ export function DraftCreator({ defaultYear = 2026 }: { defaultYear?: number }) {
       {isGuest && (
         <div className="rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-muted-foreground">
           <Link
-            href="/auth"
+            href={Routes.AUTH}
             className="font-medium text-primary hover:underline"
           >
             Sign in

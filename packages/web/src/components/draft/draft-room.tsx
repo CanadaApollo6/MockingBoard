@@ -31,6 +31,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { getErrorMessage } from '@/lib/validate';
+import { Routes } from '@/routes';
 import { ErrorBoundary } from '@/components/layout/error-boundary';
 
 interface DraftRoomProps {
@@ -135,7 +136,7 @@ export function DraftRoom({
   // Redirect to recap page when draft completes
   useEffect(() => {
     if (isComplete && !advancingCpu) {
-      router.push(`/drafts/${draftId}`);
+      router.push(Routes.draft(draftId));
     }
   }, [isComplete, advancingCpu, draftId, router]);
 
@@ -339,7 +340,7 @@ export function DraftRoom({
         const data = await res.json();
         throw new Error(data.error || 'Failed to cancel');
       }
-      router.push('/drafts');
+      router.push(Routes.DRAFTS);
     } catch (err) {
       setError(getErrorMessage(err, 'Failed to cancel'));
       setCancelling(false);

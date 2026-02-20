@@ -14,6 +14,7 @@ import { TEAM_COLORS, hexToHsl } from '@/lib/colors/team-colors';
 import { SCHOOL_COLORS } from '@/lib/colors/school-colors';
 import { cn } from '@/lib/utils';
 import { getErrorMessage } from '@/lib/validate';
+import { Routes } from '@/routes';
 
 const inputClass =
   'w-full rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:shadow-[var(--shadow-glow)]';
@@ -77,7 +78,7 @@ export function SettingsClient() {
 
         {/* Right column: profile link & integrations */}
         <div className="space-y-6">
-          <Link href="/settings/profile">
+          <Link href={Routes.SETTINGS_PROFILE}>
             <Card className="transition-colors hover:border-primary/50">
               <CardContent className="flex items-center gap-4 py-5">
                 {profile.avatar ? (
@@ -425,7 +426,7 @@ function AccountLinkingSection({
                 <p className="mb-2 text-sm text-muted-foreground">
                   Link your Discord account to sync drafts from the bot.
                 </p>
-                <a href="/api/auth/discord?link=true">
+                <a href={`${Routes.API_AUTH_DISCORD}?link=true`}>
                   <Button variant="outline" className="w-full">
                     Link Discord Account
                   </Button>

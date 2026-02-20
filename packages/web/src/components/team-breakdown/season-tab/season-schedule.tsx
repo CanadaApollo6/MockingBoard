@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
+import { Routes } from '@/routes';
 import type { TeamSchedule } from '@/lib/cache/external';
 
 interface SeasonScheduleProps {
@@ -40,7 +41,7 @@ export const SeasonSchedule: React.FC<SeasonScheduleProps> = ({ schedule }) => {
                   </TableCell>
                   <TableCell>
                     <Link
-                      href={`/teams/${g.opponent}`}
+                      href={Routes.team(g.opponent)}
                       className="text-sm hover:underline"
                     >
                       {g.isHome ? 'vs' : '@'} {g.opponent}

@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
+import { Routes } from '@/routes';
 import type { Position } from '@mockingboard/shared';
 import { teams } from '@mockingboard/shared';
 import { TEAM_COLORS } from '@/lib/colors/team-colors';
@@ -63,7 +64,7 @@ export function TeamDirectory({ capital }: TeamDirectoryProps) {
           const cap = capital[team.id];
 
           return (
-            <Link key={team.id} href={`/teams/${team.id}`}>
+            <Link key={team.id} href={Routes.team(team.id)}>
               <Card className="h-full transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md pb-2 pt-5">
                 <CardContent className="p-0">
                   {/* Color accent bar */}

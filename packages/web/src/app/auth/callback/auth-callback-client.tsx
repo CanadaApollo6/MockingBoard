@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signInWithCustomToken } from 'firebase/auth';
 import { getClientAuth } from '@/lib/firebase/firebase';
+import { Routes } from '@/routes';
 
 export function AuthCallbackClient() {
   const router = useRouter();
@@ -36,7 +37,7 @@ export function AuthCallbackClient() {
           return;
         }
 
-        router.replace('/');
+        router.replace(Routes.HOME);
       } catch (error) {
         console.error('Auth callback failed:', error);
         router.replace('/?error=client_auth');

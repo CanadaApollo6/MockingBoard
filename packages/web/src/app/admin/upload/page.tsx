@@ -3,10 +3,11 @@ import { getSessionUser } from '@/lib/firebase/auth-session';
 import { isAdmin } from '@/lib/firebase/admin';
 import { getScoutProfiles } from '@/lib/firebase/data';
 import { CsvUploadPage } from './csv-upload-page';
+import { Routes } from '@/routes';
 
 export default async function AdminUploadPage() {
   const session = await getSessionUser();
-  if (!session) redirect('/login');
+  if (!session) redirect(Routes.AUTH);
   if (!(await isAdmin(session.uid))) {
     return (
       <main className="mx-auto max-w-4xl px-4 py-8">

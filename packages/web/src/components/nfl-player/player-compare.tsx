@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Routes } from '@/routes';
 import { Search, X, ArrowLeftRight } from 'lucide-react';
 import { isTeamAbbreviation } from '@mockingboard/shared';
 import { Badge } from '@/components/ui/badge';
@@ -37,7 +38,7 @@ export function PlayerCompare({ player1, player2 }: PlayerCompareProps) {
     (slot: 'p1' | 'p2', espnId: string) => {
       const params = new URLSearchParams(window.location.search);
       params.set(slot, espnId);
-      router.replace(`/comparePlayers?${params.toString()}`);
+      router.replace(`${Routes.COMPARE_PLAYERS}?${params.toString()}`);
     },
     [router],
   );
@@ -46,7 +47,7 @@ export function PlayerCompare({ player1, player2 }: PlayerCompareProps) {
     (slot: 'p1' | 'p2') => {
       const params = new URLSearchParams(window.location.search);
       params.delete(slot);
-      router.replace(`/comparePlayers?${params.toString()}`);
+      router.replace(`${Routes.COMPARE_PLAYERS}?${params.toString()}`);
     },
     [router],
   );
@@ -242,7 +243,7 @@ function PlayerHeroCard({
           </div>
 
           <Link
-            href={`/teams/${bio.teamAbbreviation}`}
+            href={Routes.team(bio.teamAbbreviation)}
             className="text-sm text-white/80 underline-offset-2 hover:underline"
           >
             {bio.teamDisplayName}

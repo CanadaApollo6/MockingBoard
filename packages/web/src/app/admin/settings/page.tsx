@@ -6,10 +6,11 @@ import { getCachedSeasonConfig } from '@/lib/cache';
 import { adminDb } from '@/lib/firebase/firebase-admin';
 import { SettingsEditor } from './settings-editor';
 import type { Announcement } from '@/lib/cache';
+import { Routes } from '@/routes';
 
 export default async function AdminSettingsPage() {
   const session = await getSessionUser();
-  if (!session) redirect('/login');
+  if (!session) redirect(Routes.AUTH);
   if (!(await isAdmin(session.uid))) {
     return (
       <main className="mx-auto max-w-4xl px-4 py-8">

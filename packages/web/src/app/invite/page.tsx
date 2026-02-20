@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Routes } from '@/routes';
 
 const DISCORD_CLIENT_ID = process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID;
 const PERMISSIONS = '346176'; // Send Messages, Embed Links, Read Message History, Manage Messages, Add Reactions
@@ -55,7 +56,7 @@ export default function InvitePage() {
           <a href={INVITE_URL} target="_blank" rel="noopener noreferrer">
             <Button size="lg">Add to Discord</Button>
           </a>
-          <Link href="/drafts/new">
+          <Link href={Routes.DRAFT_NEW}>
             <Button variant="outline" size="lg">
               Draft on Web
             </Button>
