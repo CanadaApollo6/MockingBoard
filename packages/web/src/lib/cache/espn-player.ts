@@ -215,7 +215,9 @@ export async function getCachedEspnPlayerBio(
   if (cached) return cached;
 
   try {
-    const res = await fetch(`${ESPN_ATHLETE_BASE}/${espnId}`);
+    const res = await fetch(`${ESPN_ATHLETE_BASE}/${espnId}`, {
+      next: { revalidate: 3600 },
+    });
     if (!res.ok) return null;
     const json = (await res.json()) as Record<string, unknown>;
     const bio = transformBio(json);
@@ -234,7 +236,9 @@ export async function getCachedEspnPlayerStats(
   if (cached) return cached;
 
   try {
-    const res = await fetch(`${ESPN_ATHLETE_BASE}/${espnId}/stats`);
+    const res = await fetch(`${ESPN_ATHLETE_BASE}/${espnId}/stats`, {
+      next: { revalidate: 3600 },
+    });
     if (!res.ok) return [];
     const json = (await res.json()) as Record<string, unknown>;
     const cats = transformStats(json);
@@ -260,7 +264,7 @@ export async function getCachedEspnGameLog(
     const url = season
       ? `${ESPN_ATHLETE_BASE}/${espnId}/gamelog?season=${season}`
       : `${ESPN_ATHLETE_BASE}/${espnId}/gamelog`;
-    const res = await fetch(url);
+    const res = await fetch(url, { next: { revalidate: 3600 } });
     if (!res.ok) return null;
     const json = (await res.json()) as Record<string, unknown>;
     const gl = transformGameLog(json);

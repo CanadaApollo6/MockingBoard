@@ -4,13 +4,21 @@ import { adminDb } from './firebase-admin';
 import { hydrateDoc } from './sanitize';
 import { AppError } from '../validate';
 import type { Draft, User } from '@mockingboard/shared';
+import type { CacheEntry } from '../cache/common';
+
+const USER_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const userCache = new Map<string, CacheEntry<User | null>>();
 
 /**
  * Resolve a Firebase Auth UID to the internal Firestore user doc.
  * Checks firebaseUid first, then falls back to discordId for legacy
  * sessions where Discord ID was used as the Firebase UID.
+ * Results are cached in-memory for 5 minutes to avoid repeated reads.
  */
 export async function resolveUser(firebaseUid: string): Promise<User | null> {
+  const cached = userCache.get(firebaseUid);
+  if (cached && Date.now() < cached.expiresAt) return cached.data;
+
   // Primary: look up by firebaseUid field
   const byFirebase = await adminDb
     .collection('users')
@@ -19,8 +27,12 @@ export async function resolveUser(firebaseUid: string): Promise<User | null> {
     .get();
 
   if (!byFirebase.empty) {
-    const doc = byFirebase.docs[0];
-    return hydrateDoc<User>(doc);
+    const user = hydrateDoc<User>(byFirebase.docs[0]);
+    userCache.set(firebaseUid, {
+      data: user,
+      expiresAt: Date.now() + USER_CACHE_TTL,
+    });
+    return user;
   }
 
   // Fallback: look up by discordId (legacy web sessions)
@@ -31,10 +43,18 @@ export async function resolveUser(firebaseUid: string): Promise<User | null> {
     .get();
 
   if (!byDiscord.empty) {
-    const doc = byDiscord.docs[0];
-    return hydrateDoc<User>(doc);
+    const user = hydrateDoc<User>(byDiscord.docs[0]);
+    userCache.set(firebaseUid, {
+      data: user,
+      expiresAt: Date.now() + USER_CACHE_TTL,
+    });
+    return user;
   }
 
+  userCache.set(firebaseUid, {
+    data: null,
+    expiresAt: Date.now() + USER_CACHE_TTL,
+  });
   return null;
 }
 

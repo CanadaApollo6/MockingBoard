@@ -4,7 +4,6 @@ import {
   getPlayerMap,
   getRecentCompletedDraft,
   getDraft,
-  getTopDrafters,
   getUserStats,
 } from '@/lib/firebase/data';
 import { teams } from '@mockingboard/shared';
@@ -15,9 +14,10 @@ import {
   getCachedSeasonConfig,
   getCachedTeamDocs,
   getCachedSchedule,
+  getCachedFeaturedConfig,
+  getCachedTopDrafters,
 } from '@/lib/cache';
 import { TEAM_COLORS } from '@/lib/colors/team-colors';
-import { adminDb } from '@/lib/firebase/firebase-admin';
 
 export default async function Home({
   searchParams,
@@ -28,27 +28,16 @@ export default async function Home({
 
   if (session) {
     const { draftYear } = await getCachedSeasonConfig();
-    const [user, playerMap, featuredDoc, leaderboard] = await Promise.all([
+    const [user, playerMap, featured, leaderboard] = await Promise.all([
       resolveUser(session.uid).catch(() => null),
       getPlayerMap(draftYear).catch(() => new Map<string, never>()),
-      adminDb
-        .collection('config')
-        .doc('featured')
-        .get()
-        .catch(() => null),
-      getTopDrafters(5).catch(() => [] as never[]),
+      getCachedFeaturedConfig().catch(() => null),
+      getCachedTopDrafters(5).catch(() => [] as never[]),
     ]);
 
     const stats = await getUserStats(session.uid, user?.discordId).catch(
       () => ({ totalDrafts: 0, totalPicks: 0 }),
     );
-
-    const featured = featuredDoc?.data() as
-      | {
-          prospectOfTheDay?: { playerId: string; overrideUntil: number };
-          draftOfTheWeek?: { draftId: string; overrideUntil: number };
-        }
-      | undefined;
 
     // Followed team season overview
     let followedTeamData = undefined;

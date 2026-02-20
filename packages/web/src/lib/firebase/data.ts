@@ -170,10 +170,19 @@ export async function getUserDraftsPaginated(
 
 // ---- User Stats ----
 
+const USER_STATS_TTL = 5 * 60 * 1000; // 5 minutes
+const userStatsCache = new Map<
+  string,
+  { data: { totalDrafts: number; totalPicks: number }; expiresAt: number }
+>();
+
 export async function getUserStats(
   userId: string,
   discordId?: string,
 ): Promise<{ totalDrafts: number; totalPicks: number }> {
+  const cached = userStatsCache.get(userId);
+  if (cached && Date.now() < cached.expiresAt) return cached.data;
+
   const ids = [userId, ...(discordId ? [discordId] : [])];
 
   const draftsSnap = await adminDb
@@ -199,7 +208,12 @@ export async function getUserStats(
   );
   const totalPicks = pickCounts.reduce((sum, c) => sum + c, 0);
 
-  return { totalDrafts, totalPicks };
+  const stats = { totalDrafts, totalPicks };
+  userStatsCache.set(userId, {
+    data: stats,
+    expiresAt: Date.now() + USER_STATS_TTL,
+  });
+  return stats;
 }
 
 // ---- Scout Profiles ----
@@ -486,6 +500,7 @@ export async function getYearLeaderboard(
     .collection('draftScores')
     .where('year', '==', year)
     .where('isLocked', '==', true)
+    .limit(500)
     .get();
 
   if (scoresSnap.empty) return [];
@@ -589,6 +604,8 @@ export async function getUserDraftingIdentity(
     .collection('drafts')
     .where('participantIds', 'array-contains-any', ids)
     .where('status', '==', 'complete')
+    .orderBy('createdAt', 'desc')
+    .limit(100)
     .select()
     .get();
 

@@ -15,6 +15,8 @@ import { WordCloud } from '@/components/community/word-cloud';
 import { VideoGallery } from '@/components/video/video-gallery';
 import { getCachedSeasonConfig } from '@/lib/cache';
 
+export const revalidate = 3600;
+
 interface Props {
   params: Promise<{ id: string }>;
 }

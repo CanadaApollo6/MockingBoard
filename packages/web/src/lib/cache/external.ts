@@ -165,6 +165,7 @@ export async function getCachedRoster(
   try {
     const res = await fetch(
       `https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/${espnId}/roster`,
+      { next: { revalidate: 21600 } },
     );
     if (!res.ok) return null;
     const json = (await res.json()) as Record<string, unknown>;
@@ -262,8 +263,8 @@ export async function getCachedSchedule(
   try {
     const base = `https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/${espnId}/schedule`;
     const [regRes, postRes] = await Promise.all([
-      fetch(`${base}?seasontype=2`),
-      fetch(`${base}?seasontype=3`),
+      fetch(`${base}?seasontype=2`, { next: { revalidate: 21600 } }),
+      fetch(`${base}?seasontype=3`, { next: { revalidate: 21600 } }),
     ]);
 
     const games: GameResult[] = [];
