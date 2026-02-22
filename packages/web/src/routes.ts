@@ -48,6 +48,7 @@ export const Routes = {
   ADMIN_CPU_TUNING: '/admin/cpu-tuning',
   ADMIN_SCORING: '/admin/scoring',
   ADMIN_CONTRACTS: '/admin/contracts',
+  ADMIN_ROOKIE_SLOTS: '/admin/rookie-slots',
   ADMIN_STAFF: '/admin/staff',
   ADMIN_MODERATION: '/admin/moderation',
   ADMIN_SETTINGS: '/admin/settings',

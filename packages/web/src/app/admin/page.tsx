@@ -62,6 +62,11 @@ const sections = [
     href: Routes.ADMIN_CONTRACTS,
   },
   {
+    title: 'Rookie Slots',
+    description: 'Import rookie slot values from OTC',
+    href: Routes.ADMIN_ROOKIE_SLOTS,
+  },
+  {
     title: 'Staff Import',
     description: 'Import coaching staff from Wikipedia',
     href: Routes.ADMIN_STAFF,
