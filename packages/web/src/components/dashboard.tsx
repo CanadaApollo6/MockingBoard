@@ -73,7 +73,7 @@ export function Dashboard({
               <p className="mb-3 text-xs font-medium uppercase tracking-widest text-white/70">
                 Prospect of the Day
               </p>
-              <Link href={Routes.player(prospect.id)} className="group">
+              <Link href={Routes.prospect(prospect.id)} className="group">
                 <p className="font-[family-name:var(--font-display)] text-xl font-bold uppercase tracking-tight group-hover:text-white/80">
                   {prospect.name}
                 </p>

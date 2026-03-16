@@ -41,7 +41,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   );
 
   const playerPages: MetadataRoute.Sitemap = players.map((p) => ({
-    url: `${baseUrl}/players/${p.id}`,
+    url: `${baseUrl}/prospects/${p.id}`,
     changeFrequency: 'weekly',
     priority: 0.8,
   }));

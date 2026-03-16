@@ -59,7 +59,7 @@ export function ProspectCard({ player }: ProspectCardProps) {
         <div>
           <h2 className="font-[family-name:var(--font-display)] text-2xl font-bold uppercase leading-tight tracking-tight sm:text-3xl">
             <Link
-              href={Routes.player(player.id)}
+              href={Routes.prospect(player.id)}
               className="hover:text-mb-accent transition-colors"
             >
               {player.name}

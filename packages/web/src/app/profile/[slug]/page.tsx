@@ -298,7 +298,7 @@ export default async function ProfilePage({ params }: Props) {
                   <div key={report.id}>
                     {player && (
                       <Link
-                        href={Routes.player(report.playerId)}
+                        href={Routes.prospect(report.playerId)}
                         className="mb-1 block text-sm font-medium text-mb-accent hover:underline"
                       >
                         {player.name} — {player.position}, {player.school}

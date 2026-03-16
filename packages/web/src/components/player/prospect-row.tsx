@@ -131,7 +131,7 @@ export function ProspectRow({ player }: ProspectRowProps) {
               <ProspectDetails player={player} />
 
               <Link
-                href={Routes.player(player.id)}
+                href={Routes.prospect(player.id)}
                 className="mt-4 inline-block text-sm font-medium text-mb-accent hover:underline"
               >
                 View Full Profile

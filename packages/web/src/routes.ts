@@ -29,7 +29,12 @@ export const Routes = {
   PLAYERS: '/players',
   COMPARE_PLAYERS: '/comparePlayers',
   TRADE_CALCULATOR: '/trade-calculator',
+  CONTRACT_BUILDER: '/contract-builder',
   INVITE: '/invite',
+
+  // Learn
+  LEARN_SALARY_CAP: '/learn/salary-cap',
+  LEARN_NFL_DRAFT: '/learn/nfl-draft',
 
   // Settings
   SETTINGS: '/settings',
@@ -61,11 +66,14 @@ export const Routes = {
   // Dynamic route helpers
   team: (abbr: string) => `/teams/${abbr}`,
   player: (espnId: string) => `/players/${espnId}`,
+  prospect: (id: string) => `/prospects/${id}`,
   draft: (draftId: string) => `/drafts/${draftId}`,
   draftLive: (draftId: string) => `/drafts/${draftId}/live`,
   profile: (slug: string) => `/profile/${slug}`,
   scout: (slug: string) => `/scouts/${slug}`,
   board: (slug: string) => `/boards/${slug}`,
+  overlay: (draftId: string, type: 'board' | 'ticker' | 'current-pick') =>
+    `/overlay/${draftId}/${type}`,
   adminTeam: (abbr: string) => `/admin/teams/${abbr}`,
   adminTeamHistory: (abbr: string, year: string | number) =>
     `/admin/team-history/${abbr}/${year}`,
