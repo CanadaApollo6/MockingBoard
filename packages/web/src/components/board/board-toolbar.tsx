@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Routes } from '@/routes';
 import type {
   Position,
   CustomPlayer,
@@ -270,7 +271,7 @@ export function BoardToolbar({
             <p className="text-xs text-muted-foreground">
               Visible at{' '}
               <a
-                href={`/boards/${slug}`}
+                href={Routes.board(slug)}
                 className="text-mb-accent hover:underline"
                 target="_blank"
                 rel="noopener noreferrer"

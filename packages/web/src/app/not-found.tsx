@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { Routes } from '@/routes';
 
 export default function NotFound() {
   return (
@@ -8,7 +9,7 @@ export default function NotFound() {
       <p className="mt-2 text-muted-foreground">
         The page you&apos;re looking for doesn&apos;t exist.
       </p>
-      <Link href="/">
+      <Link href={Routes.HOME}>
         <Button className="mt-6">Go Home</Button>
       </Link>
     </main>

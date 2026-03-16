@@ -9,6 +9,7 @@ import {
   type TeamAbbreviation,
 } from '@mockingboard/shared';
 import { TeamEditor } from './team-editor';
+import { Routes } from '@/routes';
 
 const teamMap = new Map(teams.map((t) => [t.id, t]));
 
@@ -18,7 +19,7 @@ export default async function AdminTeamEditorPage({
   params: Promise<{ abbreviation: string }>;
 }) {
   const session = await getSessionUser();
-  if (!session) redirect('/login');
+  if (!session) redirect(Routes.AUTH);
   if (!(await isAdmin(session.uid))) {
     return (
       <main className="mx-auto max-w-4xl px-4 py-8">
@@ -42,7 +43,7 @@ export default async function AdminTeamEditorPage({
   return (
     <main className="mx-auto max-w-4xl px-4 py-8">
       <Link
-        href="/admin/teams"
+        href={Routes.ADMIN_TEAMS}
         className="mb-4 inline-block text-sm text-muted-foreground hover:text-foreground"
       >
         &larr; All Teams

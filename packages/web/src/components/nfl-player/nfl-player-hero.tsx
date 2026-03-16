@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { ArrowLeftRight } from 'lucide-react';
+import { Routes } from '@/routes';
 import { Badge } from '@/components/ui/badge';
 import {
   GradientCard,
@@ -59,7 +61,7 @@ export function NflPlayerHero({ bio, contract }: NflPlayerHeroProps) {
             <div className="flex items-center gap-3 text-sm sm:text-base">
               {bio.teamDisplayName && (
                 <Link
-                  href={`/teams/${teamAbbr}`}
+                  href={Routes.team(teamAbbr)}
                   className="text-white/90 underline-offset-2 hover:underline"
                 >
                   {bio.teamDisplayName}
@@ -88,6 +90,14 @@ export function NflPlayerHero({ bio, contract }: NflPlayerHeroProps) {
               )}
               {bio.displayBirthPlace && <span>{bio.displayBirthPlace}</span>}
             </div>
+
+            <Link
+              href={Routes.comparePlayers(bio.id)}
+              className="inline-flex items-center gap-1.5 rounded-md border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-medium text-white/80 transition-colors hover:bg-white/20 hover:text-white"
+            >
+              <ArrowLeftRight className="h-3.5 w-3.5" />
+              Compare
+            </Link>
           </div>
 
           {/* Contract info — right side, spread horizontally */}

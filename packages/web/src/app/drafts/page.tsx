@@ -3,6 +3,7 @@ import { getSessionUser } from '@/lib/firebase/auth-session';
 import { resolveUser } from '@/lib/firebase/user-resolve';
 import { DraftsGrid } from '@/components/draft/drafts-grid';
 import Link from 'next/link';
+import { Routes } from '@/routes';
 
 const PAGE_SIZE = 10;
 
@@ -14,7 +15,7 @@ export default async function DraftsPage() {
       <main className="mx-auto max-w-screen-xl px-4 py-8">
         <h1 className="mb-6 text-2xl font-bold">Drafts</h1>
         <p className="py-12 text-center text-muted-foreground">
-          <Link href="/login" className="text-primary hover:underline">
+          <Link href={Routes.AUTH} className="text-primary hover:underline">
             Sign in
           </Link>{' '}
           to view your drafts.
@@ -36,13 +37,13 @@ export default async function DraftsPage() {
         <h1 className="text-2xl font-bold">My Drafts</h1>
         <div className="flex flex-wrap gap-2">
           <Link
-            href="/lobbies"
+            href={Routes.LOBBIES}
             className="rounded-md border border-primary bg-transparent px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/10"
           >
             Join a Draft
           </Link>
           <Link
-            href="/drafts/new"
+            href={Routes.DRAFT_NEW}
             className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
             + New Draft

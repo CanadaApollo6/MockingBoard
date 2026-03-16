@@ -27,66 +27,87 @@ import {
   Trophy,
   Crosshair,
   Timer,
+  GitCompareArrows,
+  Calculator,
+  BookOpen,
 } from 'lucide-react';
 import { useAuth } from '@/components/auth/auth-provider';
 import { ThemeToggle } from '@/components/layout/theme-toggle';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
+import { Routes } from '@/routes';
 
 const NAV_GROUPS = [
   {
     label: '',
-    items: [{ href: '/', label: 'Home', icon: Home }],
+    items: [{ href: Routes.HOME, label: 'Home', icon: Home }],
   },
   {
     label: 'Drafts',
     items: [
-      { href: '/drafts', label: 'My Drafts', icon: FileText },
-      { href: '/draft-day', label: 'Draft Day', icon: Timer },
-      { href: '/companion', label: 'Companion', icon: Crosshair },
-      { href: '/lobbies', label: 'Join Lobby', icon: Users },
+      { href: Routes.DRAFTS, label: 'My Drafts', icon: FileText },
+      { href: Routes.DRAFT_DAY, label: 'Draft Day', icon: Timer },
+      { href: Routes.COMPANION, label: 'Companion', icon: Crosshair },
+      { href: Routes.LOBBIES, label: 'Join Lobby', icon: Users },
     ],
   },
   {
     label: 'Scouting',
     items: [
-      { href: '/prospects', label: 'Prospects', icon: Shirt },
-      { href: '/board', label: 'My Board', icon: LayoutList },
-      { href: '/rankings', label: 'Rankings', icon: BarChart3 },
-      { href: '/boards', label: 'Boards', icon: Library },
+      { href: Routes.PROSPECTS, label: 'Prospects', icon: Shirt },
+      { href: Routes.BOARD, label: 'My Board', icon: LayoutList },
+      { href: Routes.RANKINGS, label: 'Rankings', icon: BarChart3 },
+      { href: Routes.BOARDS, label: 'Boards', icon: Library },
     ],
   },
   {
     label: 'Community',
     items: [
-      { href: '/community', label: 'Community', icon: Globe },
-      { href: '/scouts', label: 'Scouts', icon: Eye },
-      { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
+      { href: Routes.COMMUNITY, label: 'Community', icon: Globe },
+      { href: Routes.SCOUTS, label: 'Scouts', icon: Eye },
+      { href: Routes.LEADERBOARD, label: 'Leaderboard', icon: Trophy },
     ],
   },
   {
     label: 'Tools',
     items: [
-      { href: '/draft-order', label: 'Draft Order', icon: ListOrdered },
-      { href: '/teams', label: 'Teams', icon: GalleryHorizontalEnd },
-      { href: '/players', label: 'NFL Players', icon: Contact },
+      { href: Routes.DRAFT_ORDER, label: 'Draft Order', icon: ListOrdered },
+      { href: Routes.TEAMS, label: 'Teams', icon: GalleryHorizontalEnd },
+      { href: Routes.PLAYERS, label: 'NFL Players', icon: Contact },
       {
-        href: '/trade-calculator',
+        href: Routes.COMPARE_PLAYERS,
+        label: 'Player Compare',
+        icon: GitCompareArrows,
+      },
+      {
+        href: Routes.TRADE_CALCULATOR,
         label: 'Trade Calculator',
         icon: ArrowLeftRight,
       },
-      { href: '/invite', label: 'Add Bot', icon: Bot },
+      {
+        href: Routes.CONTRACT_BUILDER,
+        label: 'Contract Builder',
+        icon: Calculator,
+      },
+      { href: Routes.INVITE, label: 'Add Bot', icon: Bot },
+    ],
+  },
+  {
+    label: 'Learn',
+    items: [
+      { href: Routes.LEARN_NFL_DRAFT, label: 'NFL Draft', icon: BookOpen },
+      { href: Routes.LEARN_SALARY_CAP, label: 'Salary Cap', icon: BookOpen },
     ],
   },
 ] as const;
 
 const ADMIN_GROUP = {
   label: 'Admin',
-  items: [{ href: '/admin', label: 'Dashboard', icon: Shield }],
+  items: [{ href: Routes.ADMIN, label: 'Dashboard', icon: Shield }],
 };
 
 function isNavActive(href: string, pathname: string): boolean {
-  if (href === '/' || href === '/drafts' || href === '/board')
+  if (href === Routes.HOME || href === Routes.DRAFTS || href === Routes.BOARD)
     return pathname === href;
   return pathname.startsWith(href);
 }
@@ -115,7 +136,10 @@ export function Sidebar({
     <div className="flex h-full flex-col">
       {/* Logo */}
       <div className="flex h-14 items-center gap-2 px-4">
-        <Link href="/" className="flex items-center gap-2 text-lg font-bold">
+        <Link
+          href={Routes.HOME}
+          className="flex items-center gap-2 text-lg font-bold"
+        >
           <Image
             src="/logo.png"
             alt=""
@@ -197,7 +221,7 @@ export function Sidebar({
         {loading ? null : user ? (
           <>
             <Link
-              href="/settings/profile"
+              href={Routes.SETTINGS_PROFILE}
               className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
             >
               {profile?.avatar ? (
@@ -214,7 +238,7 @@ export function Sidebar({
               {profile?.displayName ?? 'User'}
             </Link>
             <Link
-              href="/settings"
+              href={Routes.SETTINGS}
               className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
             >
               <Settings className="h-4 w-4 shrink-0" />
@@ -223,7 +247,7 @@ export function Sidebar({
           </>
         ) : (
           <Link
-            href="/auth"
+            href={Routes.AUTH}
             className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
           >
             <LogIn className="h-4 w-4 shrink-0" />

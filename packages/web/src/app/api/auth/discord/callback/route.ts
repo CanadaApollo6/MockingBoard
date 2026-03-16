@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { adminDb, adminAuth } from '@/lib/firebase/firebase-admin';
 import { getOrigin } from '@/lib/url';
 import { getSessionUser } from '@/lib/firebase/auth-session';
+import { Routes } from '@/routes';
 
 const DISCORD_TOKEN_URL = 'https://discord.com/api/oauth2/token';
 const DISCORD_USER_URL = 'https://discord.com/api/users/@me';
@@ -55,7 +56,7 @@ export async function GET(request: Request) {
         client_secret: process.env.DISCORD_CLIENT_SECRET!,
         grant_type: 'authorization_code',
         code,
-        redirect_uri: `${origin}/api/auth/discord/callback`,
+        redirect_uri: `${origin}${Routes.API_AUTH_DISCORD_CALLBACK}`,
       }),
     });
 
@@ -83,7 +84,7 @@ export async function GET(request: Request) {
       const session = await getSessionUser();
       if (!session) {
         return NextResponse.redirect(
-          new URL('/settings?error=not_authenticated', origin),
+          new URL(`${Routes.SETTINGS}?error=not_authenticated`, origin),
         );
       }
 
@@ -96,7 +97,7 @@ export async function GET(request: Request) {
 
       if (!existing.empty && existing.docs[0].id !== session.uid) {
         const response = NextResponse.redirect(
-          new URL('/settings?error=discord_already_linked', origin),
+          new URL(`${Routes.SETTINGS}?error=discord_already_linked`, origin),
         );
         response.cookies.delete('discord_oauth_state');
         return response;
@@ -116,14 +117,14 @@ export async function GET(request: Request) {
       } catch (err) {
         console.error('Discord link DB update failed:', err);
         const response = NextResponse.redirect(
-          new URL('/settings?error=discord_link_failed', origin),
+          new URL(`${Routes.SETTINGS}?error=discord_link_failed`, origin),
         );
         response.cookies.delete('discord_oauth_state');
         return response;
       }
 
       const response = NextResponse.redirect(
-        new URL('/settings?linked=discord', origin),
+        new URL(`${Routes.SETTINGS}?linked=discord`, origin),
       );
       response.cookies.delete('discord_oauth_state');
       return response;

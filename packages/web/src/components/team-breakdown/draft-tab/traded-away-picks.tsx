@@ -8,6 +8,7 @@ import {
   TableHeader,
 } from '@/components/ui/table';
 import Link from 'next/link';
+import { Routes } from '@/routes';
 import { getTeamName } from '@/lib/teams';
 import type { TradedAwayPick } from '../team-breakdown';
 
@@ -51,7 +52,7 @@ export const TradedAwayPicks: React.FC<TradedAwayPicksProps> = ({
                   </TableCell>
                   <TableCell className="no-underline">
                     <Link
-                      href={`/teams/${p.tradedTo}`}
+                      href={Routes.team(p.tradedTo)}
                       className="text-sm text-foreground no-underline hover:underline"
                     >
                       {getTeamName(p.tradedTo)}

@@ -1,5 +1,6 @@
 import { Card, CardContent, CardTitle, CardHeader } from '@/components/ui/card';
 import Link from 'next/link';
+import { Routes } from '@/routes';
 import { TeamSeed } from '../../../../../shared/src/data';
 import { TeamCapitalRank } from '../team-breakdown';
 import { TEAM_COLORS } from '@/lib/colors/team-colors';
@@ -32,7 +33,7 @@ export const CapitalRanking: React.FC<CapitalRankingProps> = ({
             return (
               <Link
                 key={entry.team}
-                href={`/teams/${entry.team}`}
+                href={Routes.team(entry.team)}
                 className="group flex items-center gap-2 text-sm"
               >
                 <span className="w-6 shrink-0 text-right font-mono text-xs text-muted-foreground">

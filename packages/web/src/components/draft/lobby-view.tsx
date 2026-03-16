@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { getDraftDisplayName } from '@/lib/firebase/format';
 import { cn } from '@/lib/utils';
 import { getErrorMessage } from '@/lib/validate';
+import { Routes } from '@/routes';
 
 const CONFERENCES = ['AFC', 'NFC'] as const;
 const DIVISIONS = ['East', 'North', 'South', 'West'] as const;
@@ -134,7 +135,7 @@ export function LobbyView({
         const data = await res.json();
         throw new Error(data.error || 'Failed to cancel');
       }
-      router.push('/drafts');
+      router.push(Routes.DRAFTS);
     } catch (err) {
       setError(getErrorMessage(err, 'Failed to cancel'));
       setCancelling(false);

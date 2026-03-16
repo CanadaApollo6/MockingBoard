@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { getCachedPlayers, getCachedSeasonConfig } from '@/lib/cache';
 import { ProspectBigBoard } from './prospect-big-board';
 
+export const revalidate = 3600;
+
 export const metadata: Metadata = {
   title: '2026 Big Board',
   description:

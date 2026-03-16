@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
+import { Routes } from '@/routes';
 import { isTeamAbbreviation } from '@mockingboard/shared';
 import {
   getCachedEspnPlayerBio,
@@ -50,7 +51,7 @@ export default async function NflPlayerPage({ params }: Props) {
   return (
     <main className="mx-auto max-w-screen-xl px-4 py-8">
       <Link
-        href="/players"
+        href={Routes.PLAYERS}
         className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
         <ChevronLeft className="h-4 w-4" />

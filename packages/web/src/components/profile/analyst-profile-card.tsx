@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Routes } from '@/routes';
 import type { User } from '@mockingboard/shared';
 
 interface AnalystProfileCardProps {
@@ -16,7 +17,7 @@ export function AnalystProfileCard({
 }: AnalystProfileCardProps) {
   return (
     <Link
-      href={`/profile/${user.slug}`}
+      href={Routes.profile(user.slug ?? user.id)}
       className="block rounded-xl border bg-card p-5 transition-colors hover:bg-muted/30"
     >
       <div className="flex items-start gap-3">

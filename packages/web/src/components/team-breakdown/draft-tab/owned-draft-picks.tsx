@@ -9,6 +9,7 @@ import {
 } from '../../ui/table';
 import { CardTitle } from '../../ui/card';
 import Link from 'next/link';
+import { Routes } from '@/routes';
 import type { OwnedPick } from '../team-breakdown';
 import type { TeamAbbreviation } from '@mockingboard/shared';
 
@@ -55,7 +56,7 @@ export const OwnedDraftPicks = ({
                       <span className="text-sm text-muted-foreground">
                         via{' '}
                         <Link
-                          href={`/teams/${p.originalTeam}`}
+                          href={Routes.team(p.originalTeam)}
                           className="hover:text-foreground hover:underline"
                         >
                           {getTeamName(p.originalTeam)}

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { Player, Draft, User, SeasonOverview } from '@mockingboard/shared';
+import { Routes } from '@/routes';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { GradientCard } from '@/components/ui/gradient-card';
@@ -39,20 +40,20 @@ export function Dashboard({
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold">Welcome back, {displayName}</h1>
         <div className="flex flex-wrap gap-2">
-          <Link href="/drafts/new">
+          <Link href={Routes.DRAFT_NEW}>
             <Button size="sm">New Draft</Button>
           </Link>
-          <Link href="/lobbies">
+          <Link href={Routes.LOBBIES}>
             <Button variant="outline" size="sm">
               Join Lobby
             </Button>
           </Link>
-          <Link href="/board">
+          <Link href={Routes.BOARD}>
             <Button variant="outline" size="sm">
               My Board
             </Button>
           </Link>
-          <Link href="/players">
+          <Link href={Routes.PLAYERS}>
             <Button variant="outline" size="sm">
               Players
             </Button>
@@ -72,7 +73,7 @@ export function Dashboard({
               <p className="mb-3 text-xs font-medium uppercase tracking-widest text-white/70">
                 Prospect of the Day
               </p>
-              <Link href={`/players/${prospect.id}`} className="group">
+              <Link href={Routes.prospect(prospect.id)} className="group">
                 <p className="font-[family-name:var(--font-display)] text-xl font-bold uppercase tracking-tight group-hover:text-white/80">
                   {prospect.name}
                 </p>
@@ -141,7 +142,7 @@ export function Dashboard({
             ) : (
               <div className="text-center">
                 <p className="text-sm text-muted-foreground">No drafts yet.</p>
-                <Link href="/drafts/new">
+                <Link href={Routes.DRAFT_NEW}>
                   <Button size="sm" className="mt-3">
                     Start Your First Draft
                   </Button>
@@ -158,7 +159,7 @@ export function Dashboard({
               Mock Draft of the Week
             </p>
             {draftOfWeek ? (
-              <Link href={`/drafts/${draftOfWeek.id}`} className="group">
+              <Link href={Routes.draft(draftOfWeek.id)} className="group">
                 <p className="font-medium group-hover:text-primary">
                   {draftOfWeek.name || 'Mock Draft'}
                 </p>
@@ -193,7 +194,7 @@ export function Dashboard({
                 Leaderboard
               </p>
               <Link
-                href="/leaderboard"
+                href={Routes.LEADERBOARD}
                 className="text-xs text-muted-foreground hover:text-primary"
               >
                 View All
@@ -208,7 +209,7 @@ export function Dashboard({
                     </span>
                     {u.slug && u.isPublic ? (
                       <Link
-                        href={`/profile/${u.slug}`}
+                        href={Routes.profile(u.slug)}
                         className="font-medium hover:text-primary"
                       >
                         {u.displayName}
@@ -245,7 +246,7 @@ export function Dashboard({
 
           return (
             <Link
-              href={`/teams/${followedTeam.abbreviation}`}
+              href={Routes.team(followedTeam.abbreviation)}
               className="mt-6 block"
             >
               <SeasonOverviewCard

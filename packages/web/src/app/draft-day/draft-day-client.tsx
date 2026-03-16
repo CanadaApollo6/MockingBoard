@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { doc, onSnapshot, Timestamp } from 'firebase/firestore';
+import { Routes } from '@/routes';
 import { getClientDb } from '@/lib/firebase/firebase';
 import { Check, Minus, Clock } from 'lucide-react';
 import type { DraftResultPick } from '@mockingboard/shared';
@@ -147,10 +148,10 @@ function CountdownView({ year }: { year: number }) {
           )}
 
           <div className="mt-10 flex flex-wrap justify-center gap-3">
-            <Link href="/drafts">
+            <Link href={Routes.DRAFTS}>
               <Button>Create Mock Draft</Button>
             </Link>
-            <Link href="/companion">
+            <Link href={Routes.COMPANION}>
               <Button
                 variant="outline"
                 className="border-white/30 text-white hover:bg-white/10"
@@ -449,10 +450,10 @@ function CompleteView({
       )}
 
       <div className="mt-8 flex flex-wrap justify-center gap-3">
-        <Link href="/companion">
+        <Link href={Routes.COMPANION}>
           <Button>View Full Scoring</Button>
         </Link>
-        <Link href="/leaderboard">
+        <Link href={Routes.LEADERBOARD}>
           <Button variant="outline">Leaderboard</Button>
         </Link>
       </div>

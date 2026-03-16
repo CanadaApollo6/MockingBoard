@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { Player } from '@mockingboard/shared';
+import { Routes } from '@/routes';
 
 interface AttributionBadgeProps {
   dataProviders: NonNullable<Player['dataProviders']>;
@@ -16,7 +17,7 @@ export function AttributionBadge({ dataProviders }: AttributionBadgeProps) {
         <span key={provider.slug}>
           {i > 0 && ', '}
           <Link
-            href={`/scouts/${provider.slug}`}
+            href={Routes.scout(provider.slug)}
             className="font-medium text-foreground underline-offset-2 hover:underline"
           >
             {provider.name}

@@ -742,3 +742,27 @@ export interface LeagueCapOverview {
   activeCapSpending: number;
   deadMoney: number;
 }
+
+// ---- Rookie Slot Import Types ----
+
+export interface RookieSlotEntry {
+  overall: number;
+  round: number;
+  pick: number;
+  team: string;
+  totalValue: number;
+  signingBonus: number;
+  year1Cap: number;
+  year2Cap: number;
+  year3Cap: number;
+  year4Cap: number;
+  year1Base: number;
+  year2Base: number;
+  year3Base: number;
+  year4Base: number;
+}
+
+export interface RookieSlotData {
+  year: number;
+  slots: RookieSlotEntry[];
+}

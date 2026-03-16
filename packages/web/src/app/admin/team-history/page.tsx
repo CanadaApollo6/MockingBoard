@@ -5,10 +5,11 @@ import { isAdmin } from '@/lib/firebase/admin';
 import { teams } from '@mockingboard/shared';
 import { getCachedSeasonConfig } from '@/lib/cache';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Routes } from '@/routes';
 
 export default async function TeamHistoryPage() {
   const session = await getSessionUser();
-  if (!session) redirect('/login');
+  if (!session) redirect(Routes.AUTH);
   if (!(await isAdmin(session.uid))) redirect('/admin');
 
   const { statsYear } = await getCachedSeasonConfig();
@@ -26,7 +27,7 @@ export default async function TeamHistoryPage() {
           </p>
         </div>
         <Link
-          href="/admin"
+          href={Routes.ADMIN}
           className="text-sm text-muted-foreground hover:text-foreground"
         >
           Back to Admin
@@ -37,7 +38,7 @@ export default async function TeamHistoryPage() {
         {sorted.map((team) => (
           <Link
             key={team.id}
-            href={`/admin/team-history/${team.id}/${statsYear}`}
+            href={Routes.adminTeamHistory(team.id, statsYear)}
           >
             <Card className="transition-colors hover:bg-muted/50">
               <CardHeader className="pb-1">

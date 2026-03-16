@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Routes } from '@/routes';
 import type { ScoutProfile } from '@mockingboard/shared';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,7 +16,7 @@ interface ScoutProfileCardProps {
 
 export function ScoutProfileCard({ profile }: ScoutProfileCardProps) {
   return (
-    <Link href={`/scouts/${profile.slug}`}>
+    <Link href={Routes.scout(profile.slug)}>
       <Card className="transition-colors hover:border-primary/50">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

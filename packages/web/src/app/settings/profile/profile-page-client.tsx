@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { TEAM_COLORS, hexToHsl } from '@/lib/colors/team-colors';
 import { cn } from '@/lib/utils';
 import { getErrorMessage } from '@/lib/validate';
+import { Routes } from '@/routes';
 
 const AFC_TEAMS = teams.filter((t) => t.conference === 'AFC');
 const NFC_TEAMS = teams.filter((t) => t.conference === 'NFC');
@@ -110,7 +111,7 @@ export function ProfilePageClient() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link
-            href="/settings"
+            href={Routes.SETTINGS}
             className="text-muted-foreground transition-colors hover:text-foreground"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -119,7 +120,7 @@ export function ProfilePageClient() {
         </div>
         {hasPublicProfile && (
           <Link
-            href={`/profile/${slug}`}
+            href={Routes.profile(slug)}
             className="flex items-center gap-1.5 text-sm text-mb-accent hover:underline"
           >
             View Profile

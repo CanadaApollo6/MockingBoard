@@ -57,6 +57,8 @@ export type {
   DeadCapEntry,
   TeamContractData,
   LeagueCapOverview,
+  RookieSlotEntry,
+  RookieSlotData,
 } from './types';
 
 // Constants & Guards
@@ -164,3 +166,94 @@ export {
   COV_KEYS,
   type ParsedProspect,
 } from './prospect-import';
+
+// Salary cap types
+export type {
+  IncentiveClassification,
+  Incentive,
+  ContractYear,
+  CapContract,
+  CapHitBreakdown,
+  CutTiming,
+  DeadMoneyResult,
+  RestructureResult,
+  TagType,
+  TagResult,
+  PositionSalaryData,
+  IncentiveNettingResult,
+  TeamCapSummary,
+  SpendingFloorResult,
+  RookieSlotValue,
+  FifthYearOptionTier,
+  FifthYearOptionResult,
+  ProvenPerformanceEscalatorResult,
+  VeteranBenefitResult,
+} from './salary-cap-types';
+
+// Salary cap constants
+export {
+  SALARY_CAP_BY_YEAR,
+  VETERAN_MINIMUM_BY_YEARS,
+  VETERAN_MINIMUM_7_PLUS,
+  VETERAN_BENEFIT_CREDITED_SEASONS,
+  MAX_PRORATION_YEARS,
+  MAX_POST_JUNE_1_DESIGNATIONS,
+  CASH_SPENDING_FLOOR_PCT,
+  CASH_SPENDING_FLOOR_WINDOW_YEARS,
+  FRANCHISE_TAG_ESCALATOR_YEAR_2,
+  FRANCHISE_TAG_ESCALATOR_YEAR_3_PLUS,
+  TOP_51_COUNT,
+  FIFTH_YEAR_OPTION_AMOUNTS,
+  PPE_SNAP_THRESHOLD,
+  PPE_QUALIFYING_SEASONS,
+  PPE_MIN_ROUND,
+  PPE_MAX_ROUND,
+  getVeteranMinimum,
+} from './salary-cap-constants';
+
+// Salary cap core
+export {
+  calculateProration,
+  calculateCapHit,
+  applyVeteranBenefit,
+} from './salary-cap-core';
+
+// Salary cap dead money
+export {
+  calculateDeadMoney,
+  calculateTradeDeadMoney,
+} from './salary-cap-dead-money';
+
+// Salary cap restructures
+export {
+  calculateRestructure,
+  maxRestructureAmount,
+} from './salary-cap-restructure';
+
+// Salary cap tags
+export { calculateTag } from './salary-cap-tags';
+
+// Salary cap incentives
+export {
+  classifyIncentive,
+  calculateIncentiveNetting,
+} from './salary-cap-incentives';
+
+// Salary cap team accounting
+export {
+  applyTop51Rule,
+  calculateCapRollover,
+  calculateTeamCap,
+  checkSpendingFloor,
+} from './salary-cap-team';
+
+// Salary cap rookie wage scale
+export {
+  getRookieSlotValue,
+  buildRookieContract,
+  calculateFifthYearOption,
+  calculateProvenPerformanceEscalator,
+} from './salary-cap-rookie';
+
+// Salary cap bridge
+export { fromDisplayContract } from './salary-cap-bridge';

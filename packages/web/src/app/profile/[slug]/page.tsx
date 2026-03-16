@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import { Routes } from '@/routes';
 import {
   getUserBySlug,
   getFollowCounts,
@@ -174,7 +175,7 @@ export default async function ProfilePage({ params }: Props) {
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold">Prediction Accuracy</h2>
             <Link
-              href="/leaderboard"
+              href={Routes.LEADERBOARD}
               className="text-sm text-mb-accent hover:underline"
             >
               View Leaderboard
@@ -297,7 +298,7 @@ export default async function ProfilePage({ params }: Props) {
                   <div key={report.id}>
                     {player && (
                       <Link
-                        href={`/players/${report.playerId}`}
+                        href={Routes.prospect(report.playerId)}
                         className="mb-1 block text-sm font-medium text-mb-accent hover:underline"
                       >
                         {player.name} — {player.position}, {player.school}

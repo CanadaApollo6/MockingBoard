@@ -1,8 +1,13 @@
+'use client';
+
+import { useId } from 'react';
+
 interface SparklineProps {
   values: number[];
   width?: number;
   height?: number;
   className?: string;
+  style?: React.CSSProperties;
 }
 
 export function Sparkline({
@@ -10,6 +15,7 @@ export function Sparkline({
   width = 80,
   height = 24,
   className,
+  style,
 }: SparklineProps) {
   if (values.length === 0) return null;
 
@@ -39,6 +45,7 @@ export function Sparkline({
         height={height}
         viewBox={`0 0 ${width} ${height}`}
         className={className}
+        style={style}
         aria-hidden
       >
         <circle cx={points[0].x} cy={points[0].y} r={2} fill="currentColor" />
@@ -51,7 +58,8 @@ export function Sparkline({
     polyline +
     ` ${points[points.length - 1].x},${height} ${points[0].x},${height}`;
 
-  const gradientId = `spark-fill-${Math.random().toString(36).slice(2, 8)}`;
+  const id = useId();
+  const gradientId = `spark-fill-${id}`;
 
   return (
     <svg
@@ -59,6 +67,7 @@ export function Sparkline({
       height={height}
       viewBox={`0 0 ${width} ${height}`}
       className={className}
+      style={style}
       aria-hidden
     >
       <defs>

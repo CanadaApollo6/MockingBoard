@@ -217,12 +217,12 @@ describe('useLocalDraft', () => {
       expect(result.current.picks[0].userId).toBe('user-1');
     });
 
-    it('syncs on pause', () => {
+    it('syncs on pause', async () => {
       const { result } = renderHook(() =>
         useLocalDraft(makeDraft(), makePlayers(), options),
       );
 
-      act(() => {
+      await act(async () => {
         result.current.pause();
       });
 
@@ -259,7 +259,7 @@ describe('useLocalDraft', () => {
       expect(body.reason).toBe('cancel');
     });
 
-    it('syncs on complete (last pick)', () => {
+    it('syncs on complete (last pick)', async () => {
       // 2-pick draft: pick 1 is human, pick 2 is human
       mockGetPickController.mockReturnValue('user-1');
       const draft = makeDraft({ currentPick: 2, pickedPlayerIds: ['p1'] });
@@ -268,7 +268,7 @@ describe('useLocalDraft', () => {
         useLocalDraft(draft, makePlayers(), options),
       );
 
-      act(() => {
+      await act(async () => {
         result.current.recordPick('p2');
       });
 
@@ -284,7 +284,7 @@ describe('useLocalDraft', () => {
       expect(body.reason).toBe('complete');
     });
 
-    it('syncs on trade execution', () => {
+    it('syncs on trade execution', async () => {
       const draft = makeDraft({
         config: { ...makeDraft().config, tradesEnabled: true },
       });
@@ -306,7 +306,7 @@ describe('useLocalDraft', () => {
         isForceTrade: false,
       };
 
-      act(() => {
+      await act(async () => {
         result.current.executeTrade(trade, false);
       });
 
@@ -321,7 +321,7 @@ describe('useLocalDraft', () => {
       expect(body.reason).toBe('trade');
     });
 
-    it('sends only new picks (not previously synced)', () => {
+    it('sends only new picks (not previously synced)', async () => {
       const existingPicks = [makePick({ id: 'pick-1', playerId: 'p1' })];
 
       const draft = makeDraft({
@@ -335,7 +335,7 @@ describe('useLocalDraft', () => {
       );
 
       // Record another pick, completing the draft
-      act(() => {
+      await act(async () => {
         result.current.recordPick('p2');
       });
 

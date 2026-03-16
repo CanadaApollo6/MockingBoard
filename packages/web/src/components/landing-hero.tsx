@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/components/auth/auth-provider';
+import { Routes } from '@/routes';
 import { AuthForm } from '@/components/auth/auth-form';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -115,12 +116,15 @@ export function LandingHero({ error }: LandingHeroProps) {
               >
                 {!loading && user ? (
                   <>
-                    <Link href="/drafts/new" className="w-full sm:w-auto">
+                    <Link href={Routes.DRAFT_NEW} className="w-full sm:w-auto">
                       <Button size="lg" className="w-full">
                         New Draft
                       </Button>
                     </Link>
-                    <Link href="/drafts?tab=mine" className="w-full sm:w-auto">
+                    <Link
+                      href={`${Routes.DRAFTS}?tab=mine`}
+                      className="w-full sm:w-auto"
+                    >
                       <Button variant="outline" size="lg" className="w-full">
                         My Drafts
                       </Button>
@@ -128,7 +132,7 @@ export function LandingHero({ error }: LandingHeroProps) {
                   </>
                 ) : (
                   <>
-                    <Link href="/drafts/new" className="w-full sm:w-auto">
+                    <Link href={Routes.DRAFT_NEW} className="w-full sm:w-auto">
                       <Button size="lg" className="w-full">
                         Mock Draft Now
                       </Button>

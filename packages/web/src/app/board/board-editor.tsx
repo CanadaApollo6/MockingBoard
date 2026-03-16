@@ -41,6 +41,7 @@ import { Badge } from '@/components/ui/badge';
 import { getPositionColor } from '@/lib/colors/position-colors';
 import { BoardGeneratorDialog } from '@/components/board/board-generator-dialog';
 import { Sparkles } from 'lucide-react';
+import { Routes } from '@/routes';
 
 interface BoardEditorProps {
   players: Record<string, Player>;
@@ -484,7 +485,7 @@ function BoardEditorInner({
                       </Button>
                       <Button variant="outline" size="xs" asChild>
                         <a
-                          href={`/board/compare?boardId=${board.id}&snapshotId=${snap.id}`}
+                          href={`${Routes.BOARD_COMPARE}?boardId=${board.id}&snapshotId=${snap.id}`}
                         >
                           Compare
                         </a>

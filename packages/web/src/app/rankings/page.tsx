@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Routes } from '@/routes';
 import { getSessionUser } from '@/lib/firebase/auth-session';
 import { getPlayerMap, getUserBoardForYear } from '@/lib/firebase/data';
 import { getCachedSeasonConfig } from '@/lib/cache';
@@ -12,7 +13,7 @@ export default async function RankingsPage() {
       <main className="mx-auto max-w-screen-xl px-4 py-8">
         <h1 className="mb-6 text-2xl font-bold">Positional Rankings</h1>
         <p className="py-12 text-center text-muted-foreground">
-          <Link href="/auth" className="text-primary hover:underline">
+          <Link href={Routes.AUTH} className="text-primary hover:underline">
             Sign in
           </Link>{' '}
           to create positional rankings.
@@ -33,7 +34,7 @@ export default async function RankingsPage() {
         <h1 className="mb-6 text-2xl font-bold">Positional Rankings</h1>
         <p className="py-12 text-center text-muted-foreground">
           Create a{' '}
-          <Link href="/board" className="text-primary hover:underline">
+          <Link href={Routes.BOARD} className="text-primary hover:underline">
             Big Board
           </Link>{' '}
           first — positional rankings are derived from your board.

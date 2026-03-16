@@ -12,6 +12,7 @@ import { useAuth } from '@/components/auth/auth-provider';
 import { useTeamTheme } from '@/hooks/use-team-theme';
 import { isBare } from '@/lib/overlay-theme';
 import type { Announcement } from '@/lib/cache';
+import { Routes } from '@/routes';
 
 const VARIANT_STYLES: Record<string, string> = {
   info: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
@@ -73,7 +74,7 @@ export function AppShell({ children, announcement }: AppShellProps) {
             <span className="sr-only">Open menu</span>
           </button>
           <Link
-            href="/"
+            href={Routes.HOME}
             className="flex flex-1 items-center gap-2 text-sm font-bold"
           >
             <Image

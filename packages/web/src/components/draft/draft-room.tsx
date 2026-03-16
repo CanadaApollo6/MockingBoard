@@ -31,7 +31,9 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { getErrorMessage } from '@/lib/validate';
+import { Routes } from '@/routes';
 import { ErrorBoundary } from '@/components/layout/error-boundary';
+import { OverlayLinksPopover } from '@/components/draft/overlay-links-popover';
 
 interface DraftRoomProps {
   draftId: string;
@@ -135,17 +137,14 @@ export function DraftRoom({
   // Redirect to recap page when draft completes
   useEffect(() => {
     if (isComplete && !advancingCpu) {
-      router.push(`/drafts/${draftId}`);
+      router.push(Routes.draft(draftId));
     }
   }, [isComplete, advancingCpu, draftId, router]);
 
-  // Trade eligibility: any team not owned by the current user is a valid target
+  // Trade eligibility: need at least 2 teams (user can trade between own teams or with CPU)
   const hasTradeTargets = useMemo(
-    () =>
-      draft
-        ? Object.values(draft.teamAssignments).some((uid) => uid !== userId)
-        : false,
-    [draft, userId],
+    () => (draft ? Object.keys(draft.teamAssignments).length >= 2 : false),
+    [draft],
   );
   const canTrade =
     (isActive || isPaused) &&
@@ -339,7 +338,7 @@ export function DraftRoom({
         const data = await res.json();
         throw new Error(data.error || 'Failed to cancel');
       }
-      router.push('/drafts');
+      router.push(Routes.DRAFTS);
     } catch (err) {
       setError(getErrorMessage(err, 'Failed to cancel'));
       setCancelling(false);
@@ -388,21 +387,24 @@ export function DraftRoom({
               }
               secondsPerPick={draft?.config.secondsPerPick}
             />
-            {isActive && userId === draft?.createdBy && (
-              <div className="flex gap-2">
-                <Button variant="ghost" size="sm" onClick={handlePause}>
-                  Pause Draft
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-destructive"
-                  onClick={() => setShowCancelConfirm(true)}
-                >
-                  Cancel Draft
-                </Button>
-              </div>
-            )}
+            <div className="flex gap-2">
+              <OverlayLinksPopover draftId={draftId} />
+              {isActive && userId === draft?.createdBy && (
+                <>
+                  <Button variant="ghost" size="sm" onClick={handlePause}>
+                    Pause Draft
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive"
+                    onClick={() => setShowCancelConfirm(true)}
+                  >
+                    Cancel Draft
+                  </Button>
+                </>
+              )}
+            </div>
           </>
         )}
       {isPaused && (
@@ -483,7 +485,10 @@ export function DraftRoom({
       ))}
 
       {canTrade && (
-        <Button variant="outline" size="sm" onClick={() => setShowTrade(true)}>
+        <Button
+          className="w-full bg-mb-accent text-black hover:bg-mb-accent/90"
+          onClick={() => setShowTrade(true)}
+        >
           Propose Trade
         </Button>
       )}

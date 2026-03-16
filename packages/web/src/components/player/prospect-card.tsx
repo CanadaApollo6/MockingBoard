@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { Player } from '@mockingboard/shared';
+import { Routes } from '@/routes';
 import { Badge } from '@/components/ui/badge';
 import { getPositionColor } from '@/lib/colors/position-colors';
 import { schoolColorStyle } from '@/lib/colors/school-colors';
@@ -58,7 +59,7 @@ export function ProspectCard({ player }: ProspectCardProps) {
         <div>
           <h2 className="font-[family-name:var(--font-display)] text-2xl font-bold uppercase leading-tight tracking-tight sm:text-3xl">
             <Link
-              href={`/players/${player.id}`}
+              href={Routes.prospect(player.id)}
               className="hover:text-mb-accent transition-colors"
             >
               {player.name}

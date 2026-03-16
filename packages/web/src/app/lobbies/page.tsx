@@ -3,6 +3,7 @@ import { getPublicLobbies } from '@/lib/firebase/data';
 import { getDraftDisplayName } from '@/lib/firebase/format';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Routes } from '@/routes';
 
 export const revalidate = 30;
 
@@ -18,7 +19,10 @@ export default async function LobbiesPage() {
       {lobbies.length === 0 ? (
         <p className="py-12 text-center text-muted-foreground">
           No open lobbies right now. Create one from the{' '}
-          <Link href="/drafts/new" className="underline hover:text-foreground">
+          <Link
+            href={Routes.DRAFT_NEW}
+            className="underline hover:text-foreground"
+          >
             draft creator
           </Link>
           .
@@ -33,7 +37,7 @@ export default async function LobbiesPage() {
               lobby.createdAt &&
               Date.now() - lobby.createdAt.seconds * 1000 > STALE_MS;
             return (
-              <Link key={lobby.id} href={`/drafts/${lobby.id}/live`}>
+              <Link key={lobby.id} href={Routes.draftLive(lobby.id)}>
                 <Card className="transition-colors hover:border-primary/50">
                   <CardHeader>
                     <CardTitle>{getDraftDisplayName(lobby)}</CardTitle>

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { getPublicBoards, getPublicUsers } from '@/lib/firebase/data';
+import { Routes } from '@/routes';
 import { BoardCard } from '@/components/board/board-card';
 import { AnalystProfileCard } from '@/components/profile/analyst-profile-card';
 
@@ -49,7 +50,10 @@ export default async function CommunityPage() {
       <section>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-xl font-bold">Recent Boards</h2>
-          <a href="/boards" className="text-sm text-mb-accent hover:underline">
+          <a
+            href={Routes.BOARDS}
+            className="text-sm text-mb-accent hover:underline"
+          >
             View all
           </a>
         </div>

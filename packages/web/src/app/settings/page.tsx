@@ -1,10 +1,11 @@
 import { redirect } from 'next/navigation';
 import { getSessionUser } from '@/lib/firebase/auth-session';
+import { Routes } from '@/routes';
 import { SettingsClient } from './settings-client';
 
 export default async function SettingsPage() {
   const session = await getSessionUser();
-  if (!session) redirect('/auth');
+  if (!session) redirect(Routes.AUTH);
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8">

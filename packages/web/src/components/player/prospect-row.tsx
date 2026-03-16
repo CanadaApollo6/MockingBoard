@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Routes } from '@/routes';
 import type { Player } from '@mockingboard/shared';
 import { Badge } from '@/components/ui/badge';
 import { getPositionColor } from '@/lib/colors/position-colors';
@@ -130,7 +131,7 @@ export function ProspectRow({ player }: ProspectRowProps) {
               <ProspectDetails player={player} />
 
               <Link
-                href={`/players/${player.id}`}
+                href={Routes.prospect(player.id)}
                 className="mt-4 inline-block text-sm font-medium text-mb-accent hover:underline"
               >
                 View Full Profile

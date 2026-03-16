@@ -355,6 +355,58 @@ export async function getCachedAnnouncement(): Promise<Announcement | null> {
   }
 }
 
+// ---- Featured config cache (singleton) ----
+
+export interface FeaturedConfig {
+  prospectOfTheDay?: { playerId: string; overrideUntil: number };
+  draftOfTheWeek?: { draftId: string; overrideUntil: number };
+}
+
+let featuredCache: CacheEntry<FeaturedConfig | null> | null = null;
+
+/** Returns the featured config. Cached for 5 minutes. */
+export async function getCachedFeaturedConfig(): Promise<FeaturedConfig | null> {
+  if (!isExpired(featuredCache)) return featuredCache!.data;
+
+  try {
+    const doc = await adminDb.collection('config').doc('featured').get();
+    const data = doc.exists ? (doc.data() as FeaturedConfig) : null;
+    featuredCache = { data, expiresAt: Date.now() + SEASON_CONFIG_TTL };
+    return data;
+  } catch (err) {
+    console.error('Failed to load featured config:', err);
+    return null;
+  }
+}
+
+// ---- Top drafters cache (singleton) ----
+
+let topDraftersCache: CacheEntry<User[]> | null = null;
+
+/** Returns top drafters by accuracy score. Cached for 5 minutes. */
+export async function getCachedTopDrafters(limit = 5): Promise<User[]> {
+  if (!isExpired(topDraftersCache))
+    return topDraftersCache!.data.slice(0, limit);
+
+  const snapshot = await adminDb
+    .collection('users')
+    .orderBy('stats.accuracyScore', 'desc')
+    .limit(limit + 5)
+    .get();
+
+  const drafters = sanitize(
+    hydrateDocs<User>(snapshot)
+      .filter((u) => !u.isGuest && (u.stats?.accuracyScore ?? 0) > 0)
+      .slice(0, limit),
+  );
+
+  topDraftersCache = {
+    data: drafters,
+    expiresAt: Date.now() + SEASON_CONFIG_TTL,
+  };
+  return drafters;
+}
+
 // ---- Bulk reset ----
 
 /** Invalidate all Firestore-backed caches. */
@@ -368,6 +420,8 @@ export function resetFirestoreCaches() {
   cpuConfigCache = null;
   publicUsersCache = null;
   publicBoardsCache = null;
+  featuredCache = null;
+  topDraftersCache = null;
   playerCache.clear();
   draftOrderCache.clear();
 }

@@ -6,10 +6,11 @@ import { adminDb } from '@/lib/firebase/firebase-admin';
 import { getCachedSeasonConfig, getCachedPlayers } from '@/lib/cache';
 import { FeaturedEditor } from './featured-editor';
 import type { FeaturedConfig } from '@/app/api/admin/featured/route';
+import { Routes } from '@/routes';
 
 export default async function AdminFeaturedPage() {
   const session = await getSessionUser();
-  if (!session) redirect('/login');
+  if (!session) redirect(Routes.AUTH);
   if (!(await isAdmin(session.uid))) {
     return (
       <main className="mx-auto max-w-4xl px-4 py-8">

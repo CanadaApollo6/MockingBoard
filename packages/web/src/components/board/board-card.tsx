@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { BigBoard } from '@mockingboard/shared';
+import { Routes } from '@/routes';
 
 interface BoardCardProps {
   board: BigBoard;
@@ -12,7 +13,7 @@ export function BoardCard({ board }: BoardCardProps) {
 
   return (
     <Link
-      href={`/boards/${board.slug}`}
+      href={Routes.board(board.slug ?? board.id)}
       className="block rounded-xl border bg-card p-5 transition-colors hover:bg-muted/30"
     >
       <div className="flex items-start justify-between gap-3">

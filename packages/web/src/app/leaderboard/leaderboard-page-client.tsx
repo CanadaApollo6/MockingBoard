@@ -11,6 +11,7 @@ import {
   SelectContent,
   SelectItem,
 } from '@/components/ui/select';
+import { Routes } from '@/routes';
 
 const MEDAL_COLORS = ['text-yellow-500', 'text-gray-400', 'text-amber-700'];
 
@@ -29,9 +30,9 @@ export function LeaderboardPageClient({
 
   function handleYearChange(value: string) {
     if (value === 'all') {
-      router.push('/leaderboard');
+      router.push(Routes.LEADERBOARD);
     } else {
-      router.push(`/leaderboard?year=${value}`);
+      router.push(`${Routes.LEADERBOARD}?year=${value}`);
     }
   }
 
@@ -104,7 +105,7 @@ export function LeaderboardPageClient({
                   <td className="px-4 py-3">
                     {entry.slug && entry.isPublic ? (
                       <Link
-                        href={`/profile/${entry.slug}`}
+                        href={Routes.profile(entry.slug)}
                         className="font-medium hover:text-primary"
                       >
                         {entry.displayName}

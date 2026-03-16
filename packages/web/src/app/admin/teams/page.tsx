@@ -5,6 +5,7 @@ import { isAdmin } from '@/lib/firebase/admin';
 import { getCachedTeamDocs } from '@/lib/cache';
 import { teams } from '@mockingboard/shared';
 import { Badge } from '@/components/ui/badge';
+import { Routes } from '@/routes';
 
 const divisions = [
   { conference: 'AFC', division: 'East' },
@@ -19,7 +20,7 @@ const divisions = [
 
 export default async function AdminTeamsPage() {
   const session = await getSessionUser();
-  if (!session) redirect('/login');
+  if (!session) redirect(Routes.AUTH);
   if (!(await isAdmin(session.uid))) {
     return (
       <main className="mx-auto max-w-4xl px-4 py-8">
@@ -67,7 +68,7 @@ export default async function AdminTeamsPage() {
                   return (
                     <Link
                       key={team.id}
-                      href={`/admin/teams/${team.id}`}
+                      href={Routes.adminTeam(team.id)}
                       className="flex items-center justify-between rounded-md border px-3 py-2.5 transition-colors hover:bg-muted/50"
                     >
                       <div className="flex items-center gap-3">
