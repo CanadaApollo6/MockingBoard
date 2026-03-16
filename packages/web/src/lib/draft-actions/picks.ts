@@ -241,7 +241,7 @@ export async function runCpuCascade(
     if (available.length === 0) break;
 
     const player = prepareCpuPick({
-      team: currentSlot.team,
+      team: currentSlot.teamOverride ?? currentSlot.team,
       pickOrder: draft.pickOrder,
       pickedPlayerIds: pickedIds,
       playerMap,
@@ -317,7 +317,7 @@ export async function advanceSingleCpuPick(
 
   const playerMap = new Map(allPlayers.map((p) => [p.id, p]));
   const player = prepareCpuPick({
-    team: currentSlot.team,
+    team: currentSlot.teamOverride ?? currentSlot.team,
     pickOrder: draft.pickOrder,
     pickedPlayerIds: draft.pickedPlayerIds ?? [],
     playerMap,

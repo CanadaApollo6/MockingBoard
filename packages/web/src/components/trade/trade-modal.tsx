@@ -79,15 +79,18 @@ export function TradeModal({
     myTeams[0],
   );
 
-  const { userTeams, cpuTeams } = useMemo(() => {
+  const { userTeams, cpuTeams, ownOtherTeams } = useMemo(() => {
     const user: TeamAbbreviation[] = [];
     const cpu: TeamAbbreviation[] = [];
+    const own: TeamAbbreviation[] = [];
     for (const [team, uid] of Object.entries(draft.teamAssignments)) {
-      if (uid === null) cpu.push(team as TeamAbbreviation);
-      else if (uid !== userId) user.push(team as TeamAbbreviation);
+      const t = team as TeamAbbreviation;
+      if (uid === null) cpu.push(t);
+      else if (uid !== userId) user.push(t);
+      else if (t !== proposerTeam) own.push(t);
     }
-    return { userTeams: user, cpuTeams: cpu };
-  }, [draft, userId]);
+    return { userTeams: user, cpuTeams: cpu, ownOtherTeams: own };
+  }, [draft, userId, proposerTeam]);
 
   // Filter picks to the selected proposer team only
   const userCurrentPicks = useMemo(
@@ -208,6 +211,10 @@ export function TradeModal({
   function handleProposerTeamChange(team: TeamAbbreviation) {
     setProposerTeam(team);
     setSelectedGiving(new Set());
+    if (targetTeam === team) {
+      setTargetTeam(null);
+      setSelectedReceiving(new Set());
+    }
   }
 
   function handleTeamChange(team: TeamAbbreviation) {
@@ -279,12 +286,36 @@ export function TradeModal({
             </div>
           )}
           {cpuTeams.length > 0 && (
-            <div>
+            <div className="mb-2">
               {userTeams.length > 0 && (
                 <p className="mb-1 text-xs text-muted-foreground">CPU</p>
               )}
               <div className="flex flex-wrap gap-1.5">
                 {cpuTeams.map((team) => (
+                  <button
+                    key={team}
+                    type="button"
+                    onClick={() => handleTeamChange(team)}
+                    className={cn(
+                      'rounded-md px-2 py-1 text-xs font-medium transition-colors',
+                      targetTeam === team
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted text-muted-foreground hover:bg-accent hover:text-foreground',
+                    )}
+                  >
+                    {team}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          {ownOtherTeams.length > 0 && (
+            <div>
+              {(userTeams.length > 0 || cpuTeams.length > 0) && (
+                <p className="mb-1 text-xs text-muted-foreground">My Teams</p>
+              )}
+              <div className="flex flex-wrap gap-1.5">
+                {ownOtherTeams.map((team) => (
                   <button
                     key={team}
                     type="button"

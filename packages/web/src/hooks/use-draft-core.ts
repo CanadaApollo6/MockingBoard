@@ -84,15 +84,16 @@ export function useDraftCore(
     return Object.values(draft.teamAssignments).filter((uid) => uid === userId)
       .length;
   }, [draft, userId]);
-  const isMultiTeam = userTeamCount > 1 && userTeamCount < 32;
+  const isMultiTeam = userTeamCount > 1;
 
   const suggestion = useMemo(() => {
     if (!isUserTurn || !isActive || !currentSlot) return null;
-    const teamSeed = teamSeeds.get(currentSlot.team);
+    const team = currentSlot.teamOverride ?? currentSlot.team;
+    const teamSeed = teamSeeds.get(team);
     const draftedPositions = getTeamDraftedPositions(
       draft!.pickOrder,
       draft!.pickedPlayerIds ?? [],
-      currentSlot.team,
+      team,
       playerMap,
     );
     const effectiveNeeds = getEffectiveNeeds(

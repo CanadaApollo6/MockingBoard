@@ -282,7 +282,7 @@ export function DraftRoom({
     const slot = draft.pickOrder[(draft.currentPick ?? 1) - 1];
     if (!slot) return;
     const player = prepareCpuPick({
-      team: slot.team,
+      team: slot.teamOverride ?? slot.team,
       pickOrder: draft.pickOrder,
       pickedPlayerIds: draft.pickedPlayerIds ?? [],
       playerMap,

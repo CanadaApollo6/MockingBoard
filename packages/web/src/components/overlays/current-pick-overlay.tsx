@@ -66,7 +66,7 @@ export function CurrentPickOverlay({
         overall={currentSlot.overall}
         picksMade={picks.length}
         total={draft.pickOrder.length}
-        team={currentSlot.team as TeamAbbreviation}
+        team={(currentSlot.teamOverride ?? currentSlot.team) as TeamAbbreviation}
         round={currentSlot.round}
         pick={currentSlot.pick}
         remaining={remaining}

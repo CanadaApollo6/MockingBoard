@@ -76,7 +76,7 @@ export function SpectatorView({
           overall={currentSlot.overall}
           picksMade={picks.length}
           total={totalPicks}
-          team={currentSlot.team as TeamAbbreviation}
+          team={(currentSlot.teamOverride ?? currentSlot.team) as TeamAbbreviation}
           round={currentSlot.round}
           pick={currentSlot.pick}
           remaining={remaining}

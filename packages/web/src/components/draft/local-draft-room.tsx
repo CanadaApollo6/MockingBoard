@@ -214,7 +214,7 @@ export function LocalDraftRoom({
   const handleTimerExpire = useCallback(() => {
     if (!currentSlot) return;
     const player = prepareCpuPick({
-      team: currentSlot.team,
+      team: currentSlot.teamOverride ?? currentSlot.team,
       pickOrder: draft.pickOrder,
       pickedPlayerIds: draft.pickedPlayerIds ?? [],
       playerMap,
