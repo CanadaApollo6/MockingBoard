@@ -2,12 +2,14 @@ import type { ScoutingReport } from '@mockingboard/shared';
 import { Badge } from '@/components/ui/badge';
 import { TipTapContent } from '@/components/community/tiptap-content';
 import { GradeBadge } from '@/components/grade/grade-badge';
+import { LikeButton } from '@/components/community/like-button';
 
 interface ReportCardProps {
   report: ScoutingReport;
+  isLiked?: boolean;
 }
 
-export function ReportCard({ report }: ReportCardProps) {
+export function ReportCard({ report, isLiked }: ReportCardProps) {
   const hasStructured =
     report.grade != null ||
     report.comparison ||
@@ -79,6 +81,15 @@ export function ReportCard({ report }: ReportCardProps) {
           No details provided.
         </p>
       )}
+
+      {/* Like button */}
+      <div className="flex items-center justify-end border-t pt-2">
+        <LikeButton
+          reportId={report.id}
+          initialLikeCount={report.likeCount ?? 0}
+          initialIsLiked={isLiked}
+        />
+      </div>
     </div>
   );
 }

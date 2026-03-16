@@ -1,10 +1,17 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import type { ScoutingReport } from '@mockingboard/shared';
 import { Button } from '@/components/ui/button';
 import { ReportCard } from '@/components/community/report-card';
 import { ReportForm } from '@/components/community/report-form';
+import { useAuth } from '@/components/auth/auth-provider';
+
+function sortByLikes(reports: ScoutingReport[]): ScoutingReport[] {
+  return [...reports].sort(
+    (a, b) => (b.likeCount ?? 0) - (a.likeCount ?? 0),
+  );
+}
 
 interface CommunityReportsProps {
   playerId: string;
@@ -19,15 +26,32 @@ export function CommunityReports({
   year,
   initialReports,
 }: CommunityReportsProps) {
-  const [reports, setReports] = useState(initialReports);
+  const { user } = useAuth();
+  const [reports, setReports] = useState(sortByLikes(initialReports));
   const [showForm, setShowForm] = useState(false);
+  const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
+
+  // Fetch current user's like status for all displayed reports
+  useEffect(() => {
+    if (!user || reports.length === 0) return;
+
+    const ids = reports.map((r) => r.id);
+    fetch(`/api/reports/likes/status?ids=${ids.join(',')}`)
+      .then((res) => (res.ok ? res.json() : { likedIds: [] }))
+      .then((data: { likedIds: string[] }) =>
+        setLikedIds(new Set(data.likedIds)),
+      )
+      .catch(() => {});
+  }, [user, reports]);
 
   const refreshReports = useCallback(async () => {
     try {
-      const res = await fetch(`/api/reports?playerId=${playerId}`);
+      const res = await fetch(
+        `/api/reports?playerId=${playerId}&sort=likes`,
+      );
       if (res.ok) {
         const data = await res.json();
-        setReports(data.reports);
+        setReports(sortByLikes(data.reports));
       }
     } catch {
       /* ignore */
@@ -65,7 +89,11 @@ export function CommunityReports({
       ) : (
         <div className="space-y-3">
           {reports.map((report) => (
-            <ReportCard key={report.id} report={report} />
+            <ReportCard
+              key={report.id}
+              report={report}
+              isLiked={likedIds.has(report.id)}
+            />
           ))}
         </div>
       )}
