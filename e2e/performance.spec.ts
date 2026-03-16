@@ -6,6 +6,9 @@ const PERF_ROUTES = [
   { path: '/teams', name: 'teams' },
   { path: '/trade-calculator', name: 'trade calculator' },
   { path: '/drafts/new', name: 'draft creator' },
+  { path: '/contract-builder', name: 'contract builder' },
+  { path: '/learn/salary-cap', name: 'salary cap explainer' },
+  { path: '/learn/nfl-draft', name: 'nfl draft explainer' },
   { path: '/comparePlayers', name: 'player compare (empty)' },
   {
     path: '/comparePlayers?p1=3139477&p2=3918298',

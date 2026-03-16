@@ -28,6 +28,8 @@ import {
   Crosshair,
   Timer,
   GitCompareArrows,
+  Calculator,
+  BookOpen,
 } from 'lucide-react';
 import { useAuth } from '@/components/auth/auth-provider';
 import { ThemeToggle } from '@/components/layout/theme-toggle';
@@ -82,7 +84,19 @@ const NAV_GROUPS = [
         label: 'Trade Calculator',
         icon: ArrowLeftRight,
       },
+      {
+        href: Routes.CONTRACT_BUILDER,
+        label: 'Contract Builder',
+        icon: Calculator,
+      },
       { href: Routes.INVITE, label: 'Add Bot', icon: Bot },
+    ],
+  },
+  {
+    label: 'Learn',
+    items: [
+      { href: Routes.LEARN_NFL_DRAFT, label: 'NFL Draft', icon: BookOpen },
+      { href: Routes.LEARN_SALARY_CAP, label: 'Salary Cap', icon: BookOpen },
     ],
   },
 ] as const;
