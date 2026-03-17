@@ -705,5 +705,5 @@ export async function getPlayerPickStats(
 ): Promise<PlayerPickStats | null> {
   const doc = await adminDb.collection('playerPickStats').doc(playerId).get();
   if (!doc.exists) return null;
-  return sanitize({ id: doc.id, ...doc.data() } as PlayerPickStats);
+  return sanitize({ id: doc.id, ...doc.data() } as unknown as PlayerPickStats);
 }
