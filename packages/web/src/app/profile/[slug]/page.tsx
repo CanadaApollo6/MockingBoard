@@ -9,9 +9,15 @@ import {
   getUserReports,
   getUserDraftScores,
   getUserDraftingIdentity,
+  getUserLikedBoards,
+  getUserLikedReports,
+  getBoardsByIds,
+  getReportsByIds,
   getPlayerMap,
 } from '@/lib/firebase/data';
 import { teams } from '@mockingboard/shared';
+import type { BigBoard, ScoutingReport } from '@mockingboard/shared';
+import { LayoutList, FileText, Heart } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { getSessionUser } from '@/lib/firebase/auth-session';
 import { FollowButton } from '@/components/profile/follow-button';
@@ -19,6 +25,7 @@ import { ProfileShareButton } from '@/components/share/profile-share-button';
 import { BoardCard } from '@/components/board/board-card';
 import { ReportCard } from '@/components/community/report-card';
 import { getCachedSeasonConfig } from '@/lib/cache';
+import { formatRelativeTime } from '@/lib/format';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -43,21 +50,85 @@ export default async function ProfilePage({ params }: Props) {
 
   if (!user) notFound();
 
-  const [session, counts, boards, reports, draftScores, identity] =
-    await Promise.all([
-      getSessionUser(),
-      getFollowCounts(user.id),
-      getUserPublicBoards(user.id),
-      getUserReports(user.id),
-      getUserDraftScores(user.id),
-      getUserDraftingIdentity(user.id, user.discordId),
-    ]);
+  const [
+    session,
+    counts,
+    boards,
+    reports,
+    draftScores,
+    identity,
+    likedBoardRefs,
+    likedReportRefs,
+  ] = await Promise.all([
+    getSessionUser(),
+    getFollowCounts(user.id),
+    getUserPublicBoards(user.id),
+    getUserReports(user.id),
+    getUserDraftScores(user.id),
+    getUserDraftingIdentity(user.id, user.discordId),
+    getUserLikedBoards(user.id),
+    getUserLikedReports(user.id),
+  ]);
 
   const isOwnProfile = session?.uid === user.id;
 
-  // Resolve player names for reports
+  // Resolve liked content
+  const [likedBoards, likedReports] = await Promise.all([
+    getBoardsByIds(likedBoardRefs.map((l) => l.boardId)),
+    getReportsByIds(likedReportRefs.map((l) => l.reportId)),
+  ]);
+
+  // Resolve player names for reports and liked reports
   const { draftYear } = await getCachedSeasonConfig();
-  const playerMap = reports.length > 0 ? await getPlayerMap(draftYear) : null;
+  const playerMap =
+    reports.length > 0 || likedReports.length > 0
+      ? await getPlayerMap(draftYear)
+      : null;
+
+  // Build activity timeline from source data
+  type TimelineItem =
+    | { type: 'board-published'; board: BigBoard; timestamp: number }
+    | { type: 'report-created'; report: ScoutingReport; timestamp: number }
+    | { type: 'board-liked'; board: BigBoard; timestamp: number }
+    | { type: 'report-liked'; report: ScoutingReport; timestamp: number };
+
+  const getSeconds = (ts: { seconds: number } | undefined): number =>
+    ts?.seconds ?? 0;
+
+  const timelineItems: TimelineItem[] = (
+    [
+      ...boards.map((b) => ({
+        type: 'board-published' as const,
+        board: b,
+        timestamp: getSeconds(b.updatedAt),
+      })),
+      ...reports.map((r) => ({
+        type: 'report-created' as const,
+        report: r,
+        timestamp: getSeconds(r.createdAt),
+      })),
+      ...likedBoardRefs.map((ref) => {
+        const board = likedBoards.find((b) => b.id === ref.boardId);
+        if (!board) return null;
+        return {
+          type: 'board-liked' as const,
+          board,
+          timestamp: getSeconds(ref.createdAt),
+        };
+      }),
+      ...likedReportRefs.map((ref) => {
+        const report = likedReports.find((r) => r.id === ref.reportId);
+        if (!report) return null;
+        return {
+          type: 'report-liked' as const,
+          report,
+          timestamp: getSeconds(ref.createdAt),
+        };
+      }),
+    ].filter(Boolean) as TimelineItem[]
+  )
+    .sort((a, b) => b.timestamp - a.timestamp)
+    .slice(0, 20);
 
   return (
     <main className="mx-auto max-w-screen-xl px-4 py-8">
@@ -265,6 +336,56 @@ export default async function ProfilePage({ params }: Props) {
         </div>
       )}
 
+      {/* Recent Activity */}
+      {timelineItems.length > 0 && (
+        <div className="mt-8 rounded-lg border bg-card p-5">
+          <h2 className="text-lg font-bold">Recent Activity</h2>
+          <div className="mt-4 space-y-2">
+            {timelineItems.map((item, i) => {
+              const Icon = item.type.includes('liked')
+                ? Heart
+                : item.type === 'board-published'
+                  ? LayoutList
+                  : FileText;
+              const verb = {
+                'board-published': 'published',
+                'report-created': 'wrote a report on',
+                'board-liked': 'liked',
+                'report-liked': 'liked a report on',
+              }[item.type];
+
+              const name =
+                'board' in item
+                  ? item.board.name
+                  : (playerMap?.get(item.report.playerId)?.name ??
+                    'a prospect');
+              const href =
+                'board' in item
+                  ? Routes.board(item.board.slug ?? item.board.id)
+                  : Routes.prospect(item.report.playerId);
+
+              return (
+                <Link
+                  key={`${item.type}-${i}`}
+                  href={href}
+                  className="flex items-start gap-3 rounded-lg border bg-card px-4 py-3 transition-colors hover:bg-muted/30"
+                >
+                  <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm">
+                      {verb} <span className="font-semibold">{name}</span>
+                    </p>
+                    <span className="text-[10px] text-muted-foreground/60">
+                      {formatRelativeTime({ seconds: item.timestamp })}
+                    </span>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Content: boards + reports */}
       <div className="mt-10 grid gap-10 lg:grid-cols-2">
         {/* Boards */}
@@ -312,6 +433,45 @@ export default async function ProfilePage({ params }: Props) {
           )}
         </div>
       </div>
+
+      {/* Liked Content */}
+      {(likedBoards.length > 0 || likedReports.length > 0) && (
+        <div className="mt-10 grid gap-10 lg:grid-cols-2">
+          {likedBoards.length > 0 && (
+            <div className="space-y-4">
+              <h2 className="text-lg font-bold">Liked Boards</h2>
+              <div className="grid gap-4">
+                {likedBoards.map((board) => (
+                  <BoardCard key={board.id} board={board} />
+                ))}
+              </div>
+            </div>
+          )}
+          {likedReports.length > 0 && (
+            <div className="space-y-4">
+              <h2 className="text-lg font-bold">Liked Reports</h2>
+              <div className="space-y-3">
+                {likedReports.map((report) => {
+                  const player = playerMap?.get(report.playerId);
+                  return (
+                    <div key={report.id}>
+                      {player && (
+                        <Link
+                          href={Routes.prospect(report.playerId)}
+                          className="mb-1 block text-sm font-medium text-mb-accent hover:underline"
+                        >
+                          {player.name} — {player.position}, {player.school}
+                        </Link>
+                      )}
+                      <ReportCard report={report} />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </main>
   );
 }

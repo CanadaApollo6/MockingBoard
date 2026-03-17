@@ -20,6 +20,7 @@ import type {
   Position,
   TeamAbbreviation,
   PlayerPickStats,
+  FirestoreTimestamp,
 } from '@mockingboard/shared';
 
 export async function getDrafts(options?: {
@@ -412,6 +413,70 @@ export async function getFollowCounts(
     followers: followersSnap.data().count,
     following: followingSnap.data().count,
   };
+}
+
+export async function getUserLikedBoards(
+  userId: string,
+  limit = 10,
+): Promise<{ boardId: string; createdAt: FirestoreTimestamp }[]> {
+  const snapshot = await adminDb
+    .collection('boardLikes')
+    .where('userId', '==', userId)
+    .orderBy('createdAt', 'desc')
+    .limit(limit)
+    .get();
+
+  return snapshot.docs.map((doc) => {
+    const data = doc.data();
+    return {
+      boardId: data.boardId as string,
+      createdAt: data.createdAt as FirestoreTimestamp,
+    };
+  });
+}
+
+export async function getUserLikedReports(
+  userId: string,
+  limit = 10,
+): Promise<{ reportId: string; createdAt: FirestoreTimestamp }[]> {
+  const snapshot = await adminDb
+    .collection('reportLikes')
+    .where('userId', '==', userId)
+    .orderBy('createdAt', 'desc')
+    .limit(limit)
+    .get();
+
+  return snapshot.docs.map((doc) => {
+    const data = doc.data();
+    return {
+      reportId: data.reportId as string,
+      createdAt: data.createdAt as FirestoreTimestamp,
+    };
+  });
+}
+
+export async function getBoardsByIds(ids: string[]): Promise<BigBoard[]> {
+  if (ids.length === 0) return [];
+  const docs = await Promise.all(
+    ids.map((id) => adminDb.collection('bigBoards').doc(id).get()),
+  );
+  return sanitize(
+    docs
+      .filter((d) => d.exists && d.data()?.visibility === 'public')
+      .map((d) => hydrateDoc<BigBoard>(d)),
+  );
+}
+
+export async function getReportsByIds(
+  ids: string[],
+): Promise<ScoutingReport[]> {
+  if (ids.length === 0) return [];
+  const docs = await Promise.all(
+    ids.map((id) => adminDb.collection('scoutingReports').doc(id).get()),
+  );
+  return sanitize(
+    docs.filter((d) => d.exists).map((d) => hydrateDoc<ScoutingReport>(d)),
+  );
 }
 
 export async function getUserPublicBoards(userId: string): Promise<BigBoard[]> {
