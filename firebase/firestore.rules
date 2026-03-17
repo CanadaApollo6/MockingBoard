@@ -190,6 +190,15 @@ service cloud.firestore {
     }
 
     // ============================================
+    // Comments Collection
+    // Public read, server-only write
+    // ============================================
+    match /comments/{commentId} {
+      allow read: if true;
+      allow create, update, delete: if false;
+    }
+
+    // ============================================
     // Trades Collection
     // Only draft participants can read/write
     // ============================================

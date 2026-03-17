@@ -146,6 +146,24 @@ export async function notifyReportLiked(
   });
 }
 
+export async function notifyNewComment(
+  contentOwnerId: string,
+  commenterName: string,
+  contentName: string,
+  contentLink: string,
+  type: 'board-commented' | 'report-commented',
+): Promise<void> {
+  const label = type === 'board-commented' ? 'board' : 'report';
+  await createNotification({
+    userId: contentOwnerId,
+    type,
+    title: `New Comment on Your ${label.charAt(0).toUpperCase() + label.slice(1)}`,
+    body: `${commenterName} commented on "${contentName}".`,
+    link: contentLink,
+    actorName: commenterName,
+  });
+}
+
 export async function notifyBoardLiked(
   authorId: string,
   likerName: string,

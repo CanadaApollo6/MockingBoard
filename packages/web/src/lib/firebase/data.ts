@@ -21,6 +21,7 @@ import type {
   TeamAbbreviation,
   PlayerPickStats,
   FirestoreTimestamp,
+  Comment,
 } from '@mockingboard/shared';
 
 export async function getDrafts(options?: {
@@ -771,4 +772,22 @@ export async function getPlayerPickStats(
   const doc = await adminDb.collection('playerPickStats').doc(playerId).get();
   if (!doc.exists) return null;
   return sanitize({ id: doc.id, ...doc.data() } as unknown as PlayerPickStats);
+}
+
+export async function getComments(
+  targetType: 'board' | 'report',
+  targetId: string,
+  limit = 50,
+): Promise<Comment[]> {
+  const snapshot = await adminDb
+    .collection('comments')
+    .where('targetId', '==', targetId)
+    .where('targetType', '==', targetType)
+    .orderBy('createdAt', 'desc')
+    .limit(limit)
+    .get();
+
+  return sanitize(
+    snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Comment),
+  );
 }

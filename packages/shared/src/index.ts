@@ -54,6 +54,8 @@ export type {
   BoardGenerationConfig,
   NotificationType,
   AppNotification,
+  ActivityEventType,
+  Comment,
   PlayerContract,
   FreeAgentEntry,
   DeadCapEntry,

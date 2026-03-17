@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { TipTapContent } from '@/components/community/tiptap-content';
 import { GradeBadge } from '@/components/grade/grade-badge';
 import { LikeButton } from '@/components/community/like-button';
+import { CommentSection } from '@/components/comments/comment-section';
 
 interface ReportCardProps {
   report: ScoutingReport;
@@ -90,6 +91,13 @@ export function ReportCard({ report, isLiked }: ReportCardProps) {
           initialIsLiked={isLiked}
         />
       </div>
+
+      {/* Comments */}
+      <CommentSection
+        targetId={report.id}
+        targetType="report"
+        initialCount={report.commentCount ?? 0}
+      />
     </div>
   );
 }

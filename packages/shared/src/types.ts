@@ -415,6 +415,7 @@ export interface BigBoard {
   preferredGradeSystem?: GradeSystem;
   positionRankings?: Partial<Record<Position, string[]>>;
   likeCount?: number;
+  commentCount?: number;
   createdAt: FirestoreTimestamp;
   updatedAt: FirestoreTimestamp;
 }
@@ -450,6 +451,7 @@ export interface ScoutingReport {
   content?: Record<string, unknown>;
   contentText?: string;
   likeCount?: number;
+  commentCount?: number;
   createdAt: FirestoreTimestamp;
   updatedAt: FirestoreTimestamp;
 }
@@ -688,7 +690,9 @@ export type NotificationType =
   | 'trade-accepted'
   | 'new-board'
   | 'report-liked'
-  | 'board-liked';
+  | 'board-liked'
+  | 'board-commented'
+  | 'report-commented';
 
 export interface AppNotification {
   id: string;
@@ -709,7 +713,9 @@ export type ActivityEventType =
   | 'board-published'
   | 'report-created'
   | 'board-liked'
-  | 'report-liked';
+  | 'report-liked'
+  | 'board-commented'
+  | 'report-commented';
 
 export interface ActivityEvent {
   id: string;
@@ -720,6 +726,19 @@ export interface ActivityEvent {
   targetName: string;
   targetLink: string;
   feedUserId: string;
+  createdAt: FirestoreTimestamp;
+}
+
+// ---- Comment Types ----
+
+export interface Comment {
+  id: string;
+  targetId: string;
+  targetType: 'board' | 'report';
+  authorId: string;
+  authorName: string;
+  authorSlug?: string;
+  text: string;
   createdAt: FirestoreTimestamp;
 }
 

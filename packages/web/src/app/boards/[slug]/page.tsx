@@ -1,8 +1,13 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getBigBoardBySlug, getPlayerMap } from '@/lib/firebase/data';
+import {
+  getBigBoardBySlug,
+  getPlayerMap,
+  getComments,
+} from '@/lib/firebase/data';
 import { PublicBoardView } from '@/components/board/public-board-view';
 import { DraftGuideButton } from '@/components/draft-guide/draft-guide-button';
+import { CommentSection } from '@/components/comments/comment-section';
 import type { Player } from '@mockingboard/shared';
 
 interface Props {
@@ -33,7 +38,10 @@ export default async function PublicBoardPage({ params }: Props) {
 
   if (!board) notFound();
 
-  const playerMap = await getPlayerMap(board.year);
+  const [playerMap, comments] = await Promise.all([
+    getPlayerMap(board.year),
+    getComments('board', board.id),
+  ]);
 
   // Resolve ranked players in board order
   const rankedPlayers: Player[] = [];
@@ -71,6 +79,14 @@ export default async function PublicBoardPage({ params }: Props) {
         </div>
       </div>
       <PublicBoardView rankedPlayers={rankedPlayers} />
+      <div className="mt-8">
+        <CommentSection
+          targetId={board.id}
+          targetType="board"
+          initialComments={comments}
+          initialCount={board.commentCount ?? comments.length}
+        />
+      </div>
     </main>
   );
 }
