@@ -27,6 +27,8 @@ import {
   notifyYourTurn,
   notifyTradeAccepted,
   notifyNewBoard,
+  notifyReportLiked,
+  notifyBoardLiked,
 } from './notifications.js';
 
 beforeEach(() => {
@@ -191,6 +193,36 @@ describe('convenience functions', () => {
         body: 'Alice published "Big Board 2026".',
         link: '/boards/board-1',
         actorName: 'Alice',
+      }),
+    );
+  });
+
+  it('notifyReportLiked creates correct notification', async () => {
+    await notifyReportLiked('user-4', 'Bob', 'Travis Hunter Report', 'rpt-1');
+
+    expect(mockAdd).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'user-4',
+        type: 'report-liked',
+        title: 'Report Liked',
+        body: 'Bob liked your report "Travis Hunter Report".',
+        link: '/reports/rpt-1',
+        actorName: 'Bob',
+      }),
+    );
+  });
+
+  it('notifyBoardLiked creates correct notification', async () => {
+    await notifyBoardLiked('user-5', 'Carol', 'My 2026 Board', 'my-board');
+
+    expect(mockAdd).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'user-5',
+        type: 'board-liked',
+        title: 'Board Liked',
+        body: 'Carol liked your board "My 2026 Board".',
+        link: '/boards/my-board',
+        actorName: 'Carol',
       }),
     );
   });

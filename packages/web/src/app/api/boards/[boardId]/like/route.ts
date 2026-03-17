@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { FieldValue } from 'firebase-admin/firestore';
 import { getSessionUser } from '@/lib/firebase/auth-session';
 import { adminDb } from '@/lib/firebase/firebase-admin';
+import { notifyBoardLiked } from '@/lib/notifications';
 
 interface RouteParams {
   params: Promise<{ boardId: string }>;
@@ -47,12 +48,12 @@ export async function POST(_request: Request, { params }: RouteParams) {
   const likeRef = adminDb.collection('boardLikes').doc(docId);
 
   try {
-    await adminDb.runTransaction(async (transaction) => {
+    const result = await adminDb.runTransaction(async (transaction) => {
       const boardDoc = await transaction.get(boardRef);
       if (!boardDoc.exists) throw new Error('Board not found');
 
       const existingLike = await transaction.get(likeRef);
-      if (existingLike.exists) return; // Already liked
+      if (existingLike.exists) return null; // Already liked
 
       transaction.set(likeRef, {
         boardId,
@@ -63,7 +64,25 @@ export async function POST(_request: Request, { params }: RouteParams) {
       transaction.update(boardRef, {
         likeCount: FieldValue.increment(1),
       });
+
+      const data = boardDoc.data()!;
+      return {
+        userId: data.userId as string,
+        name: data.name as string,
+        slug: (data.slug ?? boardId) as string,
+      };
     });
+
+    // Notify board author (fire-and-forget, don't notify yourself)
+    if (result && result.userId !== session.uid) {
+      const likerName = session.name ?? session.email ?? 'Someone';
+      notifyBoardLiked(
+        result.userId,
+        likerName,
+        result.name,
+        result.slug,
+      ).catch(() => {});
+    }
 
     return NextResponse.json({ ok: true });
   } catch (err) {

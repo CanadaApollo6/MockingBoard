@@ -15,6 +15,7 @@ import {
   Clock,
   ArrowLeftRight,
   LayoutList,
+  Heart,
   CheckCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -24,6 +25,8 @@ const TYPE_ICONS: Record<NotificationType, typeof UserPlus> = {
   'your-turn': Clock,
   'trade-accepted': ArrowLeftRight,
   'new-board': LayoutList,
+  'report-liked': Heart,
+  'board-liked': Heart,
 };
 
 function formatRelativeTime(ts: { seconds: number } | undefined): string {

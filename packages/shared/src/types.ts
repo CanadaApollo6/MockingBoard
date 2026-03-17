@@ -686,7 +686,9 @@ export type NotificationType =
   | 'new-follower'
   | 'your-turn'
   | 'trade-accepted'
-  | 'new-board';
+  | 'new-board'
+  | 'report-liked'
+  | 'board-liked';
 
 export interface AppNotification {
   id: string;

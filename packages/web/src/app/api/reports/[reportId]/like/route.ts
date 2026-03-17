@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { FieldValue } from 'firebase-admin/firestore';
 import { getSessionUser } from '@/lib/firebase/auth-session';
 import { adminDb } from '@/lib/firebase/firebase-admin';
+import { notifyReportLiked } from '@/lib/notifications';
 
 interface RouteParams {
   params: Promise<{ reportId: string }>;
@@ -50,12 +51,12 @@ export async function POST(_request: Request, { params }: RouteParams) {
   const likeRef = adminDb.collection('reportLikes').doc(docId);
 
   try {
-    await adminDb.runTransaction(async (transaction) => {
+    const result = await adminDb.runTransaction(async (transaction) => {
       const reportDoc = await transaction.get(reportRef);
       if (!reportDoc.exists) throw new Error('Report not found');
 
       const existingLike = await transaction.get(likeRef);
-      if (existingLike.exists) return; // Already liked
+      if (existingLike.exists) return null; // Already liked
 
       transaction.set(likeRef, {
         reportId,
@@ -66,7 +67,21 @@ export async function POST(_request: Request, { params }: RouteParams) {
       transaction.update(reportRef, {
         likeCount: FieldValue.increment(1),
       });
+
+      const data = reportDoc.data()!;
+      return { authorId: data.authorId as string, title: data.title as string };
     });
+
+    // Notify author (fire-and-forget, don't notify yourself)
+    if (result && result.authorId !== session.uid) {
+      const likerName = session.name ?? session.email ?? 'Someone';
+      notifyReportLiked(
+        result.authorId,
+        likerName,
+        result.title,
+        reportId,
+      ).catch(() => {});
+    }
 
     return NextResponse.json({ ok: true });
   } catch (err) {

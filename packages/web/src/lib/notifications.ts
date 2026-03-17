@@ -129,3 +129,35 @@ export async function notifyNewBoard(
     actorName: authorName,
   });
 }
+
+export async function notifyReportLiked(
+  authorId: string,
+  likerName: string,
+  reportTitle: string,
+  reportId: string,
+): Promise<void> {
+  await createNotification({
+    userId: authorId,
+    type: 'report-liked',
+    title: 'Report Liked',
+    body: `${likerName} liked your report "${reportTitle}".`,
+    link: `/reports/${reportId}`,
+    actorName: likerName,
+  });
+}
+
+export async function notifyBoardLiked(
+  authorId: string,
+  likerName: string,
+  boardName: string,
+  boardSlug: string,
+): Promise<void> {
+  await createNotification({
+    userId: authorId,
+    type: 'board-liked',
+    title: 'Board Liked',
+    body: `${likerName} liked your board "${boardName}".`,
+    link: `/boards/${boardSlug}`,
+    actorName: likerName,
+  });
+}

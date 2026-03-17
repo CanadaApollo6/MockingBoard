@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/components/auth/auth-provider';
 import { ThemeToggle } from '@/components/layout/theme-toggle';
+import { NotificationBell } from '@/components/notification/notification-bell';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { Routes } from '@/routes';
@@ -206,7 +207,10 @@ export function Sidebar({
       {/* Bottom section */}
       <div className="mt-auto border-t border-sidebar-border px-2 py-3">
         <div className="flex items-center justify-between px-3 py-1">
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            {!loading && user && <NotificationBell />}
+          </div>
           {!loading && user && (
             <button
               onClick={signOut}
