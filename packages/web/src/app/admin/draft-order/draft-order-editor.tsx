@@ -53,6 +53,8 @@ export function DraftOrderEditor({
   const [slots, setSlots] = useState<DraftSlot[]>(initialSlots);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [preview, setPreview] = useState<DraftSlot[] | null>(null);
   const [message, setMessage] = useState<{
     type: 'success' | 'error';
     text: string;
@@ -146,6 +148,66 @@ export function DraftOrderEditor({
     );
   };
 
+  const handleTankathonPreview = async () => {
+    setImporting(true);
+    setMessage(null);
+    setPreview(null);
+    try {
+      const res = await fetch('/api/admin/draft-order/tankathon', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'preview', year }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error ?? 'Preview failed');
+      }
+      const data = await res.json();
+      setPreview(data.slots);
+      setMessage({
+        type: 'success',
+        text: `Previewing ${data.slots.length} picks from Tankathon (${data.slots.filter((s: DraftSlot) => s.teamOverride).length} traded). Review and confirm to save.`,
+      });
+    } catch (err) {
+      setMessage({
+        type: 'error',
+        text: getErrorMessage(err, 'Tankathon import failed'),
+      });
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const handleTankathonCommit = async () => {
+    if (!preview) return;
+    setSaving(true);
+    setMessage(null);
+    try {
+      const res = await fetch('/api/admin/draft-order/tankathon', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'commit', year, slots: preview }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error ?? 'Commit failed');
+      }
+      setSlots(preview);
+      setPreview(null);
+      setMessage({
+        type: 'success',
+        text: `Imported ${preview.length} picks from Tankathon.`,
+      });
+    } catch (err) {
+      setMessage({
+        type: 'error',
+        text: getErrorMessage(err, 'Tankathon import failed'),
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Controls */}
@@ -180,7 +242,30 @@ export function DraftOrderEditor({
         >
           {saving ? 'Saving...' : 'Save All'}
         </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleTankathonPreview}
+          disabled={importing}
+        >
+          {importing ? 'Fetching...' : 'Import from Tankathon'}
+        </Button>
       </div>
+
+      {preview && (
+        <div className="flex items-center gap-3 rounded-md border border-border bg-muted/30 px-4 py-3 text-sm">
+          <p>
+            {preview.length} picks parsed &middot;{' '}
+            {preview.filter((s) => s.teamOverride).length} traded
+          </p>
+          <Button size="sm" onClick={handleTankathonCommit} disabled={saving}>
+            {saving ? 'Saving...' : 'Confirm & Save'}
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => setPreview(null)}>
+            Cancel
+          </Button>
+        </div>
+      )}
 
       {message && (
         <div
