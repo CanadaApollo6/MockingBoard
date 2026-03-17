@@ -301,25 +301,12 @@ Google Cloud project
 
 ---
 
-## GM Mode Design Principles
+## Community Platform Principles
 
-The following principles guide development of GM Mode (offseason simulation features on the [roadmap](ROADMAP.md)). Informed by competitive analysis of StickToTheModel and PFN.
+The following principles guide development of MockingBoard's social and community features. See the [roadmap](ROADMAP.md) for planned work.
 
-### Core Principles
-
-- **Facts, not opinions**: Every number is derived from real contract data or deterministic CBA math. No estimated market values, no AI-generated rankings.
-- **Complete or nothing**: Cap features ship with full CBA Article 13 compliance. No half-measures.
-- **User is the GM**: No CPU-initiated trades or signings. No guardrails on user decisions. Show consequences, don't prevent actions.
-- **Tiered complexity**: Casual users can do basic moves (cut, sign, draft). Cap nerds can define void years, incentive structures, and restructure specifics. Both paths produce accurate math.
-- **Editorial UX, not spreadsheets**: Card-based layouts, clear visual hierarchy, action-first flows. Progressive disclosure — start with the moves the user wants to make, reveal full roster complexity only on demand.
-
-### Anti-Features
-
-These are things we explicitly will not build:
-
-- No AI-generated player rankings or tier lists
-- No CPU-initiated trades or signings
-- No "smart suggestions" for roster moves
-- No estimated contract values for free agents
-- No half-baked cap features (complete CBA compliance or nothing)
-- No guardrails on user decisions (show consequences, don't prevent actions)
+- **Scout attribution**: Every piece of content traces back to its author. Scouts build reputation through their work — reports, boards, accuracy, and followers.
+- **Transparent accuracy**: Predictions are scored against real outcomes. No hiding bad takes. The leaderboard rewards conviction and correctness equally.
+- **Progressive social**: Start with follows and likes. Layer in feeds, comments, and notifications as the community grows. Don't ship half-baked social features.
+- **Reference tools, not simulations**: Salary cap and contract tools educate and inform. They don't simulate franchise management. Keep them standalone and useful.
+- **Discovery over curation**: Surface trending content, consensus boards, and hot takes algorithmically. Don't editorially pick winners.
