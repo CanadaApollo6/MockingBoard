@@ -48,9 +48,7 @@ export function MockDraftStats({ stats }: MockDraftStatsProps) {
         <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
           Avg Pick
         </p>
-        <p className="mt-1 font-mono text-2xl font-bold">
-          {ordinal(avgPick)}
-        </p>
+        <p className="mt-1 font-mono text-2xl font-bold">{ordinal(avgPick)}</p>
       </div>
 
       <div className="text-center">
@@ -74,9 +72,7 @@ export function MockDraftStats({ stats }: MockDraftStatsProps) {
               className="inline-block h-3 w-3 rounded-full"
               style={{ backgroundColor: teamColor }}
             />
-            <span className="font-mono text-2xl font-bold">
-              {topTeam.team}
-            </span>
+            <span className="font-mono text-2xl font-bold">{topTeam.team}</span>
           </div>
         ) : (
           <p className="mt-1 text-sm text-muted-foreground">—</p>

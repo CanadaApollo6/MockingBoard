@@ -8,9 +8,7 @@ import { ReportForm } from '@/components/community/report-form';
 import { useAuth } from '@/components/auth/auth-provider';
 
 function sortByLikes(reports: ScoutingReport[]): ScoutingReport[] {
-  return [...reports].sort(
-    (a, b) => (b.likeCount ?? 0) - (a.likeCount ?? 0),
-  );
+  return [...reports].sort((a, b) => (b.likeCount ?? 0) - (a.likeCount ?? 0));
 }
 
 interface CommunityReportsProps {
@@ -46,9 +44,7 @@ export function CommunityReports({
 
   const refreshReports = useCallback(async () => {
     try {
-      const res = await fetch(
-        `/api/reports?playerId=${playerId}&sort=likes`,
-      );
+      const res = await fetch(`/api/reports?playerId=${playerId}&sort=likes`);
       if (res.ok) {
         const data = await res.json();
         setReports(sortByLikes(data.reports));

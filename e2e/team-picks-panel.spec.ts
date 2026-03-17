@@ -13,7 +13,9 @@ test.describe('team picks panel', () => {
   });
 
   test('panel renders with header and team selector', async ({ page }) => {
-    await expect(page.getByRole('button', { name: /Team Picks/ })).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: /Team Picks/ }),
+    ).toBeVisible();
     await expect(page.locator('select')).toBeVisible();
   });
 

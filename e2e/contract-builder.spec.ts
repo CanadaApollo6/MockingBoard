@@ -46,12 +46,12 @@ test.describe('contract builder', () => {
 
     await page.getByRole('button', { name: 'Add Incentive' }).click();
     await expect(page.getByText('No incentives added')).not.toBeVisible();
-    await expect(page.getByPlaceholder('e.g. Pro Bowl selection')).toBeVisible();
+    await expect(
+      page.getByPlaceholder('e.g. Pro Bowl selection'),
+    ).toBeVisible();
   });
 
   test('links to salary cap explainer', async ({ page }) => {
-    await expect(
-      page.getByRole('link', { name: /salary cap/i }),
-    ).toBeVisible();
+    await expect(page.getByRole('link', { name: /salary cap/i })).toBeVisible();
   });
 });

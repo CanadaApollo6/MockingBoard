@@ -1,23 +1,19 @@
 /// <reference types="vitest/globals" />
 import { vi } from 'vitest';
 
-const {
-  mockGetSessionUser,
-  mockRunTransaction,
-  mockGet,
-  mockCollection,
-} = vi.hoisted(() => {
-  const mockGet = vi.fn();
-  const mockDoc = vi.fn(() => ({ get: mockGet }));
-  const mockCollection = vi.fn(() => ({ doc: mockDoc }));
+const { mockGetSessionUser, mockRunTransaction, mockGet, mockCollection } =
+  vi.hoisted(() => {
+    const mockGet = vi.fn();
+    const mockDoc = vi.fn(() => ({ get: mockGet }));
+    const mockCollection = vi.fn(() => ({ doc: mockDoc }));
 
-  return {
-    mockGetSessionUser: vi.fn(),
-    mockRunTransaction: vi.fn(),
-    mockGet,
-    mockCollection,
-  };
-});
+    return {
+      mockGetSessionUser: vi.fn(),
+      mockRunTransaction: vi.fn(),
+      mockGet,
+      mockCollection,
+    };
+  });
 
 vi.mock('server-only', () => ({}));
 vi.mock('@/lib/firebase/auth-session', () => ({

@@ -22,9 +22,9 @@ export function TeamPicksPanel({
   teams,
   defaultTeam,
 }: TeamPicksPanelProps) {
-  const [selectedTeam, setSelectedTeam] = useState<TeamAbbreviation | undefined>(
-    defaultTeam,
-  );
+  const [selectedTeam, setSelectedTeam] = useState<
+    TeamAbbreviation | undefined
+  >(defaultTeam);
   const [open, setOpen] = useState(true);
 
   // Sync with defaultTeam when it changes (e.g. user's turn switches teams)
@@ -38,10 +38,7 @@ export function TeamPicksPanel({
   );
 
   const teamPicks = useMemo(
-    () =>
-      selectedTeam
-        ? picks.filter((p) => p.team === selectedTeam)
-        : [],
+    () => (selectedTeam ? picks.filter((p) => p.team === selectedTeam) : []),
     [picks, selectedTeam],
   );
 
@@ -126,7 +123,10 @@ export function TeamPicksPanel({
                         {player?.position}
                       </Badge>
                     ) : (
-                      <Badge variant="secondary" className="shrink-0 text-[10px]">
+                      <Badge
+                        variant="secondary"
+                        className="shrink-0 text-[10px]"
+                      >
                         &mdash;
                       </Badge>
                     )}

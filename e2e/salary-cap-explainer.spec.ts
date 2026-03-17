@@ -22,9 +22,7 @@ test.describe('salary cap explainer', () => {
     ];
 
     for (const section of sections) {
-      await expect(
-        page.getByRole('heading', { name: section }),
-      ).toBeVisible();
+      await expect(page.getByRole('heading', { name: section })).toBeVisible();
     }
   });
 
@@ -37,9 +35,7 @@ test.describe('salary cap explainer', () => {
   test('table of contents links exist on desktop', async ({ page }) => {
     // Desktop TOC should have navigation links
     await expect(page.getByText('On This Page')).toBeVisible();
-    await expect(
-      page.getByRole('link', { name: 'Dead Money' }),
-    ).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Dead Money' })).toBeVisible();
   });
 
   test('links to contract builder', async ({ page }) => {

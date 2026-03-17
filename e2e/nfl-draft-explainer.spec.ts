@@ -22,9 +22,7 @@ test.describe('nfl draft explainer', () => {
     ];
 
     for (const section of sections) {
-      await expect(
-        page.getByRole('heading', { name: section }),
-      ).toBeVisible();
+      await expect(page.getByRole('heading', { name: section })).toBeVisible();
     }
   });
 
@@ -48,8 +46,6 @@ test.describe('nfl draft explainer', () => {
   });
 
   test('links to start a mock draft', async ({ page }) => {
-    await expect(
-      page.getByRole('link', { name: /mock draft/i }),
-    ).toBeVisible();
+    await expect(page.getByRole('link', { name: /mock draft/i })).toBeVisible();
   });
 });

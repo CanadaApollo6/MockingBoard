@@ -19,8 +19,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const orderField =
-      sort === 'likes' && playerId ? 'likeCount' : 'createdAt';
+    const orderField = sort === 'likes' && playerId ? 'likeCount' : 'createdAt';
     const orderDir = 'desc' as const;
 
     let query = adminDb

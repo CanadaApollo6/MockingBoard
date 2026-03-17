@@ -54,16 +54,12 @@ export function LikeButton({
       disabled={!user || loading}
       className={cn(
         'inline-flex items-center gap-1 text-xs transition-colors',
-        user
-          ? 'cursor-pointer hover:text-mb-accent'
-          : 'cursor-default',
+        user ? 'cursor-pointer hover:text-mb-accent' : 'cursor-default',
         isLiked ? 'text-mb-accent' : 'text-muted-foreground',
       )}
       aria-label={isLiked ? 'Unlike this report' : 'Like this report'}
     >
-      <Heart
-        className={cn('h-3.5 w-3.5', isLiked && 'fill-current')}
-      />
+      <Heart className={cn('h-3.5 w-3.5', isLiked && 'fill-current')} />
       {likeCount > 0 && <span>{likeCount}</span>}
     </button>
   );
