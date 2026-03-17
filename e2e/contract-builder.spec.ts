@@ -16,7 +16,7 @@ test.describe('contract builder', () => {
   test('switching between tiers via tabs', async ({ page }) => {
     // Switch to Standard
     await page.getByRole('tab', { name: 'Standard' }).click();
-    await expect(page.getByText('Cap Hit Breakdown')).toBeVisible();
+    await expect(page.getByText('Dead Money If Released')).toBeVisible();
 
     // Switch to Advanced
     await page.getByRole('tab', { name: 'Advanced' }).click();
@@ -52,6 +52,7 @@ test.describe('contract builder', () => {
   });
 
   test('links to salary cap explainer', async ({ page }) => {
-    await expect(page.getByRole('link', { name: /salary cap/i })).toBeVisible();
+    const main = page.locator('main');
+    await expect(main.getByRole('link', { name: /salary cap/i })).toBeVisible();
   });
 });

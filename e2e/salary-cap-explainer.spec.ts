@@ -29,7 +29,9 @@ test.describe('salary cap explainer', () => {
   test('proration calculator shows results', async ({ page }) => {
     // The mini-proration calc should be visible with default values
     const calc = page.locator('#proration').locator('..');
-    await expect(calc.getByText('Annual Cap Charge')).toBeVisible();
+    await expect(
+      calc.getByText('Annual Cap Charge', { exact: true }),
+    ).toBeVisible();
   });
 
   test('table of contents links exist on desktop', async ({ page }) => {
@@ -39,8 +41,9 @@ test.describe('salary cap explainer', () => {
   });
 
   test('links to contract builder', async ({ page }) => {
+    const main = page.locator('main');
     await expect(
-      page.getByRole('link', { name: /Contract Builder/i }),
+      main.getByRole('link', { name: /Contract Builder/i }),
     ).toBeVisible();
   });
 });

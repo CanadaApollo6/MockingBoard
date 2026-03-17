@@ -40,8 +40,9 @@ test.describe('nfl draft explainer', () => {
   });
 
   test('links to trade calculator', async ({ page }) => {
+    const main = page.locator('main');
     await expect(
-      page.getByRole('link', { name: /trade calculator/i }),
+      main.getByRole('link', { name: /trade calculator/i }),
     ).toBeVisible();
   });
 
