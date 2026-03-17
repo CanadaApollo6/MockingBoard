@@ -38,12 +38,9 @@ export function DollarInput({
     onChange(clamped);
   }, [raw, min, max, onChange]);
 
-  const handleChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setRaw(e.target.value);
-    },
-    [],
-  );
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setRaw(e.target.value);
+  }, []);
 
   return (
     <div className={cn('space-y-1', className)}>

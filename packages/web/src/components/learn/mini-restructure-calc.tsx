@@ -112,7 +112,9 @@ export function MiniRestructureCalc() {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">New Base Salary</span>
-              <span className="font-mono">{fmtDollar(result.newBaseSalary)}</span>
+              <span className="font-mono">
+                {fmtDollar(result.newBaseSalary)}
+              </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">

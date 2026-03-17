@@ -1,10 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import {
-  applyVeteranBenefit,
-  getVeteranMinimum,
-} from '@mockingboard/shared';
+import { applyVeteranBenefit, getVeteranMinimum } from '@mockingboard/shared';
 import { Card, CardContent } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { fmtDollar } from '@/lib/firebase/format';

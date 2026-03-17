@@ -55,10 +55,10 @@ export function NflDraftExplainer() {
         {/* Draft Order */}
         <ExplainerSection id="order" title="Draft Order">
           <p className="text-muted-foreground">
-            The draft order is based on the previous season&apos;s record.
-            Worst record picks first, best record picks last. Teams that made
-            the playoffs are ordered by how far they went, with the Super Bowl
-            loser picking 31st and the champion picking 32nd.
+            The draft order is based on the previous season&apos;s record. Worst
+            record picks first, best record picks last. Teams that made the
+            playoffs are ordered by how far they went, with the Super Bowl loser
+            picking 31st and the champion picking 32nd.
           </p>
           <p className="text-muted-foreground">
             For non-playoff teams with the same record, the tiebreaker is
@@ -66,8 +66,8 @@ export function NflDraftExplainer() {
             picks earlier. If SOS is also tied, a coin flip decides it.
           </p>
           <p className="text-muted-foreground">
-            This order applies to every round, though it gets adjusted by
-            trades and compensatory picks. Check out the{' '}
+            This order applies to every round, though it gets adjusted by trades
+            and compensatory picks. Check out the{' '}
             <Link
               href={Routes.DRAFT_ORDER}
               className="font-medium text-mb-accent hover:underline"
@@ -82,17 +82,17 @@ export function NflDraftExplainer() {
         <ExplainerSection id="trades" title="Trading Picks">
           <p className="text-muted-foreground">
             Teams can trade draft picks for other picks, for players, or for
-            both. Trades can happen during the draft itself, but also
-            throughout the offseason and regular season. The trade window opens
-            at the start of the league year (mid-March) and closes at the
-            trade deadline in early November. Between the deadline and the
-            start of the next league year, no trades can happen.
+            both. Trades can happen during the draft itself, but also throughout
+            the offseason and regular season. The trade window opens at the
+            start of the league year (mid-March) and closes at the trade
+            deadline in early November. Between the deadline and the start of
+            the next league year, no trades can happen.
           </p>
           <p className="text-muted-foreground">
-            Teams can trade picks from future drafts, but only up to three
-            years out (inclusive of the current year). So heading into the 2026
-            draft, a team can deal picks from the 2026, 2027, and 2028 drafts,
-            but not 2029.
+            Teams can trade picks from future drafts, but only up to three years
+            out (inclusive of the current year). So heading into the 2026 draft,
+            a team can deal picks from the 2026, 2027, and 2028 drafts, but not
+            2029.
           </p>
           <p className="text-muted-foreground">
             There is no hard rule on what a pick is &ldquo;worth,&rdquo; but
@@ -120,16 +120,15 @@ export function NflDraftExplainer() {
         {/* Compensatory Picks */}
         <ExplainerSection id="comp-picks" title="Compensatory Picks">
           <p className="text-muted-foreground">
-            Compensatory picks are extra selections added to the end of rounds
-            3 through 7. They are awarded to teams that lost more or better free
+            Compensatory picks are extra selections added to the end of rounds 3
+            through 7. They are awarded to teams that lost more or better free
             agents than they signed the previous offseason.
           </p>
           <p className="text-muted-foreground">
             The formula is not public, but it is based on the salary, playing
             time, and postseason honors of the players who left versus the ones
             who were signed. A team can receive up to four comp picks per year.
-            The round (3rd through 7th) depends on the value of the player
-            lost.
+            The round (3rd through 7th) depends on the value of the player lost.
           </p>
           <p className="text-muted-foreground">
             One thing that often confuses people: players who are released do

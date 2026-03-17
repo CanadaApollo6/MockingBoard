@@ -54,9 +54,7 @@ export function MiniRookieCalc({ slots, draftYear }: MiniRookieCalcProps) {
               {[slot.year1Cap, slot.year2Cap, slot.year3Cap, slot.year4Cap].map(
                 (cap, i) => (
                   <div key={i} className="rounded border p-2">
-                    <p className="text-muted-foreground">
-                      {draftYear + i}
-                    </p>
+                    <p className="text-muted-foreground">{draftYear + i}</p>
                     <p className="font-mono font-semibold">{fmtDollar(cap)}</p>
                   </div>
                 ),

@@ -125,8 +125,8 @@ export function SalaryCapExplainer({
           <p className="text-muted-foreground">
             Signing bonuses do not hit the cap all at once. They get divided
             evenly (&ldquo;prorated&rdquo;) across the length of the contract,
-            maxing out at 5 years. This is how teams turn a huge upfront
-            payment into a manageable annual cap charge.
+            maxing out at 5 years. This is how teams turn a huge upfront payment
+            into a manageable annual cap charge.
           </p>
           <p className="text-muted-foreground">
             A $20M signing bonus on a 5-year deal? That is $4M per year on the
@@ -140,10 +140,10 @@ export function SalaryCapExplainer({
         {/* Rookie Wage Scale */}
         <ExplainerSection id="rookie-scale" title="Rookie Wage Scale">
           <p className="text-muted-foreground">
-            Drafted players sign 4-year contracts where the salary is
-            determined by their draft slot. Pick 1 gets more than pick 32, and
-            pick 32 gets more than pick 64. The dollar amounts are set by the
-            CBA, so there is no real negotiation on the numbers.
+            Drafted players sign 4-year contracts where the salary is determined
+            by their draft slot. Pick 1 gets more than pick 32, and pick 32 gets
+            more than pick 64. The dollar amounts are set by the CBA, so there
+            is no real negotiation on the numbers.
           </p>
           <p className="text-muted-foreground">
             First-round picks also come with a 5th-year option. The team can
