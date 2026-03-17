@@ -9,6 +9,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const playerId = searchParams.get('playerId');
   const authorId = searchParams.get('authorId');
+  const sort = searchParams.get('sort');
 
   if (!playerId && !authorId) {
     return NextResponse.json(
@@ -18,9 +19,12 @@ export async function GET(request: Request) {
   }
 
   try {
+    const orderField = sort === 'likes' && playerId ? 'likeCount' : 'createdAt';
+    const orderDir = 'desc' as const;
+
     let query = adminDb
       .collection('scoutingReports')
-      .orderBy('createdAt', 'desc')
+      .orderBy(orderField, orderDir)
       .limit(50);
 
     if (playerId) {

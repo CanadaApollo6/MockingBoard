@@ -31,6 +31,8 @@ export type {
   BoardVisibility,
   GradeSystem,
   ScoutingReport,
+  ReportLike,
+  PlayerPickStats,
   Follow,
   Coach,
   KeyPlayerOverride,

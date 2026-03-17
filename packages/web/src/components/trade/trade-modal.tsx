@@ -17,7 +17,17 @@ import {
 } from '@mockingboard/shared';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { getTeamName } from '@/lib/teams';
+import { TEAM_COLORS } from '@/lib/colors/team-colors';
 import { cn } from '@/lib/utils';
 
 interface TradeModalProps {
@@ -79,15 +89,21 @@ export function TradeModal({
     myTeams[0],
   );
 
-  const { userTeams, cpuTeams } = useMemo(() => {
+  const { userTeams, cpuTeams, ownOtherTeams } = useMemo(() => {
     const user: TeamAbbreviation[] = [];
     const cpu: TeamAbbreviation[] = [];
+    const own: TeamAbbreviation[] = [];
     for (const [team, uid] of Object.entries(draft.teamAssignments)) {
-      if (uid === null) cpu.push(team as TeamAbbreviation);
-      else if (uid !== userId) user.push(team as TeamAbbreviation);
+      const t = team as TeamAbbreviation;
+      if (uid === null) cpu.push(t);
+      else if (uid !== userId) user.push(t);
+      else if (t !== proposerTeam) own.push(t);
     }
-    return { userTeams: user, cpuTeams: cpu };
-  }, [draft, userId]);
+    return { userTeams: user, cpuTeams: cpu, ownOtherTeams: own };
+  }, [draft, userId, proposerTeam]);
+
+  const targetCount = userTeams.length + cpuTeams.length + ownOtherTeams.length;
+  const useDropdowns = myTeams.length > 8 || targetCount > 8;
 
   // Filter picks to the selected proposer team only
   const userCurrentPicks = useMemo(
@@ -208,6 +224,10 @@ export function TradeModal({
   function handleProposerTeamChange(team: TeamAbbreviation) {
     setProposerTeam(team);
     setSelectedGiving(new Set());
+    if (targetTeam === team) {
+      setTargetTeam(null);
+      setSelectedReceiving(new Set());
+    }
   }
 
   function handleTeamChange(team: TeamAbbreviation) {
@@ -230,77 +250,236 @@ export function TradeModal({
         {myTeams.length > 1 && (
           <div>
             <label className="mb-2 block text-sm font-medium">Trade from</label>
-            <div className="flex flex-wrap gap-1.5">
-              {myTeams.map((team) => (
-                <button
-                  key={team}
-                  type="button"
-                  onClick={() => handleProposerTeamChange(team)}
-                  className={cn(
-                    'rounded-md px-2 py-1 text-xs font-medium transition-colors',
-                    proposerTeam === team
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted text-muted-foreground hover:bg-accent hover:text-foreground',
-                  )}
+            {useDropdowns ? (
+              <Select
+                value={proposerTeam}
+                onValueChange={(v) =>
+                  handleProposerTeamChange(v as TeamAbbreviation)
+                }
+              >
+                <SelectTrigger
+                  className="w-full"
+                  style={{
+                    borderLeftWidth: 3,
+                    borderLeftColor:
+                      TEAM_COLORS[proposerTeam]?.primary ?? 'transparent',
+                  }}
                 >
-                  {getTeamName(team)}
-                </button>
-              ))}
-            </div>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {myTeams.map((team) => (
+                    <SelectItem key={team} value={team}>
+                      <span className="flex items-center gap-2">
+                        <span
+                          className="size-2 shrink-0 rounded-full"
+                          style={{
+                            backgroundColor: TEAM_COLORS[team]?.primary,
+                          }}
+                        />
+                        {getTeamName(team)}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <div className="flex flex-wrap gap-1.5">
+                {myTeams.map((team) => (
+                  <button
+                    key={team}
+                    type="button"
+                    onClick={() => handleProposerTeamChange(team)}
+                    className={cn(
+                      'rounded-md px-2 py-1 text-xs font-medium transition-colors',
+                      proposerTeam === team
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted text-muted-foreground hover:bg-accent hover:text-foreground',
+                    )}
+                  >
+                    {getTeamName(team)}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
         <div>
           <label className="mb-2 block text-sm font-medium">Trade with</label>
-          {userTeams.length > 0 && (
-            <div className="mb-2">
-              <p className="mb-1 text-xs text-muted-foreground">Players</p>
-              <div className="flex flex-wrap gap-1.5">
-                {userTeams.map((team) => (
-                  <button
-                    key={team}
-                    type="button"
-                    onClick={() => handleTeamChange(team)}
-                    className={cn(
-                      'rounded-md px-2 py-1 text-xs font-medium transition-colors',
-                      targetTeam === team
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted text-muted-foreground hover:bg-accent hover:text-foreground',
-                    )}
-                  >
-                    {team}
-                    {draft.participantNames?.[draft.teamAssignments[team]!] && (
-                      <span className="ml-1 opacity-70">
-                        ({draft.participantNames[draft.teamAssignments[team]!]})
-                      </span>
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-          {cpuTeams.length > 0 && (
-            <div>
+          {useDropdowns ? (
+            <Select
+              value={targetTeam ?? ''}
+              onValueChange={(v) => handleTeamChange(v as TeamAbbreviation)}
+            >
+              <SelectTrigger
+                className="w-full"
+                style={{
+                  borderLeftWidth: 3,
+                  borderLeftColor: targetTeam
+                    ? (TEAM_COLORS[targetTeam]?.primary ?? 'transparent')
+                    : 'transparent',
+                }}
+              >
+                <SelectValue placeholder="Select team…" />
+              </SelectTrigger>
+              <SelectContent>
+                {userTeams.length > 0 && (
+                  <SelectGroup>
+                    <SelectLabel>Players</SelectLabel>
+                    {userTeams.map((team) => (
+                      <SelectItem key={team} value={team}>
+                        <span className="flex items-center gap-2">
+                          <span
+                            className="size-2 shrink-0 rounded-full"
+                            style={{
+                              backgroundColor: TEAM_COLORS[team]?.primary,
+                            }}
+                          />
+                          {getTeamName(team)}
+                          {draft.participantNames?.[
+                            draft.teamAssignments[team]!
+                          ] && (
+                            <span className="text-muted-foreground">
+                              (
+                              {
+                                draft.participantNames[
+                                  draft.teamAssignments[team]!
+                                ]
+                              }
+                              )
+                            </span>
+                          )}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                )}
+                {cpuTeams.length > 0 && (
+                  <SelectGroup>
+                    <SelectLabel>CPU</SelectLabel>
+                    {cpuTeams.map((team) => (
+                      <SelectItem key={team} value={team}>
+                        <span className="flex items-center gap-2">
+                          <span
+                            className="size-2 shrink-0 rounded-full"
+                            style={{
+                              backgroundColor: TEAM_COLORS[team]?.primary,
+                            }}
+                          />
+                          {getTeamName(team)}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                )}
+                {ownOtherTeams.length > 0 && (
+                  <SelectGroup>
+                    <SelectLabel>My Teams</SelectLabel>
+                    {ownOtherTeams.map((team) => (
+                      <SelectItem key={team} value={team}>
+                        <span className="flex items-center gap-2">
+                          <span
+                            className="size-2 shrink-0 rounded-full"
+                            style={{
+                              backgroundColor: TEAM_COLORS[team]?.primary,
+                            }}
+                          />
+                          {getTeamName(team)}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                )}
+              </SelectContent>
+            </Select>
+          ) : (
+            <>
               {userTeams.length > 0 && (
-                <p className="mb-1 text-xs text-muted-foreground">CPU</p>
+                <div className="mb-2">
+                  <p className="mb-1 text-xs text-muted-foreground">Players</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {userTeams.map((team) => (
+                      <button
+                        key={team}
+                        type="button"
+                        onClick={() => handleTeamChange(team)}
+                        className={cn(
+                          'rounded-md px-2 py-1 text-xs font-medium transition-colors',
+                          targetTeam === team
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted text-muted-foreground hover:bg-accent hover:text-foreground',
+                        )}
+                      >
+                        {team}
+                        {draft.participantNames?.[
+                          draft.teamAssignments[team]!
+                        ] && (
+                          <span className="ml-1 opacity-70">
+                            (
+                            {
+                              draft.participantNames[
+                                draft.teamAssignments[team]!
+                              ]
+                            }
+                            )
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               )}
-              <div className="flex flex-wrap gap-1.5">
-                {cpuTeams.map((team) => (
-                  <button
-                    key={team}
-                    type="button"
-                    onClick={() => handleTeamChange(team)}
-                    className={cn(
-                      'rounded-md px-2 py-1 text-xs font-medium transition-colors',
-                      targetTeam === team
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted text-muted-foreground hover:bg-accent hover:text-foreground',
-                    )}
-                  >
-                    {team}
-                  </button>
-                ))}
-              </div>
-            </div>
+              {cpuTeams.length > 0 && (
+                <div className="mb-2">
+                  {userTeams.length > 0 && (
+                    <p className="mb-1 text-xs text-muted-foreground">CPU</p>
+                  )}
+                  <div className="flex flex-wrap gap-1.5">
+                    {cpuTeams.map((team) => (
+                      <button
+                        key={team}
+                        type="button"
+                        onClick={() => handleTeamChange(team)}
+                        className={cn(
+                          'rounded-md px-2 py-1 text-xs font-medium transition-colors',
+                          targetTeam === team
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted text-muted-foreground hover:bg-accent hover:text-foreground',
+                        )}
+                      >
+                        {team}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {ownOtherTeams.length > 0 && (
+                <div>
+                  {(userTeams.length > 0 || cpuTeams.length > 0) && (
+                    <p className="mb-1 text-xs text-muted-foreground">
+                      My Teams
+                    </p>
+                  )}
+                  <div className="flex flex-wrap gap-1.5">
+                    {ownOtherTeams.map((team) => (
+                      <button
+                        key={team}
+                        type="button"
+                        onClick={() => handleTeamChange(team)}
+                        className={cn(
+                          'rounded-md px-2 py-1 text-xs font-medium transition-colors',
+                          targetTeam === team
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted text-muted-foreground hover:bg-accent hover:text-foreground',
+                        )}
+                      >
+                        {team}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
 

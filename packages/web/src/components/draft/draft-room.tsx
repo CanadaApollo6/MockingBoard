@@ -34,6 +34,7 @@ import { getErrorMessage } from '@/lib/validate';
 import { Routes } from '@/routes';
 import { ErrorBoundary } from '@/components/layout/error-boundary';
 import { OverlayLinksPopover } from '@/components/draft/overlay-links-popover';
+import { TeamPicksPanel } from '@/components/draft/team-picks-panel';
 
 interface DraftRoomProps {
   draftId: string;
@@ -282,7 +283,7 @@ export function DraftRoom({
     const slot = draft.pickOrder[(draft.currentPick ?? 1) - 1];
     if (!slot) return;
     const player = prepareCpuPick({
-      team: slot.team,
+      team: slot.teamOverride ?? slot.team,
       pickOrder: draft.pickOrder,
       pickedPlayerIds: draft.pickedPlayerIds ?? [],
       playerMap,
@@ -545,6 +546,12 @@ export function DraftRoom({
                 : 'CPU picks incoming...'}
             </p>
           )}
+          <TeamPicksPanel
+            picks={picks}
+            playerMap={playerMap}
+            teams={Object.keys(draft.teamAssignments) as TeamAbbreviation[]}
+            defaultTeam={clockTeam}
+          />
           {boardRankMap && (
             <div className="flex gap-1.5">
               <Button

@@ -9,13 +9,7 @@ interface DeadMoneyPreviewProps {
   postJune1: DeadMoneyResult;
 }
 
-function Column({
-  title,
-  result,
-}: {
-  title: string;
-  result: DeadMoneyResult;
-}) {
+function Column({ title, result }: { title: string; result: DeadMoneyResult }) {
   return (
     <div className="flex-1 space-y-2">
       <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">

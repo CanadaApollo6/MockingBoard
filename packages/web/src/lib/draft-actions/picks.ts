@@ -5,13 +5,64 @@ import { adminDb } from '../firebase/firebase-admin';
 import { getCachedPlayers } from '../cache';
 import { getBigBoard } from '../firebase/data';
 import { hydrateDoc } from '../firebase/sanitize';
-import type { Draft, DraftSlot, Pick, Player } from '@mockingboard/shared';
+import type {
+  Draft,
+  DraftSlot,
+  Pick,
+  Player,
+  TeamAbbreviation,
+} from '@mockingboard/shared';
 import {
   prepareCpuPick,
   preparePickRecord,
   getPickController,
   POSITIONAL_VALUE,
 } from '@mockingboard/shared';
+
+// ---- Player Pick Stats ----
+
+/** Fire-and-forget update of denormalized pick stats for a player. */
+export function updatePlayerPickStats(
+  playerId: string,
+  overall: number,
+  team: TeamAbbreviation,
+  year: number,
+): void {
+  const statsRef = adminDb.collection('playerPickStats').doc(playerId);
+
+  adminDb
+    .runTransaction(async (transaction) => {
+      const doc = await transaction.get(statsRef);
+
+      if (!doc.exists) {
+        transaction.set(statsRef, {
+          playerId,
+          year,
+          pickCount: 1,
+          sumOverall: overall,
+          minOverall: overall,
+          maxOverall: overall,
+          teamCounts: { [team]: 1 },
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+        return;
+      }
+
+      const data = doc.data()!;
+      const currentMin = data.minOverall as number;
+      const currentMax = data.maxOverall as number;
+
+      transaction.update(statsRef, {
+        pickCount: FieldValue.increment(1),
+        sumOverall: FieldValue.increment(overall),
+        minOverall: overall < currentMin ? overall : currentMin,
+        maxOverall: overall > currentMax ? overall : currentMax,
+        [`teamCounts.${team}`]: FieldValue.increment(1),
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+    })
+    .catch((err) => console.error('Failed to update player pick stats:', err));
+}
 
 // ---- Pick Recording ----
 
@@ -20,7 +71,7 @@ export async function recordPick(
   playerId: string,
   userId: string | null,
 ): Promise<{ pick: Pick; isComplete: boolean }> {
-  return adminDb.runTransaction(async (transaction) => {
+  const result = await adminDb.runTransaction(async (transaction) => {
     const draftRef = adminDb.collection('drafts').doc(draftId);
     const draftDoc = await transaction.get(draftRef);
 
@@ -41,8 +92,22 @@ export async function recordPick(
       updatedAt: FieldValue.serverTimestamp(),
     });
 
-    return { pick: prepared.pick, isComplete: prepared.isComplete };
+    return {
+      pick: prepared.pick,
+      isComplete: prepared.isComplete,
+      year: draft.config.year,
+    };
   });
+
+  // Fire-and-forget stats update
+  updatePlayerPickStats(
+    playerId,
+    result.pick.overall,
+    result.pick.team,
+    result.year,
+  );
+
+  return { pick: result.pick, isComplete: result.isComplete };
 }
 
 /** Write a CPU pick using a batch (no transaction read). Caller provides
@@ -53,9 +118,11 @@ async function writeCpuPick(
   playerId: string,
   pickOrder: DraftSlot[],
   nextPick: number,
+  year: number,
 ): Promise<{ pick: Pick; isComplete: boolean }> {
   const isComplete = nextPick > pickOrder.length;
   const nextSlot = isComplete ? null : pickOrder[nextPick - 1];
+  const team = slot.teamOverride ?? slot.team;
 
   const draftRef = adminDb.collection('drafts').doc(draftId);
   const pickRef = draftRef.collection('picks').doc();
@@ -66,7 +133,7 @@ async function writeCpuPick(
     overall: slot.overall,
     round: slot.round,
     pick: slot.pick,
-    team: slot.teamOverride ?? slot.team,
+    team,
     userId: null,
     playerId,
     createdAt: FieldValue.serverTimestamp(),
@@ -82,6 +149,9 @@ async function writeCpuPick(
 
   await batch.commit();
 
+  // Fire-and-forget stats update
+  updatePlayerPickStats(playerId, slot.overall, team, year);
+
   return {
     pick: {
       id: pickRef.id,
@@ -89,7 +159,7 @@ async function writeCpuPick(
       overall: slot.overall,
       round: slot.round,
       pick: slot.pick,
-      team: slot.teamOverride ?? slot.team,
+      team,
       userId: null,
       playerId,
       createdAt: { seconds: 0, nanoseconds: 0 },
@@ -171,7 +241,7 @@ export async function runCpuCascade(
     if (available.length === 0) break;
 
     const player = prepareCpuPick({
-      team: currentSlot.team,
+      team: currentSlot.teamOverride ?? currentSlot.team,
       pickOrder: draft.pickOrder,
       pickedPlayerIds: pickedIds,
       playerMap,
@@ -190,6 +260,7 @@ export async function runCpuCascade(
       player.id,
       draft.pickOrder,
       currentPick + 1,
+      draft.config.year,
     );
     cpuPicks.push(pick);
 
@@ -246,7 +317,7 @@ export async function advanceSingleCpuPick(
 
   const playerMap = new Map(allPlayers.map((p) => [p.id, p]));
   const player = prepareCpuPick({
-    team: currentSlot.team,
+    team: currentSlot.teamOverride ?? currentSlot.team,
     pickOrder: draft.pickOrder,
     pickedPlayerIds: draft.pickedPlayerIds ?? [],
     playerMap,
@@ -265,6 +336,7 @@ export async function advanceSingleCpuPick(
     player.id,
     draft.pickOrder,
     draft.currentPick + 1,
+    draft.config.year,
   );
   return { pick, isComplete };
 }

@@ -134,7 +134,7 @@ export async function recordPickAndAdvance(
   playerId: string,
   userId: string | null,
 ): Promise<{ pick: Pick; isComplete: boolean }> {
-  return db.runTransaction(async (transaction) => {
+  const result = await db.runTransaction(async (transaction) => {
     const draftRef = db.collection('drafts').doc(draftId);
     const draftDoc = await transaction.get(draftRef);
 
@@ -155,8 +155,63 @@ export async function recordPickAndAdvance(
       updatedAt: FieldValue.serverTimestamp(),
     });
 
-    return { pick: prepared.pick, isComplete: prepared.isComplete };
+    return {
+      pick: prepared.pick,
+      isComplete: prepared.isComplete,
+      year: draft.config.year,
+    };
   });
+
+  // Fire-and-forget player pick stats update
+  updatePlayerPickStats(
+    playerId,
+    result.pick.overall,
+    result.pick.team,
+    result.year,
+  );
+
+  return { pick: result.pick, isComplete: result.isComplete };
+}
+
+/** Fire-and-forget update of denormalized pick stats for a player. */
+function updatePlayerPickStats(
+  playerId: string,
+  overall: number,
+  team: TeamAbbreviation,
+  year: number,
+): void {
+  const statsRef = db.collection('playerPickStats').doc(playerId);
+
+  db.runTransaction(async (transaction) => {
+    const doc = await transaction.get(statsRef);
+
+    if (!doc.exists) {
+      transaction.set(statsRef, {
+        playerId,
+        year,
+        pickCount: 1,
+        sumOverall: overall,
+        minOverall: overall,
+        maxOverall: overall,
+        teamCounts: { [team]: 1 },
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+      return;
+    }
+
+    const data = doc.data()!;
+    const currentMin = data.minOverall as number;
+    const currentMax = data.maxOverall as number;
+
+    transaction.update(statsRef, {
+      pickCount: FieldValue.increment(1),
+      sumOverall: FieldValue.increment(overall),
+      minOverall: overall < currentMin ? overall : currentMin,
+      maxOverall: overall > currentMax ? overall : currentMax,
+      [`teamCounts.${team}`]: FieldValue.increment(1),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+  }).catch((err) => console.error('Failed to update player pick stats:', err));
 }
 
 // ---- Timer Management ----

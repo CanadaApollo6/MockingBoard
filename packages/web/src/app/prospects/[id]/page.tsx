@@ -4,10 +4,12 @@ import {
   getPlayerMap,
   getPlayerReports,
   getPlayerVideos,
+  getPlayerPickStats,
 } from '@/lib/firebase/data';
 import { PlayerHero } from '@/components/player/player-hero';
 import { PlayerJsonLd } from './json-ld';
 import { ProspectDetails } from '@/components/player/prospect-details';
+import { MockDraftStats } from '@/components/player/mock-draft-stats';
 import { CommunityGradeSummary } from '@/components/community/community-grade-summary';
 import { CommunityReports } from '@/components/community/community-reports';
 import { QuickGrade } from '@/components/grade/quick-grade';
@@ -49,9 +51,10 @@ export default async function PlayerPage({ params }: Props) {
 
   if (!player) notFound();
 
-  const [reports, videos] = await Promise.all([
+  const [reports, videos, pickStats] = await Promise.all([
     getPlayerReports(id),
     getPlayerVideos(id),
+    getPlayerPickStats(id),
   ]);
 
   return (
@@ -64,6 +67,8 @@ export default async function PlayerPage({ params }: Props) {
           <h2 className="text-lg font-bold">Consensus Scouting</h2>
           <ProspectDetails player={player} reportCount={reports.length} />
         </section>
+
+        <MockDraftStats stats={pickStats} />
 
         <section className="space-y-6">
           {reports.length > 0 && <CommunityGradeSummary reports={reports} />}

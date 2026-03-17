@@ -27,7 +27,7 @@ const {
   }));
   const mockCollection = vi.fn(() => ({ doc: pickDocFn }));
 
-  const mockRunTransaction = vi.fn();
+  const mockRunTransaction = vi.fn().mockResolvedValue(undefined);
 
   return {
     mockGet,
@@ -48,6 +48,7 @@ vi.mock('firebase-admin/firestore', () => ({
   FieldValue: {
     serverTimestamp: () => 'SERVER_TIMESTAMP',
     arrayUnion: (...args: unknown[]) => ({ _arrayUnion: args }),
+    increment: (n: number) => ({ _increment: n }),
   },
 }));
 vi.mock('../firebase/firebase-admin', () => ({

@@ -31,6 +31,7 @@ import { Button } from '@/components/ui/button';
 import { Routes } from '@/routes';
 import { ErrorBoundary } from '@/components/layout/error-boundary';
 import { OverlayLinksPopover } from '@/components/draft/overlay-links-popover';
+import { TeamPicksPanel } from '@/components/draft/team-picks-panel';
 
 const GUEST_ID = '__guest__';
 
@@ -214,7 +215,7 @@ export function LocalDraftRoom({
   const handleTimerExpire = useCallback(() => {
     if (!currentSlot) return;
     const player = prepareCpuPick({
-      team: currentSlot.team,
+      team: currentSlot.teamOverride ?? currentSlot.team,
       pickOrder: draft.pickOrder,
       pickedPlayerIds: draft.pickedPlayerIds ?? [],
       playerMap,
@@ -413,6 +414,12 @@ export function LocalDraftRoom({
               CPU picks rolling in...
             </div>
           )}
+          <TeamPicksPanel
+            picks={picks}
+            playerMap={playerMap}
+            teams={Object.keys(draft.teamAssignments) as TeamAbbreviation[]}
+            defaultTeam={clockTeam}
+          />
           {boardRankMap && (
             <div className="flex gap-1.5">
               <Button

@@ -19,6 +19,7 @@ import type {
   DraftResultPick,
   Position,
   TeamAbbreviation,
+  PlayerPickStats,
 } from '@mockingboard/shared';
 
 export async function getDrafts(options?: {
@@ -697,4 +698,12 @@ export async function getPlayerVideos(
       } as VideoBreakdown;
     }),
   );
+}
+
+export async function getPlayerPickStats(
+  playerId: string,
+): Promise<PlayerPickStats | null> {
+  const doc = await adminDb.collection('playerPickStats').doc(playerId).get();
+  if (!doc.exists) return null;
+  return sanitize({ id: doc.id, ...doc.data() } as PlayerPickStats);
 }

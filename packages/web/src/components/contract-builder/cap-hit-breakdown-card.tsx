@@ -34,7 +34,10 @@ export function CapHitBreakdownCard({
         </p>
         <div className="space-y-1.5">
           {activeRows.map(({ key, label }) => (
-            <div key={key} className="flex items-center justify-between text-sm">
+            <div
+              key={key}
+              className="flex items-center justify-between text-sm"
+            >
               <span className="text-muted-foreground">{label}</span>
               <span className="font-mono">{fmtDollar(breakdown[key])}</span>
             </div>

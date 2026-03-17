@@ -22,9 +22,7 @@ test.describe('nfl draft explainer', () => {
     ];
 
     for (const section of sections) {
-      await expect(
-        page.getByRole('heading', { name: section }),
-      ).toBeVisible();
+      await expect(page.getByRole('heading', { name: section })).toBeVisible();
     }
   });
 
@@ -42,14 +40,13 @@ test.describe('nfl draft explainer', () => {
   });
 
   test('links to trade calculator', async ({ page }) => {
+    const main = page.locator('main');
     await expect(
-      page.getByRole('link', { name: /trade calculator/i }),
+      main.getByRole('link', { name: /trade calculator/i }),
     ).toBeVisible();
   });
 
   test('links to start a mock draft', async ({ page }) => {
-    await expect(
-      page.getByRole('link', { name: /mock draft/i }),
-    ).toBeVisible();
+    await expect(page.getByRole('link', { name: /mock draft/i })).toBeVisible();
   });
 });

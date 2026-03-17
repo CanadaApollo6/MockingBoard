@@ -448,7 +448,28 @@ export interface ScoutingReport {
   weaknesses?: string[];
   content?: Record<string, unknown>;
   contentText?: string;
+  likeCount?: number;
   createdAt: FirestoreTimestamp;
+  updatedAt: FirestoreTimestamp;
+}
+
+export interface ReportLike {
+  id: string;
+  reportId: string;
+  userId: string;
+  createdAt: FirestoreTimestamp;
+}
+
+// ---- Player Pick Stats Types ----
+
+export interface PlayerPickStats {
+  playerId: string;
+  year: number;
+  pickCount: number;
+  sumOverall: number;
+  minOverall: number;
+  maxOverall: number;
+  teamCounts: Record<string, number>;
   updatedAt: FirestoreTimestamp;
 }
 

@@ -20,8 +20,8 @@ export const CPU_SPEED_DELAY: Record<CpuSpeed, number> = {
  * Returns null if the pick is controlled by CPU.
  *
  * Priority:
- * 1. Check slot.ownerOverride (set by trades)
- * 2. Fall back to teamAssignments[slot.team]
+ * 1. Check slot.ownerOverride (set by in-draft trades)
+ * 2. Fall back to teamAssignments using teamOverride ?? team (respects pre-draft trades)
  */
 export function getPickController(
   draft: Draft,
@@ -30,7 +30,8 @@ export function getPickController(
   if (slot.ownerOverride !== undefined) {
     return slot.ownerOverride || null;
   }
-  return draft.teamAssignments[slot.team] ?? null;
+  const team = slot.teamOverride ?? slot.team;
+  return draft.teamAssignments[team] ?? null;
 }
 
 /**

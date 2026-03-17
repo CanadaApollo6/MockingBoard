@@ -24,7 +24,7 @@ A full-stack NFL draft platform where mock drafting meets community scouting. Dr
 | Content creator profiles and attribution             | Live    |
 | Draft Day countdown and live companion               | Live    |
 | Monetization (Stripe, Pro tier)                      | Planned |
-| GM Mode / Offseason Simulator                        | Planned |
+| Community social features (activity feed, comments)  | Planned |
 
 ## Tech Stack
 

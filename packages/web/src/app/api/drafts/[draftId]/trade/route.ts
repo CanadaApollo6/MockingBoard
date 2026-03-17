@@ -42,8 +42,10 @@ export async function POST(
       );
     }
 
-    // Derive recipientId: null for CPU teams, userId for human teams
-    const recipientId = draft.teamAssignments[body.recipientTeam] ?? null;
+    // Derive recipientId: null for CPU teams, userId for human teams.
+    // Self-trades (all-teams mode) are treated as CPU trades for instant execution.
+    const rawRecipientId = draft.teamAssignments[body.recipientTeam] ?? null;
+    const recipientId = rawRecipientId === session.uid ? null : rawRecipientId;
 
     const { trade, evaluation } = await createWebTrade({
       draftId,

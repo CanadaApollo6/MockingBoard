@@ -142,7 +142,7 @@ Potential revenue stream once the platform proves product-market fit with consum
 #### NFL Teams / Agencies
 
 - Private team workspaces with shared boards and internal scouting reports
-- Trade scenario modeling (Phase 9 GM Mode as a professional tool)
+- Trade scenario modeling and cap impact analysis
 - Prospect tracking across combine/pro day/game tape
 
 #### Pricing: Custom / Enterprise

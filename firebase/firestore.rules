@@ -145,6 +145,28 @@ service cloud.firestore {
     }
 
     // ============================================
+    // Report Likes Collection
+    // Public read, authenticated create/delete own
+    // ============================================
+    match /reportLikes/{likeId} {
+      allow read: if true;
+      allow create: if isAuthenticated() &&
+        request.resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() &&
+        resource.data.userId == request.auth.uid;
+      allow update: if false;
+    }
+
+    // ============================================
+    // Player Pick Stats Collection
+    // Public read, server-only write
+    // ============================================
+    match /playerPickStats/{statsId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // ============================================
     // Trades Collection
     // Only draft participants can read/write
     // ============================================

@@ -23,7 +23,12 @@ import { RestructurePanel } from './restructure-panel';
 const START_YEAR = 2026;
 
 function defaultYearInput(): YearInput {
-  return { baseSalary: 1_000_000, rosterBonus: 0, optionBonus: 0, workoutBonus: 0 };
+  return {
+    baseSalary: 1_000_000,
+    rosterBonus: 0,
+    optionBonus: 0,
+    workoutBonus: 0,
+  };
 }
 
 export function AdvancedTier() {
@@ -34,31 +39,26 @@ export function AdvancedTier() {
   );
   const [incentives, setIncentives] = useState<IncentiveInput[]>([]);
 
-  const handleYearsChange = useCallback(
-    ([newYears]: number[]) => {
-      setContractYears(newYears);
-      setYearInputs((prev) => {
-        if (newYears > prev.length) {
-          return [
-            ...prev,
-            ...Array.from({ length: newYears - prev.length }, () =>
-              defaultYearInput(),
-            ),
-          ];
-        }
-        return prev.slice(0, newYears);
-      });
-      // Clamp incentive yearIndexes
-      setIncentives((prev) =>
-        prev.map((inc) =>
-          inc.yearIndex >= newYears
-            ? { ...inc, yearIndex: newYears - 1 }
-            : inc,
-        ),
-      );
-    },
-    [],
-  );
+  const handleYearsChange = useCallback(([newYears]: number[]) => {
+    setContractYears(newYears);
+    setYearInputs((prev) => {
+      if (newYears > prev.length) {
+        return [
+          ...prev,
+          ...Array.from({ length: newYears - prev.length }, () =>
+            defaultYearInput(),
+          ),
+        ];
+      }
+      return prev.slice(0, newYears);
+    });
+    // Clamp incentive yearIndexes
+    setIncentives((prev) =>
+      prev.map((inc) =>
+        inc.yearIndex >= newYears ? { ...inc, yearIndex: newYears - 1 } : inc,
+      ),
+    );
+  }, []);
 
   const updateYear = useCallback((index: number, values: YearInput) => {
     setYearInputs((prev) => prev.map((y, i) => (i === index ? values : y)));
@@ -76,12 +76,9 @@ export function AdvancedTier() {
     ]);
   }, []);
 
-  const updateIncentive = useCallback(
-    (index: number, inc: IncentiveInput) => {
-      setIncentives((prev) => prev.map((i, idx) => (idx === index ? inc : i)));
-    },
-    [],
-  );
+  const updateIncentive = useCallback((index: number, inc: IncentiveInput) => {
+    setIncentives((prev) => prev.map((i, idx) => (idx === index ? inc : i)));
+  }, []);
 
   const removeIncentive = useCallback((index: number) => {
     setIncentives((prev) => prev.filter((_, idx) => idx !== index));
@@ -233,10 +230,7 @@ export function AdvancedTier() {
 
         {/* Dead money + restructure */}
         <div className="space-y-4">
-          <DeadMoneyPreview
-            preJune1={deadMoneyPre}
-            postJune1={deadMoneyPost}
-          />
+          <DeadMoneyPreview preJune1={deadMoneyPre} postJune1={deadMoneyPost} />
           <RestructurePanel contract={contract} />
         </div>
       </div>
