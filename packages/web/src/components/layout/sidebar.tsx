@@ -30,6 +30,7 @@ import {
   GitCompareArrows,
   Calculator,
   BookOpen,
+  Compass,
 } from 'lucide-react';
 import { useAuth } from '@/components/auth/auth-provider';
 import { ThemeToggle } from '@/components/layout/theme-toggle';
@@ -64,6 +65,7 @@ const NAV_GROUPS = [
   {
     label: 'Community',
     items: [
+      { href: Routes.DISCOVER, label: 'Discover', icon: Compass },
       { href: Routes.COMMUNITY, label: 'Community', icon: Globe },
       { href: Routes.SCOUTS, label: 'Scouts', icon: Eye },
       { href: Routes.LEADERBOARD, label: 'Leaderboard', icon: Trophy },

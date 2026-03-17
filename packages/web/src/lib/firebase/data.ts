@@ -791,3 +791,24 @@ export async function getComments(
     snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Comment),
   );
 }
+
+export async function getTrendingBoards(limit = 8): Promise<BigBoard[]> {
+  const snapshot = await adminDb
+    .collection('bigBoards')
+    .where('visibility', '==', 'public')
+    .orderBy('likeCount', 'desc')
+    .limit(limit)
+    .get();
+
+  return sanitize(hydrateDocs<BigBoard>(snapshot));
+}
+
+export async function getPopularReports(limit = 6): Promise<ScoutingReport[]> {
+  const snapshot = await adminDb
+    .collection('scoutingReports')
+    .orderBy('likeCount', 'desc')
+    .limit(limit)
+    .get();
+
+  return sanitize(hydrateDocs<ScoutingReport>(snapshot));
+}

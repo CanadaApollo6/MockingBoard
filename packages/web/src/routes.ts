@@ -19,6 +19,7 @@ export const Routes = {
   BOARDS: '/boards',
 
   // Community
+  DISCOVER: '/discover',
   COMMUNITY: '/community',
   SCOUTS: '/scouts',
   LEADERBOARD: '/leaderboard',
