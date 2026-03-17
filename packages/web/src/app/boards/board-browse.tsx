@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { BigBoard } from '@mockingboard/shared';
 import { Button } from '@/components/ui/button';
 import { BoardCard } from '@/components/board/board-card';
+import { useAuth } from '@/components/auth/auth-provider';
 
 interface BoardBrowseProps {
   initialBoards: BigBoard[];
@@ -14,10 +15,25 @@ export function BoardBrowse({
   initialBoards,
   initialHasMore,
 }: BoardBrowseProps) {
+  const { user } = useAuth();
   const [boards, setBoards] = useState(initialBoards);
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
+  const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
+
+  // Fetch current user's like status for all displayed boards
+  useEffect(() => {
+    if (!user || boards.length === 0) return;
+
+    const ids = boards.map((b) => b.id);
+    fetch(`/api/boards/likes/status?ids=${ids.join(',')}`)
+      .then((res) => (res.ok ? res.json() : { likedIds: [] }))
+      .then((data: { likedIds: string[] }) =>
+        setLikedIds(new Set(data.likedIds)),
+      )
+      .catch(() => {});
+  }, [user, boards]);
 
   async function loadMore() {
     if (!hasMore || loading) return;
@@ -66,7 +82,11 @@ export function BoardBrowse({
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((board) => (
-            <BoardCard key={board.id} board={board} />
+            <BoardCard
+              key={board.id}
+              board={board}
+              isLiked={likedIds.has(board.id)}
+            />
           ))}
         </div>
       )}

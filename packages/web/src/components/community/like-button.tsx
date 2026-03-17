@@ -6,13 +6,13 @@ import { useAuth } from '@/components/auth/auth-provider';
 import { cn } from '@/lib/utils';
 
 interface LikeButtonProps {
-  reportId: string;
+  apiPath: string;
   initialLikeCount: number;
   initialIsLiked?: boolean;
 }
 
 export function LikeButton({
-  reportId,
+  apiPath,
   initialLikeCount,
   initialIsLiked = false,
 }: LikeButtonProps) {
@@ -31,7 +31,7 @@ export function LikeButton({
     setLoading(true);
 
     try {
-      const res = await fetch(`/api/reports/${reportId}/like`, {
+      const res = await fetch(apiPath, {
         method: wasLiked ? 'DELETE' : 'POST',
       });
       if (!res.ok) {
@@ -57,7 +57,7 @@ export function LikeButton({
         user ? 'cursor-pointer hover:text-mb-accent' : 'cursor-default',
         isLiked ? 'text-mb-accent' : 'text-muted-foreground',
       )}
-      aria-label={isLiked ? 'Unlike this report' : 'Like this report'}
+      aria-label={isLiked ? 'Unlike' : 'Like'}
     >
       <Heart className={cn('h-3.5 w-3.5', isLiked && 'fill-current')} />
       {likeCount > 0 && <span>{likeCount}</span>}

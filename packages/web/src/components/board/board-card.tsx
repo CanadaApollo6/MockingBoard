@@ -1,12 +1,14 @@
 import Link from 'next/link';
 import type { BigBoard } from '@mockingboard/shared';
 import { Routes } from '@/routes';
+import { LikeButton } from '@/components/community/like-button';
 
 interface BoardCardProps {
   board: BigBoard;
+  isLiked?: boolean;
 }
 
-export function BoardCard({ board }: BoardCardProps) {
+export function BoardCard({ board, isLiked }: BoardCardProps) {
   const updated = board.updatedAt?.seconds
     ? new Date(board.updatedAt.seconds * 1000).toLocaleDateString()
     : null;
@@ -38,9 +40,24 @@ export function BoardCard({ board }: BoardCardProps) {
         </p>
       )}
 
-      <div className="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
-        <span>{board.year}</span>
-        {updated && <span>Updated {updated}</span>}
+      <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+        <div className="flex items-center gap-3">
+          <span>{board.year}</span>
+          {updated && <span>Updated {updated}</span>}
+        </div>
+        {/* Prevent click from navigating to board page */}
+        <div
+          onClickCapture={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+        >
+          <LikeButton
+            apiPath={`/api/boards/${board.id}/like`}
+            initialLikeCount={board.likeCount ?? 0}
+            initialIsLiked={isLiked}
+          />
+        </div>
       </div>
     </Link>
   );

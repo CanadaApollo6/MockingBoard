@@ -85,7 +85,7 @@ export function ReportCard({ report, isLiked }: ReportCardProps) {
       {/* Like button */}
       <div className="flex items-center justify-end border-t pt-2">
         <LikeButton
-          reportId={report.id}
+          apiPath={`/api/reports/${report.id}/like`}
           initialLikeCount={report.likeCount ?? 0}
           initialIsLiked={isLiked}
         />

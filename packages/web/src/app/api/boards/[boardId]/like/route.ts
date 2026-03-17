@@ -1,0 +1,107 @@
+import { NextResponse } from 'next/server';
+import { FieldValue } from 'firebase-admin/firestore';
+import { getSessionUser } from '@/lib/firebase/auth-session';
+import { adminDb } from '@/lib/firebase/firebase-admin';
+
+interface RouteParams {
+  params: Promise<{ boardId: string }>;
+}
+
+export async function GET(request: Request, { params }: RouteParams) {
+  const { boardId } = await params;
+  const session = await getSessionUser();
+
+  if (!session) {
+    // Unauthenticated users get count only
+    const countSnap = await adminDb
+      .collection('boardLikes')
+      .where('boardId', '==', boardId)
+      .count()
+      .get();
+
+    return NextResponse.json({
+      isLiked: false,
+      likeCount: countSnap.data().count,
+    });
+  }
+
+  const docId = `${session.uid}_${boardId}`;
+  const likeDoc = await adminDb.collection('boardLikes').doc(docId).get();
+  const boardDoc = await adminDb.collection('bigBoards').doc(boardId).get();
+
+  return NextResponse.json({
+    isLiked: likeDoc.exists,
+    likeCount: boardDoc.data()?.likeCount ?? 0,
+  });
+}
+
+export async function POST(_request: Request, { params }: RouteParams) {
+  const { boardId } = await params;
+  const session = await getSessionUser();
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const docId = `${session.uid}_${boardId}`;
+  const boardRef = adminDb.collection('bigBoards').doc(boardId);
+  const likeRef = adminDb.collection('boardLikes').doc(docId);
+
+  try {
+    await adminDb.runTransaction(async (transaction) => {
+      const boardDoc = await transaction.get(boardRef);
+      if (!boardDoc.exists) throw new Error('Board not found');
+
+      const existingLike = await transaction.get(likeRef);
+      if (existingLike.exists) return; // Already liked
+
+      transaction.set(likeRef, {
+        boardId,
+        userId: session.uid,
+        createdAt: FieldValue.serverTimestamp(),
+      });
+
+      transaction.update(boardRef, {
+        likeCount: FieldValue.increment(1),
+      });
+    });
+
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Failed to like board';
+    const status = message === 'Board not found' ? 404 : 500;
+    if (status === 500) console.error('Failed to like board:', err);
+    return NextResponse.json({ error: message }, { status });
+  }
+}
+
+export async function DELETE(_request: Request, { params }: RouteParams) {
+  const { boardId } = await params;
+  const session = await getSessionUser();
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const docId = `${session.uid}_${boardId}`;
+  const boardRef = adminDb.collection('bigBoards').doc(boardId);
+  const likeRef = adminDb.collection('boardLikes').doc(docId);
+
+  try {
+    await adminDb.runTransaction(async (transaction) => {
+      const existingLike = await transaction.get(likeRef);
+      if (!existingLike.exists) return; // Not liked
+
+      transaction.delete(likeRef);
+      transaction.update(boardRef, {
+        likeCount: FieldValue.increment(-1),
+      });
+    });
+
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    console.error('Failed to unlike board:', err);
+    return NextResponse.json(
+      { error: 'Failed to unlike board' },
+      { status: 500 },
+    );
+  }
+}

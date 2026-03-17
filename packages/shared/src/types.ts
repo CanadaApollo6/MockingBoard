@@ -414,6 +414,7 @@ export interface BigBoard {
   grades?: Record<string, number>;
   preferredGradeSystem?: GradeSystem;
   positionRankings?: Partial<Record<Position, string[]>>;
+  likeCount?: number;
   createdAt: FirestoreTimestamp;
   updatedAt: FirestoreTimestamp;
 }
@@ -456,6 +457,13 @@ export interface ScoutingReport {
 export interface ReportLike {
   id: string;
   reportId: string;
+  userId: string;
+  createdAt: FirestoreTimestamp;
+}
+
+export interface BoardLike {
+  id: string;
+  boardId: string;
   userId: string;
   createdAt: FirestoreTimestamp;
 }

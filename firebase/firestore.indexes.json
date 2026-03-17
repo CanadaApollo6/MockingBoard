@@ -230,6 +230,22 @@
         { "fieldPath": "playerId", "order": "ASCENDING" },
         { "fieldPath": "likeCount", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "boardLikes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "boardId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "boardLikes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []
