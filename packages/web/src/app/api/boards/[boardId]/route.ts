@@ -3,6 +3,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { getSessionUser } from '@/lib/firebase/auth-session';
 import { adminDb } from '@/lib/firebase/firebase-admin';
 import { getBigBoard } from '@/lib/firebase/data';
+import { fanOutActivity } from '@/lib/activity';
 
 export async function GET(
   _request: Request,
@@ -123,6 +124,17 @@ export async function PUT(
       updates.positionRankings = body.positionRankings;
 
     await adminDb.collection('bigBoards').doc(boardId).update(updates);
+
+    // Fan out activity when board becomes public
+    if (body.visibility === 'public' && board.visibility !== 'public') {
+      fanOutActivity({
+        actorId: session.uid,
+        type: 'board-published',
+        targetId: boardId,
+        targetName: board.name,
+        targetLink: `/boards/${board.slug ?? boardId}`,
+      }).catch(() => {});
+    }
 
     return NextResponse.json({ ok: true });
   } catch (err) {

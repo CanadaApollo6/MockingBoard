@@ -3,6 +3,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { getSessionUser } from '@/lib/firebase/auth-session';
 import { adminDb } from '@/lib/firebase/firebase-admin';
 import { sanitize } from '@/lib/firebase/sanitize';
+import { fanOutActivity } from '@/lib/activity';
 import type { ScoutingReport } from '@mockingboard/shared';
 
 export async function GET(request: Request) {
@@ -138,6 +139,24 @@ export async function POST(request: Request) {
     };
 
     await ref.set(report);
+
+    // Fan out activity for new report (fire-and-forget)
+    adminDb
+      .collection('players')
+      .doc(playerId)
+      .get()
+      .then((playerDoc) => {
+        const playerName = playerDoc.data()?.name ?? 'a prospect';
+        return fanOutActivity({
+          actorId: session.uid,
+          type: 'report-created',
+          targetId: ref.id,
+          targetName: playerName,
+          targetLink: `/reports/${ref.id}`,
+        });
+      })
+      .catch(() => {});
+
     return NextResponse.json({ reportId: ref.id });
   } catch (err) {
     console.error('Failed to create report:', err);

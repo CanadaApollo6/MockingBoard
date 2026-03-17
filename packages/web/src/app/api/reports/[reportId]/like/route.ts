@@ -3,6 +3,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { getSessionUser } from '@/lib/firebase/auth-session';
 import { adminDb } from '@/lib/firebase/firebase-admin';
 import { notifyReportLiked } from '@/lib/notifications';
+import { fanOutActivity } from '@/lib/activity';
 
 interface RouteParams {
   params: Promise<{ reportId: string }>;
@@ -69,18 +70,41 @@ export async function POST(_request: Request, { params }: RouteParams) {
       });
 
       const data = reportDoc.data()!;
-      return { authorId: data.authorId as string, title: data.title as string };
+      return {
+        authorId: data.authorId as string,
+        authorName: data.authorName as string,
+        playerId: data.playerId as string,
+      };
     });
 
-    // Notify author (fire-and-forget, don't notify yourself)
-    if (result && result.authorId !== session.uid) {
-      const likerName = session.name ?? session.email ?? 'Someone';
-      notifyReportLiked(
-        result.authorId,
-        likerName,
-        result.title,
-        reportId,
-      ).catch(() => {});
+    if (result) {
+      // Notify author (fire-and-forget, don't notify yourself)
+      if (result.authorId !== session.uid) {
+        const likerName = session.name ?? session.email ?? 'Someone';
+        notifyReportLiked(
+          result.authorId,
+          likerName,
+          result.authorName,
+          reportId,
+        ).catch(() => {});
+      }
+
+      // Fan out activity to followers (look up player name)
+      adminDb
+        .collection('players')
+        .doc(result.playerId)
+        .get()
+        .then((playerDoc) => {
+          const playerName = playerDoc.data()?.name ?? 'a prospect';
+          return fanOutActivity({
+            actorId: session.uid,
+            type: 'report-liked',
+            targetId: reportId,
+            targetName: playerName,
+            targetLink: `/reports/${reportId}`,
+          });
+        })
+        .catch(() => {});
     }
 
     return NextResponse.json({ ok: true });

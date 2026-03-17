@@ -34,6 +34,9 @@ vi.mock('@/lib/firebase/firebase-admin', () => ({
 vi.mock('@/lib/notifications', () => ({
   notifyBoardLiked: mockNotifyBoardLiked,
 }));
+vi.mock('@/lib/activity', () => ({
+  fanOutActivity: vi.fn().mockResolvedValue(undefined),
+}));
 
 import { GET, POST, DELETE } from './route.js';
 

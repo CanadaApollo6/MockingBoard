@@ -703,6 +703,26 @@ export interface AppNotification {
   actorName?: string;
 }
 
+// ---- Activity Feed Types ----
+
+export type ActivityEventType =
+  | 'board-published'
+  | 'report-created'
+  | 'board-liked'
+  | 'report-liked';
+
+export interface ActivityEvent {
+  id: string;
+  type: ActivityEventType;
+  actorId: string;
+  actorName: string;
+  targetId: string;
+  targetName: string;
+  targetLink: string;
+  feedUserId: string;
+  createdAt: FirestoreTimestamp;
+}
+
 // ---- Contract / Salary Cap Types ----
 
 export interface PlayerContract {

@@ -7,6 +7,7 @@ const {
   mockGet,
   mockCollection,
   mockNotifyReportLiked,
+  mockFanOutActivity,
 } = vi.hoisted(() => {
   const mockGet = vi.fn();
   const mockDoc = vi.fn(() => ({ get: mockGet }));
@@ -18,6 +19,7 @@ const {
     mockGet,
     mockCollection,
     mockNotifyReportLiked: vi.fn().mockResolvedValue(undefined),
+    mockFanOutActivity: vi.fn().mockResolvedValue(undefined),
   };
 });
 
@@ -33,6 +35,9 @@ vi.mock('@/lib/firebase/firebase-admin', () => ({
 }));
 vi.mock('@/lib/notifications', () => ({
   notifyReportLiked: mockNotifyReportLiked,
+}));
+vi.mock('@/lib/activity', () => ({
+  fanOutActivity: mockFanOutActivity,
 }));
 
 import { GET, POST, DELETE } from './route.js';
@@ -108,7 +113,20 @@ describe('POST /api/reports/[reportId]/like', () => {
     });
     mockRunTransaction.mockResolvedValue({
       authorId: 'author-1',
-      title: 'Great Prospect',
+      authorName: 'Bob',
+      playerId: 'player-1',
+    });
+    // Mock player lookup for activity fan-out
+    mockCollection.mockImplementation((name: string) => {
+      if (name === 'players')
+        return {
+          doc: () => ({
+            get: vi.fn().mockResolvedValue({
+              data: () => ({ name: 'Travis Hunter' }),
+            }),
+          }),
+        };
+      return { doc: vi.fn(() => ({ get: mockGet })) };
     });
 
     await POST(makeRequest('POST'), { params });
@@ -116,7 +134,7 @@ describe('POST /api/reports/[reportId]/like', () => {
     expect(mockNotifyReportLiked).toHaveBeenCalledWith(
       'author-1',
       'Alice',
-      'Great Prospect',
+      'Bob',
       'report-1',
     );
   });
@@ -128,7 +146,8 @@ describe('POST /api/reports/[reportId]/like', () => {
     });
     mockRunTransaction.mockResolvedValue({
       authorId: 'author-1',
-      title: 'My Report',
+      authorName: 'Alice',
+      playerId: 'player-1',
     });
 
     await POST(makeRequest('POST'), { params });

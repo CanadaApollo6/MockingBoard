@@ -171,6 +171,16 @@ service cloud.firestore {
     }
 
     // ============================================
+    // Activity Events Collection
+    // Owner read, server-only write
+    // ============================================
+    match /activityEvents/{eventId} {
+      allow read: if isAuthenticated() &&
+        resource.data.feedUserId == request.auth.uid;
+      allow create, update, delete: if false;
+    }
+
+    // ============================================
     // Player Pick Stats Collection
     // Public read, server-only write
     // ============================================

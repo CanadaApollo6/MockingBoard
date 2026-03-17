@@ -3,6 +3,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { getSessionUser } from '@/lib/firebase/auth-session';
 import { adminDb } from '@/lib/firebase/firebase-admin';
 import { notifyBoardLiked } from '@/lib/notifications';
+import { fanOutActivity } from '@/lib/activity';
 
 interface RouteParams {
   params: Promise<{ boardId: string }>;
@@ -73,15 +74,26 @@ export async function POST(_request: Request, { params }: RouteParams) {
       };
     });
 
-    // Notify board author (fire-and-forget, don't notify yourself)
-    if (result && result.userId !== session.uid) {
-      const likerName = session.name ?? session.email ?? 'Someone';
-      notifyBoardLiked(
-        result.userId,
-        likerName,
-        result.name,
-        result.slug,
-      ).catch(() => {});
+    if (result) {
+      // Notify board author (fire-and-forget, don't notify yourself)
+      if (result.userId !== session.uid) {
+        const likerName = session.name ?? session.email ?? 'Someone';
+        notifyBoardLiked(
+          result.userId,
+          likerName,
+          result.name,
+          result.slug,
+        ).catch(() => {});
+      }
+
+      // Fan out activity to followers
+      fanOutActivity({
+        actorId: session.uid,
+        type: 'board-liked',
+        targetId: boardId,
+        targetName: result.name,
+        targetLink: `/boards/${result.slug}`,
+      }).catch(() => {});
     }
 
     return NextResponse.json({ ok: true });
