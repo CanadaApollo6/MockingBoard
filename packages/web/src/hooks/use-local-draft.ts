@@ -131,7 +131,7 @@ export function useLocalDraft(
         overall: slot.overall,
         round: slot.round,
         pick: slot.pick,
-        team: slot.team,
+        team: slot.teamOverride ?? slot.team,
         userId,
         playerId,
         createdAt: { seconds: 0, nanoseconds: 0 },
@@ -196,7 +196,7 @@ export function useLocalDraft(
         }
 
         const player = prepareCpuPick({
-          team: slot.team,
+          team: slot.teamOverride ?? slot.team,
           pickOrder: currentDraft.pickOrder,
           pickedPlayerIds: currentDraft.pickedPlayerIds ?? [],
           playerMap,
@@ -251,7 +251,7 @@ export function useLocalDraft(
           if (available.length === 0) break;
 
           const player = prepareCpuPick({
-            team: slot.team,
+            team: slot.teamOverride ?? slot.team,
             pickOrder: d.pickOrder,
             pickedPlayerIds: d.pickedPlayerIds ?? [],
             playerMap,
