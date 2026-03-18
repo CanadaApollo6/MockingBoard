@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 
 interface BookmarkButtonProps {
   targetId: string;
-  targetType: 'board' | 'report';
+  targetType: 'board' | 'report' | 'list';
   initialIsBookmarked?: boolean;
 }
 

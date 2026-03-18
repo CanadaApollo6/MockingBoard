@@ -6,6 +6,7 @@ import { getSessionUser } from '@/lib/firebase/auth-session';
 import { getUserReports, getPlayerMap } from '@/lib/firebase/data';
 import { getCachedSeasonConfig } from '@/lib/cache';
 import { GradeBadge } from '@/components/grade/grade-badge';
+import type { ScoutingReport } from '@mockingboard/shared';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -14,8 +15,8 @@ export const metadata: Metadata = {
 };
 
 function groupByDate(
-  reports: { createdAt: { seconds: number } }[],
-): { label: string; items: typeof reports }[] {
+  reports: ScoutingReport[],
+): { label: string; items: ScoutingReport[] }[] {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const yesterday = new Date(today.getTime() - 86_400_000);

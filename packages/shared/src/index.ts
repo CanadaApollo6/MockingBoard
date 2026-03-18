@@ -56,6 +56,8 @@ export type {
   AppNotification,
   ActivityEventType,
   ActivityEvent,
+  ReportReason,
+  ReportableContentType,
   Comment,
   Bookmark,
   WatchlistItem,

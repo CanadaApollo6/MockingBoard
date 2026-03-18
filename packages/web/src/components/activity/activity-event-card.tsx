@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { LayoutList, FileText, Heart } from 'lucide-react';
+import { LayoutList, FileText, Heart, MessageSquare } from 'lucide-react';
 import type { ActivityEvent, ActivityEventType } from '@mockingboard/shared';
 import { formatRelativeTime } from '@/lib/format';
 
@@ -11,6 +11,11 @@ const EVENT_CONFIG: Record<
   'report-created': { icon: FileText, verb: 'wrote a report on' },
   'board-liked': { icon: Heart, verb: 'liked a board' },
   'report-liked': { icon: Heart, verb: 'liked a report on' },
+  'board-commented': { icon: MessageSquare, verb: 'commented on a board' },
+  'report-commented': {
+    icon: MessageSquare,
+    verb: 'commented on a report for',
+  },
 };
 
 interface ActivityEventCardProps {

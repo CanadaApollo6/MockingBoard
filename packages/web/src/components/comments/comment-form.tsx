@@ -9,7 +9,7 @@ const MAX_LENGTH = 500;
 
 interface CommentFormProps {
   targetId: string;
-  targetType: 'board' | 'report';
+  targetType: 'board' | 'report' | 'list';
   onSubmit: (comment: {
     id: string;
     authorId: string;

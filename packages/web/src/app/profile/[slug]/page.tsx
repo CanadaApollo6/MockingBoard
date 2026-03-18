@@ -184,8 +184,8 @@ export default async function ProfilePage({ params }: Props) {
             <h1 className="font-[family-name:var(--font-display)] text-3xl font-bold uppercase tracking-tight">
               {user.displayName}
             </h1>
-            {(user.stats?.boardAccuracyScore ?? 0) >= 35 && (
-              <AccuracyBadge score={user.stats!.boardAccuracyScore!} />
+            {(user.stats?.accuracyScore ?? 0) >= 35 && (
+              <AccuracyBadge score={user.stats!.accuracyScore!} />
             )}
             <FollowButton followeeId={user.id} />
             {isOwnProfile && (
@@ -326,12 +326,12 @@ export default async function ProfilePage({ params }: Props) {
         <div className="mt-8 rounded-lg border bg-card p-5">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold">Board Accuracy</h2>
-            <AccuracyBadge score={user.stats?.boardAccuracyScore ?? 0} />
+            <AccuracyBadge score={user.stats?.accuracyScore ?? 0} />
           </div>
           <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
             <div className="text-center">
               <p className="font-mono text-2xl font-bold">
-                {user.stats?.boardAccuracyScore ?? 0}%
+                {user.stats?.accuracyScore ?? 0}%
               </p>
               <p className="text-xs text-muted-foreground">Accuracy Score</p>
             </div>

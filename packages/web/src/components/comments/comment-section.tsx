@@ -9,7 +9,7 @@ import { CommentForm } from './comment-form';
 
 interface CommentSectionProps {
   targetId: string;
-  targetType: 'board' | 'report';
+  targetType: 'board' | 'report' | 'list';
   initialComments?: Comment[];
   initialCount?: number;
 }

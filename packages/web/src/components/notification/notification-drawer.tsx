@@ -17,6 +17,9 @@ import {
   LayoutList,
   Heart,
   CheckCheck,
+  MessageSquare,
+  ShieldAlert,
+  Eye,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatRelativeTime } from '@/lib/format';
@@ -28,6 +31,10 @@ const TYPE_ICONS: Record<NotificationType, typeof UserPlus> = {
   'new-board': LayoutList,
   'report-liked': Heart,
   'board-liked': Heart,
+  'board-commented': MessageSquare,
+  'report-commented': MessageSquare,
+  'content-removed': ShieldAlert,
+  'watched-prospect-report': Eye,
 };
 
 interface NotificationDrawerProps {

@@ -12,7 +12,7 @@ import type {
 } from '@mockingboard/shared';
 
 export async function getComments(
-  targetType: 'board' | 'report',
+  targetType: 'board' | 'report' | 'list',
   targetId: string,
   limit = 50,
 ): Promise<Comment[]> {
