@@ -32,7 +32,7 @@ export default async function LiveDraftPage({
 
   // Serialize as plain object for the server→client boundary (Map isn't serializable)
   const players = Object.fromEntries(playerMap);
-  if (draft.status === 'cancelled') {
+  if (draft.status === 'cancelled' || draft.status === 'complete') {
     redirect(`/drafts/${draftId}`);
   }
 

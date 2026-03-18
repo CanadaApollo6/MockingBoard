@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, memo } from 'react';
+import { useMemo, useRef, useEffect, memo, forwardRef } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import type {
   Pick,
@@ -42,7 +42,30 @@ export function DraftBoard({
   isBatch = false,
 }: DraftBoardProps) {
   const shouldReduce = useReducedMotion();
+  const clockRowRef = useRef<HTMLTableRowElement>(null);
+  const prevBatchRef = useRef(isBatch);
   const hasFullBoard = pickOrder && pickOrder.length > 0;
+
+  // Auto-scroll to "On the Clock" row when currentPick changes
+  useEffect(() => {
+    // Skip scrolling during batch (instant CPU cascade)
+    if (isBatch) {
+      prevBatchRef.current = true;
+      return;
+    }
+    // Scroll when: pick advances normally, or batch just finished
+    if (currentPick != null || prevBatchRef.current) {
+      prevBatchRef.current = false;
+      // Small delay to let the DOM update after pick renders
+      const id = requestAnimationFrame(() => {
+        clockRowRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+        });
+      });
+      return () => cancelAnimationFrame(id);
+    }
+  }, [currentPick, isBatch]);
 
   const colorMap = useMemo(
     () => buildRowColors(hasFullBoard ? pickOrder : picks),
@@ -120,6 +143,7 @@ export function DraftBoard({
                           return (
                             <OnTheClockRow
                               key={slot.overall}
+                              ref={clockRowRef}
                               slot={slot}
                               urgency={clockUrgency}
                               teamColor={tc}
@@ -216,15 +240,10 @@ const PickRow = memo(function PickRow({
   );
 });
 
-function OnTheClockRow({
-  slot,
-  urgency = 'normal',
-  teamColor,
-}: {
-  slot: DraftSlot;
-  urgency?: ClockUrgency;
-  teamColor: string;
-}) {
+const OnTheClockRow = forwardRef<
+  HTMLTableRowElement,
+  { slot: DraftSlot; urgency?: ClockUrgency; teamColor: string }
+>(function OnTheClockRow({ slot, urgency = 'normal', teamColor }, ref) {
   // Hex values for framer-motion interpolation (CSS vars can't be animated)
   const pulseHex =
     urgency === 'critical'
@@ -237,6 +256,7 @@ function OnTheClockRow({
 
   return (
     <motion.tr
+      ref={ref}
       layout
       key={`otc-${urgency}`}
       initial={{ opacity: 0 }}
@@ -264,7 +284,7 @@ function OnTheClockRow({
       </TableCell>
     </motion.tr>
   );
-}
+});
 
 const EmptyRow = memo(function EmptyRow({
   slot,

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import type { CpuTradeEvaluation, Trade } from '@mockingboard/shared';
+import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -66,7 +67,15 @@ export function TradeResult(props: TradeResultProps) {
     return (
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={props.onCancel}
+              disabled={props.disabled}
+              className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
+              aria-label="Cancel trade"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </button>
             <CardTitle>Trade Proposed</CardTitle>
             <Badge variant="secondary">Pending</Badge>
           </div>
@@ -98,7 +107,15 @@ export function TradeResult(props: TradeResultProps) {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onCancel}
+            disabled={disabled}
+            className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
+            aria-label="Cancel trade"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </button>
           <CardTitle>Trade Result</CardTitle>
           <Badge variant={evaluation.accept ? 'default' : 'destructive'}>
             {evaluation.accept ? 'Accepted' : 'Rejected'}

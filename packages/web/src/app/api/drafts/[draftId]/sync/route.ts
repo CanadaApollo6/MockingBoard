@@ -4,7 +4,7 @@ import { getSessionUser } from '@/lib/firebase/auth-session';
 import { getDraftOrFail } from '@/lib/firebase/data';
 import { adminDb } from '@/lib/firebase/firebase-admin';
 import { AppError, safeError } from '@/lib/validate';
-import type { DraftSlot, FutureDraftPick } from '@mockingboard/shared';
+import type { DraftSlot, FutureDraftPick, Trade } from '@mockingboard/shared';
 
 interface SyncPick {
   draftId: string;
@@ -25,6 +25,7 @@ interface SyncBody {
   futurePicks?: FutureDraftPick[];
   picks: SyncPick[];
   reason: string;
+  trade?: Trade;
 }
 
 export async function POST(
@@ -90,6 +91,24 @@ export async function POST(
         userId: pick.userId,
         playerId: pick.playerId,
         createdAt: FieldValue.serverTimestamp(),
+      });
+    }
+
+    // Write trade document if present
+    if (body.trade) {
+      const tradeRef = adminDb.collection('trades').doc();
+      batch.set(tradeRef, {
+        draftId,
+        status: body.trade.status,
+        proposerId: body.trade.proposerId,
+        proposerTeam: body.trade.proposerTeam,
+        recipientId: body.trade.recipientId,
+        recipientTeam: body.trade.recipientTeam,
+        proposerGives: body.trade.proposerGives,
+        proposerReceives: body.trade.proposerReceives,
+        isForceTrade: body.trade.isForceTrade,
+        proposedAt: FieldValue.serverTimestamp(),
+        resolvedAt: FieldValue.serverTimestamp(),
       });
     }
 

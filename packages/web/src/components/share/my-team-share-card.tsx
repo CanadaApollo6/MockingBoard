@@ -1,7 +1,20 @@
-import type { Pick, Player, TeamAbbreviation } from '@mockingboard/shared';
+import type {
+  Pick,
+  Player,
+  TeamAbbreviation,
+  Trade,
+  TradePiece,
+} from '@mockingboard/shared';
 import { getTeamName } from '@/lib/teams';
 import { getTeamColor } from '@/lib/colors/team-colors';
 import { getPositionColor } from '@/lib/colors/position-colors';
+
+function formatPiece(piece: TradePiece): string {
+  if (piece.type === 'current-pick') {
+    return `Pick #${piece.overall}`;
+  }
+  return `${piece.year} Rd ${piece.round} (${getTeamName(piece.originalTeam as TeamAbbreviation)})`;
+}
 
 interface MyTeamShareCardProps {
   draftName: string;
@@ -9,6 +22,7 @@ interface MyTeamShareCardProps {
   team: TeamAbbreviation;
   picks: Pick[];
   players: Record<string, Player>;
+  trades?: Trade[];
 }
 
 export function MyTeamShareCard({
@@ -17,6 +31,7 @@ export function MyTeamShareCard({
   team,
   picks,
   players,
+  trades = [],
 }: MyTeamShareCardProps) {
   const colors = getTeamColor(team);
   const teamName = getTeamName(team);
@@ -181,6 +196,61 @@ export function MyTeamShareCard({
           })}
         </tbody>
       </table>
+
+      {/* Trades */}
+      {trades.length > 0 && (
+        <div style={{ marginTop: 20 }}>
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              color: '#71717a',
+              marginBottom: 8,
+            }}
+          >
+            Trades
+          </div>
+          {trades.map((trade, i) => {
+            const isProposer = trade.proposerTeam === team;
+            const otherTeam = isProposer
+              ? trade.recipientTeam
+              : trade.proposerTeam;
+            const sent = isProposer
+              ? trade.proposerGives
+              : trade.proposerReceives;
+            const received = isProposer
+              ? trade.proposerReceives
+              : trade.proposerGives;
+            return (
+              <div
+                key={trade.id ?? i}
+                style={{
+                  padding: '8px 10px',
+                  borderLeft: `3px solid ${colors.primary}`,
+                  borderBottom: '1px solid #1c1c1e',
+                  fontSize: 13,
+                }}
+              >
+                <div style={{ color: '#a1a1aa', marginBottom: 2 }}>
+                  Trade with{' '}
+                  <span style={{ color: '#fafafa', fontWeight: 500 }}>
+                    {getTeamName(otherTeam)}
+                  </span>
+                </div>
+                <div style={{ color: '#71717a' }}>
+                  <span style={{ color: '#ef4444' }}>Sent:</span>{' '}
+                  {sent.map(formatPiece).join(', ')}
+                  {' · '}
+                  <span style={{ color: '#22c55e' }}>Received:</span>{' '}
+                  {received.map(formatPiece).join(', ')}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Footer */}
       <div

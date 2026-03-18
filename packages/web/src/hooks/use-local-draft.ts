@@ -78,7 +78,12 @@ export function useLocalDraft(
   // ---- Sync ----
 
   const syncToFirestore = useCallback(
-    async (currentDraft: Draft, currentPicks: Pick[], reason: string) => {
+    async (
+      currentDraft: Draft,
+      currentPicks: Pick[],
+      reason: string,
+      trade?: Trade,
+    ) => {
       if (!options.draftId) return;
       const newPicks = currentPicks.slice(lastSyncedPickIndex.current);
       setIsSyncing(true);
@@ -95,6 +100,7 @@ export function useLocalDraft(
             futurePicks: currentDraft.futurePicks,
             picks: newPicks,
             reason,
+            trade: trade ?? undefined,
           }),
         });
         lastSyncedPickIndex.current = currentPicks.length;
@@ -358,14 +364,15 @@ export function useLocalDraft(
 
   const executeTrade = useCallback(
     (trade: Trade, force: boolean) => {
-      const tradeToExecute = force ? { ...trade, isForceTrade: true } : trade;
-      const { pickOrder, futurePicks } = computeTradeExecution(
-        tradeToExecute,
-        draft,
-      );
+      const executed: Trade = {
+        ...trade,
+        status: 'accepted',
+        isForceTrade: force,
+      };
+      const { pickOrder, futurePicks } = computeTradeExecution(executed, draft);
       const updated = { ...draft, pickOrder, futurePicks };
       setDraft(updated);
-      syncToFirestore(updated, picks, 'trade');
+      syncToFirestore(updated, picks, 'trade', executed);
     },
     [draft, picks, syncToFirestore],
   );

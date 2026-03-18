@@ -160,6 +160,7 @@ export default async function DraftDetailPage({
                 players={playersObj}
                 userTeams={userTeams}
                 recap={recap}
+                trades={trades}
               />
               {predictionScore && (
                 <ReceiptShareButton
