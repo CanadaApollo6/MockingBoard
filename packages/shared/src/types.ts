@@ -721,7 +721,18 @@ export type NotificationType =
   | 'report-liked'
   | 'board-liked'
   | 'board-commented'
-  | 'report-commented';
+  | 'report-commented'
+  | 'content-removed';
+
+// ---- Content Moderation ----
+
+export type ReportReason = 'spam' | 'harassment' | 'inappropriate' | 'other';
+
+export type ReportableContentType =
+  | 'comment'
+  | 'scouting-report'
+  | 'board'
+  | 'list';
 
 export interface AppNotification {
   id: string;

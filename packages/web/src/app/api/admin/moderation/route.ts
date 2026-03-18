@@ -3,15 +3,23 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { getSessionUser } from '@/lib/firebase/auth-session';
 import { isAdmin } from '@/lib/firebase/admin';
 import { adminDb } from '@/lib/firebase/firebase-admin';
+import { notifyContentRemoved } from '@/lib/notifications';
 
 export interface ModerationItem {
   id: string;
-  contentType: 'scouting-report' | 'video' | 'board' | 'profile';
+  contentType:
+    | 'scouting-report'
+    | 'video'
+    | 'board'
+    | 'profile'
+    | 'comment'
+    | 'list';
   contentId: string;
   contentPreview: string;
   authorId: string;
   authorName: string;
   status: 'pending' | 'approved' | 'removed';
+  reportCount?: number;
   reviewedBy?: string;
   reviewedAt?: unknown;
   createdAt: unknown;
@@ -71,11 +79,20 @@ export async function POST(request: Request) {
 
   const newStatus = action === 'approve' ? 'approved' : 'removed';
 
-  await adminDb.collection('moderation').doc(id).update({
+  const moderationRef = adminDb.collection('moderation').doc(id);
+  await moderationRef.update({
     status: newStatus,
     reviewedBy: session.uid,
     reviewedAt: FieldValue.serverTimestamp(),
   });
+
+  if (newStatus === 'removed') {
+    const moderationDoc = await moderationRef.get();
+    const data = moderationDoc.data();
+    if (data?.authorId) {
+      notifyContentRemoved(data.authorId, data.contentType).catch(() => {});
+    }
+  }
 
   return NextResponse.json({ ok: true });
 }

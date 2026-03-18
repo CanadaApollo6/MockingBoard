@@ -112,6 +112,7 @@ export function CommentSection({
                   key={comment.id}
                   comment={comment}
                   canDelete={user?.uid === comment.authorId}
+                  canReport={!!user && user.uid !== comment.authorId}
                   onDelete={handleDelete}
                 />
               ))}

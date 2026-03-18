@@ -239,6 +239,14 @@ service cloud.firestore {
     }
 
     // ============================================
+    // Content Reports Collection
+    // Server-only read/write (user reports via API)
+    // ============================================
+    match /contentReports/{reportId} {
+      allow read, write: if false;
+    }
+
+    // ============================================
     // Trades Collection
     // Only draft participants can read/write
     // ============================================

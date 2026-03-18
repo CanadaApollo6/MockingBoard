@@ -10,6 +10,7 @@ import { PublicBoardView } from '@/components/board/public-board-view';
 import { DraftGuideButton } from '@/components/draft-guide/draft-guide-button';
 import { CommentSection } from '@/components/comments/comment-section';
 import { HotTakeCard } from '@/components/player/hot-take-card';
+import { ReportButton } from '@/components/report-button';
 import type { Player } from '@mockingboard/shared';
 
 interface Props {
@@ -72,13 +73,14 @@ export default async function PublicBoardPage({ params }: Props) {
         {board.description && (
           <p className="mt-3 text-muted-foreground">{board.description}</p>
         )}
-        <div className="mt-4">
+        <div className="mt-4 flex items-center gap-4">
           <DraftGuideButton
             boardName={board.name}
             authorName={board.authorName}
             year={board.year}
             players={rankedPlayers}
           />
+          <ReportButton contentType="board" contentId={board.id} />
         </div>
       </div>
       {hotTakes.length > 0 && (

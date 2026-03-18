@@ -179,3 +179,25 @@ export async function notifyBoardLiked(
     actorName: likerName,
   });
 }
+
+const CONTENT_TYPE_LABELS: Record<string, string> = {
+  'scouting-report': 'scouting report',
+  board: 'big board',
+  comment: 'comment',
+  list: 'list',
+  video: 'video',
+  profile: 'profile',
+};
+
+export async function notifyContentRemoved(
+  authorId: string,
+  contentType: string,
+): Promise<void> {
+  const label = CONTENT_TYPE_LABELS[contentType] ?? 'content';
+  await createNotification({
+    userId: authorId,
+    type: 'content-removed',
+    title: 'Content Removed',
+    body: `Your ${label} was removed for violating community guidelines.`,
+  });
+}

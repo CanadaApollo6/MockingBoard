@@ -21,6 +21,7 @@ interface ModerationItem {
   authorId: string;
   authorName: string;
   status: string;
+  reportCount?: number;
 }
 
 const CONTENT_TYPES = [
@@ -29,6 +30,8 @@ const CONTENT_TYPES = [
   'video',
   'board',
   'profile',
+  'comment',
+  'list',
 ] as const;
 const STATUS_OPTIONS = ['pending', 'approved', 'removed'] as const;
 
@@ -149,6 +152,12 @@ export function ModerationQueue() {
                     <Badge variant="outline" className="text-xs">
                       {item.contentType}
                     </Badge>
+                    {item.reportCount != null && item.reportCount > 0 && (
+                      <Badge variant="destructive" className="text-xs">
+                        {item.reportCount}{' '}
+                        {item.reportCount === 1 ? 'report' : 'reports'}
+                      </Badge>
+                    )}
                     <span className="text-sm font-medium">
                       {item.authorName}
                     </span>
