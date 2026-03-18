@@ -1,6 +1,11 @@
 /// <reference types="vitest/globals" />
-import { scoreMockPick, aggregateDraftScore } from './scoring.js';
-import type { DraftResultPick } from '@mockingboard/shared';
+import {
+  scoreMockPick,
+  aggregateDraftScore,
+  scoreBoardAccuracy,
+  getAccuracyBadge,
+} from './scoring.js';
+import type { DraftResultPick, Player } from '@mockingboard/shared';
 import type { PickScore } from './scoring.js';
 
 function pick(
@@ -32,6 +37,144 @@ const ACTUAL_RESULTS: DraftResultPick[] = [
   pick(64, 'CLE', 'Some Guy', 'WR'),
   pick(65, 'NYG', 'Another Player', 'OT'),
 ];
+
+// ---- Board accuracy helpers ----
+
+function makePlayer(id: string, name: string): Player {
+  return { id, name, position: 'QB', school: 'Test U' } as Player;
+}
+
+function buildBoardData(count: number) {
+  const rankings: string[] = [];
+  const playerMap = new Map<string, Player>();
+  const actualResults: DraftResultPick[] = [];
+
+  for (let i = 1; i <= count; i++) {
+    const id = `p-${i}`;
+    const name = `Board Player ${i}`;
+    rankings.push(id);
+    playerMap.set(id, makePlayer(id, name));
+    actualResults.push(pick(i, 'NYG', name, 'QB'));
+  }
+
+  return { rankings, playerMap, actualResults };
+}
+
+describe('scoreBoardAccuracy', () => {
+  it('returns null when fewer than 10 players match', () => {
+    const { rankings, playerMap, actualResults } = buildBoardData(9);
+    expect(scoreBoardAccuracy(rankings, actualResults, playerMap)).toBeNull();
+  });
+
+  it('returns 100% for a perfect board', () => {
+    const { rankings, playerMap, actualResults } = buildBoardData(32);
+    const result = scoreBoardAccuracy(rankings, actualResults, playerMap);
+    expect(result).not.toBeNull();
+    expect(result!.percentage).toBe(100);
+    expect(result!.avgDelta).toBe(0);
+    expect(result!.matchedPlayers).toBe(32);
+  });
+
+  it('computes correct percentage for known deltas', () => {
+    const rankings: string[] = [];
+    const playerMap = new Map<string, Player>();
+    const actualResults: DraftResultPick[] = [];
+
+    for (let i = 1; i <= 15; i++) {
+      const id = `p-${i}`;
+      const name = `Player ${i}`;
+      rankings.push(id);
+      playerMap.set(id, makePlayer(id, name));
+      // Actual pick is 10 spots later
+      actualResults.push(pick(i + 10, 'NYG', name, 'QB'));
+    }
+
+    const result = scoreBoardAccuracy(rankings, actualResults, playerMap);
+    expect(result).not.toBeNull();
+    expect(result!.avgDelta).toBe(10);
+    // 100 - 10 * 1.5 = 85
+    expect(result!.percentage).toBe(85);
+  });
+
+  it('returns 0% when average delta is very large', () => {
+    const rankings: string[] = [];
+    const playerMap = new Map<string, Player>();
+    const actualResults: DraftResultPick[] = [];
+
+    for (let i = 1; i <= 15; i++) {
+      const id = `p-${i}`;
+      const name = `Player ${i}`;
+      rankings.push(id);
+      playerMap.set(id, makePlayer(id, name));
+      actualResults.push(pick(i + 100, 'NYG', name, 'QB'));
+    }
+
+    const result = scoreBoardAccuracy(rankings, actualResults, playerMap);
+    expect(result).not.toBeNull();
+    expect(result!.percentage).toBe(0);
+  });
+
+  it('skips players not in actual results', () => {
+    const { rankings, playerMap, actualResults } = buildBoardData(20);
+    const trimmedResults = actualResults.slice(0, 15);
+    const result = scoreBoardAccuracy(rankings, trimmedResults, playerMap);
+    expect(result).not.toBeNull();
+    expect(result!.matchedPlayers).toBe(15);
+  });
+
+  it('skips players not in playerMap', () => {
+    const { rankings, playerMap, actualResults } = buildBoardData(15);
+    playerMap.delete('p-13');
+    playerMap.delete('p-14');
+    playerMap.delete('p-15');
+    const result = scoreBoardAccuracy(rankings, actualResults, playerMap);
+    expect(result).not.toBeNull();
+    expect(result!.matchedPlayers).toBe(12);
+  });
+
+  it('populates playerDeltas correctly', () => {
+    const { rankings, playerMap, actualResults } = buildBoardData(12);
+    // Swap first two in actual results
+    actualResults[0] = pick(1, 'NYG', 'Board Player 2', 'QB');
+    actualResults[1] = pick(2, 'NYG', 'Board Player 1', 'QB');
+
+    const result = scoreBoardAccuracy(rankings, actualResults, playerMap);
+    expect(result).not.toBeNull();
+
+    const p1 = result!.playerDeltas.find((d) => d.playerId === 'p-1');
+    expect(p1).toBeDefined();
+    expect(p1!.boardRank).toBe(1);
+    expect(p1!.actualPick).toBe(2);
+    expect(p1!.delta).toBe(1);
+  });
+});
+
+describe('getAccuracyBadge', () => {
+  it('returns diamond for 80+', () => {
+    expect(getAccuracyBadge(80)?.tier).toBe('diamond');
+    expect(getAccuracyBadge(100)?.tier).toBe('diamond');
+  });
+
+  it('returns gold for 65-79', () => {
+    expect(getAccuracyBadge(65)?.tier).toBe('gold');
+    expect(getAccuracyBadge(79)?.tier).toBe('gold');
+  });
+
+  it('returns silver for 50-64', () => {
+    expect(getAccuracyBadge(50)?.tier).toBe('silver');
+    expect(getAccuracyBadge(64)?.tier).toBe('silver');
+  });
+
+  it('returns bronze for 35-49', () => {
+    expect(getAccuracyBadge(35)?.tier).toBe('bronze');
+    expect(getAccuracyBadge(49)?.tier).toBe('bronze');
+  });
+
+  it('returns null below 35', () => {
+    expect(getAccuracyBadge(34)).toBeNull();
+    expect(getAccuracyBadge(0)).toBeNull();
+  });
+});
 
 describe('scoring', () => {
   describe('scoreMockPick', () => {

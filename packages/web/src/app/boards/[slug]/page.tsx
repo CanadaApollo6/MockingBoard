@@ -5,12 +5,14 @@ import {
   getPlayerMap,
   getComments,
   getBoardHotTakes,
+  getBoardScore,
 } from '@/lib/firebase/data';
 import { PublicBoardView } from '@/components/board/public-board-view';
 import { DraftGuideButton } from '@/components/draft-guide/draft-guide-button';
 import { CommentSection } from '@/components/comments/comment-section';
 import { HotTakeCard } from '@/components/player/hot-take-card';
 import { ReportButton } from '@/components/report-button';
+import { AccuracyBadge } from '@/components/accuracy-badge';
 import type { Player } from '@mockingboard/shared';
 
 interface Props {
@@ -41,10 +43,11 @@ export default async function PublicBoardPage({ params }: Props) {
 
   if (!board) notFound();
 
-  const [playerMap, comments, hotTakes] = await Promise.all([
+  const [playerMap, comments, hotTakes, boardScore] = await Promise.all([
     getPlayerMap(board.year),
     getComments('board', board.id),
     getBoardHotTakes(board.rankings, board.year),
+    getBoardScore(board.id),
   ]);
 
   // Resolve ranked players in board order
@@ -69,6 +72,7 @@ export default async function PublicBoardPage({ params }: Props) {
           <span>{board.year}</span>
           <span>{board.rankings.length} players</span>
           {updated && <span>Updated {updated}</span>}
+          {boardScore != null && <AccuracyBadge score={boardScore} />}
         </div>
         {board.description && (
           <p className="mt-3 text-muted-foreground">{board.description}</p>

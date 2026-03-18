@@ -8,6 +8,7 @@ import {
   getUserPublicBoards,
   getUserReports,
   getUserDraftScores,
+  getUserBoardScores,
   getUserDraftingIdentity,
   getUserLikedBoards,
   getUserLikedReports,
@@ -36,6 +37,7 @@ import { BoardCard } from '@/components/board/board-card';
 import { ReportCard } from '@/components/community/report-card';
 import { getCachedSeasonConfig } from '@/lib/cache';
 import { formatRelativeTime } from '@/lib/format';
+import { AccuracyBadge } from '@/components/accuracy-badge';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -66,6 +68,7 @@ export default async function ProfilePage({ params }: Props) {
     boards,
     reports,
     draftScores,
+    boardScores,
     identity,
     likedBoardRefs,
     likedReportRefs,
@@ -75,6 +78,7 @@ export default async function ProfilePage({ params }: Props) {
     getUserPublicBoards(user.id),
     getUserReports(user.id),
     getUserDraftScores(user.id),
+    getUserBoardScores(user.id),
     getUserDraftingIdentity(user.id, user.discordId),
     getUserLikedBoards(user.id),
     getUserLikedReports(user.id),
@@ -171,6 +175,9 @@ export default async function ProfilePage({ params }: Props) {
             <h1 className="font-[family-name:var(--font-display)] text-3xl font-bold uppercase tracking-tight">
               {user.displayName}
             </h1>
+            {(user.stats?.boardAccuracyScore ?? 0) >= 35 && (
+              <AccuracyBadge score={user.stats!.boardAccuracyScore!} />
+            )}
             <FollowButton followeeId={user.id} />
             {isOwnProfile && (
               <ProfileShareButton
@@ -300,6 +307,36 @@ export default async function ProfilePage({ params }: Props) {
               <p className="text-xs text-muted-foreground">
                 Total Picks Scored
               </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Board Accuracy */}
+      {boardScores.length > 0 && (
+        <div className="mt-8 rounded-lg border bg-card p-5">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold">Board Accuracy</h2>
+            <AccuracyBadge score={user.stats?.boardAccuracyScore ?? 0} />
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
+            <div className="text-center">
+              <p className="font-mono text-2xl font-bold">
+                {user.stats?.boardAccuracyScore ?? 0}%
+              </p>
+              <p className="text-xs text-muted-foreground">Accuracy Score</p>
+            </div>
+            <div className="text-center">
+              <p className="font-mono text-2xl font-bold">
+                {boardScores.length}
+              </p>
+              <p className="text-xs text-muted-foreground">Boards Scored</p>
+            </div>
+            <div className="text-center">
+              <p className="font-mono text-2xl font-bold">
+                {Math.max(...boardScores.map((s) => s.percentage))}%
+              </p>
+              <p className="text-xs text-muted-foreground">Best Board Score</p>
             </div>
           </div>
         </div>

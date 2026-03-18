@@ -1,4 +1,8 @@
-import { getLeaderboard, getYearLeaderboard } from '@/lib/firebase/data';
+import {
+  getLeaderboard,
+  getYearLeaderboard,
+  getBoardLeaderboard,
+} from '@/lib/firebase/data';
 import type { LeaderboardEntry } from '@/lib/firebase/data';
 import { getCachedSeasonConfig } from '@/lib/cache';
 import { LeaderboardPageClient } from './leaderboard-page-client';
@@ -31,6 +35,22 @@ export default async function LeaderboardPage({
     }));
   }
 
+  // Fetch board leaderboard to merge board accuracy data
+  const boardEntries = await getBoardLeaderboard(
+    selectedYear ?? undefined,
+  ).catch(() => []);
+  const boardScoreMap = new Map(
+    boardEntries.map((e) => [e.userId, e.avgScore]),
+  );
+
+  // Attach board scores to existing entries
+  const enrichedEntries = entries.map((e) => ({
+    ...e,
+    boardAvgScore: boardScoreMap.get(e.userId),
+  }));
+
+  const hasBoardData = boardEntries.length > 0;
+
   // Available years for the dropdown (last 5 years up to current)
   const availableYears: number[] = [];
   for (let y = draftYear; y >= draftYear - 4 && y >= 2024; y--) {
@@ -40,9 +60,10 @@ export default async function LeaderboardPage({
   return (
     <main className="mx-auto max-w-screen-xl px-4 py-8">
       <LeaderboardPageClient
-        entries={entries}
+        entries={enrichedEntries}
         selectedYear={selectedYear}
         availableYears={availableYears}
+        hasBoardData={hasBoardData}
       />
     </main>
   );

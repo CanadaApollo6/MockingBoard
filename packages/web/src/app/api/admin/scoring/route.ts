@@ -3,11 +3,16 @@ import { getSessionUser } from '@/lib/firebase/auth-session';
 import { isAdmin } from '@/lib/firebase/admin';
 import { adminDb } from '@/lib/firebase/firebase-admin';
 import { getCachedPlayers } from '@/lib/cache';
-import { scoreMockPick, aggregateDraftScore } from '@/lib/scoring';
+import {
+  scoreMockPick,
+  aggregateDraftScore,
+  scoreBoardAccuracy,
+} from '@/lib/scoring';
 import { hydrateDoc } from '@/lib/firebase/sanitize';
 import type {
   Draft,
   Pick,
+  BigBoard,
   DraftResultPick,
   Player,
 } from '@mockingboard/shared';
@@ -196,11 +201,75 @@ export async function POST(request: Request) {
     usersUpdated++;
   }
 
+  // ---- Board Accuracy Scoring ----
+
+  const boardsSnap = await adminDb
+    .collection('bigBoards')
+    .where('year', '==', year)
+    .where('visibility', '==', 'public')
+    .get();
+
+  const boardBatch = adminDb.batch();
+  let boardsScored = 0;
+  const boardAffectedUserIds = new Set<string>();
+
+  for (const boardDoc of boardsSnap.docs) {
+    const board = hydrateDoc<BigBoard>(boardDoc);
+    if (board.rankings.length === 0) continue;
+
+    const result = scoreBoardAccuracy(board.rankings, actualResults, playerMap);
+    if (!result) continue;
+
+    const scoreDoc = adminDb.collection('boardScores').doc();
+    boardBatch.set(scoreDoc, {
+      boardId: board.id,
+      boardName: board.name,
+      year,
+      userId: board.userId,
+      matchedPlayers: result.matchedPlayers,
+      avgDelta: result.avgDelta,
+      percentage: result.percentage,
+      scoredAt: new Date(),
+    });
+
+    boardAffectedUserIds.add(board.userId);
+    boardsScored++;
+  }
+
+  if (boardsScored > 0) {
+    await boardBatch.commit();
+  }
+
+  // Aggregate board accuracy scores for affected users
+  let boardUsersUpdated = 0;
+  for (const userId of boardAffectedUserIds) {
+    const userBoardScores = await adminDb
+      .collection('boardScores')
+      .where('userId', '==', userId)
+      .get();
+
+    if (userBoardScores.empty) continue;
+
+    let totalPct = 0;
+    for (const doc of userBoardScores.docs) {
+      totalPct += (doc.data().percentage as number) ?? 0;
+    }
+    const avgBoardAccuracy = Math.round(totalPct / userBoardScores.size);
+
+    await adminDb
+      .collection('users')
+      .doc(userId)
+      .update({ 'stats.boardAccuracyScore': avgBoardAccuracy });
+    boardUsersUpdated++;
+  }
+
   return NextResponse.json({
     ok: true,
     draftsScored: draftsSnap.size,
     resultsWritten: scored.length,
     usersUpdated,
+    boardsScored,
+    boardUsersUpdated,
     results: scored.slice(0, 20),
   });
 }
