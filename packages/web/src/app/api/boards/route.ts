@@ -5,6 +5,7 @@ import { adminDb } from '@/lib/firebase/firebase-admin';
 import { getUserBoards } from '@/lib/firebase/data';
 import { notifyNewBoard } from '@/lib/notifications';
 import { generateDraftName } from '@mockingboard/shared';
+import { MAX_NAME_LENGTH } from '@/lib/validation';
 
 export async function GET() {
   const session = await getSessionUser();
@@ -43,6 +44,13 @@ export async function POST(request: Request) {
   if (!year || !basedOn) {
     return NextResponse.json(
       { error: 'Missing required fields' },
+      { status: 400 },
+    );
+  }
+
+  if (name && name.length > MAX_NAME_LENGTH) {
+    return NextResponse.json(
+      { error: `Name must be ${MAX_NAME_LENGTH} characters or less` },
       { status: 400 },
     );
   }

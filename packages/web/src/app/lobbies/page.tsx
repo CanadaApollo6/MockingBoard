@@ -14,7 +14,9 @@ export default async function LobbiesPage() {
 
   return (
     <main className="mx-auto max-w-screen-xl px-4 py-8">
-      <h1 className="mb-6 text-2xl font-bold">Open Lobbies</h1>
+      <h1 className="mb-6 font-[family-name:var(--font-display)] text-2xl font-bold uppercase tracking-tight">
+        Open Lobbies
+      </h1>
 
       {lobbies.length === 0 ? (
         <p className="py-12 text-center text-muted-foreground">

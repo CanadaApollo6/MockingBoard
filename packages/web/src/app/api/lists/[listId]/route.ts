@@ -3,6 +3,11 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { getSessionUser } from '@/lib/firebase/auth-session';
 import { adminDb } from '@/lib/firebase/firebase-admin';
 import { getList } from '@/lib/firebase/data';
+import {
+  MAX_NAME_LENGTH,
+  MAX_DESCRIPTION_LENGTH,
+  validateSlug,
+} from '@/lib/validation';
 
 interface RouteParams {
   params: Promise<{ listId: string }>;
@@ -60,8 +65,33 @@ export async function PUT(request: Request, { params }: RouteParams) {
     );
   }
 
+  if (body.name !== undefined && body.name.length > MAX_NAME_LENGTH) {
+    return NextResponse.json(
+      { error: `Name must be ${MAX_NAME_LENGTH} characters or less` },
+      { status: 400 },
+    );
+  }
+
+  if (
+    body.description !== undefined &&
+    body.description.length > MAX_DESCRIPTION_LENGTH
+  ) {
+    return NextResponse.json(
+      {
+        error: `Description must be ${MAX_DESCRIPTION_LENGTH} characters or less`,
+      },
+      { status: 400 },
+    );
+  }
+
   // Slug uniqueness check
   if (body.slug !== undefined) {
+    if (!validateSlug(body.slug)) {
+      return NextResponse.json(
+        { error: 'Invalid slug format' },
+        { status: 400 },
+      );
+    }
     const existing = await adminDb
       .collection('lists')
       .where('slug', '==', body.slug)

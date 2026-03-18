@@ -78,7 +78,9 @@ export default async function CompanionPage() {
 
   return (
     <main className="mx-auto max-w-screen-xl px-4 py-8">
-      <h1 className="mb-2 text-2xl font-bold">Draft Companion</h1>
+      <h1 className="mb-2 font-[family-name:var(--font-display)] text-2xl font-bold uppercase tracking-tight">
+        Draft Companion
+      </h1>
       <p className="mb-6 text-sm text-muted-foreground">
         Compare your locked predictions against actual {draftYear} NFL Draft
         results in real time.

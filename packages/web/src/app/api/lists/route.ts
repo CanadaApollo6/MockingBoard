@@ -3,6 +3,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { getSessionUser } from '@/lib/firebase/auth-session';
 import { adminDb } from '@/lib/firebase/firebase-admin';
 import { getUserLists } from '@/lib/firebase/data';
+import { MAX_NAME_LENGTH, MAX_DESCRIPTION_LENGTH } from '@/lib/validation';
 
 export async function GET() {
   const session = await getSessionUser();
@@ -39,6 +40,22 @@ export async function POST(request: Request) {
   if (!body.name || body.name.trim().length === 0) {
     return NextResponse.json(
       { error: 'List name is required' },
+      { status: 400 },
+    );
+  }
+
+  if (body.name.length > MAX_NAME_LENGTH) {
+    return NextResponse.json(
+      { error: `Name must be ${MAX_NAME_LENGTH} characters or less` },
+      { status: 400 },
+    );
+  }
+
+  if (body.description && body.description.length > MAX_DESCRIPTION_LENGTH) {
+    return NextResponse.json(
+      {
+        error: `Description must be ${MAX_DESCRIPTION_LENGTH} characters or less`,
+      },
       { status: 400 },
     );
   }

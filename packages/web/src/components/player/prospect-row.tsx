@@ -16,7 +16,7 @@ interface ProspectRowProps {
 }
 
 export function ProspectRow({ player }: ProspectRowProps) {
-  const [expanded, setExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const { attributes } = player;
 
   const subtitle = [
@@ -44,7 +44,8 @@ export function ProspectRow({ player }: ProspectRowProps) {
       {/* Compact row — clickable */}
       <button
         type="button"
-        onClick={() => setExpanded((e) => !e)}
+        aria-expanded={isExpanded}
+        onClick={() => setIsExpanded((e) => !e)}
         className="flex w-full items-center gap-4 px-4 py-3 text-left transition-colors hover:bg-muted/30 sm:gap-6 sm:px-6"
       >
         {/* Rank */}
@@ -94,7 +95,7 @@ export function ProspectRow({ player }: ProspectRowProps) {
 
         {/* Chevron */}
         <svg
-          className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}
+          className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 20 20"
           fill="currentColor"
@@ -109,7 +110,7 @@ export function ProspectRow({ player }: ProspectRowProps) {
 
       {/* Expandable detail section */}
       <AnimatePresence initial={false}>
-        {expanded && (
+        {isExpanded && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}

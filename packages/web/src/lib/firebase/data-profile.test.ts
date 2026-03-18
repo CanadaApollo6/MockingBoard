@@ -33,7 +33,7 @@ import {
   getUserLikedReports,
   getBoardsByIds,
   getReportsByIds,
-} from './data.js';
+} from './data/index.js';
 
 beforeEach(() => {
   vi.clearAllMocks();

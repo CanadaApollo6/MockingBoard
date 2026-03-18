@@ -3,10 +3,9 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { getSessionUser } from '@/lib/firebase/auth-session';
 import { adminDb } from '@/lib/firebase/firebase-admin';
 import { teams } from '@mockingboard/shared';
+import { MAX_BIO_LENGTH, SLUG_RE } from '@/lib/validation';
 
 const VALID_TEAMS: Set<string> = new Set(teams.map((t) => t.id));
-
-const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 function toSlug(raw: string): string {
   return raw
@@ -99,6 +98,13 @@ export async function PUT(request: Request) {
       }
 
       updates.slug = slugToSet;
+    }
+
+    if (body.bio !== undefined && body.bio.length > MAX_BIO_LENGTH) {
+      return NextResponse.json(
+        { error: `Bio must be ${MAX_BIO_LENGTH} characters or less` },
+        { status: 400 },
+      );
     }
 
     if (body.bio !== undefined) updates.bio = body.bio;

@@ -2,39 +2,24 @@ import { NextResponse } from 'next/server';
 import { FieldValue } from 'firebase-admin/firestore';
 import { getSessionUser } from '@/lib/firebase/auth-session';
 import { adminDb } from '@/lib/firebase/firebase-admin';
+import { handleLikeGet, handleLikeDelete } from '@/lib/api/likes';
 import { notifyBoardLiked } from '@/lib/notifications';
 import { fanOutActivity } from '@/lib/activity';
+
+const LIKE_CONFIG = {
+  likeCollection: 'boardLikes',
+  resourceCollection: 'bigBoards',
+  resourceKey: 'boardId',
+  label: 'Board',
+} as const;
 
 interface RouteParams {
   params: Promise<{ boardId: string }>;
 }
 
-export async function GET(request: Request, { params }: RouteParams) {
+export async function GET(_request: Request, { params }: RouteParams) {
   const { boardId } = await params;
-  const session = await getSessionUser();
-
-  if (!session) {
-    // Unauthenticated users get count only
-    const countSnap = await adminDb
-      .collection('boardLikes')
-      .where('boardId', '==', boardId)
-      .count()
-      .get();
-
-    return NextResponse.json({
-      isLiked: false,
-      likeCount: countSnap.data().count,
-    });
-  }
-
-  const docId = `${session.uid}_${boardId}`;
-  const likeDoc = await adminDb.collection('boardLikes').doc(docId).get();
-  const boardDoc = await adminDb.collection('bigBoards').doc(boardId).get();
-
-  return NextResponse.json({
-    isLiked: likeDoc.exists,
-    likeCount: boardDoc.data()?.likeCount ?? 0,
-  });
+  return handleLikeGet(boardId, LIKE_CONFIG);
 }
 
 export async function POST(_request: Request, { params }: RouteParams) {
@@ -54,7 +39,7 @@ export async function POST(_request: Request, { params }: RouteParams) {
       if (!boardDoc.exists) throw new Error('Board not found');
 
       const existingLike = await transaction.get(likeRef);
-      if (existingLike.exists) return null; // Already liked
+      if (existingLike.exists) return null;
 
       transaction.set(likeRef, {
         boardId,
@@ -74,19 +59,17 @@ export async function POST(_request: Request, { params }: RouteParams) {
       };
     });
 
-    if (result) {
-      // Notify board author (fire-and-forget, don't notify yourself)
-      if (result.userId !== session.uid) {
-        const likerName = session.name ?? session.email ?? 'Someone';
-        notifyBoardLiked(
-          result.userId,
-          likerName,
-          result.name,
-          result.slug,
-        ).catch(() => {});
-      }
+    if (result && result.userId !== session.uid) {
+      const likerName = session.name ?? session.email ?? 'Someone';
+      notifyBoardLiked(
+        result.userId,
+        likerName,
+        result.name,
+        result.slug,
+      ).catch(() => {});
+    }
 
-      // Fan out activity to followers
+    if (result) {
       fanOutActivity({
         actorId: session.uid,
         type: 'board-liked',
@@ -107,32 +90,5 @@ export async function POST(_request: Request, { params }: RouteParams) {
 
 export async function DELETE(_request: Request, { params }: RouteParams) {
   const { boardId } = await params;
-  const session = await getSessionUser();
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const docId = `${session.uid}_${boardId}`;
-  const boardRef = adminDb.collection('bigBoards').doc(boardId);
-  const likeRef = adminDb.collection('boardLikes').doc(docId);
-
-  try {
-    await adminDb.runTransaction(async (transaction) => {
-      const existingLike = await transaction.get(likeRef);
-      if (!existingLike.exists) return; // Not liked
-
-      transaction.delete(likeRef);
-      transaction.update(boardRef, {
-        likeCount: FieldValue.increment(-1),
-      });
-    });
-
-    return NextResponse.json({ ok: true });
-  } catch (err) {
-    console.error('Failed to unlike board:', err);
-    return NextResponse.json(
-      { error: 'Failed to unlike board' },
-      { status: 500 },
-    );
-  }
+  return handleLikeDelete(boardId, LIKE_CONFIG);
 }

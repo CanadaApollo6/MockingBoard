@@ -44,7 +44,7 @@ export default function InvitePage() {
           unoptimized
         />
 
-        <h1 className="text-4xl font-bold tracking-tight">
+        <h1 className="font-[family-name:var(--font-display)] text-4xl font-bold uppercase tracking-tight">
           Add MockingBoard to Discord
         </h1>
         <p className="mt-4 max-w-lg text-lg text-muted-foreground">

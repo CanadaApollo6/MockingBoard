@@ -4,6 +4,12 @@ import { getSessionUser } from '@/lib/firebase/auth-session';
 import { adminDb } from '@/lib/firebase/firebase-admin';
 import { sanitize } from '@/lib/firebase/sanitize';
 import { fanOutActivity } from '@/lib/activity';
+import {
+  MAX_REPORT_CONTENT_LENGTH,
+  MAX_COMPARISON_LENGTH,
+  MAX_STRENGTH_LENGTH,
+  MAX_ARRAY_ITEMS,
+} from '@/lib/validation';
 import type { ScoutingReport } from '@mockingboard/shared';
 
 export async function GET(request: Request) {
@@ -82,6 +88,49 @@ export async function POST(request: Request) {
   if (!playerId || !year) {
     return NextResponse.json(
       { error: 'Missing required fields' },
+      { status: 400 },
+    );
+  }
+
+  if (body.contentText && body.contentText.length > MAX_REPORT_CONTENT_LENGTH) {
+    return NextResponse.json(
+      {
+        error: `Report content must be ${MAX_REPORT_CONTENT_LENGTH} characters or less`,
+      },
+      { status: 400 },
+    );
+  }
+
+  if (body.comparison && body.comparison.length > MAX_COMPARISON_LENGTH) {
+    return NextResponse.json(
+      {
+        error: `Comparison must be ${MAX_COMPARISON_LENGTH} characters or less`,
+      },
+      { status: 400 },
+    );
+  }
+
+  if (body.strengths && body.strengths.length > MAX_ARRAY_ITEMS) {
+    return NextResponse.json(
+      { error: `Too many strengths (max ${MAX_ARRAY_ITEMS})` },
+      { status: 400 },
+    );
+  }
+
+  if (body.weaknesses && body.weaknesses.length > MAX_ARRAY_ITEMS) {
+    return NextResponse.json(
+      { error: `Too many weaknesses (max ${MAX_ARRAY_ITEMS})` },
+      { status: 400 },
+    );
+  }
+
+  const tooLong = (arr?: string[]) =>
+    arr?.some((s) => s.length > MAX_STRENGTH_LENGTH);
+  if (tooLong(body.strengths) || tooLong(body.weaknesses)) {
+    return NextResponse.json(
+      {
+        error: `Each strength/weakness must be ${MAX_STRENGTH_LENGTH} characters or less`,
+      },
       { status: 400 },
     );
   }

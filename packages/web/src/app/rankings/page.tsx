@@ -11,7 +11,9 @@ export default async function RankingsPage() {
   if (!session) {
     return (
       <main className="mx-auto max-w-screen-xl px-4 py-8">
-        <h1 className="mb-6 text-2xl font-bold">Positional Rankings</h1>
+        <h1 className="mb-6 font-[family-name:var(--font-display)] text-2xl font-bold uppercase tracking-tight">
+          Positional Rankings
+        </h1>
         <p className="py-12 text-center text-muted-foreground">
           <Link href={Routes.AUTH} className="text-primary hover:underline">
             Sign in
@@ -31,7 +33,9 @@ export default async function RankingsPage() {
   if (!board) {
     return (
       <main className="mx-auto max-w-screen-xl px-4 py-8">
-        <h1 className="mb-6 text-2xl font-bold">Positional Rankings</h1>
+        <h1 className="mb-6 font-[family-name:var(--font-display)] text-2xl font-bold uppercase tracking-tight">
+          Positional Rankings
+        </h1>
         <p className="py-12 text-center text-muted-foreground">
           Create a{' '}
           <Link href={Routes.BOARD} className="text-primary hover:underline">
@@ -47,7 +51,9 @@ export default async function RankingsPage() {
 
   return (
     <main className="mx-auto max-w-screen-xl px-4 py-8">
-      <h1 className="mb-6 text-2xl font-bold">Positional Rankings</h1>
+      <h1 className="mb-6 font-[family-name:var(--font-display)] text-2xl font-bold uppercase tracking-tight">
+        Positional Rankings
+      </h1>
       <RankingsClient board={board} players={players} />
     </main>
   );

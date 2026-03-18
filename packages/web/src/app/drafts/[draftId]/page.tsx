@@ -123,7 +123,9 @@ export default async function DraftDetailPage({
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold">{getDraftDisplayName(draft)}</h1>
+          <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold uppercase tracking-tight">
+            {getDraftDisplayName(draft)}
+          </h1>
           <Badge
             variant={
               draft.status === 'cancelled'

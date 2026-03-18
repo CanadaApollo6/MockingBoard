@@ -6,7 +6,9 @@ export default async function NewDraftPage() {
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8">
-      <h1 className="mb-6 text-2xl font-bold">New Mock Draft</h1>
+      <h1 className="mb-6 font-[family-name:var(--font-display)] text-2xl font-bold uppercase tracking-tight">
+        New Mock Draft
+      </h1>
       <DraftCreator defaultYear={draftYear} />
     </main>
   );

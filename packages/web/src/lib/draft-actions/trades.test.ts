@@ -232,7 +232,6 @@ describe('executeWebTrade', () => {
             exists: true,
             id: trade.id,
             data: () => {
-              // eslint-disable-next-line @typescript-eslint/no-unused-vars
               const { id: _id, ...data } = trade;
               return data;
             },
@@ -241,7 +240,6 @@ describe('executeWebTrade', () => {
             exists: true,
             id: draft.id,
             data: () => {
-              // eslint-disable-next-line @typescript-eslint/no-unused-vars
               const { id: _id, ...data } = draft;
               return data;
             },
@@ -281,7 +279,6 @@ describe('executeWebTrade', () => {
             exists: true,
             id: trade.id,
             data: () => {
-              // eslint-disable-next-line @typescript-eslint/no-unused-vars
               const { id: _id, ...data } = trade;
               return data;
             },

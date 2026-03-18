@@ -48,7 +48,9 @@ export default async function ScoutProfilePage({
         )}
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold">{profile.name}</h1>
+            <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold uppercase tracking-tight">
+              {profile.name}
+            </h1>
             {profile.tier && (
               <Badge variant="outline">{TIER_LABELS[profile.tier]}</Badge>
             )}

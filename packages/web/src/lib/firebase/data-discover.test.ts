@@ -29,7 +29,7 @@ vi.mock('../cache', () => ({
   getCachedScoutProfiles: vi.fn(),
 }));
 
-import { getTrendingBoards, getPopularReports } from './data.js';
+import { getTrendingBoards, getPopularReports } from './data/index.js';
 
 beforeEach(() => {
   vi.clearAllMocks();

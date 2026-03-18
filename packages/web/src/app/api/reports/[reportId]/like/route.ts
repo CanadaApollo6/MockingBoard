@@ -2,42 +2,24 @@ import { NextResponse } from 'next/server';
 import { FieldValue } from 'firebase-admin/firestore';
 import { getSessionUser } from '@/lib/firebase/auth-session';
 import { adminDb } from '@/lib/firebase/firebase-admin';
+import { handleLikeGet, handleLikeDelete } from '@/lib/api/likes';
 import { notifyReportLiked } from '@/lib/notifications';
 import { fanOutActivity } from '@/lib/activity';
+
+const LIKE_CONFIG = {
+  likeCollection: 'reportLikes',
+  resourceCollection: 'scoutingReports',
+  resourceKey: 'reportId',
+  label: 'Report',
+} as const;
 
 interface RouteParams {
   params: Promise<{ reportId: string }>;
 }
 
-export async function GET(request: Request, { params }: RouteParams) {
+export async function GET(_request: Request, { params }: RouteParams) {
   const { reportId } = await params;
-  const session = await getSessionUser();
-
-  if (!session) {
-    // Unauthenticated users get count only
-    const countSnap = await adminDb
-      .collection('reportLikes')
-      .where('reportId', '==', reportId)
-      .count()
-      .get();
-
-    return NextResponse.json({
-      isLiked: false,
-      likeCount: countSnap.data().count,
-    });
-  }
-
-  const docId = `${session.uid}_${reportId}`;
-  const likeDoc = await adminDb.collection('reportLikes').doc(docId).get();
-  const reportDoc = await adminDb
-    .collection('scoutingReports')
-    .doc(reportId)
-    .get();
-
-  return NextResponse.json({
-    isLiked: likeDoc.exists,
-    likeCount: reportDoc.data()?.likeCount ?? 0,
-  });
+  return handleLikeGet(reportId, LIKE_CONFIG);
 }
 
 export async function POST(_request: Request, { params }: RouteParams) {
@@ -57,7 +39,7 @@ export async function POST(_request: Request, { params }: RouteParams) {
       if (!reportDoc.exists) throw new Error('Report not found');
 
       const existingLike = await transaction.get(likeRef);
-      if (existingLike.exists) return null; // Already liked
+      if (existingLike.exists) return null;
 
       transaction.set(likeRef, {
         reportId,
@@ -77,19 +59,17 @@ export async function POST(_request: Request, { params }: RouteParams) {
       };
     });
 
-    if (result) {
-      // Notify author (fire-and-forget, don't notify yourself)
-      if (result.authorId !== session.uid) {
-        const likerName = session.name ?? session.email ?? 'Someone';
-        notifyReportLiked(
-          result.authorId,
-          likerName,
-          result.authorName,
-          reportId,
-        ).catch(() => {});
-      }
+    if (result && result.authorId !== session.uid) {
+      const likerName = session.name ?? session.email ?? 'Someone';
+      notifyReportLiked(
+        result.authorId,
+        likerName,
+        result.authorName,
+        reportId,
+      ).catch(() => {});
+    }
 
-      // Fan out activity to followers (look up player name)
+    if (result) {
       adminDb
         .collection('players')
         .doc(result.playerId)
@@ -119,32 +99,5 @@ export async function POST(_request: Request, { params }: RouteParams) {
 
 export async function DELETE(_request: Request, { params }: RouteParams) {
   const { reportId } = await params;
-  const session = await getSessionUser();
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const docId = `${session.uid}_${reportId}`;
-  const reportRef = adminDb.collection('scoutingReports').doc(reportId);
-  const likeRef = adminDb.collection('reportLikes').doc(docId);
-
-  try {
-    await adminDb.runTransaction(async (transaction) => {
-      const existingLike = await transaction.get(likeRef);
-      if (!existingLike.exists) return; // Not liked
-
-      transaction.delete(likeRef);
-      transaction.update(reportRef, {
-        likeCount: FieldValue.increment(-1),
-      });
-    });
-
-    return NextResponse.json({ ok: true });
-  } catch (err) {
-    console.error('Failed to unlike report:', err);
-    return NextResponse.json(
-      { error: 'Failed to unlike report' },
-      { status: 500 },
-    );
-  }
+  return handleLikeDelete(reportId, LIKE_CONFIG);
 }

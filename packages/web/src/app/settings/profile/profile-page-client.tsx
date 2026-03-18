@@ -116,7 +116,9 @@ export function ProfilePageClient() {
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
-          <h1 className="text-2xl font-bold">Edit Profile</h1>
+          <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold uppercase tracking-tight">
+            Edit Profile
+          </h1>
         </div>
         {hasPublicProfile && (
           <Link

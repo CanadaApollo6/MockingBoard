@@ -57,7 +57,9 @@ export default async function ComparePage({ searchParams }: ComparePageProps) {
         >
           &larr; Back to Board
         </Link>
-        <h1 className="text-2xl font-bold">Compare Rankings</h1>
+        <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold uppercase tracking-tight">
+          Compare Rankings
+        </h1>
       </div>
       <BoardCompareView
         currentRankings={board.rankings}

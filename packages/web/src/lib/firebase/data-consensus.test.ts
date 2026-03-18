@@ -15,7 +15,7 @@ vi.mock('../cache', () => ({
   getCachedPublicBoards: () => mockGetCachedPublicBoards(),
 }));
 
-import { getConsensusBoard } from './data.js';
+import { getConsensusBoard } from './data/index.js';
 
 function makeBoard(
   id: string,
