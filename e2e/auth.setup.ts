@@ -7,6 +7,7 @@ import fs from 'fs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const AUTH_FILE = path.join(__dirname, '.auth', 'user.json');
+export const TOKEN_FILE = path.join(__dirname, '.auth', 'token.txt');
 
 setup('authenticate', async ({ page }) => {
   const uid = process.env.PLAYWRIGHT_TEST_UID;
@@ -42,4 +43,8 @@ setup('authenticate', async ({ page }) => {
   // Save authenticated browser state (cookies + localStorage)
   fs.mkdirSync(path.dirname(AUTH_FILE), { recursive: true });
   await page.context().storageState({ path: AUTH_FILE });
+
+  // Save the custom token so the fixture can re-sign-in client-side Firebase Auth
+  // (storageState doesn't capture IndexedDB where Firebase stores auth tokens)
+  fs.writeFileSync(TOKEN_FILE, customToken, 'utf-8');
 });
