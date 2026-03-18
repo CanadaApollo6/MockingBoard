@@ -6,6 +6,7 @@ const {
   mockRunTransaction,
   mockCollection,
   mockNotifyNewComment,
+  mockGet,
 } = vi.hoisted(() => {
   const mockGet = vi.fn();
   const mockLimit = vi.fn(() => ({ get: mockGet }));
@@ -204,10 +205,12 @@ describe('POST /api/comments', () => {
       name: 'Alice',
       email: 'alice@test.com',
     });
+    // User doc read (outside transaction)
+    mockGet.mockResolvedValueOnce({
+      data: () => ({ displayName: 'Alice', slug: 'alice' }),
+    });
     mockRunTransaction.mockResolvedValue({
       commentId: 'c-new',
-      authorName: 'Alice',
-      authorSlug: 'alice',
       contentOwnerId: 'u-2',
       contentName: 'Top Board',
       contentSlug: 'top-board',
@@ -232,9 +235,11 @@ describe('POST /api/comments', () => {
       uid: 'u-1',
       name: 'Alice',
     });
+    mockGet.mockResolvedValueOnce({
+      data: () => ({ displayName: 'Alice', slug: 'alice' }),
+    });
     mockRunTransaction.mockResolvedValue({
       commentId: 'c-new',
-      authorName: 'Alice',
       contentOwnerId: 'u-2',
       contentName: 'Top Board',
       contentSlug: 'top-board',
@@ -262,9 +267,11 @@ describe('POST /api/comments', () => {
       uid: 'u-1',
       name: 'Alice',
     });
+    mockGet.mockResolvedValueOnce({
+      data: () => ({ displayName: 'Alice', slug: 'alice' }),
+    });
     mockRunTransaction.mockResolvedValue({
       commentId: 'c-new',
-      authorName: 'Alice',
       contentOwnerId: 'u-1',
       contentName: 'My Board',
       contentSlug: 'my-board',
@@ -283,6 +290,7 @@ describe('POST /api/comments', () => {
 
   it('returns 404 when content not found', async () => {
     mockGetSessionUser.mockResolvedValue({ uid: 'u-1' });
+    mockGet.mockResolvedValueOnce({ data: () => ({}) });
     mockRunTransaction.mockRejectedValue(new Error('Content not found'));
 
     const res = await POST(

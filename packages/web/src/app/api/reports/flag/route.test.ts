@@ -137,10 +137,18 @@ describe('POST /api/reports/flag', () => {
   it('returns 409 for duplicate report', async () => {
     mockGetSessionUser.mockResolvedValue({ uid: 'u-1', name: 'Alice' });
 
-    // First call: contentReports doc exists
+    // contentReports: doc exists (duplicate)
     const mockReportGet = vi.fn().mockResolvedValue({ exists: true });
     const mockReportDoc = vi.fn(() => ({ get: mockReportGet }));
     mockCollection.mockReturnValueOnce({ doc: mockReportDoc });
+
+    // bigBoards: content lookup runs in parallel
+    const mockContentGet = vi.fn().mockResolvedValue({
+      exists: true,
+      data: () => ({ userId: 'u-2', name: 'Board' }),
+    });
+    const mockContentDoc = vi.fn(() => ({ get: mockContentGet }));
+    mockCollection.mockReturnValueOnce({ doc: mockContentDoc });
 
     const res = await POST(makeRequest(validBody));
     expect(res.status).toBe(409);
@@ -218,14 +226,9 @@ describe('POST /api/reports/flag', () => {
     const mockContentDoc = vi.fn(() => ({ get: mockContentGet }));
     mockCollection.mockReturnValueOnce({ doc: mockContentDoc });
 
-    // Moderation doc: doesn't exist yet
+    // Moderation doc: set with merge
     const mockModSet = vi.fn().mockResolvedValue(undefined);
-    const mockModGet = vi.fn().mockResolvedValue({ exists: false });
-    const mockModDoc = vi.fn(() => ({
-      get: mockModGet,
-      set: mockModSet,
-      update: vi.fn(),
-    }));
+    const mockModDoc = vi.fn(() => ({ set: mockModSet }));
     mockCollection.mockReturnValueOnce({ doc: mockModDoc });
 
     const res = await POST(makeRequest(validBody));
@@ -238,11 +241,12 @@ describe('POST /api/reports/flag', () => {
     expect(reportData.contentType).toBe('board');
     expect(reportData.reason).toBe('spam');
 
-    // Verify moderation doc was created (not updated)
+    // Verify moderation doc was set with merge
     expect(mockModSet).toHaveBeenCalledTimes(1);
     const modData = mockModSet.mock.calls[0][0];
-    expect(modData.reportCount).toBe(1);
+    const modOptions = mockModSet.mock.calls[0][1];
     expect(modData.status).toBe('pending');
+    expect(modOptions).toEqual({ merge: true });
   });
 
   it('increments reportCount on subsequent report', async () => {
@@ -267,20 +271,16 @@ describe('POST /api/reports/flag', () => {
     const mockContentDoc = vi.fn(() => ({ get: mockContentGet }));
     mockCollection.mockReturnValueOnce({ doc: mockContentDoc });
 
-    // Moderation doc already exists
-    const mockModUpdate = vi.fn().mockResolvedValue(undefined);
-    const mockModGet = vi.fn().mockResolvedValue({ exists: true });
-    const mockModDoc = vi.fn(() => ({
-      get: mockModGet,
-      set: vi.fn(),
-      update: mockModUpdate,
-    }));
+    // Moderation doc: set with merge (same path for first and subsequent)
+    const mockModSet = vi.fn().mockResolvedValue(undefined);
+    const mockModDoc = vi.fn(() => ({ set: mockModSet }));
     mockCollection.mockReturnValueOnce({ doc: mockModDoc });
 
     const res = await POST(makeRequest(validBody));
     expect(res.status).toBe(200);
 
-    // Verify moderation doc was updated (not created)
-    expect(mockModUpdate).toHaveBeenCalledTimes(1);
+    // Verify moderation doc was set with merge (handles both create and update)
+    expect(mockModSet).toHaveBeenCalledTimes(1);
+    expect(mockModSet.mock.calls[0][1]).toEqual({ merge: true });
   });
 });

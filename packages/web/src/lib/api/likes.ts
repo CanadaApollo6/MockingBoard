@@ -44,14 +44,10 @@ export async function handleLikeGet(
   }
 
   const docId = `${session.uid}_${resourceId}`;
-  const likeDoc = await adminDb
-    .collection(config.likeCollection)
-    .doc(docId)
-    .get();
-  const resourceDoc = await adminDb
-    .collection(config.resourceCollection)
-    .doc(resourceId)
-    .get();
+  const [likeDoc, resourceDoc] = await Promise.all([
+    adminDb.collection(config.likeCollection).doc(docId).get(),
+    adminDb.collection(config.resourceCollection).doc(resourceId).get(),
+  ]);
 
   return NextResponse.json({
     isLiked: likeDoc.exists,

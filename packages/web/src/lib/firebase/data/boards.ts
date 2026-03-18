@@ -16,6 +16,7 @@ export async function getUserBoards(userId: string): Promise<BigBoard[]> {
     .collection('bigBoards')
     .where('userId', '==', userId)
     .orderBy('updatedAt', 'desc')
+    .limit(50)
     .get();
 
   return sanitize(hydrateDocs<BigBoard>(snapshot));
@@ -52,6 +53,7 @@ export async function getBoardSnapshots(
     .doc(boardId)
     .collection('snapshots')
     .orderBy('createdAt', 'desc')
+    .limit(50)
     .get();
 
   return sanitize(hydrateDocs<BoardSnapshot>(snap));

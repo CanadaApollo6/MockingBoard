@@ -87,17 +87,16 @@ export async function POST(request: Request) {
   const parentRef = adminDb.collection(parentCollection).doc(targetId);
 
   try {
+    // Read user doc outside transaction — only needed for display name, not transactional
+    const userDoc = await adminDb.collection('users').doc(session.uid).get();
+    const userData = userDoc.data();
+    const authorName =
+      userData?.displayName ?? session.name ?? session.email ?? 'Anonymous';
+    const authorSlug = (userData?.slug as string) ?? undefined;
+
     const result = await adminDb.runTransaction(async (transaction) => {
       const parentDoc = await transaction.get(parentRef);
       if (!parentDoc.exists) throw new Error('Content not found');
-
-      const userDoc = await transaction.get(
-        adminDb.collection('users').doc(session.uid),
-      );
-      const userData = userDoc.data();
-      const authorName =
-        userData?.displayName ?? session.name ?? session.email ?? 'Anonymous';
-      const authorSlug = (userData?.slug as string) ?? undefined;
 
       const commentRef = adminDb.collection('comments').doc();
       const commentData = {
@@ -118,8 +117,6 @@ export async function POST(request: Request) {
       const parentData = parentDoc.data()!;
       return {
         commentId: commentRef.id,
-        authorName,
-        authorSlug,
         contentOwnerId: (parentData.userId ?? parentData.authorId) as string,
         contentName: (parentData.name ??
           parentData.contentText ??
@@ -145,7 +142,7 @@ export async function POST(request: Request) {
 
       notifyNewComment(
         result.contentOwnerId,
-        result.authorName,
+        authorName,
         result.contentName,
         contentLink,
         notifType,
@@ -178,8 +175,8 @@ export async function POST(request: Request) {
         targetId,
         targetType: validTargetType,
         authorId: session.uid,
-        authorName: result.authorName,
-        authorSlug: result.authorSlug ?? undefined,
+        authorName,
+        authorSlug,
         text: text.trim(),
         createdAt: { seconds: Math.floor(Date.now() / 1000), nanoseconds: 0 },
       } satisfies Comment,

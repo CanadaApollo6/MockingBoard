@@ -4,10 +4,10 @@ import { adminDb } from './firebase-admin';
 import { hydrateDoc } from './sanitize';
 import { AppError } from '../validate';
 import type { Draft, User } from '@mockingboard/shared';
-import type { CacheEntry } from '../cache/common';
+import { BoundedCache } from '../cache/common';
 
 const USER_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-const userCache = new Map<string, CacheEntry<User | null>>();
+const userCache = new BoundedCache<string, User | null>(1000, USER_CACHE_TTL);
 
 /**
  * Resolve a Firebase Auth UID to the internal Firestore user doc.
@@ -17,7 +17,7 @@ const userCache = new Map<string, CacheEntry<User | null>>();
  */
 export async function resolveUser(firebaseUid: string): Promise<User | null> {
   const cached = userCache.get(firebaseUid);
-  if (cached && Date.now() < cached.expiresAt) return cached.data;
+  if (cached !== undefined) return cached;
 
   // Primary: look up by firebaseUid field
   const byFirebase = await adminDb
@@ -28,10 +28,7 @@ export async function resolveUser(firebaseUid: string): Promise<User | null> {
 
   if (!byFirebase.empty) {
     const user = hydrateDoc<User>(byFirebase.docs[0]);
-    userCache.set(firebaseUid, {
-      data: user,
-      expiresAt: Date.now() + USER_CACHE_TTL,
-    });
+    userCache.set(firebaseUid, user);
     return user;
   }
 
@@ -44,17 +41,11 @@ export async function resolveUser(firebaseUid: string): Promise<User | null> {
 
   if (!byDiscord.empty) {
     const user = hydrateDoc<User>(byDiscord.docs[0]);
-    userCache.set(firebaseUid, {
-      data: user,
-      expiresAt: Date.now() + USER_CACHE_TTL,
-    });
+    userCache.set(firebaseUid, user);
     return user;
   }
 
-  userCache.set(firebaseUid, {
-    data: null,
-    expiresAt: Date.now() + USER_CACHE_TTL,
-  });
+  userCache.set(firebaseUid, null);
   return null;
 }
 

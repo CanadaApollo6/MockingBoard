@@ -17,6 +17,7 @@ export async function getYearLeaderboard(
     .collection('draftScores')
     .where('year', '==', year)
     .where('isLocked', '==', true)
+    .select('userId', 'percentage')
     .limit(500)
     .get();
 
@@ -85,6 +86,7 @@ export async function getUserDraftScores(
     .collection('draftScores')
     .where('userId', '==', userId)
     .where('isLocked', '==', true)
+    .limit(100)
     .get();
 
   return snapshot.docs.map((doc) => {
@@ -119,6 +121,7 @@ export async function getUserBoardScores(
   const snapshot = await adminDb
     .collection('boardScores')
     .where('userId', '==', userId)
+    .limit(100)
     .get();
 
   return snapshot.docs.map((doc) => {
@@ -160,6 +163,7 @@ export async function getBoardLeaderboard(
 ): Promise<BoardLeaderboardEntry[]> {
   let query = adminDb.collection('boardScores') as FirebaseFirestore.Query;
   if (year) query = query.where('year', '==', year);
+  query = query.select('userId', 'percentage').limit(500);
   const snapshot = await query.get();
 
   if (snapshot.empty) return [];

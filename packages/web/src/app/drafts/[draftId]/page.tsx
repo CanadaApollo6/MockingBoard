@@ -65,43 +65,38 @@ export default async function DraftDetailPage({
 
   const playersObj = Object.fromEntries(playerMap);
 
-  // Generate recap for completed drafts
-  const recap =
-    draft.status === 'complete' && picks.length > 0
-      ? await (async () => {
-          try {
-            const teamDocs = await getCachedTeamDocs();
-            const docsMap = new Map(teamDocs.map((d) => [d.id, d]));
-            const teamNeeds = new Map<TeamAbbreviation, Position[]>(
-              teams.map((t) => [t.id, docsMap.get(t.id)?.needs ?? t.needs]),
-            );
-            const boardRankings = draft.config.boardId
-              ? (await getBigBoard(draft.config.boardId))?.rankings
-              : undefined;
-            return generateDraftRecap(
-              draft,
-              picks,
-              playersObj,
-              teamNeeds,
-              trades,
-              boardRankings,
-            );
-          } catch (err) {
-            console.error('Failed to generate draft recap:', err);
-            return null;
-          }
-        })()
-      : null;
+  // Generate recap and prediction score in parallel for completed drafts
+  const isComplete = draft.status === 'complete' && picks.length > 0;
 
-  const hasBoardDelta =
-    recap?.teamGrades.some((tg) =>
-      tg.picks.some((p) => p.boardDelta != null),
-    ) ?? false;
+  const recapPromise = isComplete
+    ? (async () => {
+        try {
+          const teamDocs = await getCachedTeamDocs();
+          const docsMap = new Map(teamDocs.map((d) => [d.id, d]));
+          const teamNeeds = new Map<TeamAbbreviation, Position[]>(
+            teams.map((t) => [t.id, docsMap.get(t.id)?.needs ?? t.needs]),
+          );
+          const boardRankings = draft.config.boardId
+            ? (await getBigBoard(draft.config.boardId))?.rankings
+            : undefined;
+          return generateDraftRecap(
+            draft,
+            picks,
+            playersObj,
+            teamNeeds,
+            trades,
+            boardRankings,
+          );
+        } catch (err) {
+          console.error('Failed to generate draft recap:', err);
+          return null;
+        }
+      })()
+    : null;
 
-  // Score picks against actual draft results for locked predictions
-  const predictionScore =
-    draft.isLocked && draft.status === 'complete' && picks.length > 0
-      ? await (async () => {
+  const predictionScorePromise =
+    draft.isLocked && isComplete
+      ? (async () => {
           const actualResults = await getDraftResults(draft.config.year);
           if (actualResults.length === 0) return null;
           const pickScores = picks.map((pick) => {
@@ -117,6 +112,16 @@ export default async function DraftDetailPage({
           return aggregateDraftScore(pickScores);
         })()
       : null;
+
+  const [recap, predictionScore] = await Promise.all([
+    recapPromise,
+    predictionScorePromise,
+  ]);
+
+  const hasBoardDelta =
+    recap?.teamGrades.some((tg) =>
+      tg.picks.some((p) => p.boardDelta != null),
+    ) ?? false;
 
   return (
     <main className="mx-auto max-w-screen-xl px-4 py-8">

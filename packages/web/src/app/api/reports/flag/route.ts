@@ -116,7 +116,11 @@ export async function POST(request: Request) {
   const reportRef = adminDb.collection('contentReports').doc(reportDocId);
 
   try {
-    const existingReport = await reportRef.get();
+    const [existingReport, contentInfo] = await Promise.all([
+      reportRef.get(),
+      getContentInfo(validContentType, contentId),
+    ]);
+
     if (existingReport.exists) {
       return NextResponse.json(
         { error: 'You have already reported this content' },
@@ -124,10 +128,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { authorId, authorName, contentPreview } = await getContentInfo(
-      validContentType,
-      contentId,
-    );
+    const { authorId, authorName, contentPreview } = contentInfo;
 
     if (authorId === session.uid) {
       return NextResponse.json(
@@ -147,25 +148,22 @@ export async function POST(request: Request) {
     });
 
     const moderationDocId = `${validContentType}_${contentId}`;
-    const moderationRef = adminDb.collection('moderation').doc(moderationDocId);
-    const moderationDoc = await moderationRef.get();
-
-    if (moderationDoc.exists) {
-      await moderationRef.update({
-        reportCount: FieldValue.increment(1),
-      });
-    } else {
-      await moderationRef.set({
-        contentType: validContentType,
-        contentId,
-        contentPreview: contentPreview.slice(0, 200),
-        authorId,
-        authorName,
-        status: 'pending',
-        reportCount: 1,
-        createdAt: FieldValue.serverTimestamp(),
-      });
-    }
+    await adminDb
+      .collection('moderation')
+      .doc(moderationDocId)
+      .set(
+        {
+          contentType: validContentType,
+          contentId,
+          contentPreview: contentPreview.slice(0, 200),
+          authorId,
+          authorName,
+          status: 'pending',
+          reportCount: FieldValue.increment(1),
+          createdAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true },
+      );
 
     return NextResponse.json({ ok: true });
   } catch (err) {

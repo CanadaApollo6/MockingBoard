@@ -1,15 +1,16 @@
 import { adminDb } from '@/lib/firebase/firebase-admin';
+import { BoundedCache } from '@/lib/cache/common';
 
 /** TTL cache so repeated checks in the same request don't re-read Firestore. */
-const cache = new Map<string, { value: boolean; expiry: number }>();
 const TTL_MS = 60_000; // 1 minute
+const cache = new BoundedCache<string, boolean>(100, TTL_MS);
 
 export async function isAdmin(uid: string): Promise<boolean> {
   const cached = cache.get(uid);
-  if (cached && Date.now() < cached.expiry) return cached.value;
+  if (cached !== undefined) return cached;
 
   const snap = await adminDb.doc(`users/${uid}`).get();
   const value = snap.exists && snap.data()?.isAdmin === true;
-  cache.set(uid, { value, expiry: Date.now() + TTL_MS });
+  cache.set(uid, value);
   return value;
 }

@@ -3,7 +3,6 @@ import {
   getYearLeaderboard,
   getBoardLeaderboard,
 } from '@/lib/firebase/data';
-import type { LeaderboardEntry } from '@/lib/firebase/data';
 import { getCachedSeasonConfig } from '@/lib/cache';
 import { LeaderboardPageClient } from './leaderboard-page-client';
 
@@ -18,27 +17,26 @@ export default async function LeaderboardPage({
   const selectedYear =
     yearParam && !Array.isArray(yearParam) ? parseInt(yearParam) : null;
 
-  let entries: LeaderboardEntry[];
+  const entriesPromise =
+    selectedYear && selectedYear > 2000 && selectedYear <= draftYear
+      ? getYearLeaderboard(selectedYear).catch(() => [])
+      : getLeaderboard(100)
+          .catch(() => [])
+          .then((users) =>
+            users.map((u) => ({
+              userId: u.id,
+              displayName: u.displayName,
+              slug: u.slug,
+              isPublic: u.isPublic,
+              avgScore: u.stats?.accuracyScore ?? 0,
+              draftCount: 0,
+            })),
+          );
 
-  if (selectedYear && selectedYear > 2000 && selectedYear <= draftYear) {
-    entries = await getYearLeaderboard(selectedYear).catch(() => []);
-  } else {
-    // All-time: convert User[] to LeaderboardEntry[]
-    const users = await getLeaderboard(100).catch(() => []);
-    entries = users.map((u) => ({
-      userId: u.id,
-      displayName: u.displayName,
-      slug: u.slug,
-      isPublic: u.isPublic,
-      avgScore: u.stats?.accuracyScore ?? 0,
-      draftCount: 0,
-    }));
-  }
-
-  // Fetch board leaderboard to merge board accuracy data
-  const boardEntries = await getBoardLeaderboard(
-    selectedYear ?? undefined,
-  ).catch(() => []);
+  const [entries, boardEntries] = await Promise.all([
+    entriesPromise,
+    getBoardLeaderboard(selectedYear ?? undefined).catch(() => []),
+  ]);
   const boardScoreMap = new Map(
     boardEntries.map((e) => [e.userId, e.avgScore]),
   );

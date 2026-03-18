@@ -7,6 +7,7 @@ import {
   AppError,
   getCachedPlayerMap,
 } from './shared';
+import { BoundedCache } from '../../cache/common';
 import type {
   Draft,
   Pick,
@@ -182,17 +183,17 @@ export async function getRecentCompletedDraft(): Promise<Draft | null> {
 // ---- User Stats ----
 
 const USER_STATS_TTL = 5 * 60 * 1000; // 5 minutes
-const userStatsCache = new Map<
+const userStatsCache = new BoundedCache<
   string,
-  { data: { totalDrafts: number; totalPicks: number }; expiresAt: number }
->();
+  { totalDrafts: number; totalPicks: number }
+>(1000, USER_STATS_TTL);
 
 export async function getUserStats(
   userId: string,
   discordId?: string,
 ): Promise<{ totalDrafts: number; totalPicks: number }> {
   const cached = userStatsCache.get(userId);
-  if (cached && Date.now() < cached.expiresAt) return cached.data;
+  if (cached) return cached;
 
   const ids = [userId, ...(discordId ? [discordId] : [])];
 
@@ -200,6 +201,7 @@ export async function getUserStats(
     .collection('drafts')
     .where('participantIds', 'array-contains-any', ids)
     .select('status')
+    .limit(200)
     .get();
 
   const completedDrafts = draftsSnap.docs.filter(
@@ -220,10 +222,7 @@ export async function getUserStats(
   const totalPicks = pickCounts.reduce((sum, c) => sum + c, 0);
 
   const stats = { totalDrafts, totalPicks };
-  userStatsCache.set(userId, {
-    data: stats,
-    expiresAt: Date.now() + USER_STATS_TTL,
-  });
+  userStatsCache.set(userId, stats);
   return stats;
 }
 

@@ -68,6 +68,7 @@ export async function GET(
       .doc(boardId)
       .collection('snapshots')
       .orderBy('createdAt', 'desc')
+      .limit(50)
       .get();
 
     const snapshots = snap.docs.map((doc) => ({

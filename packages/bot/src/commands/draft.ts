@@ -7,14 +7,18 @@ import { getActiveDraftInThread } from '../services/draft.service.js';
 import { getPlayersByYear } from '../services/player.service.js';
 import type { Player } from '@mockingboard/shared';
 
-// In-memory player cache keyed by year
-const playerCache = new Map<number, Player[]>();
+// In-memory player cache keyed by year (1-hour TTL)
+const PLAYER_CACHE_TTL = 60 * 60 * 1000;
+const playerCache = new Map<number, { data: Player[]; expiresAt: number }>();
 
 async function getCachedPlayers(year: number): Promise<Player[]> {
   const cached = playerCache.get(year);
-  if (cached) return cached;
+  if (cached && Date.now() < cached.expiresAt) return cached.data;
   const players = await getPlayersByYear(year);
-  playerCache.set(year, players);
+  playerCache.set(year, {
+    data: players,
+    expiresAt: Date.now() + PLAYER_CACHE_TTL,
+  });
   return players;
 }
 

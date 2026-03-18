@@ -110,17 +110,22 @@ export async function POST(request: Request) {
 
   const batch = adminDb.batch();
 
-  for (const draftDoc of draftsSnap.docs) {
-    const draft = hydrateDoc<Draft>(draftDoc);
+  // Fetch all picks subcollections in parallel
+  const drafts = draftsSnap.docs.map((doc) => hydrateDoc<Draft>(doc));
+  const picksSnapshots = await Promise.all(
+    drafts.map((draft) =>
+      adminDb
+        .collection('drafts')
+        .doc(draft.id)
+        .collection('picks')
+        .orderBy('overall')
+        .get(),
+    ),
+  );
 
-    // Get picks for this draft
-    const picksSnap = await adminDb
-      .collection('drafts')
-      .doc(draft.id)
-      .collection('picks')
-      .orderBy('overall')
-      .get();
-
+  for (let i = 0; i < drafts.length; i++) {
+    const draft = drafts[i];
+    const picksSnap = picksSnapshots[i];
     if (picksSnap.empty) continue;
 
     // Group picks by user
@@ -177,15 +182,21 @@ export async function POST(request: Request) {
     await batch.commit();
   }
 
-  // Aggregate accuracy scores for affected users
-  let usersUpdated = 0;
-  for (const userId of affectedUserIds) {
-    const userScores = await adminDb
-      .collection('draftScores')
-      .where('userId', '==', userId)
-      .where('isLocked', '==', true)
-      .get();
+  // Aggregate accuracy scores for affected users in parallel
+  const userScoreResults = await Promise.all(
+    [...affectedUserIds].map(async (userId) => {
+      const userScores = await adminDb
+        .collection('draftScores')
+        .where('userId', '==', userId)
+        .where('isLocked', '==', true)
+        .get();
+      return { userId, userScores };
+    }),
+  );
 
+  const userUpdateBatch = adminDb.batch();
+  let usersUpdated = 0;
+  for (const { userId, userScores } of userScoreResults) {
     if (userScores.empty) continue;
 
     let totalPct = 0;
@@ -194,12 +205,12 @@ export async function POST(request: Request) {
     }
     const avgAccuracy = Math.round(totalPct / userScores.size);
 
-    await adminDb
-      .collection('users')
-      .doc(userId)
-      .update({ 'stats.accuracyScore': avgAccuracy });
+    userUpdateBatch.update(adminDb.collection('users').doc(userId), {
+      'stats.accuracyScore': avgAccuracy,
+    });
     usersUpdated++;
   }
+  if (usersUpdated > 0) await userUpdateBatch.commit();
 
   // ---- Board Accuracy Scoring ----
 
@@ -240,14 +251,20 @@ export async function POST(request: Request) {
     await boardBatch.commit();
   }
 
-  // Aggregate board accuracy scores for affected users
-  let boardUsersUpdated = 0;
-  for (const userId of boardAffectedUserIds) {
-    const userBoardScores = await adminDb
-      .collection('boardScores')
-      .where('userId', '==', userId)
-      .get();
+  // Aggregate board accuracy scores for affected users in parallel
+  const boardScoreResults = await Promise.all(
+    [...boardAffectedUserIds].map(async (userId) => {
+      const userBoardScores = await adminDb
+        .collection('boardScores')
+        .where('userId', '==', userId)
+        .get();
+      return { userId, userBoardScores };
+    }),
+  );
 
+  const boardUserBatch = adminDb.batch();
+  let boardUsersUpdated = 0;
+  for (const { userId, userBoardScores } of boardScoreResults) {
     if (userBoardScores.empty) continue;
 
     let totalPct = 0;
@@ -256,12 +273,12 @@ export async function POST(request: Request) {
     }
     const avgBoardAccuracy = Math.round(totalPct / userBoardScores.size);
 
-    await adminDb
-      .collection('users')
-      .doc(userId)
-      .update({ 'stats.boardAccuracyScore': avgBoardAccuracy });
+    boardUserBatch.update(adminDb.collection('users').doc(userId), {
+      'stats.boardAccuracyScore': avgBoardAccuracy,
+    });
     boardUsersUpdated++;
   }
+  if (boardUsersUpdated > 0) await boardUserBatch.commit();
 
   return NextResponse.json({
     ok: true,
