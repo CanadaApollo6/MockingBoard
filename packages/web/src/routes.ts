@@ -21,6 +21,7 @@ export const Routes = {
   // Community
   DISCOVER: '/discover',
   COMMUNITY: '/community',
+  LISTS: '/lists',
   SCOUTS: '/scouts',
   LEADERBOARD: '/leaderboard',
 
@@ -73,6 +74,7 @@ export const Routes = {
   profile: (slug: string) => `/profile/${slug}`,
   scout: (slug: string) => `/scouts/${slug}`,
   board: (slug: string) => `/boards/${slug}`,
+  list: (slug: string) => `/lists/${slug}`,
   overlay: (draftId: string, type: 'board' | 'ticker' | 'current-pick') =>
     `/overlay/${draftId}/${type}`,
   adminTeam: (abbr: string) => `/admin/teams/${abbr}`,

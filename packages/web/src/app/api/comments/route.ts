@@ -8,19 +8,19 @@ import { sanitize } from '@/lib/firebase/sanitize';
 import type { Comment } from '@mockingboard/shared';
 
 const MAX_COMMENT_LENGTH = 500;
-const VALID_TARGET_TYPES = ['board', 'report'] as const;
+const VALID_TARGET_TYPES = ['board', 'report', 'list'] as const;
+type TargetType = (typeof VALID_TARGET_TYPES)[number];
 
-function getParentCollection(targetType: 'board' | 'report') {
-  return targetType === 'board' ? 'bigBoards' : 'scoutingReports';
+function getParentCollection(targetType: TargetType) {
+  if (targetType === 'board') return 'bigBoards';
+  if (targetType === 'list') return 'lists';
+  return 'scoutingReports';
 }
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const targetId = searchParams.get('targetId');
-  const targetType = searchParams.get('targetType') as
-    | 'board'
-    | 'report'
-    | null;
+  const targetType = searchParams.get('targetType') as TargetType | null;
 
   if (!targetId || !targetType || !VALID_TARGET_TYPES.includes(targetType)) {
     return NextResponse.json(
@@ -60,10 +60,10 @@ export async function POST(request: Request) {
   if (
     !targetId ||
     !targetType ||
-    !VALID_TARGET_TYPES.includes(targetType as 'board' | 'report')
+    !VALID_TARGET_TYPES.includes(targetType as TargetType)
   ) {
     return NextResponse.json(
-      { error: 'targetId and targetType (board|report) are required' },
+      { error: 'targetId and targetType (board|report|list) are required' },
       { status: 400 },
     );
   }
@@ -82,7 +82,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const validTargetType = targetType as 'board' | 'report';
+  const validTargetType = targetType as TargetType;
   const parentCollection = getParentCollection(validTargetType);
   const parentRef = adminDb.collection(parentCollection).doc(targetId);
 
@@ -131,11 +131,17 @@ export async function POST(request: Request) {
     // Notify content owner (fire-and-forget, don't notify yourself)
     if (result.contentOwnerId !== session.uid) {
       const notifType =
-        validTargetType === 'board' ? 'board-commented' : 'report-commented';
+        validTargetType === 'board'
+          ? 'board-commented'
+          : validTargetType === 'list'
+            ? 'board-commented'
+            : 'report-commented';
       const contentLink =
         validTargetType === 'board'
           ? `/boards/${result.contentSlug}`
-          : `/players/${targetId}`;
+          : validTargetType === 'list'
+            ? `/lists/${result.contentSlug}`
+            : `/players/${targetId}`;
 
       notifyNewComment(
         result.contentOwnerId,
@@ -148,11 +154,15 @@ export async function POST(request: Request) {
 
     // Fan out activity to followers
     const activityType =
-      validTargetType === 'board' ? 'board-commented' : 'report-commented';
+      validTargetType === 'board' || validTargetType === 'list'
+        ? 'board-commented'
+        : 'report-commented';
     const activityLink =
       validTargetType === 'board'
         ? `/boards/${result.contentSlug}`
-        : `/players/${targetId}`;
+        : validTargetType === 'list'
+          ? `/lists/${result.contentSlug}`
+          : `/players/${targetId}`;
 
     fanOutActivity({
       actorId: session.uid,

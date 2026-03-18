@@ -473,9 +473,30 @@ export interface BoardLike {
 export interface Bookmark {
   id: string;
   targetId: string;
-  targetType: 'board' | 'report';
+  targetType: 'board' | 'report' | 'list';
   userId: string;
   createdAt: FirestoreTimestamp;
+}
+
+export interface ListItem {
+  type: 'board' | 'report';
+  id: string;
+  note?: string;
+}
+
+export interface UserList {
+  id: string;
+  userId: string;
+  authorName?: string;
+  name: string;
+  description?: string;
+  slug?: string;
+  items: ListItem[];
+  visibility?: 'private' | 'public';
+  likeCount?: number;
+  commentCount?: number;
+  createdAt: FirestoreTimestamp;
+  updatedAt: FirestoreTimestamp;
 }
 
 // ---- Player Pick Stats Types ----
@@ -742,7 +763,7 @@ export interface ActivityEvent {
 export interface Comment {
   id: string;
   targetId: string;
-  targetType: 'board' | 'report';
+  targetType: 'board' | 'report' | 'list';
   authorId: string;
   authorName: string;
   authorSlug?: string;

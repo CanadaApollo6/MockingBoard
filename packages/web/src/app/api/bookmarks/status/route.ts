@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getSessionUser } from '@/lib/firebase/auth-session';
 import { adminDb } from '@/lib/firebase/firebase-admin';
 
-const VALID_TYPES = new Set(['board', 'report']);
+const VALID_TYPES = new Set(['board', 'report', 'list']);
 
 export async function GET(request: Request) {
   const session = await getSessionUser();

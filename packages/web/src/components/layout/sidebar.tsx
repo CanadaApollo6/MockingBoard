@@ -67,6 +67,7 @@ const NAV_GROUPS = [
     items: [
       { href: Routes.DISCOVER, label: 'Discover', icon: Compass },
       { href: Routes.COMMUNITY, label: 'Community', icon: Globe },
+      { href: Routes.LISTS, label: 'Lists', icon: ListOrdered },
       { href: Routes.SCOUTS, label: 'Scouts', icon: Eye },
       { href: Routes.LEADERBOARD, label: 'Leaderboard', icon: Trophy },
     ],

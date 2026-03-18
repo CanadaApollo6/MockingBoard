@@ -185,6 +185,32 @@ service cloud.firestore {
     }
 
     // ============================================
+    // Lists Collection
+    // Public read, owner create/update/delete
+    // ============================================
+    match /lists/{listId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() &&
+        resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() &&
+        resource.data.userId == request.auth.uid;
+    }
+
+    // ============================================
+    // List Likes Collection
+    // Public read, authenticated create/delete own
+    // ============================================
+    match /listLikes/{likeId} {
+      allow read: if true;
+      allow create: if isAuthenticated() &&
+        request.resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() &&
+        resource.data.userId == request.auth.uid;
+      allow update: if false;
+    }
+
+    // ============================================
     // Activity Events Collection
     // Owner read, server-only write
     // ============================================

@@ -4,11 +4,13 @@ import {
   getPopularReports,
   getPublicBoards,
   getLeaderboard,
+  getPopularLists,
   getPlayerMap,
 } from '@/lib/firebase/data';
 import { Routes } from '@/routes';
 import { BoardCard } from '@/components/board/board-card';
 import { ReportCard } from '@/components/community/report-card';
+import { ListCard } from '@/components/list/list-card';
 import { AnalystProfileCard } from '@/components/profile/analyst-profile-card';
 
 export const dynamic = 'force-dynamic';
@@ -21,13 +23,19 @@ export const metadata: Metadata = {
 
 export default async function DiscoverPage() {
   // Trending/popular queries need Firestore indexes — gracefully degrade if missing
-  const [trendingBoards, popularReports, { boards: justPublished }, allScouts] =
-    await Promise.all([
-      getTrendingBoards(8).catch(() => []),
-      getPopularReports(6).catch(() => []),
-      getPublicBoards({ limit: 6 }),
-      getLeaderboard(6),
-    ]);
+  const [
+    trendingBoards,
+    popularReports,
+    { boards: justPublished },
+    allScouts,
+    popularLists,
+  ] = await Promise.all([
+    getTrendingBoards(8).catch(() => []),
+    getPopularReports(6).catch(() => []),
+    getPublicBoards({ limit: 6 }),
+    getLeaderboard(6),
+    getPopularLists(4).catch(() => []),
+  ]);
 
   // Filter to public scouts only
   const topScouts = allScouts.filter((u) => u.isPublic);
@@ -149,6 +157,31 @@ export default async function DiscoverPage() {
           </div>
         )}
       </section>
+
+      {/* Popular Lists */}
+      {popularLists.length > 0 && (
+        <section className="mb-12">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold">Popular Lists</h2>
+              <p className="text-sm text-muted-foreground">
+                Curated collections from the community
+              </p>
+            </div>
+            <a
+              href={Routes.LISTS}
+              className="text-sm text-mb-accent hover:underline"
+            >
+              View all
+            </a>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {popularLists.map((list) => (
+              <ListCard key={list.id} list={list} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Just Published */}
       <section>

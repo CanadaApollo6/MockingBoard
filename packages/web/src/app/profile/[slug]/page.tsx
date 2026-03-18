@@ -13,13 +13,21 @@ import {
   getUserLikedReports,
   getUserBookmarkedBoards,
   getUserBookmarkedReports,
+  getUserPublicLists,
   getBoardsByIds,
   getReportsByIds,
   getPlayerMap,
 } from '@/lib/firebase/data';
 import { teams } from '@mockingboard/shared';
 import type { BigBoard, ScoutingReport } from '@mockingboard/shared';
-import { LayoutList, FileText, Heart, Bookmark } from 'lucide-react';
+import {
+  LayoutList,
+  FileText,
+  Heart,
+  Bookmark,
+  ListOrdered,
+} from 'lucide-react';
+import { ListCard } from '@/components/list/list-card';
 import { Badge } from '@/components/ui/badge';
 import { getSessionUser } from '@/lib/firebase/auth-session';
 import { FollowButton } from '@/components/profile/follow-button';
@@ -74,13 +82,14 @@ export default async function ProfilePage({ params }: Props) {
 
   const isOwnProfile = session?.uid === user.id;
 
-  // Fetch bookmarks (own profile only) + resolve liked content
-  const [likedBoards, likedReports, savedBoardRefs, savedReportRefs] =
+  // Fetch bookmarks (own profile only) + resolve liked content + public lists
+  const [likedBoards, likedReports, savedBoardRefs, savedReportRefs, lists] =
     await Promise.all([
       getBoardsByIds(likedBoardRefs.map((l) => l.boardId)),
       getReportsByIds(likedReportRefs.map((l) => l.reportId)),
       isOwnProfile ? getUserBookmarkedBoards(user.id) : Promise.resolve([]),
       isOwnProfile ? getUserBookmarkedReports(user.id) : Promise.resolve([]),
+      getUserPublicLists(user.id),
     ]);
 
   // Resolve saved content
@@ -444,6 +453,29 @@ export default async function ProfilePage({ params }: Props) {
           )}
         </div>
       </div>
+
+      {/* Lists */}
+      {lists.length > 0 && (
+        <div className="mt-10">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="flex items-center gap-2 text-lg font-bold">
+              <ListOrdered className="h-4 w-4" />
+              Lists
+            </h2>
+            <Link
+              href={Routes.LISTS}
+              className="text-sm text-mb-accent hover:underline"
+            >
+              View all
+            </Link>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {lists.map((list) => (
+              <ListCard key={list.id} list={list} />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Liked Content */}
       {(likedBoards.length > 0 || likedReports.length > 0) && (

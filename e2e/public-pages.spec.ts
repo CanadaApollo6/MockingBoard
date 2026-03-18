@@ -9,6 +9,7 @@ const routes = [
   { path: '/community', heading: 'Community' },
   { path: '/boards', heading: 'Community Boards' },
   { path: '/discover', heading: 'Discover' },
+  { path: '/lists', heading: 'Community Lists' },
 ];
 
 for (const { path, heading } of routes) {

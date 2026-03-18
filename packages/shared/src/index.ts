@@ -57,6 +57,8 @@ export type {
   ActivityEventType,
   Comment,
   Bookmark,
+  ListItem,
+  UserList,
   PlayerContract,
   FreeAgentEntry,
   DeadCapEntry,
