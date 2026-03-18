@@ -1,6 +1,7 @@
 import { teams } from '@mockingboard/shared';
 import {
   type CacheEntry,
+  CircuitBreaker,
   isExpired,
   getOrExpire,
   ROSTER_TTL,
@@ -151,6 +152,7 @@ function transformEspnRoster(json: Record<string, unknown>): TeamRoster {
 }
 
 const rosterCache = new Map<string, CacheEntry<TeamRoster>>();
+const espnTeamBreaker = new CircuitBreaker(5, 60_000);
 
 /** Returns the current NFL roster for a team from ESPN. Cached for 6 hours. */
 export async function getCachedRoster(
@@ -161,18 +163,24 @@ export async function getCachedRoster(
 
   const espnId = ESPN_TEAM_IDS[team];
   if (!espnId) return null;
+  if (espnTeamBreaker.isOpen) return null;
 
   try {
     const res = await fetch(
       `https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/${espnId}/roster`,
       { next: { revalidate: 21600 } },
     );
-    if (!res.ok) return null;
+    if (!res.ok) {
+      espnTeamBreaker.recordFailure();
+      return null;
+    }
     const json = (await res.json()) as Record<string, unknown>;
     const roster = transformEspnRoster(json);
+    espnTeamBreaker.recordSuccess();
     rosterCache.set(team, { data: roster, expiresAt: Date.now() + ROSTER_TTL });
     return roster;
   } catch {
+    espnTeamBreaker.recordFailure();
     return null;
   }
 }
@@ -259,6 +267,7 @@ export async function getCachedSchedule(
 
   const espnId = ESPN_TEAM_IDS[team];
   if (!espnId) return null;
+  if (espnTeamBreaker.isOpen) return null;
 
   try {
     const base = `https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/${espnId}/schedule`;
@@ -266,6 +275,11 @@ export async function getCachedSchedule(
       fetch(`${base}?seasontype=2`, { next: { revalidate: 21600 } }),
       fetch(`${base}?seasontype=3`, { next: { revalidate: 21600 } }),
     ]);
+
+    if (!regRes.ok && !postRes.ok) {
+      espnTeamBreaker.recordFailure();
+      return null;
+    }
 
     const games: GameResult[] = [];
 
@@ -278,6 +292,7 @@ export async function getCachedSchedule(
       games.push(...transformEspnSchedule(json, espnId));
     }
 
+    espnTeamBreaker.recordSuccess();
     const schedule: TeamSchedule = { games };
     scheduleCache.set(team, {
       data: schedule,
@@ -285,6 +300,7 @@ export async function getCachedSchedule(
     });
     return schedule;
   } catch {
+    espnTeamBreaker.recordFailure();
     return null;
   }
 }

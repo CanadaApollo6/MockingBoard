@@ -41,6 +41,43 @@ export function getOrExpire<K, V>(
 }
 
 /**
+ * Simple circuit breaker that tracks consecutive failures.
+ * When failures exceed the threshold, the circuit opens and all calls
+ * short-circuit for the reset window, preventing cascading latency.
+ */
+export class CircuitBreaker {
+  private failures = 0;
+  private openUntil = 0;
+
+  constructor(
+    private threshold: number = 5,
+    private resetMs: number = 60_000,
+  ) {}
+
+  /** Returns true if the circuit is open (calls should be skipped). */
+  get isOpen(): boolean {
+    if (Date.now() >= this.openUntil) {
+      // Reset window expired — allow a probe
+      if (this.failures >= this.threshold) this.failures = 0;
+      return false;
+    }
+    return this.failures >= this.threshold;
+  }
+
+  recordSuccess(): void {
+    this.failures = 0;
+    this.openUntil = 0;
+  }
+
+  recordFailure(): void {
+    this.failures++;
+    if (this.failures >= this.threshold) {
+      this.openUntil = Date.now() + this.resetMs;
+    }
+  }
+}
+
+/**
  * A size-bounded Map cache with TTL. When the cache exceeds maxSize,
  * the oldest entries (by insertion order) are evicted.
  */

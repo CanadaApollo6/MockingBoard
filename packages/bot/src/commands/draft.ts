@@ -7,18 +7,25 @@ import { getActiveDraftInThread } from '../services/draft.service.js';
 import { getPlayersByYear } from '../services/player.service.js';
 import type { Player } from '@mockingboard/shared';
 
-// In-memory player cache keyed by year (1-hour TTL)
+// In-memory player cache keyed by year (1-hour TTL, max 10 years)
 const PLAYER_CACHE_TTL = 60 * 60 * 1000;
+const PLAYER_CACHE_MAX = 10;
 const playerCache = new Map<number, { data: Player[]; expiresAt: number }>();
 
 async function getCachedPlayers(year: number): Promise<Player[]> {
   const cached = playerCache.get(year);
   if (cached && Date.now() < cached.expiresAt) return cached.data;
+  if (cached) playerCache.delete(year);
   const players = await getPlayersByYear(year);
   playerCache.set(year, {
     data: players,
     expiresAt: Date.now() + PLAYER_CACHE_TTL,
   });
+  // Evict oldest if over capacity
+  if (playerCache.size > PLAYER_CACHE_MAX) {
+    const oldest = playerCache.keys().next().value;
+    if (oldest !== undefined) playerCache.delete(oldest);
+  }
   return players;
 }
 
