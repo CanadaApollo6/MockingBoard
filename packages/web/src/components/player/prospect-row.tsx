@@ -10,12 +10,14 @@ import { getPositionColor } from '@/lib/colors/position-colors';
 import { schoolColorStyle } from '@/lib/colors/school-colors';
 import { UNRANKED, YEAR_LABELS, formatHeight } from '@/lib/player-utils';
 import { ProspectDetails } from '@/components/player/prospect-details';
+import { WatchButton } from '@/components/prospect/watch-button';
 
 interface ProspectRowProps {
   player: Player;
+  year?: number;
 }
 
-export function ProspectRow({ player }: ProspectRowProps) {
+export function ProspectRow({ player, year }: ProspectRowProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const { attributes } = player;
 
@@ -131,12 +133,17 @@ export function ProspectRow({ player }: ProspectRowProps) {
 
               <ProspectDetails player={player} />
 
-              <Link
-                href={Routes.prospect(player.id)}
-                className="mt-4 inline-block text-sm font-medium text-mb-accent hover:underline"
-              >
-                View Full Profile
-              </Link>
+              <div className="mt-4 flex items-center gap-4">
+                <Link
+                  href={Routes.prospect(player.id)}
+                  className="text-sm font-medium text-mb-accent hover:underline"
+                >
+                  View Full Profile
+                </Link>
+                {year && (
+                  <WatchButton playerId={player.id} year={year} showLabel />
+                )}
+              </div>
             </div>
           </motion.div>
         )}

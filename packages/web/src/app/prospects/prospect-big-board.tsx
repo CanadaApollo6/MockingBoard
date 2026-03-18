@@ -8,6 +8,7 @@ import { ProspectRow } from '@/components/player/prospect-row';
 
 interface ProspectBigBoardProps {
   players: Player[];
+  year?: number;
 }
 
 const POSITIONS: Position[] = [
@@ -29,7 +30,7 @@ const PAGE_SIZE = 50;
 
 type ViewMode = 'full' | 'condensed';
 
-export function ProspectBigBoard({ players }: ProspectBigBoardProps) {
+export function ProspectBigBoard({ players, year }: ProspectBigBoardProps) {
   const [search, setSearch] = useState('');
   const [posFilter, setPosFilter] = useState<Position | null>(null);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
@@ -130,13 +131,13 @@ export function ProspectBigBoard({ players }: ProspectBigBoardProps) {
       ) : view === 'full' ? (
         <div className="space-y-6">
           {visible.map((player) => (
-            <ProspectCard key={player.id} player={player} />
+            <ProspectCard key={player.id} player={player} year={year} />
           ))}
         </div>
       ) : (
         <div className="space-y-2">
           {visible.map((player) => (
-            <ProspectRow key={player.id} player={player} />
+            <ProspectRow key={player.id} player={player} year={year} />
           ))}
         </div>
       )}

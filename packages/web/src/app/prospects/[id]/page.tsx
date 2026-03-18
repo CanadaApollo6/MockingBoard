@@ -15,6 +15,7 @@ import { CommunityReports } from '@/components/community/community-reports';
 import { QuickGrade } from '@/components/grade/quick-grade';
 import { WordCloud } from '@/components/community/word-cloud';
 import { VideoGallery } from '@/components/video/video-gallery';
+import { WatchButton } from '@/components/prospect/watch-button';
 import { getCachedSeasonConfig } from '@/lib/cache';
 
 export const revalidate = 3600;
@@ -61,6 +62,10 @@ export default async function PlayerPage({ params }: Props) {
     <main className="mx-auto max-w-screen-xl px-4 py-8">
       <PlayerJsonLd player={player} />
       <PlayerHero player={player} />
+
+      <div className="mt-3 flex items-center gap-2">
+        <WatchButton playerId={id} year={draftYear} showLabel />
+      </div>
 
       <div className="mt-8 space-y-10">
         <section className="space-y-6">

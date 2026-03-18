@@ -386,6 +386,15 @@
         { "fieldPath": "authorId", "order": "ASCENDING" },
         { "fieldPath": "likeCount", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "watchlistItems",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "year", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

@@ -4,6 +4,7 @@ import { getSessionUser } from '@/lib/firebase/auth-session';
 import { adminDb } from '@/lib/firebase/firebase-admin';
 import { sanitize } from '@/lib/firebase/sanitize';
 import { fanOutActivity } from '@/lib/activity';
+import { notifyWatchedProspectReport } from '@/lib/notifications';
 import {
   MAX_REPORT_CONTENT_LENGTH,
   MAX_COMPARISON_LENGTH,
@@ -189,20 +190,40 @@ export async function POST(request: Request) {
 
     await ref.set(report);
 
-    // Fan out activity for new report (fire-and-forget)
+    // Fan out activity + notify watchers (fire-and-forget)
     adminDb
       .collection('players')
       .doc(playerId)
       .get()
-      .then((playerDoc) => {
+      .then(async (playerDoc) => {
         const playerName = playerDoc.data()?.name ?? 'a prospect';
-        return fanOutActivity({
+
+        await fanOutActivity({
           actorId: session.uid,
           type: 'report-created',
           targetId: ref.id,
           targetName: playerName,
           targetLink: `/reports/${ref.id}`,
         });
+
+        // Notify users watching this prospect
+        const watchers = await adminDb
+          .collection('watchlistItems')
+          .where('playerId', '==', playerId)
+          .get();
+
+        await Promise.all(
+          watchers.docs
+            .filter((doc) => doc.data().userId !== session.uid)
+            .map((doc) =>
+              notifyWatchedProspectReport(
+                doc.data().userId,
+                playerName,
+                playerId,
+                authorName,
+              ),
+            ),
+        );
       })
       .catch(() => {});
 

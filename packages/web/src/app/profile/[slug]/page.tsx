@@ -18,6 +18,7 @@ import {
   getBoardsByIds,
   getReportsByIds,
   getPlayerMap,
+  getUserWatchlist,
 } from '@/lib/firebase/data';
 import { teams } from '@mockingboard/shared';
 import type { BigBoard, ScoutingReport } from '@mockingboard/shared';
@@ -27,6 +28,7 @@ import {
   Heart,
   Bookmark,
   ListOrdered,
+  Eye,
 } from 'lucide-react';
 import { ListCard } from '@/components/list/list-card';
 import { Badge } from '@/components/ui/badge';
@@ -38,6 +40,7 @@ import { ReportCard } from '@/components/community/report-card';
 import { getCachedSeasonConfig } from '@/lib/cache';
 import { formatRelativeTime } from '@/lib/format';
 import { AccuracyBadge } from '@/components/accuracy-badge';
+import { WatchButton } from '@/components/prospect/watch-button';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -96,16 +99,20 @@ export default async function ProfilePage({ params }: Props) {
       getUserPublicLists(user.id),
     ]);
 
-  // Resolve saved content
-  const [savedBoards, savedReports] = await Promise.all([
+  // Resolve saved content + watchlist
+  const { draftYear } = await getCachedSeasonConfig();
+  const [savedBoards, savedReports, watchlist] = await Promise.all([
     getBoardsByIds(savedBoardRefs.map((r) => r.targetId)),
     getReportsByIds(savedReportRefs.map((r) => r.targetId)),
+    isOwnProfile ? getUserWatchlist(user.id, draftYear) : Promise.resolve([]),
   ]);
 
   // Resolve player names for reports and liked reports
-  const { draftYear } = await getCachedSeasonConfig();
   const playerMap =
-    reports.length > 0 || likedReports.length > 0 || savedReports.length > 0
+    reports.length > 0 ||
+    likedReports.length > 0 ||
+    savedReports.length > 0 ||
+    watchlist.length > 0
       ? await getPlayerMap(draftYear)
       : null;
 
@@ -552,6 +559,47 @@ export default async function ProfilePage({ params }: Props) {
           )}
         </div>
       )}
+      {/* Watchlist (own profile only) */}
+      {isOwnProfile && watchlist.length > 0 && (
+        <div className="mt-10 space-y-4">
+          <h2 className="flex items-center gap-2 text-lg font-bold">
+            <Eye className="h-4 w-4" />
+            Watching
+          </h2>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {watchlist.map((item) => {
+              const player = playerMap?.get(item.playerId);
+              if (!player) return null;
+              return (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between rounded-lg border border-mb-border-strong bg-card px-4 py-3"
+                >
+                  <Link
+                    href={Routes.prospect(player.id)}
+                    className="min-w-0 flex-1 hover:text-mb-accent transition-colors"
+                  >
+                    <span className="block truncate text-sm font-medium">
+                      {player.name}
+                    </span>
+                    <span className="block truncate text-xs text-muted-foreground">
+                      {player.position} · {player.school}
+                      {player.consensusRank < 999 &&
+                        ` · #${player.consensusRank}`}
+                    </span>
+                  </Link>
+                  <WatchButton
+                    playerId={player.id}
+                    year={draftYear}
+                    initialIsWatching
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Saved Content (own profile only) */}
       {isOwnProfile && (savedBoards.length > 0 || savedReports.length > 0) && (
         <div className="mt-10 grid gap-10 lg:grid-cols-2">

@@ -478,6 +478,14 @@ export interface Bookmark {
   createdAt: FirestoreTimestamp;
 }
 
+export interface WatchlistItem {
+  id: string;
+  userId: string;
+  playerId: string;
+  year: number;
+  createdAt: FirestoreTimestamp;
+}
+
 export interface ListItem {
   type: 'board' | 'report';
   id: string;
@@ -722,7 +730,8 @@ export type NotificationType =
   | 'board-liked'
   | 'board-commented'
   | 'report-commented'
-  | 'content-removed';
+  | 'content-removed'
+  | 'watched-prospect-report';
 
 // ---- Content Moderation ----
 

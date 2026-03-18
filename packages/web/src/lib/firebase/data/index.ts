@@ -75,6 +75,8 @@ export type {
   BoardLeaderboardEntry,
 } from './scores';
 
+export { getUserWatchlist, getWatchedPlayerIds, isWatching } from './watchlist';
+
 export {
   getComments,
   getPlayerVideos,

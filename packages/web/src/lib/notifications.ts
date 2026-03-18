@@ -180,6 +180,22 @@ export async function notifyBoardLiked(
   });
 }
 
+export async function notifyWatchedProspectReport(
+  watcherUserId: string,
+  playerName: string,
+  playerId: string,
+  authorName: string,
+): Promise<void> {
+  await createNotification({
+    userId: watcherUserId,
+    type: 'watched-prospect-report',
+    title: 'New Report on Watched Prospect',
+    body: `${authorName} posted a scouting report on ${playerName}.`,
+    link: `/prospects/${playerId}`,
+    actorName: authorName,
+  });
+}
+
 const CONTENT_TYPE_LABELS: Record<string, string> = {
   'scouting-report': 'scouting report',
   board: 'big board',

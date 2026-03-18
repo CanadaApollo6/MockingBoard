@@ -6,12 +6,14 @@ import { getPositionColor } from '@/lib/colors/position-colors';
 import { schoolColorStyle } from '@/lib/colors/school-colors';
 import { UNRANKED, YEAR_LABELS } from '@/lib/player-utils';
 import { ProspectDetails } from '@/components/player/prospect-details';
+import { WatchButton } from '@/components/prospect/watch-button';
 
 interface ProspectCardProps {
   player: Player;
+  year?: number;
 }
 
-export function ProspectCard({ player }: ProspectCardProps) {
+export function ProspectCard({ player, year }: ProspectCardProps) {
   const { attributes } = player;
 
   const subtitle = [
@@ -74,6 +76,11 @@ export function ProspectCard({ player }: ProspectCardProps) {
         </div>
 
         <ProspectDetails player={player} />
+        {year && (
+          <div className="flex items-center pt-2">
+            <WatchButton playerId={player.id} year={year} showLabel />
+          </div>
+        )}
       </div>
     </div>
   );
