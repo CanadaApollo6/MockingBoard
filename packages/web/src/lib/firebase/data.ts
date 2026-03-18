@@ -1012,3 +1012,71 @@ export async function getConsensusBoard(year: number): Promise<ConsensusBoard> {
     lastUpdated,
   };
 }
+
+// ---- Trending Prospects ----
+
+export interface TrendingProspect {
+  player: Player;
+  boardCount: number;
+  averageRank: number;
+  consensusRank: number;
+  delta: number;
+  highestRank: number;
+  lowestRank: number;
+}
+
+export interface TrendingData {
+  mostDiscussed: TrendingProspect[];
+  risers: TrendingProspect[];
+  fallers: TrendingProspect[];
+  totalBoards: number;
+  totalScouts: number;
+}
+
+const TRENDING_LIMIT = 10;
+
+export async function getTrendingProspects(
+  year: number,
+): Promise<TrendingData> {
+  const [consensus, playerMap] = await Promise.all([
+    getConsensusBoard(year),
+    getCachedPlayerMap(year),
+  ]);
+
+  const prospects: TrendingProspect[] = [];
+  for (const entry of consensus.entries) {
+    const player = playerMap.get(entry.playerId);
+    if (!player) continue;
+    prospects.push({
+      player,
+      boardCount: entry.boardCount,
+      averageRank: entry.averageRank,
+      consensusRank: player.consensusRank,
+      delta: player.consensusRank - entry.averageRank,
+      highestRank: entry.highestRank,
+      lowestRank: entry.lowestRank,
+    });
+  }
+
+  const mostDiscussed = [...prospects]
+    .sort((a, b) => b.boardCount - a.boardCount)
+    .slice(0, TRENDING_LIMIT);
+
+  const risers = prospects
+    .filter((p) => p.delta > 0)
+    .sort((a, b) => b.delta - a.delta)
+    .slice(0, TRENDING_LIMIT);
+
+  const fallers = prospects
+    .filter((p) => p.delta < 0)
+    .sort((a, b) => a.delta - b.delta)
+    .slice(0, TRENDING_LIMIT);
+
+  return {
+    mostDiscussed,
+    risers,
+    fallers,
+    totalBoards: consensus.totalBoards,
+    totalScouts: consensus.totalScouts,
+  };
+}

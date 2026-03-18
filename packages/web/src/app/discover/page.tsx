@@ -5,12 +5,15 @@ import {
   getPublicBoards,
   getLeaderboard,
   getPopularLists,
+  getTrendingProspects,
   getPlayerMap,
 } from '@/lib/firebase/data';
+import { getCachedSeasonConfig } from '@/lib/cache';
 import { Routes } from '@/routes';
 import { BoardCard } from '@/components/board/board-card';
 import { ReportCard } from '@/components/community/report-card';
 import { ListCard } from '@/components/list/list-card';
+import { TrendingProspectRow } from '@/components/player/trending-prospect-row';
 import { AnalystProfileCard } from '@/components/profile/analyst-profile-card';
 
 export const dynamic = 'force-dynamic';
@@ -23,18 +26,28 @@ export const metadata: Metadata = {
 
 export default async function DiscoverPage() {
   // Trending/popular queries need Firestore indexes — gracefully degrade if missing
+  const { draftYear } = await getCachedSeasonConfig();
+
   const [
     trendingBoards,
     popularReports,
     { boards: justPublished },
     allScouts,
     popularLists,
+    trending,
   ] = await Promise.all([
     getTrendingBoards(8).catch(() => []),
     getPopularReports(6).catch(() => []),
     getPublicBoards({ limit: 6 }),
     getLeaderboard(6),
     getPopularLists(4).catch(() => []),
+    getTrendingProspects(draftYear).catch(() => ({
+      mostDiscussed: [],
+      risers: [],
+      fallers: [],
+      totalBoards: 0,
+      totalScouts: 0,
+    })),
   ]);
 
   // Filter to public scouts only
@@ -128,6 +141,38 @@ export default async function DiscoverPage() {
           </div>
         )}
       </section>
+
+      {/* Trending Prospects */}
+      {trending.mostDiscussed.length > 0 && (
+        <section className="mb-12">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold">Trending Prospects</h2>
+              <p className="text-sm text-muted-foreground">
+                Most discussed players across community boards
+              </p>
+            </div>
+            <a
+              href={Routes.TRENDING}
+              className="text-sm text-mb-accent hover:underline"
+            >
+              View all
+            </a>
+          </div>
+          <div className="space-y-2">
+            {trending.mostDiscussed.slice(0, 4).map((t, i) => (
+              <TrendingProspectRow
+                key={t.player.id}
+                player={t.player}
+                boardCount={t.boardCount}
+                averageRank={t.averageRank}
+                delta={t.delta}
+                rank={i + 1}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Top Scouts */}
       <section className="mb-12">

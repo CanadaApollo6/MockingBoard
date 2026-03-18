@@ -32,6 +32,7 @@ import {
   BookOpen,
   Compass,
   Scale,
+  TrendingUp,
 } from 'lucide-react';
 import { useAuth } from '@/components/auth/auth-provider';
 import { ThemeToggle } from '@/components/layout/theme-toggle';
@@ -62,6 +63,7 @@ const NAV_GROUPS = [
       { href: Routes.RANKINGS, label: 'Rankings', icon: BarChart3 },
       { href: Routes.BOARDS, label: 'Boards', icon: Library },
       { href: Routes.CONSENSUS, label: 'Consensus', icon: Scale },
+      { href: Routes.TRENDING, label: 'Trending', icon: TrendingUp },
     ],
   },
   {

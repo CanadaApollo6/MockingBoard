@@ -18,6 +18,7 @@ export const Routes = {
   RANKINGS: '/rankings',
   BOARDS: '/boards',
   CONSENSUS: '/consensus',
+  TRENDING: '/trending',
 
   // Community
   DISCOVER: '/discover',
