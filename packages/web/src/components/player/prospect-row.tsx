@@ -95,6 +95,9 @@ export function ProspectRow({ player, year }: ProspectRowProps) {
           </Badge>
         </div>
 
+        {/* Watch */}
+        {year && <WatchButton playerId={player.id} year={year} size="md" />}
+
         {/* Chevron */}
         <svg
           className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
@@ -133,17 +136,12 @@ export function ProspectRow({ player, year }: ProspectRowProps) {
 
               <ProspectDetails player={player} />
 
-              <div className="mt-4 flex items-center gap-4">
-                <Link
-                  href={Routes.prospect(player.id)}
-                  className="text-sm font-medium text-mb-accent hover:underline"
-                >
-                  View Full Profile
-                </Link>
-                {year && (
-                  <WatchButton playerId={player.id} year={year} showLabel />
-                )}
-              </div>
+              <Link
+                href={Routes.prospect(player.id)}
+                className="mt-4 inline-block text-sm font-medium text-mb-accent hover:underline"
+              >
+                View Full Profile
+              </Link>
             </div>
           </motion.div>
         )}

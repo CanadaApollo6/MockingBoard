@@ -13,6 +13,8 @@ export const Routes = {
 
   // Scouting
   PROSPECTS: '/prospects',
+  WATCHLIST: '/watchlist',
+  TAPE_LOG: '/tape-log',
   BOARD: '/board',
   BOARD_COMPARE: '/board/compare',
   RANKINGS: '/rankings',

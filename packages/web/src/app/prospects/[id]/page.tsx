@@ -61,11 +61,12 @@ export default async function PlayerPage({ params }: Props) {
   return (
     <main className="mx-auto max-w-screen-xl px-4 py-8">
       <PlayerJsonLd player={player} />
-      <PlayerHero player={player} />
-
-      <div className="mt-3 flex items-center gap-2">
-        <WatchButton playerId={id} year={draftYear} showLabel />
-      </div>
+      <PlayerHero
+        player={player}
+        actions={
+          <WatchButton playerId={id} year={draftYear} showLabel size="md" />
+        }
+      />
 
       <div className="mt-8 space-y-10">
         <section className="space-y-6">

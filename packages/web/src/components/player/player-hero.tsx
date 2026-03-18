@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { Player } from '@mockingboard/shared';
 import { Badge } from '@/components/ui/badge';
 import { getPositionColor } from '@/lib/colors/position-colors';
@@ -6,9 +7,10 @@ import { UNRANKED, YEAR_LABELS } from '@/lib/player-utils';
 
 interface PlayerHeroProps {
   player: Player;
+  actions?: ReactNode;
 }
 
-export function PlayerHero({ player }: PlayerHeroProps) {
+export function PlayerHero({ player, actions }: PlayerHeroProps) {
   const { attributes } = player;
 
   const subtitle = [
@@ -59,16 +61,19 @@ export function PlayerHero({ player }: PlayerHeroProps) {
             ) : null}
           </div>
 
-          {/* Position badge */}
-          <Badge
-            style={{
-              backgroundColor: getPositionColor(player.position),
-              color: '#0A0A0B',
-            }}
-            className="text-base px-3 py-1"
-          >
-            {player.position}
-          </Badge>
+          {/* Position badge + actions */}
+          <div className="flex items-center gap-4">
+            {actions}
+            <Badge
+              style={{
+                backgroundColor: getPositionColor(player.position),
+                color: '#0A0A0B',
+              }}
+              className="text-base px-3 py-1"
+            >
+              {player.position}
+            </Badge>
+          </div>
         </div>
       </div>
     </div>

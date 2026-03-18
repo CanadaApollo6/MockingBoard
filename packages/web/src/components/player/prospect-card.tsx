@@ -39,22 +39,32 @@ export function ProspectCard({ player, year }: ProspectCardProps) {
       />
 
       <div className="space-y-4 p-5 sm:p-8">
-        {/* Header: rank + position */}
+        {/* Header: rank + position + watch */}
         <div className="flex items-center justify-between">
           <span className="font-mono text-4xl font-bold text-muted-foreground">
             {player.consensusRank >= UNRANKED
               ? 'NR'
               : `#${player.consensusRank}`}
           </span>
-          <Badge
-            style={{
-              backgroundColor: getPositionColor(player.position),
-              color: '#0A0A0B',
-            }}
-            className="text-sm"
-          >
-            {player.position}
-          </Badge>
+          <div className="flex items-center gap-3">
+            {year && (
+              <WatchButton
+                playerId={player.id}
+                year={year}
+                showLabel
+                size="md"
+              />
+            )}
+            <Badge
+              style={{
+                backgroundColor: getPositionColor(player.position),
+                color: '#0A0A0B',
+              }}
+              className="text-sm"
+            >
+              {player.position}
+            </Badge>
+          </div>
         </div>
 
         {/* Player name + school */}
@@ -76,11 +86,6 @@ export function ProspectCard({ player, year }: ProspectCardProps) {
         </div>
 
         <ProspectDetails player={player} />
-        {year && (
-          <div className="flex items-center pt-2">
-            <WatchButton playerId={player.id} year={year} showLabel />
-          </div>
-        )}
       </div>
     </div>
   );

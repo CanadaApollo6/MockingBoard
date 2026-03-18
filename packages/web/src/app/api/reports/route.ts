@@ -7,6 +7,7 @@ import { fanOutActivity } from '@/lib/activity';
 import { notifyWatchedProspectReport } from '@/lib/notifications';
 import {
   MAX_REPORT_CONTENT_LENGTH,
+  MAX_NOTE_LENGTH,
   MAX_COMPARISON_LENGTH,
   MAX_STRENGTH_LENGTH,
   MAX_ARRAY_ITEMS,
@@ -73,6 +74,7 @@ export async function POST(request: Request) {
     weaknesses?: string[];
     content?: Record<string, unknown>;
     contentText?: string;
+    note?: string;
   };
 
   try {
@@ -98,6 +100,13 @@ export async function POST(request: Request) {
       {
         error: `Report content must be ${MAX_REPORT_CONTENT_LENGTH} characters or less`,
       },
+      { status: 400 },
+    );
+  }
+
+  if (body.note && body.note.length > MAX_NOTE_LENGTH) {
+    return NextResponse.json(
+      { error: `Note must be ${MAX_NOTE_LENGTH} characters or less` },
       { status: 400 },
     );
   }
@@ -161,6 +170,7 @@ export async function POST(request: Request) {
       if (body.content !== undefined) updates.content = body.content;
       if (body.contentText !== undefined)
         updates.contentText = body.contentText;
+      if (body.note !== undefined) updates.note = body.note;
 
       await doc.ref.update(updates);
       return NextResponse.json({ reportId: doc.id });
@@ -184,6 +194,7 @@ export async function POST(request: Request) {
       weaknesses: body.weaknesses ?? [],
       content: body.content ?? null,
       contentText: body.contentText ?? null,
+      note: body.note ?? null,
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
     };

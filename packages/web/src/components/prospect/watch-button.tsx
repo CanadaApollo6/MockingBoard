@@ -10,6 +10,7 @@ interface WatchButtonProps {
   year: number;
   initialIsWatching?: boolean;
   showLabel?: boolean;
+  size?: 'sm' | 'md';
 }
 
 export function WatchButton({
@@ -17,12 +18,14 @@ export function WatchButton({
   year,
   initialIsWatching = false,
   showLabel = false,
+  size = 'sm',
 }: WatchButtonProps) {
   const { user } = useAuth();
   const [isWatching, setIsWatching] = useState(initialIsWatching);
   const [loading, setLoading] = useState(false);
 
-  async function toggle() {
+  async function toggle(e: React.MouseEvent) {
+    e.stopPropagation();
     if (!user || loading) return;
 
     const was = isWatching;
@@ -48,20 +51,33 @@ export function WatchButton({
     }
   }
 
+  const iconSize = size === 'md' ? 'h-4.5 w-4.5' : 'h-3.5 w-3.5';
+  const textSize = size === 'md' ? 'text-sm' : 'text-xs';
+
+  const disabled = !user || loading;
+
   return (
-    <button
-      type="button"
+    <span
+      role="button"
+      tabIndex={disabled ? -1 : 0}
       onClick={toggle}
-      disabled={!user || loading}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          toggle(e as unknown as React.MouseEvent);
+        }
+      }}
+      aria-disabled={disabled || undefined}
       className={cn(
-        'inline-flex items-center gap-1 text-xs transition-colors',
-        user ? 'cursor-pointer hover:text-mb-accent' : 'cursor-default',
+        'inline-flex items-center gap-1.5 transition-colors',
+        textSize,
+        disabled ? 'cursor-default' : 'cursor-pointer hover:text-mb-accent',
         isWatching ? 'text-mb-accent' : 'text-muted-foreground',
       )}
       aria-label={isWatching ? 'Remove from watchlist' : 'Add to watchlist'}
     >
-      <Eye className={cn('h-3.5 w-3.5', isWatching && 'fill-current')} />
+      <Eye className={cn(iconSize, isWatching && 'fill-current')} />
       {showLabel && <span>{isWatching ? 'Watching' : 'Watch'}</span>}
-    </button>
+    </span>
   );
 }

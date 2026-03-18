@@ -29,6 +29,7 @@ import {
   Bookmark,
   ListOrdered,
   Eye,
+  NotebookPen,
 } from 'lucide-react';
 import { ListCard } from '@/components/list/list-card';
 import { Badge } from '@/components/ui/badge';
@@ -37,6 +38,7 @@ import { FollowButton } from '@/components/profile/follow-button';
 import { ProfileShareButton } from '@/components/share/profile-share-button';
 import { BoardCard } from '@/components/board/board-card';
 import { ReportCard } from '@/components/community/report-card';
+import { GradeBadge } from '@/components/grade/grade-badge';
 import { getCachedSeasonConfig } from '@/lib/cache';
 import { formatRelativeTime } from '@/lib/format';
 import { AccuracyBadge } from '@/components/accuracy-badge';
@@ -450,6 +452,66 @@ export default async function ProfilePage({ params }: Props) {
         </div>
       )}
 
+      {/* Tape Log — compact log entries (grade + note, no rich content) */}
+      {(() => {
+        const logEntries = reports.filter(
+          (r) =>
+            r.grade != null &&
+            (!r.content || Object.keys(r.content).length === 0),
+        );
+        if (logEntries.length === 0) return null;
+        return (
+          <div className="mt-10 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="flex items-center gap-2 text-lg font-bold">
+                <NotebookPen className="h-4 w-4" />
+                Tape Log
+              </h2>
+              <span className="text-xs text-muted-foreground">
+                {logEntries.length}{' '}
+                {logEntries.length === 1 ? 'entry' : 'entries'}
+              </span>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {logEntries.slice(0, 6).map((report) => {
+                const player = playerMap?.get(report.playerId);
+                return (
+                  <Link
+                    key={report.id}
+                    href={Routes.prospect(report.playerId)}
+                    className="flex items-start gap-3 rounded-lg border bg-card px-4 py-3 transition-colors hover:bg-muted/30"
+                  >
+                    {report.grade != null && (
+                      <div className="shrink-0 pt-0.5">
+                        <GradeBadge
+                          grade={report.grade}
+                          system={report.gradeSystem ?? 'tier'}
+                        />
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">
+                        {player?.name ?? 'Unknown'}
+                      </p>
+                      {player && (
+                        <p className="text-xs text-muted-foreground">
+                          {player.position} · {player.school}
+                        </p>
+                      )}
+                      {report.note && (
+                        <p className="mt-0.5 truncate text-xs text-muted-foreground italic">
+                          &ldquo;{report.note}&rdquo;
+                        </p>
+                      )}
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Content: boards + reports */}
       <div className="mt-10 grid gap-10 lg:grid-cols-2">
         {/* Boards */}
@@ -468,34 +530,41 @@ export default async function ProfilePage({ params }: Props) {
           )}
         </div>
 
-        {/* Reports */}
-        <div className="space-y-4">
-          <h2 className="text-lg font-bold">Scouting Reports</h2>
-          {reports.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No reports written yet.
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {reports.map((report) => {
-                const player = playerMap?.get(report.playerId);
-                return (
-                  <div key={report.id}>
-                    {player && (
-                      <Link
-                        href={Routes.prospect(report.playerId)}
-                        className="mb-1 block text-sm font-medium text-mb-accent hover:underline"
-                      >
-                        {player.name} — {player.position}, {player.school}
-                      </Link>
-                    )}
-                    <ReportCard report={report} />
-                  </div>
-                );
-              })}
+        {/* Full Reports (with rich content) */}
+        {(() => {
+          const fullReports = reports.filter(
+            (r) => r.content && Object.keys(r.content).length > 0,
+          );
+          return (
+            <div className="space-y-4">
+              <h2 className="text-lg font-bold">Scouting Reports</h2>
+              {fullReports.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  No detailed reports yet.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {fullReports.map((report) => {
+                    const player = playerMap?.get(report.playerId);
+                    return (
+                      <div key={report.id}>
+                        {player && (
+                          <Link
+                            href={Routes.prospect(report.playerId)}
+                            className="mb-1 block text-sm font-medium text-mb-accent hover:underline"
+                          >
+                            {player.name} — {player.position}, {player.school}
+                          </Link>
+                        )}
+                        <ReportCard report={report} />
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          );
+        })()}
       </div>
 
       {/* Lists */}

@@ -450,6 +450,7 @@ export interface ScoutingReport {
   weaknesses?: string[];
   content?: Record<string, unknown>;
   contentText?: string;
+  note?: string;
   likeCount?: number;
   commentCount?: number;
   createdAt: FirestoreTimestamp;

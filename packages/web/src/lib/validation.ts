@@ -3,6 +3,7 @@ export const MAX_NAME_LENGTH = 100;
 export const MAX_DESCRIPTION_LENGTH = 500;
 export const MAX_BIO_LENGTH = 300;
 export const MAX_REPORT_CONTENT_LENGTH = 10_000;
+export const MAX_NOTE_LENGTH = 280;
 export const MAX_COMPARISON_LENGTH = 200;
 export const MAX_STRENGTH_LENGTH = 200;
 export const MAX_ARRAY_ITEMS = 50;

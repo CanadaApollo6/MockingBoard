@@ -15,6 +15,7 @@ export function ReportCard({ report, isLiked }: ReportCardProps) {
   const hasStructured =
     report.grade != null ||
     report.comparison ||
+    report.note ||
     report.strengths?.length ||
     report.weaknesses?.length;
 
@@ -68,6 +69,13 @@ export function ReportCard({ report, isLiked }: ReportCardProps) {
             </Badge>
           ))}
         </div>
+      )}
+
+      {/* Note (quick take) */}
+      {report.note && (
+        <p className="text-sm text-muted-foreground italic">
+          &ldquo;{report.note}&rdquo;
+        </p>
       )}
 
       {/* Long-form content */}

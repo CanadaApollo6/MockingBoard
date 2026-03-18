@@ -3,7 +3,6 @@ import { test, expect } from '@playwright/test';
 test.describe('navigation', () => {
   test.describe('desktop sidebar', () => {
     test('sidebar is visible on desktop viewport', async ({ page }) => {
-      // Desktop viewport (default Playwright viewport is 1280x720)
       await page.goto('/prospects');
 
       // Sidebar should show the MockingBoard logo/link
@@ -11,15 +10,14 @@ test.describe('navigation', () => {
         page.locator('aside').getByRole('link', { name: 'MockingBoard' }),
       ).toBeVisible();
 
-      // Key nav links should be present
+      // Home is always visible (not in a collapsible group)
       await expect(
         page.locator('aside').getByRole('link', { name: 'Home' }),
       ).toBeVisible();
+
+      // Prospects is in Scouting group which is active on /prospects
       await expect(
         page.locator('aside').getByRole('link', { name: 'Prospects' }),
-      ).toBeVisible();
-      await expect(
-        page.locator('aside').getByRole('link', { name: 'Trade Calculator' }),
       ).toBeVisible();
     });
 
@@ -40,20 +38,82 @@ test.describe('navigation', () => {
     });
   });
 
+  test.describe('collapsible groups', () => {
+    test('active group is open and others are collapsed on load', async ({
+      page,
+    }) => {
+      await page.goto('/prospects');
+      const sidebar = page.locator('aside').first();
+
+      // Scouting group items should be visible (active group)
+      await expect(
+        sidebar.getByRole('link', { name: 'Prospects' }),
+      ).toBeVisible();
+      await expect(
+        sidebar.getByRole('link', { name: 'My Board' }),
+      ).toBeVisible();
+
+      // Tools group items should be hidden (collapsed)
+      await expect(
+        sidebar.getByRole('link', { name: 'Trade Calculator' }),
+      ).toBeHidden();
+    });
+
+    test('clicking a group header expands it', async ({ page }) => {
+      await page.goto('/prospects');
+      const sidebar = page.locator('aside').first();
+
+      // Tools items hidden initially
+      await expect(
+        sidebar.getByRole('link', { name: 'Trade Calculator' }),
+      ).toBeHidden();
+
+      // Click the Tools group header
+      await sidebar.getByRole('button', { name: 'Tools' }).click();
+
+      // Tools items now visible
+      await expect(
+        sidebar.getByRole('link', { name: 'Trade Calculator' }),
+      ).toBeVisible();
+    });
+
+    test('navigating to a new section auto-collapses previous group', async ({
+      page,
+    }) => {
+      await page.goto('/prospects');
+      const sidebar = page.locator('aside').first();
+
+      // Scouting is open
+      await expect(
+        sidebar.getByRole('link', { name: 'My Board' }),
+      ).toBeVisible();
+
+      // Navigate to a Tools page
+      await sidebar.getByRole('button', { name: 'Tools' }).click();
+      await sidebar.getByRole('link', { name: 'Teams' }).click();
+      await expect(page).toHaveURL(/\/teams/);
+
+      // Tools is now open, Scouting is collapsed
+      await expect(
+        sidebar.getByRole('link', { name: 'Trade Calculator' }),
+      ).toBeVisible();
+      await expect(
+        sidebar.getByRole('link', { name: 'My Board' }),
+      ).toBeHidden();
+    });
+  });
+
   test.describe('mobile navigation', () => {
     test.use({ viewport: { width: 375, height: 812 } });
 
     test('hamburger menu opens mobile sidebar', async ({ page }) => {
       await page.goto('/prospects');
 
-      // Mobile top bar should be visible with menu button
       const menuButton = page.getByRole('button', { name: 'Open menu' });
       await expect(menuButton).toBeVisible();
 
-      // Open mobile sidebar
       await menuButton.click();
 
-      // Sidebar content should now be visible
       const mobileSidebar = page.locator('aside.fixed');
       await expect(mobileSidebar).toBeVisible();
       await expect(
@@ -71,7 +131,8 @@ test.describe('navigation', () => {
       const mobileSidebar = page.locator('aside.fixed');
       await expect(mobileSidebar).toBeVisible();
 
-      // Click a nav link — sidebar auto-closes on navigation
+      // Expand Tools group, then click Teams
+      await mobileSidebar.getByRole('button', { name: 'Tools' }).click();
       await mobileSidebar.getByRole('link', { name: 'Teams' }).click();
       await expect(page).toHaveURL(/\/teams/);
 
@@ -81,8 +142,6 @@ test.describe('navigation', () => {
 
     test('mobile top bar has search button', async ({ page }) => {
       await page.goto('/prospects');
-      // The top bar search button has sr-only "Search" — use the exact filter
-      // to distinguish from the sidebar search button (which has "Search ⌘K")
       await page
         .locator('button')
         .filter({ hasText: /^Search$/ })
