@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import { getCachedSeasonConfig } from '@/lib/cache';
-import { getTrendingProspects } from '@/lib/firebase/data';
+import { getTrendingProspects, getGlobalHotTakes } from '@/lib/firebase/data';
 import { TrendingProspectRow } from '@/components/player/trending-prospect-row';
+import { HotTakeCard } from '@/components/player/hot-take-card';
 
 export const revalidate = 3600;
 
@@ -13,7 +14,10 @@ export const metadata: Metadata = {
 
 export default async function TrendingPage() {
   const { draftYear } = await getCachedSeasonConfig();
-  const trending = await getTrendingProspects(draftYear);
+  const [trending, hotTakes] = await Promise.all([
+    getTrendingProspects(draftYear),
+    getGlobalHotTakes(draftYear).catch(() => ({ takes: [], totalBoards: 0 })),
+  ]);
 
   const hasData =
     trending.mostDiscussed.length > 0 ||
@@ -110,6 +114,33 @@ export default async function TrendingPage() {
             </section>
           )}
         </div>
+      )}
+
+      {hotTakes.takes.length > 0 && (
+        <section className="mt-10">
+          <div className="mb-4">
+            <h2 className="flex items-center gap-2 text-xl font-bold">
+              <span className="text-orange-500">🔥</span> Hot Takes
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              The boldest picks across community boards — players ranked 15+
+              spots away from consensus
+            </p>
+          </div>
+          <div className="space-y-2">
+            {hotTakes.takes.map((take, i) => (
+              <HotTakeCard
+                key={`${take.boardId}-${take.player.id}-${i}`}
+                player={take.player}
+                boardRank={take.boardRank}
+                consensusRank={take.consensusRank}
+                delta={take.delta}
+                boardId={take.boardId}
+                authorName={take.authorName}
+              />
+            ))}
+          </div>
+        </section>
       )}
     </main>
   );

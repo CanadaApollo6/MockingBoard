@@ -4,10 +4,12 @@ import {
   getBigBoardBySlug,
   getPlayerMap,
   getComments,
+  getBoardHotTakes,
 } from '@/lib/firebase/data';
 import { PublicBoardView } from '@/components/board/public-board-view';
 import { DraftGuideButton } from '@/components/draft-guide/draft-guide-button';
 import { CommentSection } from '@/components/comments/comment-section';
+import { HotTakeCard } from '@/components/player/hot-take-card';
 import type { Player } from '@mockingboard/shared';
 
 interface Props {
@@ -38,9 +40,10 @@ export default async function PublicBoardPage({ params }: Props) {
 
   if (!board) notFound();
 
-  const [playerMap, comments] = await Promise.all([
+  const [playerMap, comments, hotTakes] = await Promise.all([
     getPlayerMap(board.year),
     getComments('board', board.id),
+    getBoardHotTakes(board.rankings, board.year),
   ]);
 
   // Resolve ranked players in board order
@@ -78,6 +81,24 @@ export default async function PublicBoardPage({ params }: Props) {
           />
         </div>
       </div>
+      {hotTakes.length > 0 && (
+        <section className="mb-8">
+          <h2 className="mb-3 flex items-center gap-2 text-lg font-bold">
+            <span className="text-orange-500">🔥</span> Hot Takes
+          </h2>
+          <div className="space-y-2">
+            {hotTakes.map((take) => (
+              <HotTakeCard
+                key={take.player.id}
+                player={take.player}
+                boardRank={take.boardRank}
+                consensusRank={take.consensusRank}
+                delta={take.delta}
+              />
+            ))}
+          </div>
+        </section>
+      )}
       <PublicBoardView rankedPlayers={rankedPlayers} />
       <div className="mt-8">
         <CommentSection

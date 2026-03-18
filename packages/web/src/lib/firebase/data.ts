@@ -1080,3 +1080,108 @@ export async function getTrendingProspects(
     totalScouts: consensus.totalScouts,
   };
 }
+
+// ---- Hot Takes ----
+
+export interface HotTake {
+  player: Player;
+  boardRank: number;
+  consensusRank: number;
+  delta: number; // consensusRank - boardRank (positive = scout is higher on player)
+  boardId: string;
+  boardName: string;
+  authorName: string;
+}
+
+export interface GlobalHotTakes {
+  takes: HotTake[];
+  totalBoards: number;
+}
+
+const HOT_TAKE_THRESHOLD = 15;
+
+export async function getBoardHotTakes(
+  boardRankings: string[],
+  year: number,
+): Promise<HotTake[]> {
+  const [consensus, playerMap] = await Promise.all([
+    getConsensusBoard(year),
+    getCachedPlayerMap(year),
+  ]);
+
+  const consensusLookup = new Map<string, number>();
+  for (const entry of consensus.entries) {
+    consensusLookup.set(entry.playerId, entry.averageRank);
+  }
+
+  const takes: HotTake[] = [];
+  for (let i = 0; i < boardRankings.length; i++) {
+    const playerId = boardRankings[i];
+    const avgRank = consensusLookup.get(playerId);
+    if (avgRank == null) continue;
+    const player = playerMap.get(playerId);
+    if (!player) continue;
+
+    const boardRank = i + 1;
+    const delta = avgRank - boardRank;
+    if (Math.abs(delta) < HOT_TAKE_THRESHOLD) continue;
+
+    takes.push({
+      player,
+      boardRank,
+      consensusRank: Math.round(avgRank),
+      delta,
+      boardId: '',
+      boardName: '',
+      authorName: '',
+    });
+  }
+
+  takes.sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
+  return takes.slice(0, 5);
+}
+
+export async function getGlobalHotTakes(year: number): Promise<GlobalHotTakes> {
+  const [allBoards, consensus, playerMap] = await Promise.all([
+    getCachedPublicBoards(),
+    getConsensusBoard(year),
+    getCachedPlayerMap(year),
+  ]);
+
+  const yearBoards = allBoards.filter(
+    (b) => b.year === year && b.rankings.length > 0,
+  );
+
+  const consensusLookup = new Map<string, number>();
+  for (const entry of consensus.entries) {
+    consensusLookup.set(entry.playerId, entry.averageRank);
+  }
+
+  const takes: HotTake[] = [];
+  for (const board of yearBoards) {
+    for (let i = 0; i < board.rankings.length; i++) {
+      const playerId = board.rankings[i];
+      const avgRank = consensusLookup.get(playerId);
+      if (avgRank == null) continue;
+      const player = playerMap.get(playerId);
+      if (!player) continue;
+
+      const boardRank = i + 1;
+      const delta = avgRank - boardRank;
+      if (Math.abs(delta) < HOT_TAKE_THRESHOLD) continue;
+
+      takes.push({
+        player,
+        boardRank,
+        consensusRank: Math.round(avgRank),
+        delta,
+        boardId: board.id,
+        boardName: board.name,
+        authorName: board.authorName ?? 'Anonymous',
+      });
+    }
+  }
+
+  takes.sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
+  return { takes: takes.slice(0, 20), totalBoards: yearBoards.length };
+}
