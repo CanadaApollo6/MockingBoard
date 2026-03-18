@@ -17,6 +17,7 @@ export const Routes = {
   BOARD_COMPARE: '/board/compare',
   RANKINGS: '/rankings',
   BOARDS: '/boards',
+  CONSENSUS: '/consensus',
 
   // Community
   DISCOVER: '/discover',

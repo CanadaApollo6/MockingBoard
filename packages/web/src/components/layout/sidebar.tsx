@@ -31,6 +31,7 @@ import {
   Calculator,
   BookOpen,
   Compass,
+  Scale,
 } from 'lucide-react';
 import { useAuth } from '@/components/auth/auth-provider';
 import { ThemeToggle } from '@/components/layout/theme-toggle';
@@ -60,6 +61,7 @@ const NAV_GROUPS = [
       { href: Routes.BOARD, label: 'My Board', icon: LayoutList },
       { href: Routes.RANKINGS, label: 'Rankings', icon: BarChart3 },
       { href: Routes.BOARDS, label: 'Boards', icon: Library },
+      { href: Routes.CONSENSUS, label: 'Consensus', icon: Scale },
     ],
   },
   {

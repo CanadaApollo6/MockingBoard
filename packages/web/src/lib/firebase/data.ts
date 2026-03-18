@@ -2,7 +2,11 @@ import 'server-only';
 
 import { Timestamp } from 'firebase-admin/firestore';
 import { adminDb } from './firebase-admin';
-import { getCachedPlayerMap, getCachedScoutProfiles } from '../cache';
+import {
+  getCachedPlayerMap,
+  getCachedScoutProfiles,
+  getCachedPublicBoards,
+} from '../cache';
 import { sanitize, hydrateDoc, hydrateDocs } from './sanitize';
 import { AppError } from '../validate';
 import type {
@@ -930,4 +934,81 @@ export async function getPopularReports(limit = 6): Promise<ScoutingReport[]> {
     .get();
 
   return sanitize(hydrateDocs<ScoutingReport>(snapshot));
+}
+
+// ---- Consensus Board ----
+
+export interface ConsensusEntry {
+  playerId: string;
+  averageRank: number;
+  boardCount: number;
+  highestRank: number;
+  lowestRank: number;
+}
+
+export interface ConsensusBoard {
+  entries: ConsensusEntry[];
+  totalBoards: number;
+  totalScouts: number;
+  lastUpdated: number | null;
+}
+
+const MIN_BOARDS_THRESHOLD = 3;
+
+export async function getConsensusBoard(year: number): Promise<ConsensusBoard> {
+  const allBoards = await getCachedPublicBoards();
+  const yearBoards = allBoards.filter(
+    (b) => b.year === year && b.rankings.length > 0,
+  );
+
+  const scoutIds = new Set(yearBoards.map((b) => b.userId));
+
+  const playerRanks = new Map<string, number[]>();
+  for (const board of yearBoards) {
+    for (let i = 0; i < board.rankings.length; i++) {
+      const playerId = board.rankings[i];
+      const ranks = playerRanks.get(playerId);
+      if (ranks) {
+        ranks.push(i + 1);
+      } else {
+        playerRanks.set(playerId, [i + 1]);
+      }
+    }
+  }
+
+  const entries: ConsensusEntry[] = [];
+  for (const [playerId, ranks] of playerRanks) {
+    if (ranks.length < MIN_BOARDS_THRESHOLD) continue;
+    const sum = ranks.reduce((a, b) => a + b, 0);
+    entries.push({
+      playerId,
+      averageRank: sum / ranks.length,
+      boardCount: ranks.length,
+      highestRank: Math.min(...ranks),
+      lowestRank: Math.max(...ranks),
+    });
+  }
+
+  entries.sort(
+    (a, b) =>
+      a.averageRank - b.averageRank ||
+      b.boardCount - a.boardCount ||
+      a.highestRank - b.highestRank,
+  );
+
+  let lastUpdated: number | null = null;
+  for (const board of yearBoards) {
+    if (board.updatedAt?.seconds) {
+      if (!lastUpdated || board.updatedAt.seconds > lastUpdated) {
+        lastUpdated = board.updatedAt.seconds;
+      }
+    }
+  }
+
+  return {
+    entries,
+    totalBoards: yearBoards.length,
+    totalScouts: scoutIds.size,
+    lastUpdated,
+  };
 }
