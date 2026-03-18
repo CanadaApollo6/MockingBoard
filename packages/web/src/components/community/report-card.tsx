@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { TipTapContent } from '@/components/community/tiptap-content';
 import { GradeBadge } from '@/components/grade/grade-badge';
 import { LikeButton } from '@/components/community/like-button';
+import { BookmarkButton } from '@/components/community/bookmark-button';
 import { CommentSection } from '@/components/comments/comment-section';
 
 interface ReportCardProps {
@@ -83,8 +84,9 @@ export function ReportCard({ report, isLiked }: ReportCardProps) {
         </p>
       )}
 
-      {/* Like button */}
-      <div className="flex items-center justify-end border-t pt-2">
+      {/* Like + Bookmark */}
+      <div className="flex items-center justify-end gap-2 border-t pt-2">
+        <BookmarkButton targetId={report.id} targetType="report" />
         <LikeButton
           apiPath={`/api/reports/${report.id}/like`}
           initialLikeCount={report.likeCount ?? 0}

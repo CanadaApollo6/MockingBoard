@@ -171,6 +171,20 @@ service cloud.firestore {
     }
 
     // ============================================
+    // Bookmarks Collection
+    // Owner-only read/create/delete, no updates
+    // ============================================
+    match /bookmarks/{bookmarkId} {
+      allow read: if isAuthenticated() &&
+        resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() &&
+        request.resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() &&
+        resource.data.userId == request.auth.uid;
+      allow update: if false;
+    }
+
+    // ============================================
     // Activity Events Collection
     // Owner read, server-only write
     // ============================================

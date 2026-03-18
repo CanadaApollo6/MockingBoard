@@ -470,6 +470,14 @@ export interface BoardLike {
   createdAt: FirestoreTimestamp;
 }
 
+export interface Bookmark {
+  id: string;
+  targetId: string;
+  targetType: 'board' | 'report';
+  userId: string;
+  createdAt: FirestoreTimestamp;
+}
+
 // ---- Player Pick Stats Types ----
 
 export interface PlayerPickStats {

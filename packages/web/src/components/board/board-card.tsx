@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { BigBoard } from '@mockingboard/shared';
 import { Routes } from '@/routes';
 import { LikeButton } from '@/components/community/like-button';
+import { BookmarkButton } from '@/components/community/bookmark-button';
 
 interface BoardCardProps {
   board: BigBoard;
@@ -52,11 +53,14 @@ export function BoardCard({ board, isLiked }: BoardCardProps) {
             e.stopPropagation();
           }}
         >
-          <LikeButton
-            apiPath={`/api/boards/${board.id}/like`}
-            initialLikeCount={board.likeCount ?? 0}
-            initialIsLiked={isLiked}
-          />
+          <div className="flex items-center gap-2">
+            <BookmarkButton targetId={board.id} targetType="board" />
+            <LikeButton
+              apiPath={`/api/boards/${board.id}/like`}
+              initialLikeCount={board.likeCount ?? 0}
+              initialIsLiked={isLiked}
+            />
+          </div>
         </div>
       </div>
     </Link>

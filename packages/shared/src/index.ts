@@ -56,6 +56,7 @@ export type {
   AppNotification,
   ActivityEventType,
   Comment,
+  Bookmark,
   PlayerContract,
   FreeAgentEntry,
   DeadCapEntry,

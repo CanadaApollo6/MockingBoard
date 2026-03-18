@@ -480,6 +480,42 @@ export async function getReportsByIds(
   );
 }
 
+export async function getUserBookmarkedBoards(
+  userId: string,
+  limit = 20,
+): Promise<{ targetId: string; createdAt: FirestoreTimestamp }[]> {
+  const snapshot = await adminDb
+    .collection('bookmarks')
+    .where('userId', '==', userId)
+    .where('targetType', '==', 'board')
+    .orderBy('createdAt', 'desc')
+    .limit(limit)
+    .get();
+
+  return snapshot.docs.map((d) => ({
+    targetId: d.data().targetId as string,
+    createdAt: d.data().createdAt as FirestoreTimestamp,
+  }));
+}
+
+export async function getUserBookmarkedReports(
+  userId: string,
+  limit = 20,
+): Promise<{ targetId: string; createdAt: FirestoreTimestamp }[]> {
+  const snapshot = await adminDb
+    .collection('bookmarks')
+    .where('userId', '==', userId)
+    .where('targetType', '==', 'report')
+    .orderBy('createdAt', 'desc')
+    .limit(limit)
+    .get();
+
+  return snapshot.docs.map((d) => ({
+    targetId: d.data().targetId as string,
+    createdAt: d.data().createdAt as FirestoreTimestamp,
+  }));
+}
+
 export async function getUserPublicBoards(userId: string): Promise<BigBoard[]> {
   const snapshot = await adminDb
     .collection('bigBoards')

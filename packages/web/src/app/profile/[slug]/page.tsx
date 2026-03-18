@@ -11,13 +11,15 @@ import {
   getUserDraftingIdentity,
   getUserLikedBoards,
   getUserLikedReports,
+  getUserBookmarkedBoards,
+  getUserBookmarkedReports,
   getBoardsByIds,
   getReportsByIds,
   getPlayerMap,
 } from '@/lib/firebase/data';
 import { teams } from '@mockingboard/shared';
 import type { BigBoard, ScoutingReport } from '@mockingboard/shared';
-import { LayoutList, FileText, Heart } from 'lucide-react';
+import { LayoutList, FileText, Heart, Bookmark } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { getSessionUser } from '@/lib/firebase/auth-session';
 import { FollowButton } from '@/components/profile/follow-button';
@@ -72,16 +74,25 @@ export default async function ProfilePage({ params }: Props) {
 
   const isOwnProfile = session?.uid === user.id;
 
-  // Resolve liked content
-  const [likedBoards, likedReports] = await Promise.all([
-    getBoardsByIds(likedBoardRefs.map((l) => l.boardId)),
-    getReportsByIds(likedReportRefs.map((l) => l.reportId)),
+  // Fetch bookmarks (own profile only) + resolve liked content
+  const [likedBoards, likedReports, savedBoardRefs, savedReportRefs] =
+    await Promise.all([
+      getBoardsByIds(likedBoardRefs.map((l) => l.boardId)),
+      getReportsByIds(likedReportRefs.map((l) => l.reportId)),
+      isOwnProfile ? getUserBookmarkedBoards(user.id) : Promise.resolve([]),
+      isOwnProfile ? getUserBookmarkedReports(user.id) : Promise.resolve([]),
+    ]);
+
+  // Resolve saved content
+  const [savedBoards, savedReports] = await Promise.all([
+    getBoardsByIds(savedBoardRefs.map((r) => r.targetId)),
+    getReportsByIds(savedReportRefs.map((r) => r.targetId)),
   ]);
 
   // Resolve player names for reports and liked reports
   const { draftYear } = await getCachedSeasonConfig();
   const playerMap =
-    reports.length > 0 || likedReports.length > 0
+    reports.length > 0 || likedReports.length > 0 || savedReports.length > 0
       ? await getPlayerMap(draftYear)
       : null;
 
@@ -452,6 +463,50 @@ export default async function ProfilePage({ params }: Props) {
               <h2 className="text-lg font-bold">Liked Reports</h2>
               <div className="space-y-3">
                 {likedReports.map((report) => {
+                  const player = playerMap?.get(report.playerId);
+                  return (
+                    <div key={report.id}>
+                      {player && (
+                        <Link
+                          href={Routes.prospect(report.playerId)}
+                          className="mb-1 block text-sm font-medium text-mb-accent hover:underline"
+                        >
+                          {player.name} — {player.position}, {player.school}
+                        </Link>
+                      )}
+                      <ReportCard report={report} />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+      {/* Saved Content (own profile only) */}
+      {isOwnProfile && (savedBoards.length > 0 || savedReports.length > 0) && (
+        <div className="mt-10 grid gap-10 lg:grid-cols-2">
+          {savedBoards.length > 0 && (
+            <div className="space-y-4">
+              <h2 className="flex items-center gap-2 text-lg font-bold">
+                <Bookmark className="h-4 w-4" />
+                Saved Boards
+              </h2>
+              <div className="grid gap-4">
+                {savedBoards.map((board) => (
+                  <BoardCard key={board.id} board={board} />
+                ))}
+              </div>
+            </div>
+          )}
+          {savedReports.length > 0 && (
+            <div className="space-y-4">
+              <h2 className="flex items-center gap-2 text-lg font-bold">
+                <Bookmark className="h-4 w-4" />
+                Saved Reports
+              </h2>
+              <div className="space-y-3">
+                {savedReports.map((report) => {
                   const player = playerMap?.get(report.playerId);
                   return (
                     <div key={report.id}>
