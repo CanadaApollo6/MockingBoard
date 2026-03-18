@@ -3,6 +3,11 @@ const windows = new Map<string, number[]>();
 /**
  * In-memory sliding window rate limiter.
  * Returns true if the request is allowed, false if rate-limited.
+ *
+ * NOTE: This is per-process — each Cloud Run instance maintains its own map.
+ * In a multi-instance deployment a client can bypass the limit by hitting
+ * different instances. A distributed solution (e.g. Redis/Upstash) would be
+ * needed for strict enforcement. Acceptable for now as a best-effort guard.
  */
 export function rateLimit(
   key: string,

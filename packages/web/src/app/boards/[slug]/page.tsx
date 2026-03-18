@@ -1,8 +1,20 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getBigBoardBySlug, getPlayerMap } from '@/lib/firebase/data';
+
+export const revalidate = 3600;
+import {
+  getBigBoardBySlug,
+  getPlayerMap,
+  getComments,
+  getBoardHotTakes,
+  getBoardScore,
+} from '@/lib/firebase/data';
 import { PublicBoardView } from '@/components/board/public-board-view';
 import { DraftGuideButton } from '@/components/draft-guide/draft-guide-button';
+import { CommentSection } from '@/components/comments/comment-section';
+import { HotTakeCard } from '@/components/player/hot-take-card';
+import { ReportButton } from '@/components/report-button';
+import { AccuracyBadge } from '@/components/accuracy-badge';
 import type { Player } from '@mockingboard/shared';
 
 interface Props {
@@ -33,7 +45,12 @@ export default async function PublicBoardPage({ params }: Props) {
 
   if (!board) notFound();
 
-  const playerMap = await getPlayerMap(board.year);
+  const [playerMap, comments, hotTakes, boardScore] = await Promise.all([
+    getPlayerMap(board.year),
+    getComments('board', board.id),
+    getBoardHotTakes(board.rankings, board.year),
+    getBoardScore(board.id),
+  ]);
 
   // Resolve ranked players in board order
   const rankedPlayers: Player[] = [];
@@ -57,20 +74,48 @@ export default async function PublicBoardPage({ params }: Props) {
           <span>{board.year}</span>
           <span>{board.rankings.length} players</span>
           {updated && <span>Updated {updated}</span>}
+          {boardScore != null && <AccuracyBadge score={boardScore} />}
         </div>
         {board.description && (
           <p className="mt-3 text-muted-foreground">{board.description}</p>
         )}
-        <div className="mt-4">
+        <div className="mt-4 flex items-center gap-4">
           <DraftGuideButton
             boardName={board.name}
             authorName={board.authorName}
             year={board.year}
             players={rankedPlayers}
           />
+          <ReportButton contentType="board" contentId={board.id} />
         </div>
       </div>
+      {hotTakes.length > 0 && (
+        <section className="mb-8">
+          <h2 className="mb-3 flex items-center gap-2 text-lg font-bold">
+            <span className="text-orange-500">🔥</span> Hot Takes
+          </h2>
+          <div className="space-y-2">
+            {hotTakes.map((take) => (
+              <HotTakeCard
+                key={take.player.id}
+                player={take.player}
+                boardRank={take.boardRank}
+                consensusRank={take.consensusRank}
+                delta={take.delta}
+              />
+            ))}
+          </div>
+        </section>
+      )}
       <PublicBoardView rankedPlayers={rankedPlayers} />
+      <div className="mt-8">
+        <CommentSection
+          targetId={board.id}
+          targetType="board"
+          initialComments={comments}
+          initialCount={board.commentCount ?? comments.length}
+        />
+      </div>
     </main>
   );
 }

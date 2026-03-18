@@ -15,6 +15,7 @@ import {
   getPickValue,
   getFuturePickValue,
 } from '@mockingboard/shared';
+import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -44,12 +45,11 @@ interface TradeModalProps {
 }
 
 function getTeamUnmadePicks(draft: Draft, team: TeamAbbreviation): DraftSlot[] {
-  return draft.pickOrder.filter(
-    (slot) =>
-      slot.overall >= draft.currentPick &&
-      slot.team === team &&
-      slot.ownerOverride === undefined,
-  );
+  return draft.pickOrder.filter((slot) => {
+    if (slot.overall < draft.currentPick) return false;
+    const currentTeam = slot.teamOverride ?? slot.team;
+    return currentTeam === team;
+  });
 }
 
 function currentPickKey(slot: DraftSlot): string {
@@ -244,7 +244,16 @@ export function TradeModal({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Propose Trade</CardTitle>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onCancel}
+            className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            aria-label="Back to draft"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </button>
+          <CardTitle>Propose Trade</CardTitle>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {myTeams.length > 1 && (

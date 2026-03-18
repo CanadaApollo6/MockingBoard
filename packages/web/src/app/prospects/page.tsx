@@ -25,7 +25,7 @@ export default async function PlayersPage() {
           stats.
         </p>
       </div>
-      <ProspectBigBoard players={players} />
+      <ProspectBigBoard players={players} year={draftYear} />
     </main>
   );
 }

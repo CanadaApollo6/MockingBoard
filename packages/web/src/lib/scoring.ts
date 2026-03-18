@@ -1,4 +1,4 @@
-import type { DraftResultPick } from '@mockingboard/shared';
+import type { DraftResultPick, Player } from '@mockingboard/shared';
 
 export interface PickScore {
   overall: number;
@@ -95,4 +95,103 @@ export function aggregateDraftScore(pickScores: PickScore[]): DraftScoreResult {
     maxScore,
     percentage: maxScore > 0 ? Math.round((totalScore / maxScore) * 100) : 0,
   };
+}
+
+// ---- Board Accuracy Scoring ----
+
+const MIN_MATCHED_PLAYERS = 10;
+const DELTA_MULTIPLIER = 1.5;
+
+export interface PlayerDelta {
+  playerId: string;
+  playerName: string;
+  boardRank: number;
+  actualPick: number;
+  delta: number;
+}
+
+export interface BoardScoreResult {
+  matchedPlayers: number;
+  avgDelta: number;
+  percentage: number;
+  playerDeltas: PlayerDelta[];
+}
+
+/**
+ * Score a big board's rankings against actual draft results.
+ * Compares board rank position vs actual overall pick for each player.
+ * Returns null if fewer than 10 players matched (not enough signal).
+ */
+export function scoreBoardAccuracy(
+  rankings: string[],
+  actualResults: DraftResultPick[],
+  playerMap: Map<string, Player>,
+): BoardScoreResult | null {
+  const actualByName = new Map<string, DraftResultPick>();
+  for (const pick of actualResults) {
+    actualByName.set(pick.playerName.toLowerCase().trim(), pick);
+  }
+
+  const playerDeltas: PlayerDelta[] = [];
+
+  for (let i = 0; i < rankings.length; i++) {
+    const player = playerMap.get(rankings[i]);
+    if (!player) continue;
+
+    const actual = actualByName.get(player.name.toLowerCase().trim());
+    if (!actual) continue;
+
+    const boardRank = i + 1;
+    const delta = Math.abs(boardRank - actual.overall);
+
+    playerDeltas.push({
+      playerId: rankings[i],
+      playerName: player.name,
+      boardRank,
+      actualPick: actual.overall,
+      delta,
+    });
+  }
+
+  if (playerDeltas.length < MIN_MATCHED_PLAYERS) return null;
+
+  const avgDelta =
+    playerDeltas.reduce((sum, d) => sum + d.delta, 0) / playerDeltas.length;
+  const percentage = Math.max(0, Math.round(100 - avgDelta * DELTA_MULTIPLIER));
+
+  return {
+    matchedPlayers: playerDeltas.length,
+    avgDelta,
+    percentage,
+    playerDeltas,
+  };
+}
+
+// ---- Accuracy Badges ----
+
+export type AccuracyBadgeTier = 'diamond' | 'gold' | 'silver' | 'bronze';
+
+export interface AccuracyBadgeInfo {
+  tier: AccuracyBadgeTier;
+  label: string;
+  color: string;
+}
+
+const BADGE_TIERS: {
+  min: number;
+  tier: AccuracyBadgeTier;
+  label: string;
+  color: string;
+}[] = [
+  { min: 80, tier: 'diamond', label: 'Diamond', color: 'text-cyan-400' },
+  { min: 65, tier: 'gold', label: 'Gold', color: 'text-yellow-500' },
+  { min: 50, tier: 'silver', label: 'Silver', color: 'text-gray-400' },
+  { min: 35, tier: 'bronze', label: 'Bronze', color: 'text-amber-700' },
+];
+
+export function getAccuracyBadge(score: number): AccuracyBadgeInfo | null {
+  for (const { min, tier, label, color } of BADGE_TIERS) {
+    if (score >= min) return { tier, label, color };
+  }
+  return null;
 }

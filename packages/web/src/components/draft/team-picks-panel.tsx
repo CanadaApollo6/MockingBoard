@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
 import type { Pick, Player, TeamAbbreviation } from '@mockingboard/shared';
+import { teams as teamSeeds } from '@mockingboard/shared';
 import { TEAM_COLORS } from '@/lib/colors/team-colors';
 import { getPositionColor } from '@/lib/colors/position-colors';
 import { getTeamName } from '@/lib/teams';
@@ -46,6 +47,21 @@ export function TeamPicksPanel({
     ? TEAM_COLORS[selectedTeam]?.primary
     : undefined;
 
+  const teamSeed = useMemo(
+    () =>
+      selectedTeam ? teamSeeds.find((t) => t.id === selectedTeam) : undefined,
+    [selectedTeam],
+  );
+
+  const filledPositions = useMemo(() => {
+    const filled = new Set<string>();
+    for (const pick of teamPicks) {
+      const player = playerMap.get(pick.playerId);
+      if (player) filled.add(player.position);
+    }
+    return filled;
+  }, [teamPicks, playerMap]);
+
   return (
     <div className="rounded-lg border bg-card">
       <button
@@ -88,6 +104,34 @@ export function TeamPicksPanel({
               </option>
             ))}
           </select>
+
+          {teamSeed && teamSeed.needs.length > 0 && (
+            <div className="space-y-1">
+              <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                Needs
+              </p>
+              <div className="flex flex-wrap gap-1">
+                {teamSeed.needs.map((pos) => {
+                  const isFilled = filledPositions.has(pos);
+                  return (
+                    <Badge
+                      key={pos}
+                      style={{
+                        backgroundColor: getPositionColor(pos),
+                        color: '#0A0A0B',
+                      }}
+                      className={cn(
+                        'px-1.5 py-0 text-[10px]',
+                        isFilled && 'opacity-40 line-through',
+                      )}
+                    >
+                      {pos}
+                    </Badge>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {teamPicks.length === 0 ? (
             <p className="py-2 text-center text-xs text-muted-foreground">

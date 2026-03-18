@@ -129,3 +129,91 @@ export async function notifyNewBoard(
     actorName: authorName,
   });
 }
+
+export async function notifyReportLiked(
+  authorId: string,
+  likerName: string,
+  reportTitle: string,
+  reportId: string,
+): Promise<void> {
+  await createNotification({
+    userId: authorId,
+    type: 'report-liked',
+    title: 'Report Liked',
+    body: `${likerName} liked your report "${reportTitle}".`,
+    link: `/reports/${reportId}`,
+    actorName: likerName,
+  });
+}
+
+export async function notifyNewComment(
+  contentOwnerId: string,
+  commenterName: string,
+  contentName: string,
+  contentLink: string,
+  type: 'board-commented' | 'report-commented',
+): Promise<void> {
+  const label = type === 'board-commented' ? 'board' : 'report';
+  await createNotification({
+    userId: contentOwnerId,
+    type,
+    title: `New Comment on Your ${label.charAt(0).toUpperCase() + label.slice(1)}`,
+    body: `${commenterName} commented on "${contentName}".`,
+    link: contentLink,
+    actorName: commenterName,
+  });
+}
+
+export async function notifyBoardLiked(
+  authorId: string,
+  likerName: string,
+  boardName: string,
+  boardSlug: string,
+): Promise<void> {
+  await createNotification({
+    userId: authorId,
+    type: 'board-liked',
+    title: 'Board Liked',
+    body: `${likerName} liked your board "${boardName}".`,
+    link: `/boards/${boardSlug}`,
+    actorName: likerName,
+  });
+}
+
+export async function notifyWatchedProspectReport(
+  watcherUserId: string,
+  playerName: string,
+  playerId: string,
+  authorName: string,
+): Promise<void> {
+  await createNotification({
+    userId: watcherUserId,
+    type: 'watched-prospect-report',
+    title: 'New Report on Watched Prospect',
+    body: `${authorName} posted a scouting report on ${playerName}.`,
+    link: `/prospects/${playerId}`,
+    actorName: authorName,
+  });
+}
+
+const CONTENT_TYPE_LABELS: Record<string, string> = {
+  'scouting-report': 'scouting report',
+  board: 'big board',
+  comment: 'comment',
+  list: 'list',
+  video: 'video',
+  profile: 'profile',
+};
+
+export async function notifyContentRemoved(
+  authorId: string,
+  contentType: string,
+): Promise<void> {
+  const label = CONTENT_TYPE_LABELS[contentType] ?? 'content';
+  await createNotification({
+    userId: authorId,
+    type: 'content-removed',
+    title: 'Content Removed',
+    body: `Your ${label} was removed for violating community guidelines.`,
+  });
+}

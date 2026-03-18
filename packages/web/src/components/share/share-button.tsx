@@ -2,13 +2,14 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { toPng, toBlob } from 'html-to-image';
+import { capturePng, captureBlob } from './capture';
 import type {
   Pick,
   Player,
   TeamAbbreviation,
   Draft,
   DraftRecap,
+  Trade,
 } from '@mockingboard/shared';
 import { getTeamName } from '@/lib/teams';
 import { formatDraftDate, getDraftDisplayName } from '@/lib/firebase/format';
@@ -24,6 +25,7 @@ interface ShareButtonProps {
   players: Record<string, Player>;
   userTeams: TeamAbbreviation[];
   recap?: DraftRecap | null;
+  trades?: Trade[];
 }
 
 type CardMode =
@@ -37,6 +39,7 @@ export function ShareButton({
   players,
   userTeams,
   recap,
+  trades = [],
 }: ShareButtonProps) {
   const [open, setOpen] = useState(false);
   const [cardMode, setCardMode] = useState<CardMode | null>(null);
@@ -95,14 +98,13 @@ export function ShareButton({
     if (!el) return;
     setBusy(true);
     try {
-      const dataUrl = await toPng(el, {
-        pixelRatio: 2,
-        backgroundColor: '#0a0a0b',
-      });
+      const dataUrl = await capturePng(el);
       const link = document.createElement('a');
       link.download = `mockingboard-${draft.id}${fileSuffix}.png`;
       link.href = dataUrl;
       link.click();
+    } catch (err) {
+      console.error('Failed to generate image:', err);
     } finally {
       setBusy(false);
     }
@@ -113,16 +115,15 @@ export function ShareButton({
     if (!el) return;
     setBusy(true);
     try {
-      const blob = await toBlob(el, {
-        pixelRatio: 2,
-        backgroundColor: '#0a0a0b',
-      });
+      const blob = await captureBlob(el);
       if (!blob) return;
       await navigator.clipboard.write([
         new ClipboardItem({ 'image/png': blob }),
       ]);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy image:', err);
     } finally {
       setBusy(false);
     }
@@ -161,6 +162,11 @@ export function ShareButton({
         team={cardMode.team}
         picks={picks.filter((p) => p.team === cardMode.team)}
         players={players}
+        trades={trades.filter(
+          (t) =>
+            t.proposerTeam === cardMode.team ||
+            t.recipientTeam === cardMode.team,
+        )}
       />
     );
   };

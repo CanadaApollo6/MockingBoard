@@ -13,7 +13,9 @@ export default async function DraftsPage() {
   if (!session) {
     return (
       <main className="mx-auto max-w-screen-xl px-4 py-8">
-        <h1 className="mb-6 text-2xl font-bold">Drafts</h1>
+        <h1 className="mb-6 font-[family-name:var(--font-display)] text-2xl font-bold uppercase tracking-tight">
+          Drafts
+        </h1>
         <p className="py-12 text-center text-muted-foreground">
           <Link href={Routes.AUTH} className="text-primary hover:underline">
             Sign in
@@ -34,7 +36,9 @@ export default async function DraftsPage() {
   return (
     <main className="mx-auto max-w-screen-xl px-4 py-8">
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">My Drafts</h1>
+        <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold uppercase tracking-tight">
+          My Drafts
+        </h1>
         <div className="flex flex-wrap gap-2">
           <Link
             href={Routes.LOBBIES}

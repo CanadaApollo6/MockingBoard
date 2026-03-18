@@ -1,4 +1,7 @@
+import { config } from 'dotenv';
 import { defineConfig, devices } from '@playwright/test';
+
+config();
 
 export default defineConfig({
   testDir: './e2e',
@@ -13,8 +16,13 @@ export default defineConfig({
   },
   projects: [
     {
+      name: 'setup',
+      testMatch: /auth\.setup\.ts/,
+    },
+    {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
+      dependencies: ['setup'],
     },
   ],
   webServer: {

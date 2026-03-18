@@ -110,7 +110,7 @@ export default async function GuestDraftPage({
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8">
-      <h1 className="mb-6 text-2xl font-bold">
+      <h1 className="mb-6 font-[family-name:var(--font-display)] text-2xl font-bold uppercase tracking-tight">
         {getDraftDisplayName(initialDraft)}
       </h1>
       <LocalDraftRoom initialDraft={initialDraft} players={players} />

@@ -76,7 +76,6 @@ export function DraftResultsEditor({
   const toggleTrade = (index: number) => {
     const updated = [...picks];
     if (updated[index].trade) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { trade: _, ...rest } = updated[index];
       updated[index] = rest;
     } else {

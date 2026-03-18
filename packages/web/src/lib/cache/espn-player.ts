@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { type CacheEntry, getOrExpire, PLAYER_TTL } from './common';
+import { BoundedCache, CircuitBreaker, PLAYER_TTL } from './common';
 
 // ---- Types ----
 
@@ -201,30 +201,42 @@ function transformGameLog(json: Record<string, unknown>): EspnGameLog | null {
 
 // ---- Caches ----
 
-const bioCache = new Map<string, CacheEntry<EspnPlayerBio>>();
-const statsCache = new Map<string, CacheEntry<EspnStatCategory[]>>();
-const gameLogCache = new Map<string, CacheEntry<EspnGameLog>>();
+const bioCache = new BoundedCache<string, EspnPlayerBio>(500, PLAYER_TTL);
+const statsCache = new BoundedCache<string, EspnStatCategory[]>(
+  500,
+  PLAYER_TTL,
+);
+const gameLogCache = new BoundedCache<string, EspnGameLog>(500, PLAYER_TTL);
 
 const ESPN_ATHLETE_BASE =
   'https://site.web.api.espn.com/apis/common/v3/sports/football/nfl/athletes';
 
+// Circuit breaker: after 5 consecutive failures, skip ESPN calls for 60s
+const espnPlayerBreaker = new CircuitBreaker(5, 60_000);
+
 export async function getCachedEspnPlayerBio(
   espnId: string,
 ): Promise<EspnPlayerBio | null> {
-  const cached = getOrExpire(bioCache, espnId);
+  const cached = bioCache.get(espnId);
   if (cached) return cached;
+  if (espnPlayerBreaker.isOpen) return null;
 
   try {
     const res = await fetch(`${ESPN_ATHLETE_BASE}/${espnId}`, {
       next: { revalidate: 3600 },
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      espnPlayerBreaker.recordFailure();
+      return null;
+    }
     const json = (await res.json()) as Record<string, unknown>;
     const bio = transformBio(json);
     if (!bio) return null;
-    bioCache.set(espnId, { data: bio, expiresAt: Date.now() + PLAYER_TTL });
+    espnPlayerBreaker.recordSuccess();
+    bioCache.set(espnId, bio);
     return bio;
   } catch {
+    espnPlayerBreaker.recordFailure();
     return null;
   }
 }
@@ -232,22 +244,25 @@ export async function getCachedEspnPlayerBio(
 export async function getCachedEspnPlayerStats(
   espnId: string,
 ): Promise<EspnStatCategory[]> {
-  const cached = getOrExpire(statsCache, espnId);
+  const cached = statsCache.get(espnId);
   if (cached) return cached;
+  if (espnPlayerBreaker.isOpen) return [];
 
   try {
     const res = await fetch(`${ESPN_ATHLETE_BASE}/${espnId}/stats`, {
       next: { revalidate: 3600 },
     });
-    if (!res.ok) return [];
+    if (!res.ok) {
+      espnPlayerBreaker.recordFailure();
+      return [];
+    }
     const json = (await res.json()) as Record<string, unknown>;
     const cats = transformStats(json);
-    statsCache.set(espnId, {
-      data: cats,
-      expiresAt: Date.now() + PLAYER_TTL,
-    });
+    espnPlayerBreaker.recordSuccess();
+    statsCache.set(espnId, cats);
     return cats;
   } catch {
+    espnPlayerBreaker.recordFailure();
     return [];
   }
 }
@@ -257,24 +272,27 @@ export async function getCachedEspnGameLog(
   season?: string,
 ): Promise<EspnGameLog | null> {
   const cacheKey = season ? `${espnId}:${season}` : espnId;
-  const cached = getOrExpire(gameLogCache, cacheKey);
+  const cached = gameLogCache.get(cacheKey);
   if (cached) return cached;
+  if (espnPlayerBreaker.isOpen) return null;
 
   try {
     const url = season
       ? `${ESPN_ATHLETE_BASE}/${espnId}/gamelog?season=${season}`
       : `${ESPN_ATHLETE_BASE}/${espnId}/gamelog`;
     const res = await fetch(url, { next: { revalidate: 3600 } });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      espnPlayerBreaker.recordFailure();
+      return null;
+    }
     const json = (await res.json()) as Record<string, unknown>;
     const gl = transformGameLog(json);
     if (!gl) return null;
-    gameLogCache.set(cacheKey, {
-      data: gl,
-      expiresAt: Date.now() + PLAYER_TTL,
-    });
+    espnPlayerBreaker.recordSuccess();
+    gameLogCache.set(cacheKey, gl);
     return gl;
   } catch {
+    espnPlayerBreaker.recordFailure();
     return null;
   }
 }

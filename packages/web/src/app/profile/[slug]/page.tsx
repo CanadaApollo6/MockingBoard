@@ -8,17 +8,41 @@ import {
   getUserPublicBoards,
   getUserReports,
   getUserDraftScores,
+  getUserBoardScores,
   getUserDraftingIdentity,
+  getUserLikedBoards,
+  getUserLikedReports,
+  getUserBookmarkedBoards,
+  getUserBookmarkedReports,
+  getUserPublicLists,
+  getBoardsByIds,
+  getReportsByIds,
   getPlayerMap,
+  getUserWatchlist,
 } from '@/lib/firebase/data';
 import { teams } from '@mockingboard/shared';
+import type { BigBoard, ScoutingReport } from '@mockingboard/shared';
+import {
+  LayoutList,
+  FileText,
+  Heart,
+  Bookmark,
+  ListOrdered,
+  Eye,
+  NotebookPen,
+} from 'lucide-react';
+import { ListCard } from '@/components/list/list-card';
 import { Badge } from '@/components/ui/badge';
 import { getSessionUser } from '@/lib/firebase/auth-session';
 import { FollowButton } from '@/components/profile/follow-button';
 import { ProfileShareButton } from '@/components/share/profile-share-button';
 import { BoardCard } from '@/components/board/board-card';
 import { ReportCard } from '@/components/community/report-card';
+import { GradeBadge } from '@/components/grade/grade-badge';
 import { getCachedSeasonConfig } from '@/lib/cache';
+import { formatRelativeTime } from '@/lib/format';
+import { AccuracyBadge } from '@/components/accuracy-badge';
+import { WatchButton } from '@/components/prospect/watch-button';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -43,21 +67,101 @@ export default async function ProfilePage({ params }: Props) {
 
   if (!user) notFound();
 
-  const [session, counts, boards, reports, draftScores, identity] =
-    await Promise.all([
-      getSessionUser(),
-      getFollowCounts(user.id),
-      getUserPublicBoards(user.id),
-      getUserReports(user.id),
-      getUserDraftScores(user.id),
-      getUserDraftingIdentity(user.id, user.discordId),
-    ]);
+  const [
+    session,
+    counts,
+    boards,
+    reports,
+    draftScores,
+    boardScores,
+    identity,
+    likedBoardRefs,
+    likedReportRefs,
+  ] = await Promise.all([
+    getSessionUser(),
+    getFollowCounts(user.id),
+    getUserPublicBoards(user.id),
+    getUserReports(user.id),
+    getUserDraftScores(user.id),
+    getUserBoardScores(user.id),
+    getUserDraftingIdentity(user.id, user.discordId),
+    getUserLikedBoards(user.id),
+    getUserLikedReports(user.id),
+  ]);
 
   const isOwnProfile = session?.uid === user.id;
 
-  // Resolve player names for reports
+  // Fetch bookmarks (own profile only) + resolve liked content + public lists
+  const [likedBoards, likedReports, savedBoardRefs, savedReportRefs, lists] =
+    await Promise.all([
+      getBoardsByIds(likedBoardRefs.map((l) => l.boardId)),
+      getReportsByIds(likedReportRefs.map((l) => l.reportId)),
+      isOwnProfile ? getUserBookmarkedBoards(user.id) : Promise.resolve([]),
+      isOwnProfile ? getUserBookmarkedReports(user.id) : Promise.resolve([]),
+      getUserPublicLists(user.id),
+    ]);
+
+  // Resolve saved content + watchlist
   const { draftYear } = await getCachedSeasonConfig();
-  const playerMap = reports.length > 0 ? await getPlayerMap(draftYear) : null;
+  const [savedBoards, savedReports, watchlist] = await Promise.all([
+    getBoardsByIds(savedBoardRefs.map((r) => r.targetId)),
+    getReportsByIds(savedReportRefs.map((r) => r.targetId)),
+    isOwnProfile ? getUserWatchlist(user.id, draftYear) : Promise.resolve([]),
+  ]);
+
+  // Resolve player names for reports and liked reports
+  const playerMap =
+    reports.length > 0 ||
+    likedReports.length > 0 ||
+    savedReports.length > 0 ||
+    watchlist.length > 0
+      ? await getPlayerMap(draftYear)
+      : null;
+
+  // Build activity timeline from source data
+  type TimelineItem =
+    | { type: 'board-published'; board: BigBoard; timestamp: number }
+    | { type: 'report-created'; report: ScoutingReport; timestamp: number }
+    | { type: 'board-liked'; board: BigBoard; timestamp: number }
+    | { type: 'report-liked'; report: ScoutingReport; timestamp: number };
+
+  const getSeconds = (ts: { seconds: number } | undefined): number =>
+    ts?.seconds ?? 0;
+
+  const timelineItems: TimelineItem[] = (
+    [
+      ...boards.map((b) => ({
+        type: 'board-published' as const,
+        board: b,
+        timestamp: getSeconds(b.updatedAt),
+      })),
+      ...reports.map((r) => ({
+        type: 'report-created' as const,
+        report: r,
+        timestamp: getSeconds(r.createdAt),
+      })),
+      ...likedBoardRefs.map((ref) => {
+        const board = likedBoards.find((b) => b.id === ref.boardId);
+        if (!board) return null;
+        return {
+          type: 'board-liked' as const,
+          board,
+          timestamp: getSeconds(ref.createdAt),
+        };
+      }),
+      ...likedReportRefs.map((ref) => {
+        const report = likedReports.find((r) => r.id === ref.reportId);
+        if (!report) return null;
+        return {
+          type: 'report-liked' as const,
+          report,
+          timestamp: getSeconds(ref.createdAt),
+        };
+      }),
+    ].filter(Boolean) as TimelineItem[]
+  )
+    .sort((a, b) => b.timestamp - a.timestamp)
+    .slice(0, 20);
 
   return (
     <main className="mx-auto max-w-screen-xl px-4 py-8">
@@ -80,6 +184,9 @@ export default async function ProfilePage({ params }: Props) {
             <h1 className="font-[family-name:var(--font-display)] text-3xl font-bold uppercase tracking-tight">
               {user.displayName}
             </h1>
+            {(user.stats?.boardAccuracyScore ?? 0) >= 35 && (
+              <AccuracyBadge score={user.stats!.boardAccuracyScore!} />
+            )}
             <FollowButton followeeId={user.id} />
             {isOwnProfile && (
               <ProfileShareButton
@@ -214,6 +321,36 @@ export default async function ProfilePage({ params }: Props) {
         </div>
       )}
 
+      {/* Board Accuracy */}
+      {boardScores.length > 0 && (
+        <div className="mt-8 rounded-lg border bg-card p-5">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold">Board Accuracy</h2>
+            <AccuracyBadge score={user.stats?.boardAccuracyScore ?? 0} />
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
+            <div className="text-center">
+              <p className="font-mono text-2xl font-bold">
+                {user.stats?.boardAccuracyScore ?? 0}%
+              </p>
+              <p className="text-xs text-muted-foreground">Accuracy Score</p>
+            </div>
+            <div className="text-center">
+              <p className="font-mono text-2xl font-bold">
+                {boardScores.length}
+              </p>
+              <p className="text-xs text-muted-foreground">Boards Scored</p>
+            </div>
+            <div className="text-center">
+              <p className="font-mono text-2xl font-bold">
+                {Math.max(...boardScores.map((s) => s.percentage))}%
+              </p>
+              <p className="text-xs text-muted-foreground">Best Board Score</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Drafting Identity */}
       {identity && (
         <div className="mt-8 rounded-lg border bg-card p-5">
@@ -265,6 +402,116 @@ export default async function ProfilePage({ params }: Props) {
         </div>
       )}
 
+      {/* Recent Activity */}
+      {timelineItems.length > 0 && (
+        <div className="mt-8 rounded-lg border bg-card p-5">
+          <h2 className="text-lg font-bold">Recent Activity</h2>
+          <div className="mt-4 space-y-2">
+            {timelineItems.map((item, i) => {
+              const Icon = item.type.includes('liked')
+                ? Heart
+                : item.type === 'board-published'
+                  ? LayoutList
+                  : FileText;
+              const verb = {
+                'board-published': 'published',
+                'report-created': 'wrote a report on',
+                'board-liked': 'liked',
+                'report-liked': 'liked a report on',
+              }[item.type];
+
+              const name =
+                'board' in item
+                  ? item.board.name
+                  : (playerMap?.get(item.report.playerId)?.name ??
+                    'a prospect');
+              const href =
+                'board' in item
+                  ? Routes.board(item.board.slug ?? item.board.id)
+                  : Routes.prospect(item.report.playerId);
+
+              return (
+                <Link
+                  key={`${item.type}-${i}`}
+                  href={href}
+                  className="flex items-start gap-3 rounded-lg border bg-card px-4 py-3 transition-colors hover:bg-muted/30"
+                >
+                  <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm">
+                      {verb} <span className="font-semibold">{name}</span>
+                    </p>
+                    <span className="text-[10px] text-muted-foreground/60">
+                      {formatRelativeTime({ seconds: item.timestamp })}
+                    </span>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Tape Log — compact log entries (grade + note, no rich content) */}
+      {(() => {
+        const logEntries = reports.filter(
+          (r) =>
+            r.grade != null &&
+            (!r.content || Object.keys(r.content).length === 0),
+        );
+        if (logEntries.length === 0) return null;
+        return (
+          <div className="mt-10 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="flex items-center gap-2 text-lg font-bold">
+                <NotebookPen className="h-4 w-4" />
+                Tape Log
+              </h2>
+              <span className="text-xs text-muted-foreground">
+                {logEntries.length}{' '}
+                {logEntries.length === 1 ? 'entry' : 'entries'}
+              </span>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {logEntries.slice(0, 6).map((report) => {
+                const player = playerMap?.get(report.playerId);
+                return (
+                  <Link
+                    key={report.id}
+                    href={Routes.prospect(report.playerId)}
+                    className="flex items-start gap-3 rounded-lg border bg-card px-4 py-3 transition-colors hover:bg-muted/30"
+                  >
+                    {report.grade != null && (
+                      <div className="shrink-0 pt-0.5">
+                        <GradeBadge
+                          grade={report.grade}
+                          system={report.gradeSystem ?? 'tier'}
+                        />
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">
+                        {player?.name ?? 'Unknown'}
+                      </p>
+                      {player && (
+                        <p className="text-xs text-muted-foreground">
+                          {player.position} · {player.school}
+                        </p>
+                      )}
+                      {report.note && (
+                        <p className="mt-0.5 truncate text-xs text-muted-foreground italic">
+                          &ldquo;{report.note}&rdquo;
+                        </p>
+                      )}
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Content: boards + reports */}
       <div className="mt-10 grid gap-10 lg:grid-cols-2">
         {/* Boards */}
@@ -283,35 +530,189 @@ export default async function ProfilePage({ params }: Props) {
           )}
         </div>
 
-        {/* Reports */}
-        <div className="space-y-4">
-          <h2 className="text-lg font-bold">Scouting Reports</h2>
-          {reports.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No reports written yet.
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {reports.map((report) => {
-                const player = playerMap?.get(report.playerId);
-                return (
-                  <div key={report.id}>
-                    {player && (
-                      <Link
-                        href={Routes.prospect(report.playerId)}
-                        className="mb-1 block text-sm font-medium text-mb-accent hover:underline"
-                      >
-                        {player.name} — {player.position}, {player.school}
-                      </Link>
-                    )}
-                    <ReportCard report={report} />
-                  </div>
-                );
-              })}
+        {/* Full Reports (with rich content) */}
+        {(() => {
+          const fullReports = reports.filter(
+            (r) => r.content && Object.keys(r.content).length > 0,
+          );
+          return (
+            <div className="space-y-4">
+              <h2 className="text-lg font-bold">Scouting Reports</h2>
+              {fullReports.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  No detailed reports yet.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {fullReports.map((report) => {
+                    const player = playerMap?.get(report.playerId);
+                    return (
+                      <div key={report.id}>
+                        {player && (
+                          <Link
+                            href={Routes.prospect(report.playerId)}
+                            className="mb-1 block text-sm font-medium text-mb-accent hover:underline"
+                          >
+                            {player.name} — {player.position}, {player.school}
+                          </Link>
+                        )}
+                        <ReportCard report={report} />
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+      </div>
+
+      {/* Lists */}
+      {lists.length > 0 && (
+        <div className="mt-10">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="flex items-center gap-2 text-lg font-bold">
+              <ListOrdered className="h-4 w-4" />
+              Lists
+            </h2>
+            <Link
+              href={Routes.LISTS}
+              className="text-sm text-mb-accent hover:underline"
+            >
+              View all
+            </Link>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {lists.map((list) => (
+              <ListCard key={list.id} list={list} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Liked Content */}
+      {(likedBoards.length > 0 || likedReports.length > 0) && (
+        <div className="mt-10 grid gap-10 lg:grid-cols-2">
+          {likedBoards.length > 0 && (
+            <div className="space-y-4">
+              <h2 className="text-lg font-bold">Liked Boards</h2>
+              <div className="grid gap-4">
+                {likedBoards.map((board) => (
+                  <BoardCard key={board.id} board={board} />
+                ))}
+              </div>
+            </div>
+          )}
+          {likedReports.length > 0 && (
+            <div className="space-y-4">
+              <h2 className="text-lg font-bold">Liked Reports</h2>
+              <div className="space-y-3">
+                {likedReports.map((report) => {
+                  const player = playerMap?.get(report.playerId);
+                  return (
+                    <div key={report.id}>
+                      {player && (
+                        <Link
+                          href={Routes.prospect(report.playerId)}
+                          className="mb-1 block text-sm font-medium text-mb-accent hover:underline"
+                        >
+                          {player.name} — {player.position}, {player.school}
+                        </Link>
+                      )}
+                      <ReportCard report={report} />
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>
-      </div>
+      )}
+      {/* Watchlist (own profile only) */}
+      {isOwnProfile && watchlist.length > 0 && (
+        <div className="mt-10 space-y-4">
+          <h2 className="flex items-center gap-2 text-lg font-bold">
+            <Eye className="h-4 w-4" />
+            Watching
+          </h2>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {watchlist.map((item) => {
+              const player = playerMap?.get(item.playerId);
+              if (!player) return null;
+              return (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between rounded-lg border border-mb-border-strong bg-card px-4 py-3"
+                >
+                  <Link
+                    href={Routes.prospect(player.id)}
+                    className="min-w-0 flex-1 hover:text-mb-accent transition-colors"
+                  >
+                    <span className="block truncate text-sm font-medium">
+                      {player.name}
+                    </span>
+                    <span className="block truncate text-xs text-muted-foreground">
+                      {player.position} · {player.school}
+                      {player.consensusRank < 999 &&
+                        ` · #${player.consensusRank}`}
+                    </span>
+                  </Link>
+                  <WatchButton
+                    playerId={player.id}
+                    year={draftYear}
+                    initialIsWatching
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Saved Content (own profile only) */}
+      {isOwnProfile && (savedBoards.length > 0 || savedReports.length > 0) && (
+        <div className="mt-10 grid gap-10 lg:grid-cols-2">
+          {savedBoards.length > 0 && (
+            <div className="space-y-4">
+              <h2 className="flex items-center gap-2 text-lg font-bold">
+                <Bookmark className="h-4 w-4" />
+                Saved Boards
+              </h2>
+              <div className="grid gap-4">
+                {savedBoards.map((board) => (
+                  <BoardCard key={board.id} board={board} />
+                ))}
+              </div>
+            </div>
+          )}
+          {savedReports.length > 0 && (
+            <div className="space-y-4">
+              <h2 className="flex items-center gap-2 text-lg font-bold">
+                <Bookmark className="h-4 w-4" />
+                Saved Reports
+              </h2>
+              <div className="space-y-3">
+                {savedReports.map((report) => {
+                  const player = playerMap?.get(report.playerId);
+                  return (
+                    <div key={report.id}>
+                      {player && (
+                        <Link
+                          href={Routes.prospect(report.playerId)}
+                          className="mb-1 block text-sm font-medium text-mb-accent hover:underline"
+                        >
+                          {player.name} — {player.position}, {player.school}
+                        </Link>
+                      )}
+                      <ReportCard report={report} />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </main>
   );
 }

@@ -11,20 +11,27 @@ import {
   SelectContent,
   SelectItem,
 } from '@/components/ui/select';
+import { AccuracyBadge } from '@/components/accuracy-badge';
 import { Routes } from '@/routes';
 
 const MEDAL_COLORS = ['text-yellow-500', 'text-gray-400', 'text-amber-700'];
 
+interface EnrichedEntry extends LeaderboardEntry {
+  boardAvgScore?: number;
+}
+
 interface LeaderboardPageClientProps {
-  entries: LeaderboardEntry[];
+  entries: EnrichedEntry[];
   selectedYear: number | null;
   availableYears: number[];
+  hasBoardData?: boolean;
 }
 
 export function LeaderboardPageClient({
   entries,
   selectedYear,
   availableYears,
+  hasBoardData,
 }: LeaderboardPageClientProps) {
   const router = useRouter();
 
@@ -40,7 +47,9 @@ export function LeaderboardPageClient({
     <>
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Leaderboard</h1>
+          <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold uppercase tracking-tight">
+            Leaderboard
+          </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Prediction accuracy rankings
           </p>
@@ -80,6 +89,11 @@ export function LeaderboardPageClient({
                 <th className="px-4 py-3 w-12">#</th>
                 <th className="px-4 py-3">User</th>
                 <th className="px-4 py-3 text-right">Accuracy</th>
+                {hasBoardData && (
+                  <th className="px-4 py-3 text-right hidden sm:table-cell">
+                    Board
+                  </th>
+                )}
                 {selectedYear && (
                   <th className="px-4 py-3 text-right">Drafts</th>
                 )}
@@ -119,6 +133,15 @@ export function LeaderboardPageClient({
                       {entry.avgScore}%
                     </span>
                   </td>
+                  {hasBoardData && (
+                    <td className="px-4 py-3 text-right hidden sm:table-cell">
+                      {entry.boardAvgScore != null ? (
+                        <AccuracyBadge score={entry.boardAvgScore} />
+                      ) : (
+                        <span className="text-sm text-muted-foreground">—</span>
+                      )}
+                    </td>
+                  )}
                   {selectedYear && (
                     <td className="px-4 py-3 text-right text-sm text-muted-foreground">
                       {entry.draftCount}

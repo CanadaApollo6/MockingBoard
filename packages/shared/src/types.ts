@@ -414,6 +414,8 @@ export interface BigBoard {
   grades?: Record<string, number>;
   preferredGradeSystem?: GradeSystem;
   positionRankings?: Partial<Record<Position, string[]>>;
+  likeCount?: number;
+  commentCount?: number;
   createdAt: FirestoreTimestamp;
   updatedAt: FirestoreTimestamp;
 }
@@ -448,7 +450,9 @@ export interface ScoutingReport {
   weaknesses?: string[];
   content?: Record<string, unknown>;
   contentText?: string;
+  note?: string;
   likeCount?: number;
+  commentCount?: number;
   createdAt: FirestoreTimestamp;
   updatedAt: FirestoreTimestamp;
 }
@@ -458,6 +462,50 @@ export interface ReportLike {
   reportId: string;
   userId: string;
   createdAt: FirestoreTimestamp;
+}
+
+export interface BoardLike {
+  id: string;
+  boardId: string;
+  userId: string;
+  createdAt: FirestoreTimestamp;
+}
+
+export interface Bookmark {
+  id: string;
+  targetId: string;
+  targetType: 'board' | 'report' | 'list';
+  userId: string;
+  createdAt: FirestoreTimestamp;
+}
+
+export interface WatchlistItem {
+  id: string;
+  userId: string;
+  playerId: string;
+  year: number;
+  createdAt: FirestoreTimestamp;
+}
+
+export interface ListItem {
+  type: 'board' | 'report';
+  id: string;
+  note?: string;
+}
+
+export interface UserList {
+  id: string;
+  userId: string;
+  authorName?: string;
+  name: string;
+  description?: string;
+  slug?: string;
+  items: ListItem[];
+  visibility?: 'private' | 'public';
+  likeCount?: number;
+  commentCount?: number;
+  createdAt: FirestoreTimestamp;
+  updatedAt: FirestoreTimestamp;
 }
 
 // ---- Player Pick Stats Types ----
@@ -678,7 +726,23 @@ export type NotificationType =
   | 'new-follower'
   | 'your-turn'
   | 'trade-accepted'
-  | 'new-board';
+  | 'new-board'
+  | 'report-liked'
+  | 'board-liked'
+  | 'board-commented'
+  | 'report-commented'
+  | 'content-removed'
+  | 'watched-prospect-report';
+
+// ---- Content Moderation ----
+
+export type ReportReason = 'spam' | 'harassment' | 'inappropriate' | 'other';
+
+export type ReportableContentType =
+  | 'comment'
+  | 'scouting-report'
+  | 'board'
+  | 'list';
 
 export interface AppNotification {
   id: string;
@@ -691,6 +755,41 @@ export interface AppNotification {
   createdAt: FirestoreTimestamp;
   actorId?: string;
   actorName?: string;
+}
+
+// ---- Activity Feed Types ----
+
+export type ActivityEventType =
+  | 'board-published'
+  | 'report-created'
+  | 'board-liked'
+  | 'report-liked'
+  | 'board-commented'
+  | 'report-commented';
+
+export interface ActivityEvent {
+  id: string;
+  type: ActivityEventType;
+  actorId: string;
+  actorName: string;
+  targetId: string;
+  targetName: string;
+  targetLink: string;
+  feedUserId: string;
+  createdAt: FirestoreTimestamp;
+}
+
+// ---- Comment Types ----
+
+export interface Comment {
+  id: string;
+  targetId: string;
+  targetType: 'board' | 'report' | 'list';
+  authorId: string;
+  authorName: string;
+  authorSlug?: string;
+  text: string;
+  createdAt: FirestoreTimestamp;
 }
 
 // ---- Contract / Salary Cap Types ----

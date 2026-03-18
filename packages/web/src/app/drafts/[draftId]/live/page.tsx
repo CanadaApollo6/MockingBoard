@@ -32,7 +32,7 @@ export default async function LiveDraftPage({
 
   // Serialize as plain object for the server→client boundary (Map isn't serializable)
   const players = Object.fromEntries(playerMap);
-  if (draft.status === 'cancelled') {
+  if (draft.status === 'cancelled' || draft.status === 'complete') {
     redirect(`/drafts/${draftId}`);
   }
 
@@ -62,7 +62,7 @@ export default async function LiveDraftPage({
     if (isSingleUser) {
       return (
         <main className="mx-auto max-w-screen-xl px-4 py-8">
-          <h1 className="mb-6 text-2xl font-bold">
+          <h1 className="mb-6 font-[family-name:var(--font-display)] text-2xl font-bold uppercase tracking-tight">
             {getDraftDisplayName(draft)}
           </h1>
           <LocalDraftRoom
@@ -79,7 +79,7 @@ export default async function LiveDraftPage({
 
     return (
       <main className="mx-auto max-w-screen-xl px-4 py-8">
-        <h1 className="mb-6 text-2xl font-bold">
+        <h1 className="mb-6 font-[family-name:var(--font-display)] text-2xl font-bold uppercase tracking-tight">
           {getDraftDisplayName(draft)}
         </h1>
         <DraftRoom
@@ -96,7 +96,7 @@ export default async function LiveDraftPage({
 
   return (
     <main className="mx-auto max-w-screen-xl px-4 py-8">
-      <h1 className="mb-6 text-2xl font-bold">
+      <h1 className="mb-6 font-[family-name:var(--font-display)] text-2xl font-bold uppercase tracking-tight">
         {getDraftDisplayName(draft)} — Live
       </h1>
       <LiveDraftView

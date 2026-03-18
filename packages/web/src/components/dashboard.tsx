@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { GradientCard } from '@/components/ui/gradient-card';
 import { getSchoolColor } from '@/lib/colors/school-colors';
 import { SeasonOverviewCard } from './team-breakdown/season-tab/season-overview-card';
+import { ActivityFeed } from '@/components/activity/activity-feed';
 
 interface DashboardProps {
   displayName: string;
@@ -230,6 +231,14 @@ export function Dashboard({
             )}
           </CardContent>
         </Card>
+      </div>
+
+      {/* Activity Feed */}
+      <div className="mt-6">
+        <h2 className="mb-3 text-xs font-medium uppercase tracking-widest text-muted-foreground">
+          Activity
+        </h2>
+        <ActivityFeed />
       </div>
 
       {/* Followed Team Season Overview */}

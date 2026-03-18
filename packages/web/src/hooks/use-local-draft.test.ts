@@ -29,7 +29,7 @@ vi.mock('@mockingboard/shared', async (importOriginal) => {
   };
 });
 
-import { useLocalDraft } from './use-local-draft';
+import { useLocalDraft } from './use-local-draft.js';
 
 // ---- helpers ----
 
@@ -189,6 +189,67 @@ describe('useLocalDraft', () => {
       expect(mockFetch).not.toHaveBeenCalled();
     });
 
+    it('records pick under teamOverride when slot has been traded', () => {
+      const draft = makeDraft({
+        pickOrder: [
+          makeSlot({
+            overall: 1,
+            team: 'DAL' as TeamAbbreviation,
+            teamOverride: 'NE' as TeamAbbreviation,
+          }),
+          makeSlot({
+            overall: 2,
+            round: 1,
+            pick: 2,
+            team: 'NE' as TeamAbbreviation,
+          }),
+        ],
+      });
+
+      const { result } = renderHook(() => useLocalDraft(draft, makePlayers()));
+
+      act(() => {
+        result.current.recordPick('p1');
+      });
+
+      expect(result.current.picks[0].team).toBe('NE');
+    });
+
+    it('CPU cascade uses teamOverride for traded slots', () => {
+      // Pick 1 is human, pick 2 is CPU with teamOverride
+      const draft = makeDraft({
+        pickOrder: [
+          makeSlot({ overall: 1, team: 'NE' as TeamAbbreviation }),
+          makeSlot({
+            overall: 2,
+            round: 1,
+            pick: 2,
+            team: 'DAL' as TeamAbbreviation,
+            teamOverride: 'NE' as TeamAbbreviation,
+          }),
+        ],
+      });
+
+      // Pick 1 is human, pick 2 is CPU
+      mockGetPickController
+        .mockReturnValueOnce('__guest__') // initial mount check
+        .mockReturnValueOnce(null) // after recordPick: next pick is CPU
+        .mockReturnValueOnce(null); // inside cascade: confirm CPU
+
+      const { result } = renderHook(() => useLocalDraft(draft, makePlayers()));
+
+      act(() => {
+        result.current.recordPick('p1');
+        // Advance past the 50ms setTimeout that triggers CPU cascade
+        vi.advanceTimersByTime(100);
+      });
+
+      // CPU pick should have been called with the override team
+      expect(mockPrepareCpuPick).toHaveBeenCalledWith(
+        expect.objectContaining({ team: 'NE' }),
+      );
+    });
+
     it('uses GUEST_ID for picks by default', () => {
       const { result } = renderHook(() =>
         useLocalDraft(makeDraft(), makePlayers()),
@@ -232,7 +293,7 @@ describe('useLocalDraft', () => {
       );
 
       const body = JSON.parse(
-        (mockFetch.mock.calls[0][1] as RequestInit).body as string,
+        (mockFetch.mock.calls[0][1] as unknown as RequestInit).body as string,
       );
       expect(body.status).toBe('paused');
       expect(body.reason).toBe('pause');
@@ -253,7 +314,7 @@ describe('useLocalDraft', () => {
       );
 
       const body = JSON.parse(
-        (mockFetch.mock.calls[0][1] as RequestInit).body as string,
+        (mockFetch.mock.calls[0][1] as unknown as RequestInit).body as string,
       );
       expect(body.status).toBe('cancelled');
       expect(body.reason).toBe('cancel');
@@ -278,7 +339,7 @@ describe('useLocalDraft', () => {
       );
 
       const body = JSON.parse(
-        (mockFetch.mock.calls[0][1] as RequestInit).body as string,
+        (mockFetch.mock.calls[0][1] as unknown as RequestInit).body as string,
       );
       expect(body.status).toBe('complete');
       expect(body.reason).toBe('complete');
@@ -316,7 +377,7 @@ describe('useLocalDraft', () => {
       );
 
       const body = JSON.parse(
-        (mockFetch.mock.calls[0][1] as RequestInit).body as string,
+        (mockFetch.mock.calls[0][1] as unknown as RequestInit).body as string,
       );
       expect(body.reason).toBe('trade');
     });
@@ -341,7 +402,7 @@ describe('useLocalDraft', () => {
 
       expect(mockFetch).toHaveBeenCalled();
       const body = JSON.parse(
-        (mockFetch.mock.calls[0][1] as RequestInit).body as string,
+        (mockFetch.mock.calls[0][1] as unknown as RequestInit).body as string,
       );
       // Should only contain the new pick, not the initial one
       expect(body.picks).toHaveLength(1);

@@ -6,12 +6,14 @@ import { getPositionColor } from '@/lib/colors/position-colors';
 import { schoolColorStyle } from '@/lib/colors/school-colors';
 import { UNRANKED, YEAR_LABELS } from '@/lib/player-utils';
 import { ProspectDetails } from '@/components/player/prospect-details';
+import { WatchButton } from '@/components/prospect/watch-button';
 
 interface ProspectCardProps {
   player: Player;
+  year?: number;
 }
 
-export function ProspectCard({ player }: ProspectCardProps) {
+export function ProspectCard({ player, year }: ProspectCardProps) {
   const { attributes } = player;
 
   const subtitle = [
@@ -37,22 +39,32 @@ export function ProspectCard({ player }: ProspectCardProps) {
       />
 
       <div className="space-y-4 p-5 sm:p-8">
-        {/* Header: rank + position */}
+        {/* Header: rank + position + watch */}
         <div className="flex items-center justify-between">
           <span className="font-mono text-4xl font-bold text-muted-foreground">
             {player.consensusRank >= UNRANKED
               ? 'NR'
               : `#${player.consensusRank}`}
           </span>
-          <Badge
-            style={{
-              backgroundColor: getPositionColor(player.position),
-              color: '#0A0A0B',
-            }}
-            className="text-sm"
-          >
-            {player.position}
-          </Badge>
+          <div className="flex items-center gap-3">
+            {year && (
+              <WatchButton
+                playerId={player.id}
+                year={year}
+                showLabel
+                size="md"
+              />
+            )}
+            <Badge
+              style={{
+                backgroundColor: getPositionColor(player.position),
+                color: '#0A0A0B',
+              }}
+              className="text-sm"
+            >
+              {player.position}
+            </Badge>
+          </div>
         </div>
 
         {/* Player name + school */}

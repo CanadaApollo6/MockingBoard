@@ -13,13 +13,19 @@ export const Routes = {
 
   // Scouting
   PROSPECTS: '/prospects',
+  WATCHLIST: '/watchlist',
+  TAPE_LOG: '/tape-log',
   BOARD: '/board',
   BOARD_COMPARE: '/board/compare',
   RANKINGS: '/rankings',
   BOARDS: '/boards',
+  CONSENSUS: '/consensus',
+  TRENDING: '/trending',
 
   // Community
+  DISCOVER: '/discover',
   COMMUNITY: '/community',
+  LISTS: '/lists',
   SCOUTS: '/scouts',
   LEADERBOARD: '/leaderboard',
 
@@ -72,6 +78,7 @@ export const Routes = {
   profile: (slug: string) => `/profile/${slug}`,
   scout: (slug: string) => `/scouts/${slug}`,
   board: (slug: string) => `/boards/${slug}`,
+  list: (slug: string) => `/lists/${slug}`,
   overlay: (draftId: string, type: 'board' | 'ticker' | 'current-pick') =>
     `/overlay/${draftId}/${type}`,
   adminTeam: (abbr: string) => `/admin/teams/${abbr}`,

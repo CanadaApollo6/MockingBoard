@@ -1,19 +1,27 @@
 /// <reference types="vitest/globals" />
 import { vi } from 'vitest';
 
-const { mockGetSessionUser, mockRunTransaction, mockGet, mockCollection } =
-  vi.hoisted(() => {
-    const mockGet = vi.fn();
-    const mockDoc = vi.fn(() => ({ get: mockGet }));
-    const mockCollection = vi.fn(() => ({ doc: mockDoc }));
+const {
+  mockGetSessionUser,
+  mockRunTransaction,
+  mockGet,
+  mockCollection,
+  mockNotifyReportLiked,
+  mockFanOutActivity,
+} = vi.hoisted(() => {
+  const mockGet = vi.fn();
+  const mockDoc = vi.fn(() => ({ get: mockGet }));
+  const mockCollection = vi.fn(() => ({ doc: mockDoc }));
 
-    return {
-      mockGetSessionUser: vi.fn(),
-      mockRunTransaction: vi.fn(),
-      mockGet,
-      mockCollection,
-    };
-  });
+  return {
+    mockGetSessionUser: vi.fn(),
+    mockRunTransaction: vi.fn(),
+    mockGet,
+    mockCollection,
+    mockNotifyReportLiked: vi.fn().mockResolvedValue(undefined),
+    mockFanOutActivity: vi.fn().mockResolvedValue(undefined),
+  };
+});
 
 vi.mock('server-only', () => ({}));
 vi.mock('@/lib/firebase/auth-session', () => ({
@@ -24,6 +32,12 @@ vi.mock('@/lib/firebase/firebase-admin', () => ({
     collection: mockCollection,
     runTransaction: mockRunTransaction,
   },
+}));
+vi.mock('@/lib/notifications', () => ({
+  notifyReportLiked: mockNotifyReportLiked,
+}));
+vi.mock('@/lib/activity', () => ({
+  fanOutActivity: mockFanOutActivity,
 }));
 
 import { GET, POST, DELETE } from './route.js';
@@ -41,7 +55,6 @@ beforeEach(() => {
 describe('GET /api/reports/[reportId]/like', () => {
   it('returns isLiked false for unauthenticated users', async () => {
     mockGetSessionUser.mockResolvedValue(null);
-    // Mock count query for unauthenticated path
     mockCollection.mockReturnValueOnce({
       where: vi.fn().mockReturnValue({
         count: vi.fn().mockReturnValue({
@@ -60,9 +73,7 @@ describe('GET /api/reports/[reportId]/like', () => {
   it('returns isLiked true when user has liked', async () => {
     mockGetSessionUser.mockResolvedValue({ uid: 'user-1' });
 
-    // First call: reportLikes doc
     const likeDoc = { exists: true };
-    // Second call: report doc
     const reportDoc = { data: () => ({ likeCount: 3 }) };
 
     mockGet.mockResolvedValueOnce(likeDoc).mockResolvedValueOnce(reportDoc);
@@ -93,6 +104,64 @@ describe('POST /api/reports/[reportId]/like', () => {
 
     expect(json.ok).toBe(true);
     expect(mockRunTransaction).toHaveBeenCalledTimes(1);
+  });
+
+  it('notifies report author on new like', async () => {
+    mockGetSessionUser.mockResolvedValue({
+      uid: 'user-1',
+      name: 'Alice',
+    });
+    mockRunTransaction.mockResolvedValue({
+      authorId: 'author-1',
+      authorName: 'Bob',
+      playerId: 'player-1',
+    });
+    // Mock player lookup for activity fan-out
+    mockCollection.mockImplementation((name: string) => {
+      if (name === 'players')
+        return {
+          doc: () => ({
+            get: vi.fn().mockResolvedValue({
+              data: () => ({ name: 'Travis Hunter' }),
+            }),
+          }),
+        };
+      return { doc: vi.fn(() => ({ get: mockGet })) };
+    });
+
+    await POST(makeRequest('POST'), { params });
+
+    expect(mockNotifyReportLiked).toHaveBeenCalledWith(
+      'author-1',
+      'Alice',
+      'Bob',
+      'report-1',
+    );
+  });
+
+  it('does not notify when liking own report', async () => {
+    mockGetSessionUser.mockResolvedValue({
+      uid: 'author-1',
+      name: 'Alice',
+    });
+    mockRunTransaction.mockResolvedValue({
+      authorId: 'author-1',
+      authorName: 'Alice',
+      playerId: 'player-1',
+    });
+
+    await POST(makeRequest('POST'), { params });
+
+    expect(mockNotifyReportLiked).not.toHaveBeenCalled();
+  });
+
+  it('does not notify when already liked (null result)', async () => {
+    mockGetSessionUser.mockResolvedValue({ uid: 'user-1', name: 'Alice' });
+    mockRunTransaction.mockResolvedValue(null);
+
+    await POST(makeRequest('POST'), { params });
+
+    expect(mockNotifyReportLiked).not.toHaveBeenCalled();
   });
 
   it('returns 404 when report not found', async () => {

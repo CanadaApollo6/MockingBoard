@@ -3,6 +3,8 @@ import { Badge } from '@/components/ui/badge';
 import { TipTapContent } from '@/components/community/tiptap-content';
 import { GradeBadge } from '@/components/grade/grade-badge';
 import { LikeButton } from '@/components/community/like-button';
+import { BookmarkButton } from '@/components/community/bookmark-button';
+import { CommentSection } from '@/components/comments/comment-section';
 
 interface ReportCardProps {
   report: ScoutingReport;
@@ -13,6 +15,7 @@ export function ReportCard({ report, isLiked }: ReportCardProps) {
   const hasStructured =
     report.grade != null ||
     report.comparison ||
+    report.note ||
     report.strengths?.length ||
     report.weaknesses?.length;
 
@@ -68,6 +71,13 @@ export function ReportCard({ report, isLiked }: ReportCardProps) {
         </div>
       )}
 
+      {/* Note (quick take) */}
+      {report.note && (
+        <p className="text-sm text-muted-foreground italic">
+          &ldquo;{report.note}&rdquo;
+        </p>
+      )}
+
       {/* Long-form content */}
       {report.content && Object.keys(report.content).length > 0 && (
         <div className="border-t pt-3">
@@ -82,14 +92,22 @@ export function ReportCard({ report, isLiked }: ReportCardProps) {
         </p>
       )}
 
-      {/* Like button */}
-      <div className="flex items-center justify-end border-t pt-2">
+      {/* Like + Bookmark */}
+      <div className="flex items-center justify-end gap-2 border-t pt-2">
+        <BookmarkButton targetId={report.id} targetType="report" />
         <LikeButton
-          reportId={report.id}
+          apiPath={`/api/reports/${report.id}/like`}
           initialLikeCount={report.likeCount ?? 0}
           initialIsLiked={isLiked}
         />
       </div>
+
+      {/* Comments */}
+      <CommentSection
+        targetId={report.id}
+        targetType="report"
+        initialCount={report.commentCount ?? 0}
+      />
     </div>
   );
 }

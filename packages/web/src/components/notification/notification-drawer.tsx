@@ -15,25 +15,20 @@ import {
   Clock,
   ArrowLeftRight,
   LayoutList,
+  Heart,
   CheckCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { formatRelativeTime } from '@/lib/format';
 
 const TYPE_ICONS: Record<NotificationType, typeof UserPlus> = {
   'new-follower': UserPlus,
   'your-turn': Clock,
   'trade-accepted': ArrowLeftRight,
   'new-board': LayoutList,
+  'report-liked': Heart,
+  'board-liked': Heart,
 };
-
-function formatRelativeTime(ts: { seconds: number } | undefined): string {
-  if (!ts) return '';
-  const diff = Math.floor(Date.now() / 1000 - ts.seconds);
-  if (diff < 60) return 'just now';
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  return `${Math.floor(diff / 86400)}d ago`;
-}
 
 interface NotificationDrawerProps {
   open: boolean;

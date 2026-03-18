@@ -3,6 +3,12 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { getSessionUser } from '@/lib/firebase/auth-session';
 import { adminDb } from '@/lib/firebase/firebase-admin';
 import { getBigBoard } from '@/lib/firebase/data';
+import { fanOutActivity } from '@/lib/activity';
+import {
+  MAX_NAME_LENGTH,
+  MAX_DESCRIPTION_LENGTH,
+  validateSlug,
+} from '@/lib/validation';
 
 export async function GET(
   _request: Request,
@@ -88,7 +94,33 @@ export async function PUT(
     );
   }
 
+  if (body.name !== undefined && body.name.length > MAX_NAME_LENGTH) {
+    return NextResponse.json(
+      { error: `Name must be ${MAX_NAME_LENGTH} characters or less` },
+      { status: 400 },
+    );
+  }
+
+  if (
+    body.description !== undefined &&
+    body.description.length > MAX_DESCRIPTION_LENGTH
+  ) {
+    return NextResponse.json(
+      {
+        error: `Description must be ${MAX_DESCRIPTION_LENGTH} characters or less`,
+      },
+      { status: 400 },
+    );
+  }
+
   if (body.slug !== undefined) {
+    if (!validateSlug(body.slug)) {
+      return NextResponse.json(
+        { error: 'Invalid slug format' },
+        { status: 400 },
+      );
+    }
+
     const existing = await adminDb
       .collection('bigBoards')
       .where('slug', '==', body.slug)
@@ -123,6 +155,17 @@ export async function PUT(
       updates.positionRankings = body.positionRankings;
 
     await adminDb.collection('bigBoards').doc(boardId).update(updates);
+
+    // Fan out activity when board becomes public
+    if (body.visibility === 'public' && board.visibility !== 'public') {
+      fanOutActivity({
+        actorId: session.uid,
+        type: 'board-published',
+        targetId: boardId,
+        targetName: board.name,
+        targetLink: `/boards/${board.slug ?? boardId}`,
+      }).catch(() => {});
+    }
 
     return NextResponse.json({ ok: true });
   } catch (err) {

@@ -39,3 +39,86 @@ export function getOrExpire<K, V>(
   }
   return entry.data;
 }
+
+/**
+ * Simple circuit breaker that tracks consecutive failures.
+ * When failures exceed the threshold, the circuit opens and all calls
+ * short-circuit for the reset window, preventing cascading latency.
+ */
+export class CircuitBreaker {
+  private failures = 0;
+  private openUntil = 0;
+
+  constructor(
+    private threshold: number = 5,
+    private resetMs: number = 60_000,
+  ) {}
+
+  /** Returns true if the circuit is open (calls should be skipped). */
+  get isOpen(): boolean {
+    if (Date.now() >= this.openUntil) {
+      // Reset window expired — allow a probe
+      if (this.failures >= this.threshold) this.failures = 0;
+      return false;
+    }
+    return this.failures >= this.threshold;
+  }
+
+  recordSuccess(): void {
+    this.failures = 0;
+    this.openUntil = 0;
+  }
+
+  recordFailure(): void {
+    this.failures++;
+    if (this.failures >= this.threshold) {
+      this.openUntil = Date.now() + this.resetMs;
+    }
+  }
+}
+
+/**
+ * A size-bounded Map cache with TTL. When the cache exceeds maxSize,
+ * the oldest entries (by insertion order) are evicted.
+ */
+export class BoundedCache<K, V> {
+  private map = new Map<K, CacheEntry<V>>();
+
+  constructor(
+    private maxSize: number,
+    private ttlMs: number,
+  ) {}
+
+  get(key: K): V | undefined {
+    const entry = this.map.get(key);
+    if (!entry) return undefined;
+    if (Date.now() >= entry.expiresAt) {
+      this.map.delete(key);
+      return undefined;
+    }
+    return entry.data;
+  }
+
+  set(key: K, data: V): void {
+    // Delete first to reset insertion order
+    this.map.delete(key);
+    this.map.set(key, { data, expiresAt: Date.now() + this.ttlMs });
+    // Evict oldest entries if over capacity
+    if (this.map.size > this.maxSize) {
+      const excess = this.map.size - this.maxSize;
+      const keys = this.map.keys();
+      for (let i = 0; i < excess; i++) {
+        const oldest = keys.next().value;
+        if (oldest !== undefined) this.map.delete(oldest);
+      }
+    }
+  }
+
+  clear(): void {
+    this.map.clear();
+  }
+
+  get size(): number {
+    return this.map.size;
+  }
+}

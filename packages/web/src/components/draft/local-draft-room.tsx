@@ -86,6 +86,7 @@ export function LocalDraftRoom({
     trade: Trade;
     evaluation: CpuTradeEvaluation;
   } | null>(null);
+  const autoPausedRef = useRef(false);
 
   // Skip entry animation during CPU cascade or large batch
   const prevPickCountRef = useRef(picks.length);
@@ -119,12 +120,12 @@ export function LocalDraftRoom({
     boardRankMap,
   });
 
-  // Redirect to recap page when authed draft completes
+  // Redirect to recap page when authed draft completes (wait for sync)
   useEffect(() => {
-    if (isComplete && draftId) {
+    if (isComplete && draftId && !isSyncing) {
       router.push(Routes.draft(draftId));
     }
-  }, [isComplete, draftId, router]);
+  }, [isComplete, draftId, isSyncing, router]);
 
   // Trade eligibility: need at least 2 teams (user can trade between own teams or with CPU)
   const hasTradeTargets = useMemo(
@@ -137,6 +138,14 @@ export function LocalDraftRoom({
     hasTradeTargets &&
     !showTrade &&
     !tradeResult;
+
+  // Auto-resume after trade flow completes (only if we auto-paused)
+  useEffect(() => {
+    if (!showTrade && !tradeResult && autoPausedRef.current) {
+      autoPausedRef.current = false;
+      resume();
+    }
+  }, [showTrade, tradeResult, resume]);
 
   const handlePick = useCallback(
     (playerId: string) => {
@@ -375,7 +384,13 @@ export function LocalDraftRoom({
       {canTrade && (
         <Button
           className="w-full bg-mb-accent text-black hover:bg-mb-accent/90"
-          onClick={() => setShowTrade(true)}
+          onClick={() => {
+            if (isActive) {
+              pause();
+              autoPausedRef.current = true;
+            }
+            setShowTrade(true);
+          }}
         >
           Propose Trade
         </Button>

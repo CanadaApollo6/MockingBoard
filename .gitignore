@@ -147,6 +147,7 @@ vite.config.ts.timestamp-*
 # Playwright
 /playwright-report/
 /test-results/
+e2e/.auth/
 
 # Lighthouse CI
 .lighthouseci/

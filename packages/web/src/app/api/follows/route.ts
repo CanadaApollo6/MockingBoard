@@ -46,17 +46,14 @@ export async function POST(request: Request) {
     }
 
     const docId = `${session.uid}_${followeeId}`;
-    await adminDb.collection('follows').doc(docId).set({
-      followerId: session.uid,
-      followeeId,
-      createdAt: FieldValue.serverTimestamp(),
-    });
-
-    // Fire-and-forget: notify the followee
-    const followerDoc = await adminDb
-      .collection('users')
-      .doc(session.uid)
-      .get();
+    const [, followerDoc] = await Promise.all([
+      adminDb.collection('follows').doc(docId).set({
+        followerId: session.uid,
+        followeeId,
+        createdAt: FieldValue.serverTimestamp(),
+      }),
+      adminDb.collection('users').doc(session.uid).get(),
+    ]);
     const followerData = followerDoc.data();
     notifyNewFollower(
       followeeId,
